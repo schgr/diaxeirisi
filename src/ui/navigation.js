@@ -12,21 +12,44 @@ export function createNavigation({ container, sections, activeSection, onNavigat
   }
 }
 
+const HOME_TILE_META = {
+  shares: { code: '§ 01-Α', icon: 'MR' },
+  transactions: { code: '§ 01-Β', icon: 'DX' },
+  indexes: { code: '§ 01-Γ', icon: 'EV' },
+  charges: { code: '§ 01-Δ', icon: 'XR' },
+  requests: { code: '§ 01-Ε', icon: 'AI' },
+  as: { code: '§ 02-Α', icon: 'AP' },
+  'movement-differences': { code: '§ 02-Β', icon: 'DF' },
+  administration: { code: '§ 03-Α', icon: 'DG' },
+  settings: { code: '§ 04-Α', icon: 'ST' }
+};
+
 export function renderHomeTiles({ container, groups, onNavigate }) {
   container.innerHTML = `
     <section class="home-screen">
-      <div class="home-heading">
-        <p class="eyebrow">ΑΡΧΙΚΗ</p>
-        <h2>Διαχείριση Υλικού</h2>
-      </div>
+      <header class="home-heading corner">
+        <div>
+          <p class="home-kicker">ΣΧΕΔΙΟ ΛΕΙΤΟΥΡΓΙΑΣ</p>
+          <h2>Διαχείριση Υλικού</h2>
+        </div>
+        <div class="home-title-block" aria-hidden="true">
+          <span>BLUEPRINT</span>
+          <strong>V10</strong>
+        </div>
+      </header>
       <div class="home-groups">
-        ${groups.map((group) => `
-          <section class="home-group">
-            <p class="home-group-label">${group.label}</p>
+        ${groups.map((group, groupIndex) => `
+          <section class="home-group corner">
+            <div class="home-group-header">
+              <p class="home-group-label">${escapeHtml(group.label)}</p>
+              <span class="home-zone-tag">§ ${String(groupIndex + 1).padStart(2, '0')}</span>
+            </div>
             <div class="home-tile-grid">
               ${group.items.map((item) => `
-                <button class="home-tile" data-home-section="${item.id}" type="button">
-                  <span>${item.title}</span>
+                <button class="home-tile panel corner" data-home-section="${escapeHtml(item.id)}" type="button">
+                  <span class="home-tile-icon" aria-hidden="true">${escapeHtml(homeTileMeta(item).icon)}</span>
+                  <span class="home-tile-title">${escapeHtml(item.title)}</span>
+                  <span class="home-tile-code">${escapeHtml(homeTileMeta(item).code)}</span>
                 </button>
               `).join('')}
             </div>
@@ -39,4 +62,17 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
   container.querySelectorAll('[data-home-section]').forEach((button) => {
     button.addEventListener('click', () => onNavigate(button.dataset.homeSection));
   });
+}
+
+function homeTileMeta(item) {
+  return HOME_TILE_META[item.id] || { code: '§ 00-Α', icon: 'MN' };
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

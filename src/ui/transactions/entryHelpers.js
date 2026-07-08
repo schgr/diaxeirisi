@@ -150,7 +150,7 @@ export function canAddItem(controls, state) {
     controls.nominalNumber.value.trim() &&
     controls.description.value.trim() &&
     Number(controls.quantity.value) > 0 &&
-    (!isCommerceUnit(controls.materialType.value) || controls.unitPrice.value.trim()) &&
+    (!isCommerceUnit(controls.unit.value) || controls.unitPrice.value.trim()) &&
     controls.measurementUnit.value &&
     controls.transactionType.value &&
     (controls.transactionType.value !== 'Χρέωση' || controls.materialType.value) &&
@@ -165,7 +165,7 @@ export function hasValidShareForAdd(controls) {
 export function updateAddButton(controls, state) {
   const isCharge = controls.transactionType.value === 'Χρέωση';
   const isCredit = controls.transactionType.value === 'Πίστωση';
-  const isCommerceMaterial = isCharge && isCommerceUnit(controls.materialType.value);
+  const isCommerceTransactionUnit = isCommerceUnit(controls.unit.value);
   controls.justificationReference.disabled = !isCharge;
   if (!isCharge) {
     controls.justificationReference.value = '';
@@ -180,8 +180,8 @@ export function updateAddButton(controls, state) {
   } else if (!isCharge) {
     controls.materialType.value = '';
   }
-  controls.unitPrice.disabled = !isCommerceMaterial;
-  if (!isCommerceMaterial) {
+  controls.unitPrice.disabled = !isCommerceTransactionUnit;
+  if (!isCommerceTransactionUnit) {
     controls.unitPrice.value = '';
   }
   controls.addItem.disabled = !canAddItem(controls, state);

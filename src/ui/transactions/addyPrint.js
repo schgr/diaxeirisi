@@ -3,7 +3,7 @@ import { splitOfficerSignature } from '../officerSignature.js';
 import { numberToGreekWords } from '../pages/sharesPage.js';
 import { formatDate, formatQuantity, isCommerceUnit } from './shared.js';
 export function shouldOpenAddyDocument(documentData) {
-  return hasCredit(documentData.items) || hasCommerceCharge(documentData.items);
+  return hasCredit(documentData.items) || (hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit));
 }
 
 
@@ -116,7 +116,7 @@ export function renderAddyDocument(documentData) {
   const rows = Array.from({ length: 10 }, (_unused, index) => documentData.items[index] || null);
   const rawDocumentReference = `${String(documentData.id || '')} / ${formatDate(documentData.documentDate)}`;
   const hasOnlyCredit = hasCredit(documentData.items) && !hasCharge(documentData.items);
-  const hasCommerceChargeDocument = hasCommerceCharge(documentData.items);
+  const hasCommerceChargeDocument = hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit);
   const leftDocumentReference = hasCommerceChargeDocument ? '' : rawDocumentReference;
   const field17Reference = hasCommerceChargeDocument ? `Χ-${rawDocumentReference}` : '';
   const field19Reference = hasOnlyCredit ? `Π-${rawDocumentReference}` : '';
@@ -333,12 +333,6 @@ export function firstValue(rows, key) {
 export function hasCharge(items) {
   return items.some((item) => item.transactionType === 'Χρέωση');
 }
-
-export function hasCommerceCharge(items) {
-  return items.some((item) => item.transactionType === 'Χρέωση' && isCommerceUnit(item.materialType));
-}
-
-
 
 export function hasCredit(items) {
   return items.some((item) => item.transactionType === 'Πίστωση');
