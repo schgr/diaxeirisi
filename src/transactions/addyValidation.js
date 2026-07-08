@@ -14,8 +14,8 @@ function validateAddy(payload) {
 
   const transactionUnit = requireText(payload && payload.transactionUnit, 'Μονάδα Δοσοληψιών');
   const validatedItems = items.map(validateAddyItem);
-  if (normalize(transactionUnit) === 'εμπόριο' && validatedItems.some((item) => item.unitPrice === null)) {
-    throw new AppError('Η τιμή είναι υποχρεωτική όταν η Μονάδα Δοσοληψιών είναι Εμπόριο.', 'VALIDATION_ERROR');
+  if (validatedItems.some((item) => item.transactionType === 'Χρέωση' && normalize(item.materialType) === 'εμπόριο' && item.unitPrice === null)) {
+    throw new AppError('Η τιμή είναι υποχρεωτική όταν το Είδος Υλικού είναι Εμπόριο.', 'VALIDATION_ERROR');
   }
 
   return {

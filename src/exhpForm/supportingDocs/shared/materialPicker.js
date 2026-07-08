@@ -76,7 +76,7 @@ function renderCatalogDatalist(shares) {
     <datalist id="exhp-material-picker-catalog">
       ${shares.map((share) => `
         <option value="${escapeHtml(share.shareNumber || '')}">
-          ${escapeHtml([share.nominalNumber, share.description].filter(Boolean).join(' - '))}
+          ${escapeHtml(share.description || '')}
         </option>
       `).join('')}
     </datalist>

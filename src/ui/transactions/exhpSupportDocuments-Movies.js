@@ -14,16 +14,12 @@ export function renderExhpSupportChecklist(container, templates, draftSupports =
   const officialTemplates = templates.filter((template) => template.printable);
   const officialForms = officialTemplates.length
     ? `
-      <div class="requests-status-header">
-        <div><h4>Επίσημα έντυπα</h4><p class="muted">Συμπλήρωσε μόνο όσα επίσημα έντυπα χρειάζονται για την αιτιολογία.</p></div>
-      </div>
-      <div class="exhp-support-grid">
+      <div class="exhp-support-grid official-exhp-support-grid">
         ${officialTemplates.map((template) => {
           const draft = draftSupports.get(template.id) || {};
           return `
-            <div class="exhp-support-row" data-exhp-official-template="${template.id}">
-              <span><strong>${escapeHtml(template.documentCode || 'Έντυπο')}</strong>${escapeHtml(template.title)}</span>
-              <button class="secondary-button" data-open-support-template="${template.id}" type="button">${isInventorySupportTemplate(template) ? 'Άνοιγμα Απογραφών' : draft.completed ? 'Επεξεργασία εντύπου' : 'Συμπλήρωση εντύπου'}</button>
+            <div class="exhp-support-row official-exhp-support-row" data-exhp-official-template="${template.id}">
+              <button class="secondary-button" data-open-support-template="${template.id}" type="button">${supportTemplateActionLabel(template, draft)}</button>
             </div>
           `;
         }).join('')}
@@ -88,9 +84,14 @@ export function renderSupportTemplateCards(referenceData, reasonName) {
   return templates.map((template) => `
     <article class="exhp-support-row">
       <span><strong>${escapeHtml(template.documentCode || 'Έντυπο')}</strong>${escapeHtml(template.title)}</span>
-      <button class="secondary-button" data-open-support-template="${template.id}" type="button">Συμπλήρωση Εντύπου</button>
+      <button class="secondary-button" data-open-support-template="${template.id}" type="button">${supportTemplateActionLabel(template)}</button>
     </article>
   `).join('');
+}
+
+function supportTemplateActionLabel(template, draft = {}) {
+  if (isInventorySupportTemplate(template)) return 'Κατάσταση Απογραφής';
+  return draft.completed ? 'Επεξεργασία εντύπου' : 'Συμπλήρωση εντύπου';
 }
 
 export function createDraftSupportDocument(referenceData, reason, items = [], container = null, settings = {}) {
@@ -145,7 +146,7 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
             <span><strong>${escapeHtml(support.documentCode || 'Δικαιολογητικό')}</strong>${escapeHtml(support.title)}</span>
             <input data-support-reference value="${escapeHtml(support.documentReference)}" placeholder="Αριθμός / ημερομηνία / στοιχεία" />
             <div class="row-actions">
-              ${support.printable ? `<button class="secondary-button" data-print-support="${support.id}" type="button">${isInventorySupportTemplate(support) ? 'Απογραφές' : 'Έντυπο'}</button>` : ''}
+              ${support.printable ? `<button class="secondary-button" data-print-support="${support.id}" type="button">${isInventorySupportTemplate(support) ? 'Κατάσταση Απογραφής' : 'Έντυπο'}</button>` : ''}
               <button class="secondary-button" data-save-support="${support.id}" type="button">Αποθήκευση</button>
             </div>
           </label>

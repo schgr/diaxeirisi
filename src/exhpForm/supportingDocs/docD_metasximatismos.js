@@ -6,7 +6,6 @@ import {
   getGreekDateParts,
   renderPrintLayout
 } from './shared/printLayout.js';
-import { renderDocHeader } from './shared/docHeader.js';
 import { renderSignatureBlock } from './shared/signatureBlock.js';
 import { requireAtLeastOneRow, requireNonEmpty } from '../validation.js';
 
@@ -95,15 +94,7 @@ export function renderDocDEdit(data = {}, options = {}) {
 
   return `
     <section class="doc-d-metasximatismos-editor" data-exhp-doc-d-editor>
-      ${renderDocHeader({
-        monada: normalized.commonFields.monada,
-        addyAxp: normalized.commonFields.addyAxp,
-        formCode: DOC_D_METASXIMATISMOS_DEFINITION.formReference,
-        formNumber: DOC_D_METASXIMATISMOS_DEFINITION.formCode
-      })}
       <div class="doc-d-edit-grid exhp-form-edit-fields">
-        ${renderInputField('Μονάδα', 'commonFields.monada', normalized.commonFields.monada)}
-        ${renderInputField('Α/Α ΕΧΠ', 'commonFields.addyAxp', normalized.commonFields.addyAxp)}
         ${renderInputField('Τόπος', 'specificFields.topos', fields.topos)}
         ${renderInputField('Ημερομηνία πρωτοκόλλου', 'commonFields.date', normalized.commonFields.date, 'date', '', 'date')}
         ${renderInputField('Δγή συγκρότησης', 'specificFields.dgiArithmos', fields.dgiArithmos)}
@@ -133,12 +124,6 @@ export function renderDocDPrint(data = {}) {
   const fields = normalized.specificFields;
   const dateParts = getGreekDateParts(normalized.commonFields.date);
   const content = `
-    ${renderDocHeader({
-      monada: normalized.commonFields.monada,
-      addyAxp: normalized.commonFields.addyAxp,
-      formCode: DOC_D_METASXIMATISMOS_DEFINITION.formReference,
-      formNumber: DOC_D_METASXIMATISMOS_DEFINITION.formCode
-    })}
     <h1 class="exhp-form-title">
       <span>Π Ρ Ω Τ Ο Κ Ο Λ Λ Ο</span>
       <span>ΜΕΤΑΣΧΗΜΑΤΙΣΜΟΥ ΥΛΙΚΩΝ</span>

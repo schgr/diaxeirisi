@@ -3,7 +3,7 @@ import { splitOfficerSignature } from '../officerSignature.js';
 import { numberToGreekWords } from '../pages/sharesPage.js';
 import { formatDate, formatQuantity, isCommerceUnit } from './shared.js';
 export function shouldOpenAddyDocument(documentData) {
-  return hasCredit(documentData.items) || (hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit));
+  return hasCredit(documentData.items) || hasCommerceCharge(documentData.items);
 }
 
 
@@ -116,12 +116,12 @@ export function renderAddyDocument(documentData) {
   const rows = Array.from({ length: 10 }, (_unused, index) => documentData.items[index] || null);
   const rawDocumentReference = `${String(documentData.id || '')} / ${formatDate(documentData.documentDate)}`;
   const hasOnlyCredit = hasCredit(documentData.items) && !hasCharge(documentData.items);
-  const hasCommerceCharge = hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit);
-  const leftDocumentReference = hasCommerceCharge ? '' : rawDocumentReference;
-  const field17Reference = hasCommerceCharge ? `Χ-${rawDocumentReference}` : '';
+  const hasCommerceChargeDocument = hasCommerceCharge(documentData.items);
+  const leftDocumentReference = hasCommerceChargeDocument ? '' : rawDocumentReference;
+  const field17Reference = hasCommerceChargeDocument ? `Χ-${rawDocumentReference}` : '';
   const field19Reference = hasOnlyCredit ? `Π-${rawDocumentReference}` : '';
-  const leftNotes = hasCharge(documentData.items) && !hasCommerceCharge ? documentData.notes || '' : '';
-  const rightNotes = hasCredit(documentData.items) || hasCommerceCharge ? documentData.notes || '' : '';
+  const leftNotes = hasCharge(documentData.items) && !hasCommerceChargeDocument ? documentData.notes || '' : '';
+  const rightNotes = hasCredit(documentData.items) || hasCommerceChargeDocument ? documentData.notes || '' : '';
   const leftPed = hasCharge(documentData.items) ? documentData.financialOfficers?.ped : '';
   const leftManager = hasCharge(documentData.items) ? documentData.financialOfficers?.manager : '';
   const rightPed = hasOnlyCredit ? documentData.financialOfficers?.ped : '';
@@ -332,6 +332,10 @@ export function firstValue(rows, key) {
 
 export function hasCharge(items) {
   return items.some((item) => item.transactionType === 'Χρέωση');
+}
+
+export function hasCommerceCharge(items) {
+  return items.some((item) => item.transactionType === 'Χρέωση' && isCommerceUnit(item.materialType));
 }
 
 

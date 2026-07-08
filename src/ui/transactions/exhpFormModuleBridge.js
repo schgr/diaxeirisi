@@ -49,7 +49,7 @@ export function renderNewSupportDocumentEditor(issueReason, context = {}) {
       <div class="requests-status-header">
         <div>
           <h4>${aitiologia.label}</h4>
-          <p class="muted">${data.formCode}</p>
+          ${code === 'd' ? '' : `<p class="muted">${data.formCode}</p>`}
         </div>
       </div>
       ${instance.renderEdit()}

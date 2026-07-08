@@ -122,7 +122,7 @@ export async function renderTransactionsPage(
         </label>
         <label class="field">
           <span>Τιμή</span>
-          <input id="addy-unit-price" type="number" min="0" step="0.01" />
+          <input id="addy-unit-price" type="number" min="0" step="0.01" disabled />
         </label>
         <label class="field">
           <span>Μονάδα Μέτρησης</span>

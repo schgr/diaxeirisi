@@ -936,6 +936,16 @@ h3 {
   border-bottom: 1px solid var(--border);
 }
 
+.official-exhp-support-grid {
+  margin-bottom: 18px;
+}
+
+.official-exhp-support-row {
+  grid-template-columns: minmax(220px, 1040px);
+  padding: 0 10px 14px;
+  border-bottom: 0;
+}
+
 .manual-exhp-support-row {
   grid-template-columns: minmax(360px, 1fr) minmax(88px, 116px);
   padding: 8px 10px;
@@ -5070,6 +5080,10 @@ th {
 
   .exhp-support-row {
     grid-template-columns: 22px 1fr;
+  }
+
+  .official-exhp-support-row {
+    grid-template-columns: 1fr;
   }
 
   .manual-exhp-support-row {
