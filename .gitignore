@@ -1,0 +1,9 @@
+node_modules/
+data/
+.db-check*/
+*.log
+dist/
+build/
+release/
+.env
+diaxeirisi-source-*.zip
