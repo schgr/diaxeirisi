@@ -38,6 +38,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <select id="application-theme">
               <option value="dark" ${getApplicationTheme() === 'dark' ? 'selected' : ''}>Dark mode</option>
               <option value="light" ${getApplicationTheme() === 'light' ? 'selected' : ''}>Light mode</option>
+              <option value="blueprint" ${getApplicationTheme() === 'blueprint' ? 'selected' : ''}>Blueprint</option>
             </select>
           </label>
         </section>
@@ -110,10 +111,10 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
   `;
 
   container.querySelector('#application-theme').addEventListener('change', (event) => {
-    const theme = event.target.value === 'light' ? 'light' : 'dark';
+    const theme = ['dark', 'light', 'blueprint'].includes(event.target.value) ? event.target.value : 'dark';
     window.localStorage.setItem('diaxeirisi-theme', theme);
     document.documentElement.dataset.theme = theme;
-    showToast(`Εφαρμόστηκε ${theme === 'dark' ? 'Dark mode' : 'Light mode'}.`);
+    showToast(`Εφαρμόστηκε ${theme === 'blueprint' ? 'Blueprint' : theme === 'dark' ? 'Dark mode' : 'Light mode'}.`);
   });
 
   bindSettingsTabs(container);
@@ -194,7 +195,8 @@ function bindSettingsTabs(container) {
 }
 
 function getApplicationTheme() {
-  return window.localStorage.getItem('diaxeirisi-theme') === 'light' ? 'light' : 'dark';
+  const theme = window.localStorage.getItem('diaxeirisi-theme');
+  return ['dark', 'light', 'blueprint'].includes(theme) ? theme : 'dark';
 }
 
 export function renderRequestPriorityTable() {
