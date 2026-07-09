@@ -59,6 +59,23 @@ async function run() {
     assert.match(externalIndexHtml, /ΕΙΔΙΚΟ ΠΕΔΙΟ 8/);
     assert.match(externalIndexHtml, /ΕΙΔΙΚΟ ΠΕΔΙΟ 9/);
     assert.match(externalIndexHtml, /official-index-cell official-index-left-cell/);
+    const emptyExternalFieldsHtml = renderExternalTransactionsIndex(printSettings, [{
+      serial: 1,
+      date: '2026-06-13',
+      unit: 'ΜΟΝΑΔΑ',
+      documentType: 'Χ',
+      nominalNumber: '1005007265655',
+      documentReference: 'ΔΙΚ-42/06-06-2026',
+      movementDate: '2026-06-13',
+      returnDate: '2026-06-14',
+      indexField7: '',
+      indexField8: '',
+      indexField9: '',
+      notes: ''
+    }]);
+    assert.doesNotMatch(emptyExternalFieldsHtml, /ΔΙΚ-42/);
+    assert.doesNotMatch(emptyExternalFieldsHtml, /06\/06\/2026/);
+    assert.doesNotMatch(emptyExternalFieldsHtml, /14\/06\/2026/);
 
     const ordersIndexHtml = renderChargeCreditOrdersIndex(
       printSettings,

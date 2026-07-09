@@ -40,7 +40,8 @@ const sections = [
       title: 'Ευρετήρια',
       menuTitle: 'Ευρετήρια Δοσοληψιών',
       visibleGroups: ['transactions'],
-      initialGroup: 'transactions'
+      initialGroup: 'transactions',
+      tileMenu: true
     }
   },
   {

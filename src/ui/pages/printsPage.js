@@ -19,7 +19,7 @@ const printTabGroups = [
     label: 'Δοσοληψίες',
     tabs: [
       { key: 'external', label: 'Ευρετήριο Εξωτερικών Δοσοληψιών' },
-      { key: 'orders', label: 'Εντολές Χρεωπιστώσεων' }
+      { key: 'orders', label: 'Ευρετήριο Εντολών Χρεωπιστώσεως' }
     ]
   },
   {
@@ -53,6 +53,7 @@ export async function renderPrintsPage(
   const state = {
     activeGroup: initialGroup,
     activeTab: visiblePrintTabGroups.find((group) => group.key === initialGroup).tabs[0].key,
+    showTileMenu: Boolean(options.tileMenu),
     displayCount: getDefaultRegistryCount(shares),
     fiscalYear: new Date().getFullYear(),
     selectedShareId: shares[0] ? shares[0].id : '',
@@ -70,7 +71,7 @@ export async function renderPrintsPage(
       </div>
     </section>
 
-    <section class="page-panel no-print">
+    <section class="page-panel no-print" ${options.tileMenu ? 'hidden' : ''} data-print-standard-menu>
       <details class="print-menu" open>
         <summary>${escapeHtml(options.menuTitle || 'Εργασίες Οικονομικού Έτους')}</summary>
         ${visiblePrintTabGroups.length > 1 ? `
@@ -90,17 +91,48 @@ export async function renderPrintsPage(
           ${renderPrintSubtabs(state, visiblePrintTabGroups)}
         </div>
       </details>
+    </section>
+
+    ${options.tileMenu ? `
+      <section class="transaction-flow-home print-index-tile-menu no-print" data-print-tile-menu aria-label="${escapeHtml(options.menuTitle || 'Ευρετήρια')}">
+        ${visiblePrintTabGroups[0].tabs.map((tab) => `
+          <button class="home-tile transaction-flow-tile" data-print-tab="${tab.key}" type="button">
+            <span>${escapeHtml(tab.label)}</span>
+          </button>
+        `).join('')}
+      </section>
+      <div class="page-toolbar no-print" data-print-menu-back hidden>
+        <button class="secondary-button" type="button">Πίσω στα Ευρετήρια</button>
+      </div>
+    ` : ''}
+
+    <section class="page-panel no-print" data-print-controls-panel ${options.tileMenu ? 'hidden' : ''}>
       <div id="print-controls"></div>
     </section>
 
-    <section id="print-preview" class="print-preview-shell"></section>
+    <section id="print-preview" class="print-preview-shell" ${options.tileMenu ? 'hidden' : ''}></section>
   `;
 
   const title = container.querySelector('#prints-title');
   const controls = container.querySelector('#print-controls');
   const preview = container.querySelector('#print-preview');
+  const tileMenu = container.querySelector('[data-print-tile-menu]');
+  const menuBack = container.querySelector('[data-print-menu-back]');
+  const controlsPanel = container.querySelector('[data-print-controls-panel]');
 
   async function renderActiveTab() {
+    if (options.tileMenu) {
+      tileMenu.hidden = !state.showTileMenu;
+      menuBack.hidden = state.showTileMenu;
+      controlsPanel.hidden = state.showTileMenu;
+      preview.hidden = state.showTileMenu;
+      if (state.showTileMenu) {
+        title.textContent = options.title || 'Ευρετήρια';
+        controls.innerHTML = '';
+        preview.innerHTML = '';
+        return;
+      }
+    }
     renderPrintNavigation(container, state, visiblePrintTabGroups);
     preview.classList.toggle('share-card-preview', state.activeTab === 'share-card');
 
@@ -196,6 +228,13 @@ export async function renderPrintsPage(
     const tab = event.target.closest('[data-print-tab]');
     if (tab) {
       state.activeTab = tab.dataset.printTab;
+      state.showTileMenu = false;
+      renderActiveTab();
+      return;
+    }
+
+    if (event.target.closest('[data-print-menu-back]')) {
+      state.showTileMenu = true;
       renderActiveTab();
       return;
     }
@@ -238,7 +277,10 @@ function renderPrintNavigation(container, state, groups = printTabGroups) {
   container.querySelectorAll('[data-print-group]').forEach((button) => {
     button.classList.toggle('active', button.dataset.printGroup === state.activeGroup);
   });
-  container.querySelector('[data-print-subtabs]').innerHTML = renderPrintSubtabs(state, groups);
+  const subtabs = container.querySelector('[data-print-subtabs]');
+  if (subtabs) {
+    subtabs.innerHTML = renderPrintSubtabs(state, groups);
+  }
 }
 
 function renderOfficerIdentity(value) {
@@ -505,15 +547,15 @@ function renderExternalIndexControls(state, rows) {
         </select>
       </label>
       <label class="field">
-        <span>Πεδίο 7</span>
+        <span>Αριθμός/Ημερομηνία Δικαιολογητικού</span>
         <input id="external-field-7" value="${escapeHtml(selected?.indexField7 || '')}" ${selected ? '' : 'disabled'} />
       </label>
       <label class="field">
-        <span>Πεδίο 8</span>
+        <span>Ημερομηνία Παραλαβής ή (ΔΙΑΖ) Αποστολής Υλικού</span>
         <input id="external-field-8" value="${escapeHtml(selected?.indexField8 || '')}" ${selected ? '' : 'disabled'} />
       </label>
       <label class="field">
-        <span>Πεδίο 9</span>
+        <span>Ημερομηνία Επιστροφής ή (ΔΙΑΖ) Παραλαβής Οριστικού «Π»-«Χ» Δικαιολογητικού Δοσοληψίας</span>
         <input id="external-field-9" value="${escapeHtml(selected?.indexField9 || '')}" ${selected ? '' : 'disabled'} />
       </label>
       <button id="update-external-index" class="secondary-button" type="button" ${selected ? '' : 'disabled'}>Ενημέρωση</button>
@@ -571,16 +613,16 @@ function renderOrdersIndexControls(state, rows) {
         <span>ΕΧΠ Ευρετηρίου</span>
         <select id="orders-exhp-id" ${rows.length ? '' : 'disabled'}>
           ${rows.length
-            ? rows.map((row) => `<option value="${row.id}" ${Number(row.id) === Number(state.selectedExhpIndexId) ? 'selected' : ''}>${escapeHtml(row.serial)}/${escapeHtml(row.fiscalYear)} - ${formatDate(row.date)} - ${escapeHtml(row.reason)}</option>`).join('')
+            ? rows.map((row) => `<option value="${row.id}" ${Number(row.id) === Number(state.selectedExhpIndexId) ? 'selected' : ''}>${escapeHtml(row.serial)} - ${formatDate(row.date)} - ${escapeHtml(row.reason)}</option>`).join('')
             : '<option value="">Δεν υπάρχουν ΕΧΠ</option>'}
         </select>
       </label>
       <label class="field">
-        <span>Πεδίο 6 - Αριθμός/Ημερομηνία Έγκρισης</span>
+        <span>Αριθμός/Ημερομηνία Έγκρισης</span>
         <input id="orders-field-6" value="${escapeHtml(selected?.indexField6 || '')}" ${selected ? '' : 'disabled'} />
       </label>
       <label class="field">
-        <span>Πεδίο 7 - Παρατηρήσεις</span>
+        <span>Παρατηρήσεις</span>
         <input id="orders-field-7" value="${escapeHtml(selected?.indexField7 || '')}" ${selected ? '' : 'disabled'} />
       </label>
       <button id="update-orders-index" class="secondary-button" type="button" ${selected ? '' : 'disabled'}>Ενημέρωση</button>
@@ -739,35 +781,19 @@ export function renderExternalTransactionsIndex(settings, entries) {
       { left: 83.95, width: 10.3, className: 'official-index-left-cell' }
     ],
     rows: entries.map((entry) => {
-      const isCharge = entry.documentType === 'Χ';
       return [
         entry.serial,
         formatDate(entry.date),
         entry.unit,
         entry.documentType,
         entry.nominalNumber,
-        entry.indexField7 || entry.documentReference,
-        entry.indexField8 || (isCharge
-          ? extractDocumentReferenceDate(entry.documentReference)
-          : formatDate(entry.movementDate)),
-        entry.indexField9 || (isCharge ? formatDate(entry.date) : formatDate(entry.returnDate)),
+        entry.indexField7 || '',
+        entry.indexField8 || '',
+        entry.indexField9 || '',
         entry.notes
       ];
     })
   });
-}
-
-function extractDocumentReferenceDate(value) {
-  const text = String(value || '');
-  const dayFirst = text.match(/\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/);
-  if (dayFirst) {
-    return `${dayFirst[1].padStart(2, '0')}/${dayFirst[2].padStart(2, '0')}/${dayFirst[3]}`;
-  }
-  const yearFirst = text.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
-  if (yearFirst) {
-    return `${yearFirst[3].padStart(2, '0')}/${yearFirst[2].padStart(2, '0')}/${yearFirst[1]}`;
-  }
-  return '';
 }
 
 export function renderChargeCreditOrdersIndex(settings, entries) {
