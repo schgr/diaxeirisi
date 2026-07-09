@@ -10,6 +10,7 @@ async function run() {
   const assetPath = path.join(__dirname, '..', 'src', 'ui', 'assets', 'official-forms', 'dyp192-clean.png');
   const {
     createDocIAPyromaxika,
+    getGreekWeekday,
     renderDocIAPrint,
     validateDocIAPyromaxika
   } = await import(moduleUrl);
@@ -69,16 +70,17 @@ async function run() {
   assert.match(printHtml, /official-overlay-page dyp192-page print-document-area/);
   assert.match(printHtml, /dyp192-clean\.png/);
   assert.match(printHtml, /data-dyp192-page="1"/);
-  assert.match(printHtml, /left:2\.1%;top:10\.35%;width:78\.75%;height:3\.69%/);
-  assert.match(printHtml, /left:23\.8%;top:33\.03%;width:28\.9%;height:1\.72%/);
-  assert.match(printHtml, /left:23\.8%;top:59\.15%;width:28\.9%;height:1\.72%/);
+  assert.match(printHtml, /left:9\.51%;top:9\.85%;width:71\.34%;height:3\.69%/);
+  assert.match(printHtml, /dyp192-list-description/);
+  assert.match(printHtml, /dyp192-list-quantity/);
   assert.match(printHtml, /left:35\.28%;top:81\.27%;width:4\.72%;height:1\.57%/);
   assert.match(printHtml, /dyp192-signature-overlay/);
   assert.match(printHtml, /left:9\.9%;top:96\.35%;width:23\.4%;height:2\.95%/);
   assert.match(printHtml, /left:52\.8%;top:96\.35%;width:29\.4%;height:2\.95%/);
   assert.ok(!printHtml.includes('<7,62>'));
-  assert.match(printHtml, /Φυσίγγια &lt;7,62&gt; \/ Τεμάχια \/ 2/);
-  assert.match(printHtml, /Κάλυκες &amp; φορείς \/ Τεμάχια \/ 2/);
+  assert.match(printHtml, /Φυσίγγια &lt;7,62&gt; \/ Τεμάχια/);
+  assert.match(printHtml, /Κάλυκες &amp; φορείς \/ Τεμάχια/);
+  assert.match(printHtml, /dyp192-list-quantity[^>]*style="[^"]*">2<\/div>/);
   assert.doesNotMatch(printHtml, /data-materials-table/);
   assert.doesNotMatch(printHtml, /exhp-materials-table-print/);
 
@@ -89,6 +91,21 @@ async function run() {
   assert.match(editHtml, /data-material-picker-variant="dyp192"/);
   assert.match(editHtml, /data-doc-ia-field="specificFields\.vathmosOnomatepwnymo"/);
   assert.doesNotMatch(editHtml, /data-lettered-list/);
+  assert.strictEqual(getGreekWeekday('2026-07-09'), 'Πέμπτη');
+  assert.strictEqual(getGreekWeekday('2026-02-30'), '');
+
+  const autoWeekdayData = {
+    ...validData,
+    specificFields: {
+      ...validData.specificFields,
+      imerominia: '2026-07-09',
+      imeraEvdomadas: ''
+    }
+  };
+  assert.strictEqual(
+    createDocIAPyromaxika({ data: autoWeekdayData }).getData().specificFields.imeraEvdomadas,
+    'Πέμπτη'
+  );
 
   assert.strictEqual(typeof getAitiologiaByCode('ia').module, 'function');
   assert.strictEqual(getAitiologiaByCode('ia').module, createDocIAPyromaxika);

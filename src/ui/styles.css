@@ -4319,6 +4319,18 @@ th {
   align-items: center;
 }
 
+.dyp192-list-description {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dyp192-list-quantity {
+  justify-items: end;
+  padding-right: 2px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .dyp192-officer-overlay {
   display: block;
   padding: 1px 3px;

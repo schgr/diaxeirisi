@@ -117,7 +117,7 @@ export function renderDocIAPrint(data = {}) {
   return Array.from({ length: pageCount }, (_unused, pageIndex) => `
     <article class="official-overlay-page dyp192-page print-document-area" data-exhp-doc-ia-print data-dyp192-page="${pageIndex + 1}">
       <img src="./assets/official-forms/dyp192-clean.png" alt="ΔΥΠ/192 - Πιστοποιητικό Καταναλώσεως Πυρομαχικών" />
-      ${dyp192Overlay(fields.vathmosOnomatepwnymo, 2.10, 10.35, 78.75, 3.69, 'dyp192-officer-overlay')}
+      ${dyp192Overlay(fields.vathmosOnomatepwnymo, 9.51, 9.85, 71.34, 3.69, 'dyp192-officer-overlay')}
       ${dyp192Overlay(fields.monadaTmima || normalized.commonFields.monada, 9.51, 14.05, 36.28, 1.72)}
       ${dyp192Overlay(formatDisplayDate(fields.imerominia), 9.51, 19.98, 26.20, 1.72)}
       ${dyp192Overlay(fields.imeraEvdomadas, 56.24, 19.98, 26.74, 1.72)}
@@ -151,6 +151,8 @@ function normalizeDocIAData(data = {}) {
     ...EMPTY_DATA.specificFields,
     ...(data.specificFields || {})
   };
+  specificFields.imeraEvdomadas = getGreekWeekday(specificFields.imerominia)
+    || specificFields.imeraEvdomadas;
   const consumedMaterials = normalizeAmmoRows(
     specificFields.consumedMaterials,
     specificFields.consumedAmmo
@@ -247,11 +249,44 @@ function blank(value, className = '') {
 
 function renderDyp192ListOverlays(items, firstTop) {
   return Array.from({ length: LIST_LENGTH }, (_unused, rowIndex) => {
-    const firstColumn = items[rowIndex] ? dyp192Overlay(formatDyp192MaterialLine(items[rowIndex]), 23.80, firstTop + rowIndex * 3.695, 28.90, 1.72, 'dyp192-list-overlay') : '';
+    const firstColumn = items[rowIndex]
+      ? renderDyp192MaterialOverlays(items[rowIndex], 23.80, firstTop + rowIndex * 3.695, 28.90)
+      : '';
     const secondColumnIndex = rowIndex + LIST_LENGTH;
-    const secondColumn = items[secondColumnIndex] ? dyp192Overlay(formatDyp192MaterialLine(items[secondColumnIndex]), 53.15, firstTop + rowIndex * 3.695, 29.68, 1.72, 'dyp192-list-overlay dyp192-list-overlay-secondary') : '';
+    const secondColumn = items[secondColumnIndex]
+      ? renderDyp192MaterialOverlays(items[secondColumnIndex], 53.15, firstTop + rowIndex * 3.695, 29.68, true)
+      : '';
     return `${firstColumn}${secondColumn}`;
   }).join('');
+}
+
+function renderDyp192MaterialOverlays(item, left, top, width, secondary = false) {
+  const quantityWidth = 5.4;
+  const gap = 0.3;
+  const detailsWidth = width - quantityWidth - gap;
+  const details = [item.description || '', item.unit || '']
+    .filter((value) => String(value).trim())
+    .join(' / ');
+  const quantity = item.quantity === null || item.quantity === undefined ? '' : item.quantity;
+  const secondaryClass = secondary ? ' dyp192-list-overlay-secondary' : '';
+  return [
+    dyp192Overlay(
+      details,
+      left,
+      top,
+      detailsWidth,
+      1.72,
+      `dyp192-list-overlay dyp192-list-description${secondaryClass}`
+    ),
+    dyp192Overlay(
+      quantity,
+      left + detailsWidth + gap,
+      top,
+      quantityWidth,
+      1.72,
+      `dyp192-list-overlay dyp192-list-quantity${secondaryClass}`
+    )
+  ].join('');
 }
 
 function formatDyp192MaterialLine(item = {}) {
@@ -292,6 +327,20 @@ function formatDisplayDate(value) {
   const [year, month, day] = String(value || '').slice(0, 10).split('-');
   if (!year || !month || !day) return value || '';
   return `${day}/${month}/${year}`;
+}
+
+export function getGreekWeekday(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  if (
+    date.getUTCFullYear() !== Number(match[1]) ||
+    date.getUTCMonth() !== Number(match[2]) - 1 ||
+    date.getUTCDate() !== Number(match[3])
+  ) {
+    return '';
+  }
+  return ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'][date.getUTCDay()];
 }
 
 function structuredCloneFallback(value) {

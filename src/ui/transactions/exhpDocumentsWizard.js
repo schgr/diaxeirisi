@@ -34,6 +34,7 @@ import {
   toLegacyPreviewPayload,
   validateNewSupportDocumentData
 } from './exhpFormModuleBridge.js';
+import { getGreekWeekday } from '../../exhpForm/supportingDocs/docIA_pyromaxika.js';
 
 export function bindExhpDocumentsWizard(container, state, settings, showToast) {
   const exhpDocsApi = window.appApi?.exhpDocs;
@@ -63,6 +64,17 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
     if (share) applyShareToMaterialPickerRow(materialPicker.closest('[data-material-picker-row]'), share);
   });
   editor.addEventListener('change', (event) => {
+    const ammoDate = event.target.closest(
+      '[data-doc-ia-field="specificFields.imerominia"]'
+    );
+    if (ammoDate) {
+      const weekday = editor.querySelector(
+        '[data-doc-ia-field="specificFields.imeraEvdomadas"]'
+      );
+      if (weekday) weekday.value = getGreekWeekday(ammoDate.value);
+      return;
+    }
+
     const materialPicker = event.target.closest('[data-material-picker-select]');
     if (materialPicker) {
       const share = getShareForMaterialPickerValue(state.referenceData?.shares || [], materialPicker.value);
