@@ -1,6 +1,6 @@
 import { EXP_AITIOLOGIES, getAitiologiaByCode } from '../../exhpForm/aitiologies.js';
 
-export const OFFICIAL_EXHP_FORM_REASON_CODES = new Set(['a', 'b', 'd', 'ia', 'z']);
+export const OFFICIAL_EXHP_FORM_REASON_CODES = new Set(['a', 'b', 'd', 'ia', 'st', 'z']);
 export const EXHP_SECOND_OPINION_REASON_CODES = new Set(['a', 'd', 'th', 'i']);
 
 export function getAitiologiaCodeForIssueReason(issueReason, explicitCode = '') {
@@ -67,6 +67,7 @@ export function collectNewSupportDocumentData(editor, issueReason, context = {})
   if (code === 'd') return collectDocDData(editor, context);
   if (code === 'z') return collectDocZData(editor, context);
   if (code === 'ia') return collectDocIAData(editor, context);
+  if (code === 'st') return collectDocSTData(editor, context);
   return null;
 }
 
@@ -90,6 +91,7 @@ export function saveNewSupportDocumentDraft(documentsState, data) {
   if (data.aitiologiaCode === 'z') documentsState.draftUselessA = toLegacyUselessA(data);
   if (data.aitiologiaCode === 'ia') documentsState.draftAmmo = toLegacyAmmo(data);
   if (data.aitiologiaCode === 'd') documentsState.transformation = data;
+  if (data.aitiologiaCode === 'st') documentsState.clothingMonthlySummary = data;
   if (data.aitiologiaCode === 'a') {
     documentsState.uselessMaterialForms ||= {};
     documentsState.uselessMaterialForms[docAKey] = data;
@@ -133,6 +135,10 @@ export async function saveNewSupportDocument(exhpDocsApi, documentsState, select
     const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, 'transformation_materials');
     return exhpDocsApi.saveGeneric(document.id, data);
   }
+  if (data.aitiologiaCode === 'st') {
+    const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, 'clothing_monthly_summary');
+    return exhpDocsApi.saveGeneric(document.id, data);
+  }
   if (data.aitiologiaCode === 'a') {
     return exhpDocsApi.saveUselessStatement(selectedExhp.id, docAKey, data);
   }
@@ -151,6 +157,7 @@ function getInitialModuleData(code, context) {
   if (code === 'z') return fromLegacyUselessA(context);
   if (code === 'ia') return fromLegacyAmmo(context);
   if (code === 'd' && context.documentsState?.transformation) return context.documentsState.transformation;
+  if (code === 'st' && context.documentsState?.clothingMonthlySummary) return context.documentsState.clothingMonthlySummary;
   if (code === 'a') return baseData(code, context);
   return baseData(code, context);
 }
@@ -172,11 +179,19 @@ function baseData(code, context) {
     },
     specificFields: code === 'd'
       ? { topos: context.settings?.serviceInfo?.serviceLocation || '' }
-      : {},
+      : code === 'st'
+        ? {
+            month: String(context.selectedExhp?.documentDate || new Date().toISOString()).slice(0, 7),
+            sp: '',
+            commander: context.settings?.financialOfficers?.commander || '',
+            manager: context.settings?.financialOfficers?.manager || ''
+          }
+        : {},
     materials: code === 'a' ? [] : code === 'z' ? mapExhpItemsToMaterials(context.items || []) : [],
     formDrafts: code === 'a' ? (context.documentsState?.uselessMaterialForms || {}) : undefined,
     materialsUsed: [],
     materialsProduced: [],
+    entries: code === 'st' ? [] : undefined,
     label: aitiologia?.label || ''
   };
 }
@@ -330,9 +345,21 @@ function collectDocIAData(editor, context) {
   return data;
 }
 
+function collectDocSTData(editor, context) {
+  const data = { ...baseData('st', context), specificFields: { month: '', sp: '', commander: '', manager: '' }, entries: [] };
+  readPathFields(editor, '[data-doc-st-field]', data);
+  data.entries = Array.from(editor.querySelectorAll('[data-doc-st-row]')).map((row) => ({
+    item: row.querySelector('[data-doc-st-entry="item"]')?.value.trim() || '',
+    subunit: row.querySelector('[data-doc-st-entry="subunit"]')?.value.trim() || '',
+    quantity: row.querySelector('[data-doc-st-entry="quantity"]')?.value || '',
+    movement: row.querySelector('[data-doc-st-entry="movement"]')?.value || 'initial'
+  }));
+  return data;
+}
+
 function readPathFields(editor, selector, data) {
   editor.querySelectorAll(selector).forEach((input) => {
-    const path = input.dataset.docZField || input.dataset.docIaField || input.dataset.docDField || input.dataset.docAField;
+    const path = input.dataset.docZField || input.dataset.docIaField || input.dataset.docDField || input.dataset.docAField || input.dataset.docStField;
     setPath(data, path, input.value.trim());
   });
 }

@@ -1,4 +1,4 @@
-const DOCUMENT_TYPES = ['useless_material_a', 'useless_material_b', 'ammo_consumption', 'transformation_materials'];
+const DOCUMENT_TYPES = ['useless_material_a', 'useless_material_b', 'ammo_consumption', 'transformation_materials', 'clothing_monthly_summary'];
 
 function getDocumentsByExhpId(db, exhpId) {
   return db.prepare(`

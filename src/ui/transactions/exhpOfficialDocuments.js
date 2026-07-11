@@ -246,6 +246,15 @@ export async function saveDraftExhpDocuments(exhpDocsApi, exhpId, issueReason, e
     );
     await exhpDocsApi.saveGeneric(transformationDocument.id, documentsState.newModuleDrafts.d);
   }
+  if (documentsState?.newModuleDrafts?.st) {
+    const clothingDocument = await ensureExhpSupportDocument(
+      exhpDocsApi,
+      saveState,
+      exhpId,
+      'clothing_monthly_summary'
+    );
+    await exhpDocsApi.saveGeneric(clothingDocument.id, documentsState.newModuleDrafts.st);
+  }
 }
 
 function collectUselessA(editor) {

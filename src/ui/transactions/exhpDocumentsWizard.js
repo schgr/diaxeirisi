@@ -35,6 +35,7 @@ import {
   validateNewSupportDocumentData
 } from './exhpFormModuleBridge.js';
 import { getGreekWeekday } from '../../exhpForm/supportingDocs/docIA_pyromaxika.js';
+import { renderDocSTRow } from '../../exhpForm/supportingDocs/docST_clothingSummary.js';
 
 export function bindExhpDocumentsWizard(container, state, settings, showToast) {
   const exhpDocsApi = window.appApi?.exhpDocs;
@@ -58,12 +59,18 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
     await autofillShareDocumentRow(input, showToast);
   });
   editor.addEventListener('input', (event) => {
+    if (event.target.closest('[data-doc-st-entry]')) {
+      updateClothingSummaryTotals(event.target.closest('[data-doc-st-editor]'));
+    }
     const materialPicker = event.target.closest('[data-material-picker-select]');
     if (!materialPicker) return;
     const share = getShareForMaterialPickerValue(state.referenceData?.shares || [], materialPicker.value);
     if (share) applyShareToMaterialPickerRow(materialPicker.closest('[data-material-picker-row]'), share);
   });
   editor.addEventListener('change', (event) => {
+    if (event.target.closest('[data-doc-st-entry]')) {
+      updateClothingSummaryTotals(event.target.closest('[data-doc-st-editor]'));
+    }
     const docAMenu = event.target.closest('[data-doc-a-menu]');
     if (docAMenu) {
       const tierRoot = docAMenu.closest('[data-doc-a-tier]');
@@ -220,6 +227,23 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
       return;
     }
 
+    const addClothingRow = event.target.closest('[data-doc-st-add-row]');
+    if (addClothingRow) {
+      const body = addClothingRow.closest('[data-doc-st-editor]')?.querySelector('[data-doc-st-body]');
+      if (body) body.insertAdjacentHTML('beforeend', renderDocSTRow({}, body.querySelectorAll('[data-doc-st-row]').length));
+      return;
+    }
+
+    const removeClothingRow = event.target.closest('[data-doc-st-remove-row]');
+    if (removeClothingRow) {
+      const body = removeClothingRow.closest('[data-doc-st-body]');
+      removeClothingRow.closest('[data-doc-st-row]')?.remove();
+      if (body && !body.querySelector('[data-doc-st-row]')) body.insertAdjacentHTML('beforeend', renderDocSTRow({}, 0));
+      body?.querySelectorAll('[data-doc-st-seq]').forEach((cell, index) => { cell.textContent = String(index + 1); });
+      updateClothingSummaryTotals(removeClothingRow.closest('[data-doc-st-editor]'));
+      return;
+    }
+
     const removeMaterialRow = event.target.closest('[data-material-picker-remove-row]');
     if (removeMaterialRow) {
       const body = removeMaterialRow.closest('[data-material-picker-body]');
@@ -369,6 +393,20 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
   });
 }
 
+function updateClothingSummaryTotals(root) {
+  if (!root) return;
+  const totals = { initial: 0, replacement: 0, return: 0 };
+  root.querySelectorAll('[data-doc-st-row]').forEach((row) => {
+    const movement = row.querySelector('[data-doc-st-entry="movement"]')?.value;
+    const quantity = Number(row.querySelector('[data-doc-st-entry="quantity"]')?.value);
+    if (movement in totals && Number.isFinite(quantity)) totals[movement] += quantity;
+  });
+  Object.entries(totals).forEach(([movement, total]) => {
+    const target = root.querySelector(`[data-doc-st-total="${movement}"]`);
+    if (target) target.textContent = total.toLocaleString('el-GR', { maximumFractionDigits: 3 });
+  });
+}
+
 function renumberMaterialPickerRows(body) {
   body.querySelectorAll('[data-material-picker-row]').forEach((row, index) => {
     const seqInput = row.querySelector('[data-materials-field="seq"]');
@@ -449,12 +487,18 @@ async function loadSavedExhpDocumentForms(documentsState, exhpDocsApi) {
   const transformation = documentsState.supportDocuments.find((documentItem) =>
     documentItem.documentType === 'transformation_materials'
   );
+  const clothingSummary = documentsState.supportDocuments.find((documentItem) =>
+    documentItem.documentType === 'clothing_monthly_summary'
+  );
 
   documentsState.uselessA = uselessA ? await exhpDocsApi.getUselessA(uselessA.id) : null;
   documentsState.uselessB = uselessB ? await exhpDocsApi.getUselessB(uselessB.id) : null;
   documentsState.ammo = ammo ? await exhpDocsApi.getAmmo(ammo.id) : null;
   const transformationPayload = transformation ? await exhpDocsApi.getGeneric(transformation.id) : null;
   documentsState.transformation = transformationPayload?.data || null;
+  const clothingSummaryPayload = clothingSummary ? await exhpDocsApi.getGeneric(clothingSummary.id) : null;
+  documentsState.clothingMonthlySummary = clothingSummaryPayload?.data || null;
+  if (documentsState.clothingMonthlySummary) documentsState.newModuleDrafts.st = documentsState.clothingMonthlySummary;
   if (documentsState.transformation) {
     documentsState.newModuleDrafts.d = documentsState.transformation;
   }

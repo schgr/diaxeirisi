@@ -28,6 +28,7 @@ async function run() {
   );
   assert.strictEqual(hasAitiologiaModule('', 'z'), true);
   assert.strictEqual(hasAitiologiaModule('', 'd'), true);
+  assert.strictEqual(hasAitiologiaModule('', 'st'), true);
   assert.strictEqual(hasAitiologiaModule('Τακτοποίηση Διαφορών.', ''), false);
 
   assert.strictEqual(shouldShowOfficialExhpForms('', 'b'), true);
@@ -35,6 +36,7 @@ async function run() {
   assert.strictEqual(shouldShowOfficialExhpForms('', 'ia'), true);
   assert.strictEqual(shouldShowOfficialExhpForms('', 'z'), true);
   assert.strictEqual(shouldShowOfficialExhpForms('', 'a'), true);
+  assert.strictEqual(shouldShowOfficialExhpForms('', 'st'), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'a', ''), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'd', ''), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'th', ''), true);
@@ -274,6 +276,22 @@ async function run() {
   const unchangedWithoutDocument = syncSupportDocumentMaterialsToExhpItems(syncedD, null);
   assert.strictEqual(unchangedWithoutDocument, syncedD);
   assert.strictEqual(unchangedWithoutDocument.length, 3);
+
+  const clothingPrint = renderNewSupportDocumentPrint({
+    aitiologiaCode: 'st',
+    commonFields: { monada: 'ΜΟΝΑΔΑ' },
+    specificFields: { month: '2026-07', sp: '123', commander: 'ΔΚΤΗΣ', manager: 'ΔΧΣΤΗΣ' },
+    entries: [
+      { item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 2, movement: 'initial' },
+      { item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 3, movement: 'initial' },
+      { item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 4, movement: 'replacement' },
+      { item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 1, movement: 'return' }
+    ]
+  });
+  assert.match(clothingPrint, /ΔΥΠ\/189/);
+  assert.match(clothingPrint, /ΧΙΤΩΝΙΟ/);
+  assert.match(clothingPrint, /ΑΡΧΙΚ/);
+  assert.match(clothingPrint, />5<\/th>/);
 
   console.log('EXHP form module bridge test passed.');
 }
