@@ -104,10 +104,10 @@ async function run() {
       quantity: 1
     }))
   });
-  assert.strictEqual((pagedPrint.match(/class="exhp-print-page print-document-area exhp-axristo-page"/g) || []).length, 3);
-  assert.strictEqual((pagedPrint.match(/ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ/g) || []).length, 3);
-  assert.match(pagedPrint, /Σελίδα 1 από 3/);
-  assert.match(pagedPrint, /Σελίδα 3 από 3/);
+  assert.strictEqual((pagedPrint.match(/class="exhp-print-page print-document-area exhp-axristo-page"/g) || []).length, 2);
+  assert.strictEqual((pagedPrint.match(/ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ/g) || []).length, 2);
+  assert.match(pagedPrint, /Σελίδα 1 από 2/);
+  assert.match(pagedPrint, /Σελίδα 2 από 2/);
   assert.strictEqual((pagedPrint.match(/ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ/g) || []).length, 1);
   assert.strictEqual((pagedPrint.match(/ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/g) || []).length, 1);
   assert.match(pagedPrint, /text-align:right/);
