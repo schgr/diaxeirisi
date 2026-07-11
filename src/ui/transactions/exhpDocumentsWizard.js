@@ -94,12 +94,26 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
   });
 
   editor.addEventListener('click', async (event) => {
+    const docAFormChoice = event.target.closest('[data-select-doc-a-form]');
+    if (docAFormChoice) {
+      const formKey = docAFormChoice.dataset.selectDocAForm;
+      editor.querySelectorAll('[data-select-doc-a-form]').forEach((button) => {
+        button.classList.toggle('is-selected', button === docAFormChoice);
+      });
+      editor.querySelectorAll('[data-doc-a-form]').forEach((panel) => {
+        panel.hidden = panel.dataset.docAForm !== formKey;
+      });
+      editor.querySelector(`[data-doc-a-form="${formKey}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     const previousCommittee = event.target.closest('[data-use-previous-exhp-committee]');
     if (previousCommittee) {
       try {
         const committee = JSON.parse(window.localStorage?.getItem('exhp:lastCommittee') || '{}');
         Object.entries(committee).forEach(([key, value]) => {
-          const input = editor.querySelector(`[data-committee-field="${key}"]`);
+          const input = previousCommittee.closest('[data-doc-a-form]')?.querySelector(`[data-committee-field="${key}"]`)
+            || editor.querySelector(`[data-committee-field="${key}"]`);
           if (input && value) input.value = value;
         });
       } catch (_error) {
@@ -114,6 +128,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
       try {
         const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
           reasonCode,
+          formKey: previewNew.dataset.exhpFormKey || '',
           selectedExhp: documentsState.selectedExhp,
           documentsState,
           settings,
@@ -132,6 +147,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         try {
           const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
             reasonCode,
+            formKey: previewNew.dataset.exhpFormKey || '',
             selectedExhp: documentsState.selectedExhp,
             documentsState,
             settings,
@@ -154,6 +170,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
       try {
         const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
           reasonCode,
+          formKey: saveNew.dataset.exhpFormKey || '',
           selectedExhp: documentsState.selectedExhp,
           documentsState,
           settings,
@@ -167,7 +184,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
           return;
         }
         const result = await saveNewSupportDocument(exhpDocsApi, documentsState, documentsState.selectedExhp, data);
-        if (!documentsState.selectedExhp && ['z', 'd'].includes(data.aitiologiaCode)) {
+        if (!documentsState.selectedExhp && ['a', 'z', 'd'].includes(data.aitiologiaCode)) {
           state.exhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, data);
           documentsState.currentItems = state.exhpItems;
           renderExhpEntryState(container, state);

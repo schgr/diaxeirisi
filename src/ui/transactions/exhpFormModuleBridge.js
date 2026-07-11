@@ -1,6 +1,6 @@
 import { EXP_AITIOLOGIES, getAitiologiaByCode } from '../../exhpForm/aitiologies.js';
 
-export const OFFICIAL_EXHP_FORM_REASON_CODES = new Set(['b', 'd', 'ia', 'z']);
+export const OFFICIAL_EXHP_FORM_REASON_CODES = new Set(['a', 'b', 'd', 'ia', 'z']);
 export const EXHP_SECOND_OPINION_REASON_CODES = new Set(['a', 'd', 'th', 'i']);
 
 export function getAitiologiaCodeForIssueReason(issueReason, explicitCode = '') {
@@ -53,7 +53,7 @@ export function renderNewSupportDocumentEditor(issueReason, context = {}) {
         </div>
       </div>
       ${instance.renderEdit()}
-      <div class="support-template-form-actions">
+      <div class="support-template-form-actions"${code === 'a' ? ' hidden' : ''}>
         <button class="secondary-button" data-preview-new-exhp-support="${code}" type="button">Προεπισκόπηση</button>
         <button class="primary-button" data-save-new-exhp-support="${code}" type="button">Αποθήκευση δικαιολογητικού</button>
       </div>
@@ -63,6 +63,7 @@ export function renderNewSupportDocumentEditor(issueReason, context = {}) {
 
 export function collectNewSupportDocumentData(editor, issueReason, context = {}) {
   const code = getAitiologiaCodeForIssueReason(issueReason, context.reasonCode);
+  if (code === 'a') return collectDocAData(editor, context);
   if (code === 'd') return collectDocDData(editor, context);
   if (code === 'z') return collectDocZData(editor, context);
   if (code === 'ia') return collectDocIAData(editor, context);
@@ -84,10 +85,14 @@ export function renderNewSupportDocumentPrint(data) {
 
 export function saveNewSupportDocumentDraft(documentsState, data) {
   documentsState.newModuleDrafts ||= {};
-  documentsState.newModuleDrafts[data.aitiologiaCode] = data;
+  documentsState.newModuleDrafts[data.aitiologiaCode === 'a' ? `a_${data.formKey || 'a'}` : data.aitiologiaCode] = data;
   if (data.aitiologiaCode === 'z') documentsState.draftUselessA = toLegacyUselessA(data);
   if (data.aitiologiaCode === 'ia') documentsState.draftAmmo = toLegacyAmmo(data);
   if (data.aitiologiaCode === 'd') documentsState.transformation = data;
+  if (data.aitiologiaCode === 'a') {
+    documentsState.uselessMaterialForms ||= {};
+    documentsState.uselessMaterialForms[data.formKey || 'a'] = data;
+  }
   rememberCommittee(data.specificFields);
 }
 
@@ -98,7 +103,7 @@ export async function saveNewSupportDocument(exhpDocsApi, documentsState, select
   }
 
   documentsState.newModuleDrafts ||= {};
-  documentsState.newModuleDrafts[data.aitiologiaCode] = data;
+  documentsState.newModuleDrafts[data.aitiologiaCode === 'a' ? `a_${data.formKey || 'a'}` : data.aitiologiaCode] = data;
 
   if (data.aitiologiaCode === 'z') {
     const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, 'useless_material_a');
@@ -110,6 +115,10 @@ export async function saveNewSupportDocument(exhpDocsApi, documentsState, select
   }
   if (data.aitiologiaCode === 'd') {
     const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, 'transformation_materials');
+    return exhpDocsApi.saveGeneric(document.id, data);
+  }
+  if (data.aitiologiaCode === 'a') {
+    const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, `useless_material_${data.formKey || 'a'}`);
     return exhpDocsApi.saveGeneric(document.id, data);
   }
   return { message: 'Δεν έγινε αποθήκευση.' };
@@ -127,6 +136,7 @@ function getInitialModuleData(code, context) {
   if (code === 'z') return fromLegacyUselessA(context);
   if (code === 'ia') return fromLegacyAmmo(context);
   if (code === 'd' && context.documentsState?.transformation) return context.documentsState.transformation;
+  if (code === 'a') return baseData(code, context);
   return baseData(code, context);
 }
 
@@ -148,7 +158,8 @@ function baseData(code, context) {
     specificFields: code === 'd'
       ? { topos: context.settings?.serviceInfo?.serviceLocation || '' }
       : {},
-    materials: code === 'z' ? mapExhpItemsToMaterials(context.items || []) : [],
+    materials: code === 'a' ? [] : code === 'z' ? mapExhpItemsToMaterials(context.items || []) : [],
+    formDrafts: code === 'a' ? (context.documentsState?.uselessMaterialForms || {}) : undefined,
     materialsUsed: [],
     materialsProduced: [],
     label: aitiologia?.label || ''
@@ -230,6 +241,21 @@ function collectDocDData(editor, context) {
   return data;
 }
 
+function collectDocAData(editor, context) {
+  const formKey = context.formKey || 'a';
+  const root = editor.querySelector(`[data-doc-a-form="${formKey}"]`);
+  const data = {
+    ...baseData('a', context),
+    formKey,
+    specificFields: { proedros: '', melosA: '', melosB: '', logistirio: '' },
+    materials: []
+  };
+  readPathFields(root || editor, '[data-doc-a-field]', data);
+  data.materials = collectMaterialRows(root?.querySelector('[data-doc-a-materials]'));
+  rememberCommittee(data.specificFields);
+  return data;
+}
+
 function collectDocZData(editor, context) {
   const data = {
     ...baseData('z', context),
@@ -288,7 +314,7 @@ function collectDocIAData(editor, context) {
 
 function readPathFields(editor, selector, data) {
   editor.querySelectorAll(selector).forEach((input) => {
-    const path = input.dataset.docZField || input.dataset.docIaField || input.dataset.docDField;
+    const path = input.dataset.docZField || input.dataset.docIaField || input.dataset.docDField || input.dataset.docAField;
     setPath(data, path, input.value.trim());
   });
 }
@@ -301,6 +327,9 @@ function collectMaterialRows(root) {
     description: readRowField(row, 'description'),
     unit: readRowField(row, 'unit'),
     quantity: readRowField(row, 'quantity'),
+    quantityWords: readRowField(row, 'quantityWords'),
+    acquisitionPrice: readRowField(row, 'acquisitionPrice'),
+    acquisitionDate: readRowField(row, 'acquisitionDate'),
     notes: readRowField(row, 'notes')
   }));
 }
@@ -461,11 +490,17 @@ export function syncDocZMaterialsToExhpCreditItems(items = [], data = {}) {
 
 export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   const existingItems = Array.isArray(items) ? items : [];
+  const currentDocASource = data?.aitiologiaCode === 'a' ? `docA_axristo_${data.formKey || 'a'}` : '';
   const retained = existingItems.filter((item) =>
     item.supportModuleSource !== 'docZ_analosimo' &&
     item.supportModuleSource !== 'docD_metasximatismos_used' &&
-    item.supportModuleSource !== 'docD_metasximatismos_produced'
+    item.supportModuleSource !== 'docD_metasximatismos_produced' &&
+    item.supportModuleSource !== currentDocASource
   );
+  if (data?.aitiologiaCode === 'a') {
+    const credits = mapSupportMaterialsToExhpItems(data.materials, 'Πίστωση', `docA_axristo_${data.formKey || 'a'}`);
+    return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
+  }
   if (data?.aitiologiaCode === 'd') {
     return [...retained, ...mapDocDMaterialsToExhpItems(data)].sort(compareShareNumbersForExhpItems);
   }

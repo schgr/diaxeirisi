@@ -32,7 +32,7 @@ async function run() {
   assert.strictEqual(shouldShowOfficialExhpForms('', 'd'), true);
   assert.strictEqual(shouldShowOfficialExhpForms('', 'ia'), true);
   assert.strictEqual(shouldShowOfficialExhpForms('', 'z'), true);
-  assert.strictEqual(shouldShowOfficialExhpForms('', 'a'), false);
+  assert.strictEqual(shouldShowOfficialExhpForms('', 'a'), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'a', ''), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'd', ''), true);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'th', ''), true);
@@ -40,6 +40,18 @@ async function run() {
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'b', ''), false);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'ib', ''), false);
   assert.strictEqual(shouldFillExhpSecondOpinion('', 'ib', 'manual text'), true);
+
+  const docAHtml = renderNewSupportDocumentEditor('', {
+    reasonCode: 'a',
+    serviceUnit: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ',
+    documentsState: {},
+    items: []
+  });
+  assert.match(docAHtml, /data-exhp-doc-a-editor/);
+  assert.strictEqual((docAHtml.match(/data-select-doc-a-form=/g) || []).length, 4);
+  assert.strictEqual((docAHtml.match(/data-doc-a-form=/g) || []).length, 4);
+  assert.match(docAHtml, /Πρωτοβάθμια Επιτροπή/);
+  assert.match(docAHtml, /data-doc-a-form="b" hidden/);
 
   const context = {
     reasonCode: 'ia',

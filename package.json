@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.103",
+  "version": "0.13.107",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Local Prototype",
   "main": "src/main.js",
@@ -49,11 +49,11 @@
   },
   "dependencies": {
     "exceljs": "^4.4.0",
-    "sql.js": "^1.12.0"
+    "sql.js": "^1.12.0",
+    "uuid": "^11.1.1"
   },
   "overrides": {
     "tmp": "^0.2.6",
-    "uuid": "^11.1.1",
     "readable-stream": "3.6.2",
     "lazystream": {
       "readable-stream": "1.1.14"

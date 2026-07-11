@@ -1,9 +1,10 @@
 import { createDocZAnalosimo } from './supportingDocs/docZ_analosimo.js';
 import { createDocDMetasximatismos } from './supportingDocs/docD_metasximatismos.js';
 import { createDocIAPyromaxika } from './supportingDocs/docIA_pyromaxika.js';
+import { createDocAAxristo } from './supportingDocs/docA_axristo.js';
 
 export const EXP_AITIOLOGIES = [
-  { code: 'a', label: 'Λογιστική τακτοποίηση πάσης φύσεως άχρηστου υλικού', module: null },
+  { code: 'a', label: 'Λογιστική τακτοποίηση πάσης φύσεως άχρηστου υλικού', module: createDocAAxristo },
   { code: 'b', label: 'Λογιστική τακτοποίηση διαφορών ομοειδών Υλικών', module: null },
   { code: 'g', label: 'Μεταγραφή υλικών λόγω μεταβολής του Αριθμού Στρατιωτικού', module: null },
   { code: 'd', label: 'Μετασχηματισμός υλικών (κατασκευή - μετασκευή)', module: createDocDMetasximatismos },

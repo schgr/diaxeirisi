@@ -57,6 +57,10 @@
   background: #f4f6f8;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 :root[data-theme="blueprint"] {
   color-scheme: dark;
   --bg: #0A1A2E;
@@ -283,11 +287,19 @@ select {
 
 .brand {
   display: flex;
-  gap: 12px;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   min-height: 58px;
   padding: 8px 24px;
   border-bottom: 1px solid var(--line);
+}
+
+.brand-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -314,6 +326,16 @@ select {
   color: var(--muted);
   font-size: 10px;
   text-transform: uppercase;
+}
+
+.app-version-badge {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--primary-strong);
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .main-navigation {
@@ -373,8 +395,10 @@ select {
   --hs-ink-faint: #4A6478;
 
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0;
   min-height: 100%;
+  height: 100%;
   padding: 0;
   margin: 0;
   max-width: none;
@@ -388,13 +412,56 @@ select {
   font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
 }
 
+:root[data-theme="dark"] .home-screen,
+:root[data-theme="light"] .home-screen {
+  --hs-bg: var(--bg);
+  --hs-grid-line: transparent;
+  --hs-grid-line-strong: transparent;
+  --hs-panel: var(--panel);
+  --hs-panel-hi: var(--panel-strong);
+  --hs-line: var(--line);
+  --hs-line-hi: var(--primary);
+  --hs-cyan: var(--primary);
+  --hs-cyan-dim: var(--line);
+  --hs-ink: var(--text);
+  --hs-ink-muted: var(--muted);
+  --hs-ink-faint: var(--muted);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+:root[data-theme="dark"] .home-heading,
+:root[data-theme="light"] .home-heading,
+:root[data-theme="dark"] .home-group,
+:root[data-theme="light"] .home-group {
+  background: var(--panel);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .home-title-block,
+:root[data-theme="light"] .home-title-block {
+  background: var(--panel-strong);
+}
+
+:root[data-theme="dark"] .home-tile,
+:root[data-theme="light"] .home-tile {
+  background: var(--panel);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .home-tile:hover,
+:root[data-theme="dark"] .home-tile.selected,
+:root[data-theme="light"] .home-tile:hover,
+:root[data-theme="light"] .home-tile.selected {
+  background: var(--panel-strong);
+}
+
 .home-heading {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 20px;
   margin: 0;
-  padding: 28px 32px;
+  padding: 18px 24px;
   border: 1px solid var(--hs-line);
   border-left: 4px solid var(--hs-cyan);
   background: linear-gradient(135deg, rgba(13, 33, 56, 0.94), rgba(18, 48, 73, 0.78));
@@ -411,7 +478,7 @@ select {
 }
 
 .home-kicker {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: var(--hs-cyan);
   font-size: 12px;
   font-weight: 800;
@@ -422,10 +489,19 @@ select {
 .home-heading h2 {
   margin: 0;
   color: var(--hs-ink);
-  font-size: clamp(30px, 4vw, 58px);
+  font-size: clamp(26px, 3vw, 42px);
   font-weight: 800;
   letter-spacing: 0;
   line-height: 0.96;
+}
+
+.home-subtitle {
+  display: block;
+  margin-top: 6px;
+  color: var(--hs-ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .home-title-block {
@@ -441,7 +517,7 @@ select {
 .home-title-block span,
 .home-title-block strong {
   display: block;
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 
 .home-title-block span {
@@ -452,20 +528,23 @@ select {
 
 .home-title-block strong {
   color: var(--hs-cyan);
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: 0.1em;
 }
 
 .home-groups {
   display: grid;
-  gap: 20px;
-  padding: 24px 32px 34px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 14px;
+  padding: 16px 24px 20px;
+  overflow: hidden;
 }
 
 .home-group {
   display: grid;
-  gap: 18px;
-  padding: 18px;
+  gap: 12px;
+  padding: 14px;
   border: 1px solid var(--hs-line);
   background: rgba(13, 33, 56, 0.76);
   box-shadow: inset 0 0 0 1px rgba(79, 209, 232, 0.06);
@@ -476,7 +555,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--hs-line);
 }
 
@@ -499,8 +578,8 @@ select {
 
 .home-tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
 }
 
 .transaction-flow-home,
@@ -517,9 +596,9 @@ select {
     "icon title"
     "code code";
   align-items: center;
-  gap: 18px 16px;
-  min-height: 156px;
-  padding: 20px;
+  gap: 10px 12px;
+  min-height: 96px;
+  padding: 14px;
   border: 1px solid var(--hs-line, var(--line));
   border-radius: 0;
   background:
@@ -552,8 +631,8 @@ select {
   grid-area: icon;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   border: 1px solid var(--hs-cyan-dim, var(--line));
   color: var(--hs-cyan, var(--primary));
   font-size: 14px;
@@ -564,7 +643,7 @@ select {
 .home-tile-title {
   grid-area: title;
   color: inherit;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.25;
   letter-spacing: 0;
 }
@@ -572,7 +651,7 @@ select {
 .home-tile-code {
   grid-area: code;
   justify-self: start;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--hs-line, var(--line));
   color: var(--hs-ink-muted, var(--muted));
   font-size: 12px;
@@ -618,8 +697,48 @@ select {
   min-width: 96px;
 }
 
+.print-page-toolbar {
+  margin-bottom: 14px;
+  padding-top: 8px;
+}
+
 .transaction-flow-home {
   max-width: 620px;
+}
+
+.print-index-menu-mode {
+  min-height: 0;
+}
+
+.print-index-menu-mode .page-header {
+  margin-bottom: 16px;
+}
+
+.print-index-tile-menu {
+  max-width: 620px;
+}
+
+.content:has(.print-index-menu-mode) {
+  overflow: hidden;
+}
+
+.window-options-modal {
+  width: min(480px, calc(100vw - 32px));
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+}
+
+.window-options-modal h2 {
+  margin-bottom: 18px;
+  font-size: 16px;
+}
+
+.window-options-actions {
+  display: grid;
+  gap: 10px;
 }
 
 .transaction-flow-home.is-hidden {
@@ -663,6 +782,85 @@ select {
 .exhp-reason-tile {
   min-height: 118px;
   text-transform: none;
+}
+
+.doc-a-form-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 16px 0 22px;
+}
+
+.doc-a-form-choice {
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+}
+
+.doc-a-form-choice strong,
+.doc-a-form-choice span {
+  display: block;
+}
+
+.doc-a-form-choice span {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.doc-a-form-choice:hover,
+.doc-a-form-choice.is-selected {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.doc-a-form-panel[hidden] {
+  display: none !important;
+}
+
+.doc-a-committee-heading {
+  margin: 18px 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--primary);
+}
+
+.doc-a-committee-fields {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  margin-bottom: 18px;
+}
+
+.doc-a-committee-fields .field,
+.doc-a-committee-fields input {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+[data-material-picker-variant="axristo"] {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+[data-material-picker-variant="axristo"] .exhp-materials-table {
+  min-width: 1480px;
+}
+
+[data-material-picker-variant="axristo"] th,
+[data-material-picker-variant="axristo"] td {
+  min-width: 120px;
+}
+
+[data-material-picker-variant="axristo"] th:first-child,
+[data-material-picker-variant="axristo"] td:first-child {
+  min-width: 58px;
 }
 
 .visually-hidden {
@@ -2053,7 +2251,8 @@ table.administration-table td {
   display: grid;
   justify-content: center;
   gap: 18px;
-  height: calc(100vh - 280px);
+  height: auto;
+  max-height: calc(100vh - 320px);
   min-height: 0;
   margin-top: 18px;
   padding: 22px;
