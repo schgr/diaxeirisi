@@ -506,6 +506,16 @@ export function syncDocZMaterialsToExhpCreditItems(items = [], data = {}) {
   return syncSupportDocumentMaterialsToExhpItems(items, data);
 }
 
+export function syncSavedSecondaryMaterialsToExhpItems(items = [], documentsState = {}) {
+  const retained = (Array.isArray(items) ? items : []).filter((item) =>
+    !String(item.supportModuleSource || '').startsWith('docA_axristo_secondary_')
+  );
+  return Object.entries(documentsState.uselessMaterialForms || {})
+    .filter(([key, data]) => key.startsWith('secondary_') && data?.committeeTier === 'secondary')
+    .sort(([left], [right]) => left.localeCompare(right, 'el'))
+    .reduce((result, [, data]) => syncSupportDocumentMaterialsToExhpItems(result, data), retained);
+}
+
 export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   const existingItems = Array.isArray(items) ? items : [];
   if (!data?.aitiologiaCode) return existingItems;

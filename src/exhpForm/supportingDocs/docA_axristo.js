@@ -80,15 +80,16 @@ function renderPrint(data) {
   const pages = paginateMaterials(data.materials);
   const totalPages = pages.length;
   return `${renderPrintStyles()}<style>
-    .exhp-axristo-page{display:flex;flex-direction:column;min-height:277mm;padding:0;break-after:page;page-break-after:always}
+    .exhp-axristo-page{display:flex;flex-direction:column;width:210mm;min-height:277mm;padding:0;break-after:page;page-break-after:always}
     .exhp-axristo-page:last-child{break-after:auto;page-break-after:auto}
-    .exhp-axristo-page-number{margin-top:auto;padding-top:5mm;text-align:center;font-weight:700}
+    .exhp-axristo-page-number{margin-top:auto;padding-top:5mm;text-align:right;font-weight:700}
     .exhp-axristo-signatures{display:grid;grid-template-columns:1fr 1.45fr;gap:14mm;margin-top:6mm;text-align:center}
     .exhp-axristo-signatures span,.exhp-axristo-signatures strong{display:block}.exhp-axristo-committee-grid{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:4mm}.exhp-axristo-members{margin-left:auto;min-width:42mm}.exhp-axristo-signature{min-height:14mm;margin-top:6mm;text-align:center}.exhp-axristo-signature-name,.exhp-axristo-signature-rank{display:block}.exhp-axristo-signature-name{font-weight:700}.exhp-axristo-members .exhp-axristo-signature+ .exhp-axristo-signature{margin-top:8mm}.exhp-axristo-accounting{margin-top:8mm;width:78mm;text-align:center}.exhp-axristo-table{font-size:7.6pt}.exhp-axristo-table td{height:8mm}
+    @media print{.exhp-axristo-page.print-document-area{position:relative!important;left:auto!important;top:auto!important;display:flex!important;width:210mm!important;min-height:277mm!important}}
   </style>${pages.map((rows, pageIndex) => {
     const isLastPage = pageIndex === totalPages - 1;
     return `<article class="exhp-print-page print-document-area exhp-axristo-page">
-      <h1 class="exhp-form-title"><span>${data.committeeTier === 'secondary' ? 'ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ' : 'ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ'}</span><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span></h1>
+      ${pageIndex === 0 ? `<h1 class="exhp-form-title"><span>${data.committeeTier === 'secondary' ? 'ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ' : 'ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ'}</span><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span></h1>` : ''}
       ${printTable(rows)}
       ${isLastPage ? `<div class="exhp-axristo-signatures">
       <div class="exhp-axristo-manager"><span>Ο</span><strong>ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ</strong>${signatureName(officers.manager)}</div>

@@ -13,6 +13,7 @@ async function run() {
     shouldFillExhpSecondOpinion,
     shouldShowOfficialExhpForms,
     syncDocZMaterialsToExhpCreditItems,
+    syncSavedSecondaryMaterialsToExhpItems,
     syncSupportDocumentMaterialsToExhpItems,
     toLegacyPreviewPayload
   } = await import(moduleUrl);
@@ -85,6 +86,12 @@ async function run() {
   const secondaryCredits = syncSupportDocumentMaterialsToExhpItems([], primaryDocumentsState.uselessStatements.secondary_d2);
   assert.strictEqual(secondaryCredits.length, 1);
   assert.strictEqual(secondaryCredits[0].supportModuleSource, 'docA_axristo_secondary_d2');
+  const issuedCredits = syncSavedSecondaryMaterialsToExhpItems([], primaryDocumentsState);
+  assert.strictEqual(issuedCredits.length, 1);
+  assert.strictEqual(issuedCredits[0].shareNumber, '42');
+  const issuedCreditsAgain = syncSavedSecondaryMaterialsToExhpItems(issuedCredits, primaryDocumentsState);
+  assert.deepStrictEqual(issuedCreditsAgain, issuedCredits);
+  assert.strictEqual(issuedCreditsAgain.length, 1);
 
   const pagedPrint = renderNewSupportDocumentPrint({
     ...primaryDocA,
@@ -102,6 +109,9 @@ async function run() {
   assert.match(pagedPrint, /Σελίδα 1 από 3/);
   assert.match(pagedPrint, /Σελίδα 3 από 3/);
   assert.strictEqual((pagedPrint.match(/ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ/g) || []).length, 1);
+  assert.strictEqual((pagedPrint.match(/ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/g) || []).length, 1);
+  assert.match(pagedPrint, /text-align:right/);
+  assert.match(pagedPrint, /position:relative!important/);
 
   const context = {
     reasonCode: 'ia',

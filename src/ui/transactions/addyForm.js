@@ -37,8 +37,10 @@ import {
 } from './shared.js';
 import { captureNewSupportModuleDraft, loadExhpDocumentsEditor } from './exhpDocumentsWizard.js';
 import {
+  getAitiologiaCodeForIssueReason,
   hasAitiologiaModule,
   shouldShowOfficialExhpForms,
+  syncSavedSecondaryMaterialsToExhpItems,
   syncSupportDocumentMaterialsToExhpItems
 } from './exhpFormModuleBridge.js';
 import { syncExhpIssueReasonSettings } from '../pages/settingsPage.js';
@@ -314,6 +316,16 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         }
         if (['z', 'd'].includes(newSupportCapture?.data?.aitiologiaCode)) {
           saveExhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, newSupportCapture.data);
+        }
+        const issueReasonCode = getAitiologiaCodeForIssueReason(
+          exhpReason.value,
+          exhpSelector.dataset.issueReasonCode || ''
+        );
+        if (issueReasonCode === 'a') {
+          saveExhpItems = syncSavedSecondaryMaterialsToExhpItems(
+            saveExhpItems,
+            state.exhpDocumentsState
+          );
         }
         if (!saveExhpItems.length) {
           showToast('\u03a0\u03c1\u03cc\u03c3\u03b8\u03b5\u03c3\u03b5 \u03c4\u03bf\u03c5\u03bb\u03ac\u03c7\u03b9\u03c3\u03c4\u03bf\u03bd \u03ad\u03bd\u03b1 \u03c5\u03bb\u03b9\u03ba\u03cc \u03c3\u03c4\u03b7\u03bd \u0395\u03a7\u03a0.', 'error');
