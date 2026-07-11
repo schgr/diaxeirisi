@@ -65,9 +65,43 @@ async function run() {
   });
   assert.ok(docAPrint.indexOf('Αζίζογλου Πρόδρομος') < docAPrint.indexOf('Λγός (ΠΒ)'));
   assert.ok(docAPrint.indexOf('Παπαδόπουλος Νικόλαος') < docAPrint.indexOf('Τχης'));
-  assert.match(docAPrint, /exhp-axristo-signature-label">Α/);
-  assert.match(docAPrint, /exhp-axristo-signature-label">Β/);
+  assert.doesNotMatch(docAPrint, /exhp-axristo-signature-label/);
+  assert.doesNotMatch(docAPrint, /Υπόδειγμα/);
   assert.match(docAPrint, /ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/);
+
+  const primaryDocA = {
+    aitiologiaCode: 'a', formKey: 'd2', committeeTier: 'primary',
+    commonFields: { monada: 'ΜΟΝΑΔΑ' },
+    financialOfficers: { manager: 'ΔΧΣΤΗΣ', ped: 'ΠΕΔ' },
+    specificFields: { proedros: 'ΠΡΩΤΟΣ ΠΡΟΕΔΡΟΣ', melosA: 'ΠΡΩΤΟ ΜΕΛΟΣ Α', melosB: 'ΠΡΩΤΟ ΜΕΛΟΣ Β' },
+    materials: [{ shareNumber: '42', description: 'Συσσωρευτής', unit: 'ΤΕΜ', quantity: 2 }]
+  };
+  const primaryDocumentsState = {};
+  saveNewSupportDocumentDraft(primaryDocumentsState, primaryDocA);
+  assert.strictEqual(primaryDocumentsState.uselessStatements.primary_d2, primaryDocA);
+  assert.strictEqual(primaryDocumentsState.uselessStatements.secondary_d2.materials[0].shareNumber, '42');
+  assert.strictEqual(primaryDocumentsState.uselessStatements.secondary_d2.specificFields.proedros, '');
+  assert.deepStrictEqual(syncSupportDocumentMaterialsToExhpItems([], primaryDocA), []);
+  const secondaryCredits = syncSupportDocumentMaterialsToExhpItems([], primaryDocumentsState.uselessStatements.secondary_d2);
+  assert.strictEqual(secondaryCredits.length, 1);
+  assert.strictEqual(secondaryCredits[0].supportModuleSource, 'docA_axristo_secondary_d2');
+
+  const pagedPrint = renderNewSupportDocumentPrint({
+    ...primaryDocA,
+    materials: Array.from({ length: 25 }, (_, index) => ({
+      seq: index + 1,
+      shareNumber: String(index + 1),
+      nomenclature: `N-${index + 1}`,
+      description: `Υλικό ${index + 1}`,
+      unit: 'ΤΕΜ',
+      quantity: 1
+    }))
+  });
+  assert.strictEqual((pagedPrint.match(/class="exhp-print-page print-document-area exhp-axristo-page"/g) || []).length, 3);
+  assert.strictEqual((pagedPrint.match(/ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ/g) || []).length, 3);
+  assert.match(pagedPrint, /Σελίδα 1 από 3/);
+  assert.match(pagedPrint, /Σελίδα 3 από 3/);
+  assert.strictEqual((pagedPrint.match(/ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ/g) || []).length, 1);
 
   const context = {
     reasonCode: 'ia',

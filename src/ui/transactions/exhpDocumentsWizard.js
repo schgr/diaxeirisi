@@ -187,6 +187,9 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
           return;
         }
         const result = await saveNewSupportDocument(exhpDocsApi, documentsState, documentsState.selectedExhp, data);
+        if (data.aitiologiaCode === 'a' && (data.committeeTier || 'primary') === 'primary') {
+          copyPrimaryMaterialsIntoSecondaryEditor(editor, data);
+        }
         if (!documentsState.selectedExhp && ['a', 'z', 'd'].includes(data.aitiologiaCode)) {
           state.exhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, data);
           documentsState.currentItems = state.exhpItems;
@@ -373,6 +376,19 @@ function renumberMaterialPickerRows(body) {
   });
 }
 
+function copyPrimaryMaterialsIntoSecondaryEditor(editor, data) {
+  const secondaryPanel = editor.querySelector(
+    `[data-doc-a-form="${data.formKey || 'a'}"][data-committee-tier="secondary"]`
+  );
+  const body = secondaryPanel?.querySelector('[data-material-picker-body]');
+  if (!body) return;
+  const rows = Array.isArray(data.materials) && data.materials.length ? data.materials : [{}];
+  body.innerHTML = rows.map((row, index) =>
+    renderMaterialPickerRow(row, index, { variant: 'axristo' })
+  ).join('');
+  renumberMaterialPickerRows(body);
+}
+
 export async function loadExhpDocumentsEditor(selector, editor, reasonLabel, exhpDocuments, documentsState, exhpDocsApi, showToast, settings = {}) {
   const exhpId = Number(selector.value);
   const selectedExhp = exhpDocuments.find((documentItem) => documentItem.id === exhpId);
@@ -398,6 +414,7 @@ export async function loadExhpDocumentsEditor(selector, editor, reasonLabel, exh
       : '<p class="muted">Επίλεξε Αιτιολογία Εκδόσεως για να εμφανιστούν τα διαθέσιμα δικαιολογητικά.</p>';
     return;
   }
+  documentsState.uselessMaterialForms = {};
   if (reasonLabel) reasonLabel.textContent = selectedExhp.issueReason || '';
 
   try {
@@ -405,6 +422,11 @@ export async function loadExhpDocumentsEditor(selector, editor, reasonLabel, exh
     await loadSavedExhpDocumentForms(documentsState, exhpDocsApi);
     if (isUselessMaterialReason(selectedExhp.issueReason)) {
       documentsState.uselessStatements = await exhpDocsApi.getUselessStatements(selectedExhp.id);
+      documentsState.uselessMaterialForms = Object.fromEntries(
+        Object.entries(documentsState.uselessStatements || {}).filter(([key]) =>
+          /^(primary|secondary)_(a|b|d2|d3)$/.test(key)
+        )
+      );
     }
     selectedExhp.issueReasonCode = getAitiologiaCodeForIssueReason(selectedExhp.issueReason, draftIssueReasonCode);
     editor.innerHTML = renderExhpDocumentsEditor(selectedExhp, documentsState, settings);
@@ -492,6 +514,10 @@ function renderExhpDocumentsEditor(selectedExhp, documentsState, settings = {}) 
 
 export function captureNewSupportModuleDraft(editor, documentsState, issueReason, reasonCode, context = {}) {
   if (!hasAitiologiaModule(issueReason, reasonCode)) return null;
+  const resolvedCode = getAitiologiaCodeForIssueReason(issueReason, reasonCode);
+  if (resolvedCode === 'a' && Object.keys(documentsState.uselessMaterialForms || {}).length) {
+    return { data: null, validation: { valid: true, errors: [] } };
+  }
   const data = collectNewSupportDocumentData(editor, issueReason, {
     ...context,
     reasonCode,

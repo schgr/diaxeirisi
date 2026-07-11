@@ -339,6 +339,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
             container.querySelector('#exhp-documents-editor'),
             state.exhpDocumentsState
           );
+          clearIssuedExhpDraftState(state);
         } catch (documentsError) {
           console.error('EXHP supporting documents save failed:', documentsError);
           showToast('Η ΕΧΠ αποθηκεύτηκε, αλλά ορισμένα δικαιολογητικά δεν αποθηκεύτηκαν.', 'error');
@@ -456,4 +457,16 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση ΑΔΔΥ.', 'error');
     }
   });
+}
+
+function clearIssuedExhpDraftState(state) {
+  const documentsState = state.exhpDocumentsState || {};
+  documentsState.newModuleDrafts = {};
+  documentsState.uselessMaterialForms = {};
+  documentsState.uselessStatements = {};
+  documentsState.draftUselessA = null;
+  documentsState.draftUselessB = null;
+  documentsState.draftAmmo = null;
+  documentsState.transformation = null;
+  if (state.exhpDraftSupports?.clear) state.exhpDraftSupports.clear();
 }

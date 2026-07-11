@@ -1,6 +1,6 @@
 import { escapeHtml } from '../../ui/components/forms.js';
 import { renderMaterialPickerTableInput } from './shared/materialPicker.js';
-import { formatPrintValue, renderPrintLayout } from './shared/printLayout.js';
+import { formatPrintValue, renderPrintStyles } from './shared/printLayout.js';
 import { parseRankAndName } from './shared/signatureBlock.js';
 import { requireAtLeastOneRow, requireNonEmpty } from '../validation.js';
 
@@ -77,21 +77,32 @@ function renderPrint(data) {
   const form = AXRISTO_FORMS.find((item) => item.key === data.formKey) || AXRISTO_FORMS[0];
   const f = data.specificFields;
   const officers = data.financialOfficers || {};
-  return renderPrintLayout(`<section class="exhp-axristo-form">
-    <h1 class="exhp-form-title"><span>${data.committeeTier === 'secondary' ? 'ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ' : 'ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ'}</span><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span><small>(Υπόδειγμα)</small></h1>
-    ${printTable(data.materials)}
-    <div class="exhp-axristo-signatures">
+  const pages = paginateMaterials(data.materials);
+  const totalPages = pages.length;
+  return `${renderPrintStyles()}<style>
+    .exhp-axristo-page{display:flex;flex-direction:column;min-height:277mm;padding:0;break-after:page;page-break-after:always}
+    .exhp-axristo-page:last-child{break-after:auto;page-break-after:auto}
+    .exhp-axristo-page-number{margin-top:auto;padding-top:5mm;text-align:center;font-weight:700}
+    .exhp-axristo-signatures{display:grid;grid-template-columns:1fr 1.45fr;gap:14mm;margin-top:6mm;text-align:center}
+    .exhp-axristo-signatures span,.exhp-axristo-signatures strong{display:block}.exhp-axristo-committee-grid{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:4mm}.exhp-axristo-members{margin-left:auto;min-width:42mm}.exhp-axristo-signature{min-height:14mm;margin-top:6mm;text-align:center}.exhp-axristo-signature-name,.exhp-axristo-signature-rank{display:block}.exhp-axristo-signature-name{font-weight:700}.exhp-axristo-members .exhp-axristo-signature+ .exhp-axristo-signature{margin-top:8mm}.exhp-axristo-accounting{margin-top:8mm;width:78mm;text-align:center}.exhp-axristo-table{font-size:7.6pt}.exhp-axristo-table td{height:8mm}
+  </style>${pages.map((rows, pageIndex) => {
+    const isLastPage = pageIndex === totalPages - 1;
+    return `<article class="exhp-print-page print-document-area exhp-axristo-page">
+      <h1 class="exhp-form-title"><span>${data.committeeTier === 'secondary' ? 'ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ' : 'ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ'}</span><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span></h1>
+      ${printTable(rows)}
+      ${isLastPage ? `<div class="exhp-axristo-signatures">
       <div class="exhp-axristo-manager"><span>Ο</span><strong>ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ</strong>${signatureName(officers.manager)}</div>
-      <div class="exhp-axristo-committee"><span>Η</span><strong>ΕΠΙΤΡΟΠΗ</strong><div class="exhp-axristo-committee-grid"><div><strong>Ο ΠΡΟΕΔΡΟΣ</strong>${signatureName(f.proedros)}</div><div class="exhp-axristo-members"><strong>ΤΑ ΜΕΛΗ</strong>${signatureName(f.melosA, 'Α')}${signatureName(f.melosB, 'Β')}</div></div></div>
-    </div>
-    <div class="exhp-axristo-accounting"><p>Βεβαιώνεται η ορθότητα - πληρότητα<br>των αναγραφομένων στοιχείων</p><p>Ο</p><strong>ΠΡΟΪΣΤΑΜΕΝΟΣ ΛΟΓΙΣΤΗΡΙΟΥ</strong>${signatureName(officers.ped)}</div>
-    <style>.exhp-axristo-signatures{display:grid;grid-template-columns:1fr 1.45fr;gap:14mm;margin-top:6mm;text-align:center}.exhp-axristo-signatures span,.exhp-axristo-signatures strong{display:block}.exhp-axristo-committee-grid{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:4mm}.exhp-axristo-members{margin-left:auto;min-width:42mm}.exhp-axristo-signature{min-height:14mm;margin-top:6mm;text-align:center}.exhp-axristo-signature-label{font-weight:700;margin-bottom:1mm}.exhp-axristo-signature-name,.exhp-axristo-signature-rank{display:block}.exhp-axristo-signature-name{font-weight:700}.exhp-axristo-members .exhp-axristo-signature+ .exhp-axristo-signature{margin-top:8mm}.exhp-axristo-accounting{margin-top:8mm;width:78mm;text-align:center}.exhp-axristo-table{font-size:7.6pt}.exhp-axristo-table td{height:8mm}.exhp-form-title small{display:block}</style>
-  </section>`);
+      <div class="exhp-axristo-committee"><span>Η</span><strong>ΕΠΙΤΡΟΠΗ</strong><div class="exhp-axristo-committee-grid"><div><strong>Ο ΠΡΟΕΔΡΟΣ</strong>${signatureName(f.proedros)}</div><div class="exhp-axristo-members"><strong>ΤΑ ΜΕΛΗ</strong>${signatureName(f.melosA)}${signatureName(f.melosB)}</div></div></div>
+      </div><div class="exhp-axristo-accounting"><p>Βεβαιώνεται η ορθότητα - πληρότητα<br>των αναγραφομένων στοιχείων</p><p>Ο</p><strong>ΠΡΟΪΣΤΑΜΕΝΟΣ ΛΟΓΙΣΤΗΡΙΟΥ</strong>${signatureName(officers.ped)}</div>` : ''}
+      <footer class="exhp-axristo-page-number">Σελίδα ${pageIndex + 1} από ${totalPages}</footer>
+    </article>`;
+  }).join('')}`;
 }
 
-function printTable(rows) { const source = (rows || []).filter(hasValue); const body = (source.length ? source : [{}]).map((r, i) => `<tr><td>${v(r.seq || i + 1)}</td><td>${v(r.nomenclature)}</td><td>${v(r.description)}</td><td>${v(r.unit)}</td><td>${v(r.quantity)}</td><td>${v(r.quantityWords)}</td><td>${v(r.acquisitionPrice)}</td><td>${v(r.acquisitionDate)}</td><td>${v(r.notes)}</td></tr>`).join(''); return `<table class="exhp-materials-table exhp-axristo-table"><thead><tr><th rowspan="2">Α/Α</th><th rowspan="2">ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</th><th rowspan="2">ΠΕΡΙΓΡΑΦΗ</th><th rowspan="2">ΜΜ</th><th colspan="2">ΠΟΣΟΤΗΤΑ</th><th rowspan="2">ΤΙΜΗ ΚΤΗΣΗΣ</th><th rowspan="2">ΗΜ/ΝΙΑ ΚΤΗΣΗΣ</th><th rowspan="2">ΠΑΡΑΤΗΡΗΣΕΙΣ</th></tr><tr><th>ΑΡΙΘΜ.</th><th>ΟΛΟΓΡΑΦΩΣ</th></tr></thead><tbody>${body}</tbody></table>`; }
+function printTable(rows) { const body = rows.map((r) => `<tr><td>${v(r.seq)}</td><td>${v(r.nomenclature)}</td><td>${v(r.description)}</td><td>${v(r.unit)}</td><td>${v(r.quantity)}</td><td>${v(r.quantityWords)}</td><td>${v(r.acquisitionPrice)}</td><td>${v(r.acquisitionDate)}</td><td>${v(r.notes)}</td></tr>`).join(''); return `<table class="exhp-materials-table exhp-axristo-table"><thead><tr><th rowspan="2">Α/Α</th><th rowspan="2">ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</th><th rowspan="2">ΠΕΡΙΓΡΑΦΗ</th><th rowspan="2">ΜΜ</th><th colspan="2">ΠΟΣΟΤΗΤΑ</th><th rowspan="2">ΤΙΜΗ ΚΤΗΣΗΣ</th><th rowspan="2">ΗΜ/ΝΙΑ ΚΤΗΣΗΣ</th><th rowspan="2">ΠΑΡΑΤΗΡΗΣΕΙΣ</th></tr><tr><th>ΑΡΙΘΜ.</th><th>ΟΛΟΓΡΑΦΩΣ</th></tr></thead><tbody>${body}</tbody></table>`; }
+function paginateMaterials(rows = []) { const source = (Array.isArray(rows) ? rows : []).filter(hasValue).map((row, index) => ({ ...row, seq: row.seq || index + 1 })); if (!source.length) source.push({ seq: 1 }); const pages = []; for (let index = 0; index < source.length; index += 12) pages.push(source.slice(index, index + 12)); return pages; }
 export function validateDocAAxristo(data = {}) { const n = normalize(data); const checks = [requireNonEmpty(n.commonFields.monada, 'Μονάδα'), requireAtLeastOneRow(n.materials, `Υλικά Κατάστασης ${n.formKey.toUpperCase()}`)]; const errors = checks.filter((x) => !x.valid); return { valid: !errors.length, errors }; }
 function normalize(data = {}) { return { aitiologiaCode: 'a', formCode: DOC_A_AXRISTO_DEFINITION.formCode, formKey: data.formKey || '', committeeTier: data.committeeTier || 'primary', commonFields: { monada: data.commonFields?.monada ?? '', addyAxp: data.commonFields?.addyAxp ?? '', date: data.commonFields?.date ?? '' }, financialOfficers: { manager: data.financialOfficers?.manager ?? '', ped: data.financialOfficers?.ped ?? '' }, specificFields: { ...EMPTY_FIELDS, ...(data.specificFields || {}) }, materials: Array.isArray(data.materials) ? data.materials : [], formDrafts: data.formDrafts || {} }; }
 function field(label, path, value, committee = '') { return `<label class="field exhp-form-field-person"><span>${label}</span><input data-doc-a-field="${path}"${committee ? ` data-committee-field="${committee}"` : ''} value="${escapeHtml(value)}" /></label>`; }
 function hasValue(r = {}) { return Boolean(String(r.shareNumber || r.description || '').trim()); } function v(value) { return formatPrintValue(value ?? ''); } function clone(value) { return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
-function signatureName(value = '', label = '') { const parsed = parseRankAndName(value); return `<div class="exhp-axristo-signature">${label ? `<span class="exhp-axristo-signature-label">${escapeHtml(label)}</span>` : ''}<span class="exhp-axristo-signature-name">${escapeHtml(parsed.name || '')}</span><span class="exhp-axristo-signature-rank">${escapeHtml(parsed.rank || '')}</span></div>`; }
+function signatureName(value = '') { const parsed = parseRankAndName(value); return `<div class="exhp-axristo-signature"><span class="exhp-axristo-signature-name">${escapeHtml(parsed.name || '')}</span><span class="exhp-axristo-signature-rank">${escapeHtml(parsed.rank || '')}</span></div>`; }

@@ -93,6 +93,11 @@ export function saveNewSupportDocumentDraft(documentsState, data) {
   if (data.aitiologiaCode === 'a') {
     documentsState.uselessMaterialForms ||= {};
     documentsState.uselessMaterialForms[docAKey] = data;
+    documentsState.uselessStatements ||= {};
+    documentsState.uselessStatements[docAKey] = data;
+    if ((data.committeeTier || 'primary') === 'primary') {
+      copyPrimaryMaterialsToSecondary(documentsState, data);
+    }
   }
   rememberCommittee(data.specificFields);
 }
@@ -109,6 +114,11 @@ export async function saveNewSupportDocument(exhpDocsApi, documentsState, select
   if (data.aitiologiaCode === 'a') {
     documentsState.uselessMaterialForms ||= {};
     documentsState.uselessMaterialForms[docAKey] = data;
+    documentsState.uselessStatements ||= {};
+    documentsState.uselessStatements[docAKey] = data;
+    if ((data.committeeTier || 'primary') === 'primary') {
+      copyPrimaryMaterialsToSecondary(documentsState, data);
+    }
   }
 
   if (data.aitiologiaCode === 'z') {
@@ -124,8 +134,7 @@ export async function saveNewSupportDocument(exhpDocsApi, documentsState, select
     return exhpDocsApi.saveGeneric(document.id, data);
   }
   if (data.aitiologiaCode === 'a') {
-    const document = await ensureSupportDocument(exhpDocsApi, documentsState, selectedExhp.id, `useless_material_${docAKey}`);
-    return exhpDocsApi.saveGeneric(document.id, data);
+    return exhpDocsApi.saveUselessStatement(selectedExhp.id, docAKey, data);
   }
   return { message: 'Δεν έγινε αποθήκευση.' };
 }
@@ -502,13 +511,18 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   if (!data?.aitiologiaCode) return existingItems;
   const docAKey = `${data.committeeTier || 'primary'}_${data.formKey || 'a'}`;
   const currentDocASource = data?.aitiologiaCode === 'a' ? `docA_axristo_${docAKey}` : '';
+  const legacyPrimarySource = data?.aitiologiaCode === 'a' && (data.committeeTier || 'primary') === 'primary'
+    ? `docA_axristo_${data.formKey || 'a'}`
+    : '';
   const retained = existingItems.filter((item) =>
     item.supportModuleSource !== 'docZ_analosimo' &&
     item.supportModuleSource !== 'docD_metasximatismos_used' &&
     item.supportModuleSource !== 'docD_metasximatismos_produced' &&
-    item.supportModuleSource !== currentDocASource
+    item.supportModuleSource !== currentDocASource &&
+    item.supportModuleSource !== legacyPrimarySource
   );
   if (data?.aitiologiaCode === 'a') {
+    if ((data.committeeTier || 'primary') === 'primary') return retained;
     const credits = mapSupportMaterialsToExhpItems(data.materials, 'Πίστωση', `docA_axristo_${docAKey}`);
     return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
   }
@@ -533,6 +547,32 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
     }));
 
   return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
+}
+
+function copyPrimaryMaterialsToSecondary(documentsState, data) {
+  const formKey = data.formKey || 'a';
+  const secondaryKey = `secondary_${formKey}`;
+  const existing = documentsState.uselessMaterialForms?.[secondaryKey] || {};
+  const secondary = {
+    ...data,
+    ...existing,
+    aitiologiaCode: 'a',
+    formKey,
+    committeeTier: 'secondary',
+    commonFields: { ...(data.commonFields || {}), ...(existing.commonFields || {}) },
+    financialOfficers: { ...(data.financialOfficers || {}), ...(existing.financialOfficers || {}) },
+    specificFields: existing.specificFields || { proedros: '', melosA: '', melosB: '' },
+    materials: cloneSupportMaterials(data.materials)
+  };
+  documentsState.uselessMaterialForms[secondaryKey] = secondary;
+  documentsState.uselessStatements ||= {};
+  documentsState.uselessStatements[secondaryKey] = secondary;
+  documentsState.newModuleDrafts ||= {};
+  documentsState.newModuleDrafts[`a_${secondaryKey}`] = secondary;
+}
+
+function cloneSupportMaterials(rows = []) {
+  return (Array.isArray(rows) ? rows : []).map((row) => ({ ...row }));
 }
 
 function mapDocDMaterialsToExhpItems(data = {}) {
