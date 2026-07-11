@@ -227,6 +227,10 @@ async function run() {
   assert.ok(!syncedD.some((item) => item.description === 'stale used'));
   assert.ok(!syncedD.some((item) => item.description === 'stale produced'));
 
+  const unchangedWithoutDocument = syncSupportDocumentMaterialsToExhpItems(syncedD, null);
+  assert.strictEqual(unchangedWithoutDocument, syncedD);
+  assert.strictEqual(unchangedWithoutDocument.length, 3);
+
   console.log('EXHP form module bridge test passed.');
 }
 

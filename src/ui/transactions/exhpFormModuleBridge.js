@@ -499,6 +499,7 @@ export function syncDocZMaterialsToExhpCreditItems(items = [], data = {}) {
 
 export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   const existingItems = Array.isArray(items) ? items : [];
+  if (!data?.aitiologiaCode) return existingItems;
   const docAKey = `${data.committeeTier || 'primary'}_${data.formKey || 'a'}`;
   const currentDocASource = data?.aitiologiaCode === 'a' ? `docA_axristo_${docAKey}` : '';
   const retained = existingItems.filter((item) =>

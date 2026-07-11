@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.109",
+  "version": "0.13.110",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Local Prototype",
   "main": "src/main.js",
