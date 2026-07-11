@@ -64,6 +64,19 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
     if (share) applyShareToMaterialPickerRow(materialPicker.closest('[data-material-picker-row]'), share);
   });
   editor.addEventListener('change', (event) => {
+    const docAMenu = event.target.closest('[data-doc-a-menu]');
+    if (docAMenu) {
+      const tierRoot = docAMenu.closest('[data-doc-a-tier]');
+      const formKey = docAMenu.value;
+      tierRoot?.querySelectorAll('[data-doc-a-form]').forEach((panel) => {
+        panel.hidden = panel.dataset.docAForm !== formKey;
+      });
+      if (formKey) {
+        tierRoot?.querySelector(`[data-doc-a-form="${formKey}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      return;
+    }
+
     const ammoDate = event.target.closest(
       '[data-doc-ia-field="specificFields.imerominia"]'
     );
@@ -94,23 +107,6 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
   });
 
   editor.addEventListener('click', async (event) => {
-    const docAFormChoice = event.target.closest('[data-select-doc-a-form]');
-    if (docAFormChoice) {
-      const formKey = docAFormChoice.dataset.selectDocAForm;
-      editor.querySelectorAll('[data-select-doc-a-form]').forEach((button) => {
-        button.classList.toggle('is-selected', button === docAFormChoice);
-        button.setAttribute('aria-expanded', String(button === docAFormChoice));
-      });
-      editor.querySelectorAll('[data-doc-a-card]').forEach((card) => {
-        card.classList.toggle('is-selected', card.dataset.docACard === formKey);
-      });
-      editor.querySelectorAll('[data-doc-a-form]').forEach((panel) => {
-        panel.hidden = panel.dataset.docAForm !== formKey;
-      });
-      editor.querySelector(`[data-doc-a-form="${formKey}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-
     const previousCommittee = event.target.closest('[data-use-previous-exhp-committee]');
     if (previousCommittee) {
       try {
@@ -133,6 +129,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
           reasonCode,
           formKey: previewNew.dataset.exhpFormKey || '',
+          committeeTier: previewNew.dataset.committeeTier || 'primary',
           selectedExhp: documentsState.selectedExhp,
           documentsState,
           settings,
@@ -152,6 +149,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
           const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
             reasonCode,
             formKey: previewNew.dataset.exhpFormKey || '',
+            committeeTier: previewNew.dataset.committeeTier || 'primary',
             selectedExhp: documentsState.selectedExhp,
             documentsState,
             settings,
@@ -175,6 +173,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         const data = collectNewSupportDocumentData(editor, selector.dataset.issueReason || documentsState.selectedExhp?.issueReason || '', {
           reasonCode,
           formKey: saveNew.dataset.exhpFormKey || '',
+          committeeTier: saveNew.dataset.committeeTier || 'primary',
           selectedExhp: documentsState.selectedExhp,
           documentsState,
           settings,

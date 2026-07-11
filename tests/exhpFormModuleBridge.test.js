@@ -49,13 +49,15 @@ async function run() {
     items: []
   });
   assert.match(docAHtml, /data-exhp-doc-a-editor/);
-  assert.strictEqual((docAHtml.match(/data-select-doc-a-form=/g) || []).length, 4);
-  assert.strictEqual((docAHtml.match(/data-doc-a-form=/g) || []).length, 4);
+  assert.strictEqual((docAHtml.match(/data-doc-a-menu=/g) || []).length, 2);
+  assert.strictEqual((docAHtml.match(/data-doc-a-form=/g) || []).length, 8);
+  assert.strictEqual((docAHtml.match(/data-use-previous-exhp-committee/g) || []).length, 1);
   assert.match(docAHtml, /Πρωτοβάθμια Επιτροπή/);
-  assert.match(docAHtml, /data-doc-a-form="b" hidden/);
+  assert.match(docAHtml, /Δευτεροβάθμια Επιτροπή/);
+  assert.match(docAHtml, /data-doc-a-form="b" data-committee-tier="secondary" hidden/);
 
   const docAPrint = renderNewSupportDocumentPrint({
-    aitiologiaCode: 'a', formKey: 'a',
+    aitiologiaCode: 'a', formKey: 'a', committeeTier: 'secondary',
     commonFields: { monada: 'ΜΟΝΑΔΑ' },
     financialOfficers: { manager: 'Λγός (ΠΒ) Αζίζογλου Πρόδρομος', ped: 'Τχης Παπαδόπουλος Νικόλαος' },
     specificFields: { proedros: 'Λγός (ΠΖ) Πρόεδρος Δοκιμής', melosA: 'Υπλγός Μέλος Άλφα', melosB: 'Ανθλγός Μέλος Βήτα' },
@@ -65,6 +67,7 @@ async function run() {
   assert.ok(docAPrint.indexOf('Παπαδόπουλος Νικόλαος') < docAPrint.indexOf('Τχης'));
   assert.match(docAPrint, /exhp-axristo-signature-label">Α/);
   assert.match(docAPrint, /exhp-axristo-signature-label">Β/);
+  assert.match(docAPrint, /ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/);
 
   const context = {
     reasonCode: 'ia',

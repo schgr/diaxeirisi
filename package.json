@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.108",
+  "version": "0.13.109",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Local Prototype",
   "main": "src/main.js",
@@ -22,12 +22,13 @@
     },
     "files": [
       "src/**/*",
+      "build/icon.ico",
       "package.json"
     ],
     "asar": true,
     "win": {
       "icon": "build/icon.ico",
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
       "target": [
         {
           "target": "nsis",

@@ -820,6 +820,35 @@ select {
   background: var(--panel);
 }
 
+.doc-a-committee-tier {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.doc-a-form-menu-field {
+  width: min(100%, 980px);
+}
+
+.doc-a-form-menu-field select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.doc-a-menu-panels {
+  min-width: 0;
+}
+
+.doc-a-menu-panels .doc-a-form-panel {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .doc-a-form-choice strong,
 .doc-a-form-choice span {
   display: block;
