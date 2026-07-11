@@ -8,6 +8,7 @@ async function run() {
     getAitiologiaCodeForIssueReason,
     hasAitiologiaModule,
     renderNewSupportDocumentEditor,
+    renderNewSupportDocumentPrint,
     saveNewSupportDocumentDraft,
     shouldFillExhpSecondOpinion,
     shouldShowOfficialExhpForms,
@@ -52,6 +53,18 @@ async function run() {
   assert.strictEqual((docAHtml.match(/data-doc-a-form=/g) || []).length, 4);
   assert.match(docAHtml, /Πρωτοβάθμια Επιτροπή/);
   assert.match(docAHtml, /data-doc-a-form="b" hidden/);
+
+  const docAPrint = renderNewSupportDocumentPrint({
+    aitiologiaCode: 'a', formKey: 'a',
+    commonFields: { monada: 'ΜΟΝΑΔΑ' },
+    financialOfficers: { manager: 'Λγός (ΠΒ) Αζίζογλου Πρόδρομος', ped: 'Τχης Παπαδόπουλος Νικόλαος' },
+    specificFields: { proedros: 'Λγός (ΠΖ) Πρόεδρος Δοκιμής', melosA: 'Υπλγός Μέλος Άλφα', melosB: 'Ανθλγός Μέλος Βήτα' },
+    materials: [{ shareNumber: '1', description: 'Υλικό', quantity: 1 }]
+  });
+  assert.ok(docAPrint.indexOf('Αζίζογλου Πρόδρομος') < docAPrint.indexOf('Λγός (ΠΒ)'));
+  assert.ok(docAPrint.indexOf('Παπαδόπουλος Νικόλαος') < docAPrint.indexOf('Τχης'));
+  assert.match(docAPrint, /exhp-axristo-signature-label">Α/);
+  assert.match(docAPrint, /exhp-axristo-signature-label">Β/);
 
   const context = {
     reasonCode: 'ia',

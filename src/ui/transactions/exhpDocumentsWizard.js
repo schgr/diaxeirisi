@@ -99,6 +99,10 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
       const formKey = docAFormChoice.dataset.selectDocAForm;
       editor.querySelectorAll('[data-select-doc-a-form]').forEach((button) => {
         button.classList.toggle('is-selected', button === docAFormChoice);
+        button.setAttribute('aria-expanded', String(button === docAFormChoice));
+      });
+      editor.querySelectorAll('[data-doc-a-card]').forEach((card) => {
+        card.classList.toggle('is-selected', card.dataset.docACard === formKey);
       });
       editor.querySelectorAll('[data-doc-a-form]').forEach((panel) => {
         panel.hidden = panel.dataset.docAForm !== formKey;

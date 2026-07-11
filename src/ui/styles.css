@@ -792,6 +792,7 @@ select {
 }
 
 .doc-a-form-choice {
+  width: 100%;
   min-height: 112px;
   padding: 14px;
   border: 1px solid var(--line);
@@ -801,6 +802,22 @@ select {
   text-align: left;
   text-transform: none;
   white-space: normal;
+}
+
+.doc-a-form-card.is-selected {
+  grid-column: 1 / -1;
+}
+
+.doc-a-form-card.is-selected .doc-a-form-choice {
+  min-height: 0;
+}
+
+.doc-a-form-panel {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
 }
 
 .doc-a-form-choice strong,
