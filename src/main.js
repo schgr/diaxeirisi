@@ -28,6 +28,7 @@ function createWindow() {
     minWidth: 980,
     minHeight: 680,
     title: 'diaxeirisi Ylikoy',
+    icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     backgroundColor: '#f4f6f8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

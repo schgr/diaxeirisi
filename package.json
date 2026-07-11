@@ -16,6 +16,7 @@
   "build": {
     "appId": "gr.local.diaxeirisi.ylikoy",
     "productName": "diaxeirisi Ylikoy",
+    "icon": "build/icon.ico",
     "directories": {
       "output": "release"
     },
@@ -25,6 +26,7 @@
     ],
     "asar": true,
     "win": {
+      "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "target": [
         {
