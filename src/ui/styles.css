@@ -5845,8 +5845,8 @@ th {
     display: flex !important;
     box-sizing: border-box;
     width: 210mm !important;
-    height: 297mm !important;
-    min-height: 297mm !important;
+    height: 277mm !important;
+    min-height: 277mm !important;
     margin: 0 !important;
     padding: 10mm !important;
     overflow: hidden !important;
