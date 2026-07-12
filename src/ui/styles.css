@@ -293,6 +293,10 @@ select {
   overflow: hidden;
 }
 
+.app-shell-headerless {
+  grid-template-rows: minmax(0, 1fr);
+}
+
 .app-header {
   display: grid;
   grid-template-rows: auto auto;

@@ -13,6 +13,7 @@ import { showToast } from './components/toast.js';
 import { escapeHtml } from './components/forms.js';
 
 const THEME_STORAGE_KEY = 'diaxeirisi-theme';
+const DEFAULT_THEME = 'blueprint';
 
 applyStoredTheme();
 
@@ -108,10 +109,14 @@ document.addEventListener('keydown', (event) => {
 
   const modals = [...document.querySelectorAll('.modal-backdrop')];
   const modal = modals[modals.length - 1];
-  if (!modal) return;
 
   event.preventDefault();
   event.stopPropagation();
+
+  if (!modal) {
+    showWindowOptions();
+    return;
+  }
 
   const closeControl = modal.querySelector([
     '[data-close-exhp-document]',
@@ -137,22 +142,13 @@ document.addEventListener('keydown', (event) => {
 });
 
 function applyStoredTheme() {
-  const theme = window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
-  document.documentElement.dataset.theme = theme;
+  window.localStorage.removeItem(THEME_STORAGE_KEY);
+  document.documentElement.dataset.theme = DEFAULT_THEME;
 }
 
 function renderShell() {
   app.innerHTML = `
-    <div class="app-shell">
-      <header class="app-header">
-        <div class="brand">
-          <div class="brand-mark">Δ</div>
-          <div>
-            <h1>Διαχείριση</h1>
-            <p>Offline-first prototype <span id="app-version-label"></span></p>
-          </div>
-        </div>
-      </header>
+    <div class="app-shell app-shell-headerless">
       <main class="content">
         <div id="page-root"></div>
       </main>
@@ -167,16 +163,80 @@ function renderShell() {
 async function renderAppVersion() {
   try {
     const version = await window.appApi.app.getVersion();
-    const target = document.querySelector('#app-version-label');
-    if (target) {
+    const targets = document.querySelectorAll('#home-version-label');
+    targets.forEach((target) => {
       target.textContent = `v${version}`;
-    }
+    });
   } catch (_error) {
-    const target = document.querySelector('#app-version-label');
-    if (target) {
+    const targets = document.querySelectorAll('#home-version-label');
+    targets.forEach((target) => {
       target.textContent = '';
-    }
+    });
   }
+}
+
+function showWindowOptions() {
+  if (document.querySelector('[data-window-options-modal]')) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop window-options-backdrop';
+  modal.dataset.windowOptionsModal = 'true';
+  modal.innerHTML = `
+    <div class="window-options-modal" role="dialog" aria-modal="true" aria-labelledby="window-options-title">
+      <h2 id="window-options-title">Επιλογές παραθύρου</h2>
+      <div class="window-options-actions">
+        <button class="secondary-button" data-window-action="exit-fullscreen" type="button">Έξοδος από πλήρη οθόνη</button>
+        <button class="secondary-button" data-window-action="minimize" type="button">Ελαχιστοποίηση παραθύρου</button>
+        <button class="primary-button" data-window-action="save" type="button">Αποθήκευση αλλαγών</button>
+        <button class="danger-button" data-window-action="save-exit" type="button">Αποθήκευση και έξοδος</button>
+        <button class="secondary-button" data-window-action="exit" type="button">Έξοδος χωρίς νέα αποθήκευση</button>
+        <button class="secondary-button" data-window-action="cancel" type="button">Άκυρο</button>
+      </div>
+    </div>
+  `;
+
+  modal.addEventListener('click', async (event) => {
+    if (event.target === modal) {
+      modal.remove();
+      return;
+    }
+
+    const button = event.target.closest('[data-window-action]');
+    if (!button) return;
+
+    const action = button.dataset.windowAction;
+    try {
+      if (action === 'exit-fullscreen') {
+        await window.appApi.windowControls.setFullscreen(false);
+        modal.remove();
+        return;
+      }
+
+      if (action === 'minimize') {
+        modal.remove();
+        await window.appApi.windowControls.minimize();
+        return;
+      }
+
+      if (action === 'save') {
+        showToast('Οι αλλαγές αποθηκεύονται αυτόματα.');
+        modal.remove();
+        return;
+      }
+
+      if (action === 'save-exit' || action === 'exit') {
+        await window.appApi.windowControls.quit();
+        return;
+      }
+
+      modal.remove();
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια παραθύρου.', 'error');
+    }
+  });
+
+  document.body.appendChild(modal);
+  modal.querySelector('[data-window-action="cancel"]')?.focus();
 }
 
 function navigate(sectionId, options = {}) {
@@ -207,12 +267,18 @@ async function renderActivePage() {
     }
 
     pageRoot.innerHTML = `
-      <div class="page-toolbar no-print">
+      <div class="page-toolbar no-print${section.type === 'prints' ? ' print-page-toolbar' : ''}">
         <button class="secondary-button page-back-button" type="button" data-back-home>Πίσω</button>
       </div>
       <div id="section-root"></div>
     `;
-    pageRoot.querySelector('[data-back-home]').addEventListener('click', () => navigate('home'));
+    const backButton = pageRoot.querySelector('[data-back-home]');
+    if (backButton) {
+      backButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigate('home');
+      });
+    }
     const sectionRoot = pageRoot.querySelector('#section-root');
 
     if (section.type === 'settings') {
