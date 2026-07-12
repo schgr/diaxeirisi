@@ -227,10 +227,7 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.administrationTab;
-      menu.querySelectorAll('[data-administration-tab]').forEach((item) => {
-        item.classList.toggle('active', item === button);
-        item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
-      });
+      menu.hidden = true;
       container.querySelectorAll('[data-administration-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.administrationPanel !== tab;
       });
