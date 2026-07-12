@@ -261,7 +261,9 @@ body {
 .doc-st-summary-table th:first-child,.doc-st-summary-table td:first-child { width:28mm; }
 .doc-st-grand-total th { font-weight:700; }
 .doc-st-signatures { display:grid; grid-template-columns:1fr 1fr; gap:60mm; margin-top:10mm; text-align:center; }
-.doc-st-signatures div { display:flex; flex-direction:column; gap:5mm; }
+.doc-st-signatures > div { display:flex; flex-direction:column; gap:5mm; }
+.doc-st-signature { display:flex; flex-direction:column; gap:0; margin-top:2mm; }
+.doc-st-signature-name { font-weight:700; }
 
 @media print { .doc-st-print-page.print-document-area { page:landscape; position:relative; left:auto; top:auto; width:297mm; min-height:210mm; } }
 
@@ -2328,6 +2330,24 @@ table.administration-table td {
 }
 
 @media screen {
+  #inventory-statement-preview.print-preview-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+
+  #inventory-statement-preview .official-inventory-page {
+    position: relative;
+    flex: 0 0 auto;
+    width: 210mm;
+    min-width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0 auto;
+  }
+
   .print-preview-shell.share-card-preview {
     grid-auto-flow: row;
     grid-auto-rows: max-content;

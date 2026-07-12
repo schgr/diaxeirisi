@@ -280,18 +280,22 @@ async function run() {
   const clothingPrint = renderNewSupportDocumentPrint({
     aitiologiaCode: 'st',
     commonFields: { monada: 'ΜΟΝΑΔΑ' },
-    specificFields: { month: '2026-07', sp: '123', commander: 'ΔΚΤΗΣ', manager: 'ΔΧΣΤΗΣ' },
+    specificFields: { month: '2026-07', stg: '123', commander: 'Λγός (ΠΒ) ΑΖΙΖΟΓΛΟΥ ΠΡΟΔΡΟΜΟΣ', manager: 'Λγός (ΠΒ) ΔΧΣΤΗΣ' },
     entries: [
-      { item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 2, movement: 'initial' },
-      { item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 3, movement: 'initial' },
-      { item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 4, movement: 'replacement' },
-      { item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 1, movement: 'return' }
+      { shareNumber: '10', item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 2, movement: 'initial' },
+      { shareNumber: '10', item: 'ΧΙΤΩΝΙΟ', subunit: '1ος Λόχος', quantity: 3, movement: 'initial' },
+      { shareNumber: '20', item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 4, movement: 'replacement' },
+      { shareNumber: '20', item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 1, movement: 'return' }
     ]
   });
   assert.match(clothingPrint, /ΔΥΠ\/189/);
   assert.match(clothingPrint, /ΧΙΤΩΝΙΟ/);
   assert.match(clothingPrint, /ΑΡΧΙΚ/);
   assert.match(clothingPrint, />5<\/th>/);
+  assert.doesNotMatch(clothingPrint, /<h1>ΚΑΤΑΣΤΑΣΗ<\/h1>/);
+  assert.doesNotMatch(clothingPrint, /-257-/);
+  assert.match(clothingPrint, /ΣΤΓ 123/);
+  assert.ok(clothingPrint.indexOf('Αζίζογλου Πρόδρομος') < clothingPrint.indexOf('Λγός \(ΠΒ\)'));
 
   console.log('EXHP form module bridge test passed.');
 }

@@ -49,7 +49,7 @@ export function renderNewSupportDocumentEditor(issueReason, context = {}) {
       <div class="requests-status-header">
         <div>
           <h4>${aitiologia.label}</h4>
-          ${code === 'd' ? '' : `<p class="muted">${data.formCode}</p>`}
+          ${['d', 'st'].includes(code) ? '' : `<p class="muted">${data.formCode}</p>`}
         </div>
       </div>
       ${instance.renderEdit()}
@@ -166,7 +166,7 @@ function baseData(code, context) {
   const aitiologia = getAitiologiaByCode(code);
   return {
     aitiologiaCode: code,
-    formCode: code === 'ia' ? 'ΔΥΠ/192' : code === 'd' ? 'ΕΦΕΔ 506' : 'ΕΦΕΔ 505',
+    formCode: code === 'ia' ? 'ΔΥΠ/192' : code === 'd' ? 'ΕΦΕΔ 506' : code === 'st' ? 'ΔΥΠ/189' : 'ΕΦΕΔ 505',
     commonFields: {
       monada: context.serviceUnit || context.selectedExhp?.serviceUnit || '',
       addyAxp: context.indexNumber || formatExhpIndex(context.selectedExhp),
@@ -182,7 +182,7 @@ function baseData(code, context) {
       : code === 'st'
         ? {
             month: String(context.selectedExhp?.documentDate || new Date().toISOString()).slice(0, 7),
-            sp: '',
+            stg: '',
             commander: context.settings?.financialOfficers?.commander || '',
             manager: context.settings?.financialOfficers?.manager || ''
           }
@@ -346,9 +346,10 @@ function collectDocIAData(editor, context) {
 }
 
 function collectDocSTData(editor, context) {
-  const data = { ...baseData('st', context), specificFields: { month: '', sp: '', commander: '', manager: '' }, entries: [] };
+  const data = { ...baseData('st', context), specificFields: { month: '', stg: '', commander: '', manager: '' }, entries: [] };
   readPathFields(editor, '[data-doc-st-field]', data);
   data.entries = Array.from(editor.querySelectorAll('[data-doc-st-row]')).map((row) => ({
+    shareNumber: row.querySelector('[data-doc-st-entry="shareNumber"]')?.value.trim() || '',
     item: row.querySelector('[data-doc-st-entry="item"]')?.value.trim() || '',
     subunit: row.querySelector('[data-doc-st-entry="subunit"]')?.value.trim() || '',
     quantity: row.querySelector('[data-doc-st-entry="quantity"]')?.value || '',
@@ -555,6 +556,7 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
     item.supportModuleSource !== 'docZ_analosimo' &&
     item.supportModuleSource !== 'docD_metasximatismos_used' &&
     item.supportModuleSource !== 'docD_metasximatismos_produced' &&
+    item.supportModuleSource !== 'docST_clothing_summary' &&
     item.supportModuleSource !== currentDocASource &&
     item.supportModuleSource !== legacyPrimarySource
   );
@@ -565,6 +567,29 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   }
   if (data?.aitiologiaCode === 'd') {
     return [...retained, ...mapDocDMaterialsToExhpItems(data)].sort(compareShareNumbersForExhpItems);
+  }
+  if (data?.aitiologiaCode === 'st') {
+    const grouped = new Map();
+    (data.entries || []).filter((entry) => entry.shareNumber && Number(entry.quantity) > 0).forEach((entry) => {
+      const key = String(entry.shareNumber).trim();
+      const current = grouped.get(key) || { shareNumber: key, description: entry.item || '', quantity: 0 };
+      current.quantity += Number(entry.quantity);
+      if (!current.description) current.description = entry.item || '';
+      grouped.set(key, current);
+    });
+    const credits = Array.from(grouped.values()).map((entry) => ({
+      shareNumber: entry.shareNumber,
+      nominalNumber: '',
+      description: entry.description,
+      measurementUnit: 'Τεμάχια',
+      materialType: '',
+      materialCode: '',
+      quantity: entry.quantity,
+      transactionType: 'Πίστωση',
+      supportingDocuments: 'Συγκεντρωτική κατάσταση ΔΥΠ/189',
+      supportModuleSource: 'docST_clothing_summary'
+    }));
+    return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
   }
   if (data?.aitiologiaCode !== 'z') return retained;
 

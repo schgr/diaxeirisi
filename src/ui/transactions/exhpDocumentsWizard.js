@@ -62,6 +62,14 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
     if (event.target.closest('[data-doc-st-entry]')) {
       updateClothingSummaryTotals(event.target.closest('[data-doc-st-editor]'));
     }
+    const clothingShare = event.target.closest('[data-doc-st-entry="shareNumber"]');
+    if (clothingShare) {
+      const share = (state.referenceData?.shares || []).find((item) =>
+        String(item.shareNumber || '').trim() === clothingShare.value.trim()
+      );
+      const itemField = clothingShare.closest('[data-doc-st-row]')?.querySelector('[data-doc-st-entry="item"]');
+      if (share && itemField) itemField.value = share.description || '';
+    }
     const materialPicker = event.target.closest('[data-material-picker-select]');
     if (!materialPicker) return;
     const share = getShareForMaterialPickerValue(state.referenceData?.shares || [], materialPicker.value);
@@ -197,7 +205,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         if (data.aitiologiaCode === 'a' && (data.committeeTier || 'primary') === 'primary') {
           copyPrimaryMaterialsIntoSecondaryEditor(editor, data);
         }
-        if (!documentsState.selectedExhp && ['a', 'z', 'd'].includes(data.aitiologiaCode)) {
+        if (!documentsState.selectedExhp && ['a', 'z', 'd', 'st'].includes(data.aitiologiaCode)) {
           state.exhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, data);
           documentsState.currentItems = state.exhpItems;
           renderExhpEntryState(container, state);

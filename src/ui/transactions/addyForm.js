@@ -314,7 +314,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           showToast(newSupportCapture.validation.errors[0]?.message || 'Συμπλήρωσε τα υποχρεωτικά πεδία δικαιολογητικού.', 'error');
           return;
         }
-        if (['z', 'd'].includes(newSupportCapture?.data?.aitiologiaCode)) {
+        if (['z', 'd', 'st'].includes(newSupportCapture?.data?.aitiologiaCode)) {
           saveExhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, newSupportCapture.data);
         }
         const issueReasonCode = getAitiologiaCodeForIssueReason(
