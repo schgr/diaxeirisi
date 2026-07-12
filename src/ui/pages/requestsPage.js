@@ -27,12 +27,13 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
       </div>
     </section>
 
-    <nav class="transaction-tabs" aria-label="Ενότητες αιτήσεων">
-      <button class="transaction-tab ${activeTab === 'requests' ? 'active' : ''}" data-requests-tab="requests" type="button">Αιτήσεις</button>
-      <button class="transaction-tab ${activeTab === 'settings' ? 'active' : ''}" data-requests-tab="settings" type="button">Ρυθμίσεις</button>
+    <nav class="transaction-flow-home contextual-tile-menu requests-tile-menu" data-requests-menu aria-label="Ενότητες αιτήσεων">
+      <button class="home-tile transaction-flow-tile" data-requests-tab="requests" type="button"><span>Αιτήσεις</span></button>
+      <button class="home-tile transaction-flow-tile" data-requests-tab="settings" type="button"><span>Ρυθμίσεις</span></button>
     </nav>
+    <div class="page-toolbar" data-requests-back hidden><button class="secondary-button" type="button">Πίσω στις Αιτήσεις</button></div>
 
-    <div class="transaction-tab-panel ${activeTab === 'requests' ? 'active' : ''}" data-requests-panel="requests" ${activeTab === 'requests' ? '' : 'hidden'}>
+    <div class="transaction-tab-panel" data-requests-panel="requests" hidden>
     <section class="page-panel request-panel no-print">
       <div class="request-header-grid">
         <label class="field">
@@ -124,7 +125,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </section>
     </div>
 
-    <div class="transaction-tab-panel ${activeTab === 'settings' ? 'active' : ''}" data-requests-panel="settings" ${activeTab === 'settings' ? '' : 'hidden'}>
+    <div class="transaction-tab-panel" data-requests-panel="settings" hidden>
       <div class="settings-layout">
         <section class="page-panel wide-panel">
           <h3>Κωδικοί Αιτήσεων</h3>
@@ -148,7 +149,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </div>
   `;
 
-  bindRequestsTabs(container);
+  bindRequestsTabs(container, activeTab === 'settings' ? 'settings' : '');
   bindRequestsPage(container, requestsApi, settingsApi, reference, state, showToast);
   bindRequestSettings(
     container,
@@ -158,19 +159,29 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
   );
 }
 
-function bindRequestsTabs(container) {
+function bindRequestsTabs(container, initialTab = '') {
+  const menu = container.querySelector('[data-requests-menu]');
+  const back = container.querySelector('[data-requests-back]');
   container.querySelectorAll('[data-requests-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.requestsTab;
-      container.querySelectorAll('[data-requests-tab]').forEach((item) => {
-        item.classList.toggle('active', item === button);
-      });
+      menu.hidden = true;
+      back.hidden = false;
       container.querySelectorAll('[data-requests-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.requestsPanel !== tab;
         panel.classList.toggle('active', panel.dataset.requestsPanel === tab);
       });
     });
   });
+  back?.addEventListener('click', () => {
+    menu.hidden = false;
+    back.hidden = true;
+    container.querySelectorAll('[data-requests-panel]').forEach((panel) => {
+      panel.hidden = true;
+      panel.classList.remove('active');
+    });
+  });
+  if (initialTab) container.querySelector(`[data-requests-tab="${initialTab}"]`)?.click();
 }
 
 function bindRequestsPage(container, requestsApi, settingsApi, reference, state, showToast) {

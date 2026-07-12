@@ -404,7 +404,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       if (!template) return;
       if (isInventorySupportTemplate(template)) {
         document.dispatchEvent(new CustomEvent('diaxeirisi:navigate', {
-          detail: { sectionId: 'as', inventoryTab: 'statement' }
+          detail: { sectionId: 'as', inventoryTab: 'counts' }
         }));
         return;
       }

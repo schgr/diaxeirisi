@@ -735,6 +735,14 @@ select {
   max-width: 620px;
 }
 
+.contextual-tile-menu {
+  max-width: 760px;
+}
+
+.contextual-tile-menu[hidden] {
+  display: none;
+}
+
 .content:has(.print-index-menu-mode) {
   overflow: hidden;
 }

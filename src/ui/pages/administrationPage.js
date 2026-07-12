@@ -17,13 +17,14 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
       </div>
     </section>
 
-    <div class="transaction-tabs administration-tabs">
-      <button class="transaction-tab active" data-administration-tab="handover" type="button">Παράδοση - Παραλαβή</button>
-      <button class="transaction-tab" data-administration-tab="archive" type="button">Αρχείο Μερίδων</button>
-      <button class="transaction-tab" data-administration-tab="aggregate-prints" type="button">Συγκεντρωτικές Εκτυπώσεις</button>
-    </div>
+    <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span>Παράδοση - Παραλαβή</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span>Αρχείο Μερίδων</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span>Συγκεντρωτικές Εκτυπώσεις</span></button>
+    </section>
+    <div class="page-toolbar" data-administration-back hidden><button class="secondary-button" type="button">Πίσω στη Διαχείριση</button></div>
 
-    <div data-administration-panel="handover">
+    <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
     </div>
     <div data-administration-panel="archive" hidden>
@@ -224,14 +225,22 @@ function renderArchivePanel(data) {
 }
 
 function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast) {
+  const menu = container.querySelector('[data-administration-menu]');
+  const back = container.querySelector('[data-administration-back]');
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.administrationTab;
-      container.querySelectorAll('[data-administration-tab]').forEach((item) => item.classList.toggle('active', item === button));
+      menu.hidden = true;
+      back.hidden = false;
       container.querySelectorAll('[data-administration-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.administrationPanel !== tab;
       });
     });
+  });
+  back?.addEventListener('click', () => {
+    menu.hidden = false;
+    back.hidden = true;
+    container.querySelectorAll('[data-administration-panel]').forEach((panel) => { panel.hidden = true; });
   });
 
   if (selectedHandover) {

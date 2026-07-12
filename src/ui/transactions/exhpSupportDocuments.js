@@ -174,7 +174,7 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
       if (isInventorySupportTemplate(support)) {
         modal.remove();
         document.dispatchEvent(new CustomEvent('diaxeirisi:navigate', {
-          detail: { sectionId: 'as', inventoryTab: 'statement' }
+          detail: { sectionId: 'as', inventoryTab: 'counts' }
         }));
         return;
       }
