@@ -22,8 +22,6 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
       <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span class="home-tile-icon">ΑΜ</span><span class="home-tile-title">Αρχείο Μερίδων</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
     </section>
-    <div class="page-toolbar" data-administration-back hidden><button class="secondary-button" type="button">Πίσω στη Διαχείριση</button></div>
-
     <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
     </div>
@@ -226,21 +224,17 @@ function renderArchivePanel(data) {
 
 function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast) {
   const menu = container.querySelector('[data-administration-menu]');
-  const back = container.querySelector('[data-administration-back]');
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.administrationTab;
-      menu.hidden = true;
-      back.hidden = false;
+      menu.querySelectorAll('[data-administration-tab]').forEach((item) => {
+        item.classList.toggle('active', item === button);
+        item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+      });
       container.querySelectorAll('[data-administration-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.administrationPanel !== tab;
       });
     });
-  });
-  back?.addEventListener('click', () => {
-    menu.hidden = false;
-    back.hidden = true;
-    container.querySelectorAll('[data-administration-panel]').forEach((panel) => { panel.hidden = true; });
   });
 
   if (selectedHandover) {

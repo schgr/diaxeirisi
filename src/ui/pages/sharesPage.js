@@ -1,8 +1,10 @@
 import { escapeHtml } from '../components/forms.js';
 
 export async function renderSharesPage(container, sharesApi, settingsApi, showToast) {
-  const shares = await sharesApi.list();
-  const settings = await settingsApi.get();
+  const [shares, settings] = await Promise.all([
+    sharesApi.list(),
+    settingsApi.get()
+  ]);
   const materialTypes = collectMaterialTypes(shares, settings.materialCategories);
 
   container.innerHTML = `
@@ -54,9 +56,7 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
               <th>Κατάσταση</th>
             </tr>
           </thead>
-          <tbody id="shares-body">
-            ${renderRows(shares)}
-          </tbody>
+          <tbody id="shares-body"></tbody>
         </table>
       </div>
     </section>
