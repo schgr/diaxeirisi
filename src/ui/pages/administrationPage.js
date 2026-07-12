@@ -18,9 +18,9 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     </section>
 
     <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span>Παράδοση - Παραλαβή</span></button>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span>Αρχείο Μερίδων</span></button>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span>Συγκεντρωτικές Εκτυπώσεις</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span class="home-tile-icon">ΑΜ</span><span class="home-tile-title">Αρχείο Μερίδων</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
     </section>
     <div class="page-toolbar" data-administration-back hidden><button class="secondary-button" type="button">Πίσω στη Διαχείριση</button></div>
 

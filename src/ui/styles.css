@@ -771,8 +771,32 @@ select {
 }
 
 .transaction-flow-tile {
-  min-height: 170px;
-  font-size: 20px;
+  position: relative;
+  min-height: 118px;
+  font-size: 18px;
+}
+
+.transaction-flow-tile::before,
+.transaction-flow-tile::after {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  content: "";
+  pointer-events: none;
+}
+
+.transaction-flow-tile::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--hs-cyan, var(--primary));
+  border-left: 2px solid var(--hs-cyan, var(--primary));
+}
+
+.transaction-flow-tile::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 2px solid var(--hs-cyan, var(--primary));
+  border-bottom: 2px solid var(--hs-cyan, var(--primary));
 }
 
 .exhp-step-indicator {

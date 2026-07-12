@@ -23,26 +23,15 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
       </div>
     </section>
 
-    <nav class="transaction-tabs" aria-label="Ενότητες ρυθμίσεων">
-      <button class="transaction-tab active" data-settings-tab="general" type="button">Γενικά</button>
-      <button class="transaction-tab" data-settings-tab="personnel" type="button">Προσωπικό</button>
-      <button class="transaction-tab" data-settings-tab="parameters" type="button">Παράμετροι</button>
+    <nav class="transaction-flow-home contextual-tile-menu settings-tile-menu" data-settings-menu aria-label="Ενότητες ρυθμίσεων">
+      <button class="home-tile transaction-flow-tile" data-settings-tab="general" type="button"><span class="home-tile-icon">ΓΕ</span><span class="home-tile-title">Γενικά</span><span class="home-tile-code">§ ΡΥ-Α</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΠΡ</span><span class="home-tile-title">Προσωπικό</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΠΑ</span><span class="home-tile-title">Παράμετροι</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
     </nav>
+    <div class="page-toolbar" data-settings-back hidden><button class="secondary-button" type="button">Πίσω στα Βασικά στοιχεία</button></div>
 
-    <div class="transaction-tab-panel active" data-settings-panel="general">
+    <div class="transaction-tab-panel" data-settings-panel="general" hidden>
       <div class="settings-layout">
-        <section class="page-panel">
-          <h3>Εμφάνιση</h3>
-          <label class="field">
-            <span>Θέμα εφαρμογής</span>
-            <select id="application-theme">
-              <option value="dark" ${getApplicationTheme() === 'dark' ? 'selected' : ''}>Dark mode</option>
-              <option value="light" ${getApplicationTheme() === 'light' ? 'selected' : ''}>Light mode</option>
-              <option value="blueprint" ${getApplicationTheme() === 'blueprint' ? 'selected' : ''}>Blueprint</option>
-            </select>
-          </label>
-        </section>
-
         <section class="page-panel">
           <h3>Στοιχεία Υπηρεσίας</h3>
           <form id="service-form" class="stacked-form autosave-form">
@@ -110,13 +99,6 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
     </div>
   `;
 
-  container.querySelector('#application-theme').addEventListener('change', (event) => {
-    const theme = ['dark', 'light', 'blueprint'].includes(event.target.value) ? event.target.value : 'dark';
-    window.localStorage.setItem('diaxeirisi-theme', theme);
-    document.documentElement.dataset.theme = theme;
-    showToast(`Εφαρμόστηκε ${theme === 'blueprint' ? 'Blueprint' : theme === 'dark' ? 'Dark mode' : 'Light mode'}.`);
-  });
-
   bindSettingsTabs(container);
   bindSettingsEvents(container, settingsApi, clothingApi, showToast);
 }
@@ -181,22 +163,23 @@ function clothingCategoryLabel(category) {
 }
 
 function bindSettingsTabs(container) {
+  const menu = container.querySelector('[data-settings-menu]');
+  const back = container.querySelector('[data-settings-back]');
   container.querySelectorAll('[data-settings-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.settingsTab;
-      container.querySelectorAll('[data-settings-tab]').forEach((item) => {
-        item.classList.toggle('active', item === button);
-      });
+      menu.hidden = true;
+      back.hidden = false;
       container.querySelectorAll('[data-settings-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.settingsPanel !== tab;
       });
     });
   });
-}
-
-function getApplicationTheme() {
-  const theme = window.localStorage.getItem('diaxeirisi-theme');
-  return ['dark', 'light', 'blueprint'].includes(theme) ? theme : 'dark';
+  back?.addEventListener('click', () => {
+    menu.hidden = false;
+    back.hidden = true;
+    container.querySelectorAll('[data-settings-panel]').forEach((panel) => { panel.hidden = true; });
+  });
 }
 
 export function renderRequestPriorityTable() {
