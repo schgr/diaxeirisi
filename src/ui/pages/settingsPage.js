@@ -12,7 +12,7 @@ const materialCategorySection = {
   deleteMessage: 'Η κατηγορία υλικού διαγράφηκε.'
 };
 
-export async function renderSettingsPage(container, settingsApi, clothingApi, showToast) {
+export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '') {
   const settings = await settingsApi.get();
 
   container.innerHTML = `
@@ -97,7 +97,8 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
     </div>
   `;
 
-  bindSettingsTabs(container);
+  if (initialTab) container.querySelector('.page-header')?.remove();
+  bindSettingsTabs(container, initialTab);
   bindSettingsEvents(container, settingsApi, clothingApi, showToast);
 }
 
@@ -160,20 +161,18 @@ function clothingCategoryLabel(category) {
   }[category] || category;
 }
 
-function bindSettingsTabs(container) {
+function bindSettingsTabs(container, initialTab = '') {
   const menu = container.querySelector('[data-settings-menu]');
   container.querySelectorAll('[data-settings-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.settingsTab;
-      menu.querySelectorAll('[data-settings-tab]').forEach((item) => {
-        item.classList.toggle('active', item === button);
-        item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
-      });
+      menu.hidden = true;
       container.querySelectorAll('[data-settings-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.settingsPanel !== tab;
       });
     });
   });
+  if (initialTab) container.querySelector(`[data-settings-tab="${initialTab}"]`)?.click();
 }
 
 export function renderRequestPriorityTable() {

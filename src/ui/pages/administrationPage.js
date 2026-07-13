@@ -2,7 +2,7 @@ import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
-export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null) {
+export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '') {
   const [data, settings] = await Promise.all([
     api.getReferenceData(),
     settingsApi.get()
@@ -33,7 +33,8 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     </div>
   `;
 
-  bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast);
+  if (initialTab) container.querySelector('.page-header')?.remove();
+  bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast, initialTab);
 }
 
 function renderHandoverPanel(data, selected, settings) {
@@ -222,7 +223,7 @@ function renderArchivePanel(data) {
   `;
 }
 
-function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast) {
+function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast, initialTab = '') {
   const menu = container.querySelector('[data-administration-menu]');
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -236,6 +237,8 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
 
   if (selectedHandover) {
     container.querySelector('[data-administration-tab="handover"]').click();
+  } else if (initialTab) {
+    container.querySelector(`[data-administration-tab="${initialTab}"]`)?.click();
   }
 
   container.querySelector('[data-open-aggregate-prints]')?.addEventListener('click', () => {

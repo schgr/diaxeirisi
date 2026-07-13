@@ -20,8 +20,12 @@ const HOME_TILE_META = {
   requests: { code: '§ 01-Ε', icon: 'AI' },
   as: { code: '§ 02-Α', icon: 'AP' },
   'movement-differences': { code: '§ 02-Β', icon: 'DF' },
-  administration: { code: '§ 03-Α', icon: 'DG' },
-  settings: { code: '§ 04-Α', icon: 'ST' }
+  'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
+  'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
+  'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
+  'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
+  'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
+  'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' }
 };
 
 export function renderHomeTiles({ container, groups, onNavigate }) {
@@ -29,12 +33,13 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
     <section class="home-screen">
       <header class="home-heading corner">
         <div>
-          <p class="home-kicker">ΣΧΕΔΙΟ ΛΕΙΤΟΥΡΓΙΑΣ</p>
-          <h2>Διαχείριση Υλικού</h2>
+          <p class="home-kicker">ΣΧΕΔΙΟ ΛΕΙΤΟΥΡΓΙΑΣ · ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</p>
+          <h2>Διαχείριση υλικού</h2>
+          <span class="home-subtitle">Offline-first prototype</span>
         </div>
         <div class="home-title-block" aria-hidden="true">
-          <span>BLUEPRINT</span>
-          <strong>V10</strong>
+          <span>Έκδοση</span>
+          <strong id="home-version-label"></strong>
         </div>
       </header>
       <div class="home-groups">
@@ -46,7 +51,7 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
             </div>
             <div class="home-tile-grid">
               ${group.items.map((item) => `
-                <button class="home-tile panel corner" data-home-section="${escapeHtml(item.id)}" type="button">
+                <button class="home-tile panel corner" data-home-section="${escapeHtml(item.sectionId || item.id)}" data-home-tab="${escapeHtml(item.tab || '')}" type="button">
                   <span class="home-tile-icon" aria-hidden="true">${escapeHtml(homeTileMeta(item).icon)}</span>
                   <span class="home-tile-title">${escapeHtml(item.title)}</span>
                   <span class="home-tile-code">${escapeHtml(homeTileMeta(item).code)}</span>
@@ -60,7 +65,7 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
   `;
 
   container.querySelectorAll('[data-home-section]').forEach((button) => {
-    button.addEventListener('click', () => onNavigate(button.dataset.homeSection));
+    button.addEventListener('click', () => onNavigate(button.dataset.homeSection, { tab: button.dataset.homeTab }));
   });
 }
 

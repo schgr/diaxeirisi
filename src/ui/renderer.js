@@ -79,22 +79,28 @@ const homeGroups = [
     ]
   },
   {
-    label: 'Θεσμικά',
+    label: 'Διαχείριση',
     items: [
-      { id: 'administration', title: 'Διαχείριση' }
+      { id: 'administration-handover', sectionId: 'administration', tab: 'handover', title: 'Παράδοση - Παραλαβή' },
+      { id: 'administration-archive', sectionId: 'administration', tab: 'archive', title: 'Αρχείο Μερίδων' },
+      { id: 'administration-aggregate-prints', sectionId: 'administration', tab: 'aggregate-prints', title: 'Συγκεντρωτικές Εκτυπώσεις' }
     ]
   },
   {
-    label: 'Σύστημα',
+    label: 'Ρυθμίσεις',
     items: [
-      { id: 'settings', title: 'Ρυθμίσεις' }
+      { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Γενικά' },
+      { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Προσωπικό' },
+      { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' }
     ]
   }
 ];
 
 const state = {
   activeSection: 'home',
-  inventoryTab: 'counts'
+  inventoryTab: 'counts',
+  administrationTab: 'handover',
+  settingsTab: 'general'
 };
 
 const app = document.querySelector('#app');
@@ -244,6 +250,12 @@ function navigate(sectionId, options = {}) {
   if (sectionId === 'as') {
     state.inventoryTab = options.inventoryTab || 'counts';
   }
+  if (sectionId === 'administration') {
+    state.administrationTab = options.tab || 'handover';
+  }
+  if (sectionId === 'settings') {
+    state.settingsTab = options.tab || 'general';
+  }
   renderShell();
 }
 
@@ -286,7 +298,8 @@ async function renderActivePage() {
         sectionRoot,
         window.appApi.settings,
         window.appApi.clothing,
-        showToast
+        showToast,
+        state.settingsTab
       );
       return;
     }
@@ -334,7 +347,9 @@ async function renderActivePage() {
         window.appApi.administration,
         window.appApi.annualAccounts,
         window.appApi.settings,
-        showToast
+        showToast,
+        null,
+        state.administrationTab
       );
       return;
     }
