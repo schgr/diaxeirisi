@@ -5033,6 +5033,18 @@ th {
   padding: 5px;
 }
 
+.k2310-table .k2310-department-signature {
+  padding: 4px 2px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.k2310-department-signature strong,
+.k2310-department-signature span {
+  display: block;
+}
+
 .material-card-section {
   padding: 18px;
 }

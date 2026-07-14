@@ -147,7 +147,7 @@ async function run() {
     );
     assert.strictEqual((k2310Html.match(/class="index-page print-document-area k2310-page"/g) || []).length, 2);
     assert.match(k2310Html, /k2310-composition-row/);
-    assert.doesNotMatch(k2310Html, /<td>1<\/td><\/tr>\s*<\/tbody>/);
+    assert.match(k2310Html, /<td>1<\/td><\/tr>\s*<\/tbody>/);
 
     const movementProtocolHtml = renderProtocolDocument({
       registryNumber: 1,

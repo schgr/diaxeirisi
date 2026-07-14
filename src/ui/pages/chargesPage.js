@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { splitOfficerSignature } from '../officerSignature.js';
 
 export async function renderChargesPage(container, internalApi, showToast) {
   const referenceData = await internalApi.getReferenceData();
@@ -279,6 +280,7 @@ export function renderK2310Pages(serviceName, department, balances) {
   ]);
   const pageCount = Math.max(1, Math.ceil(printableRows.length / pageSize));
   const documentDate = new Date().toLocaleDateString('el-GR');
+  const departmentHead = splitOfficerSignature(department.departmentHead || '');
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
     const pageItems = printableRows.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
     const rows = Array.from({ length: pageSize }, (_row, index) => pageItems[index] || null);
@@ -335,7 +337,11 @@ export function renderK2310Pages(serviceName, department, balances) {
           <tfoot>
             <tr>
               <td colspan="6" class="k2310-signatures">(14) ΥΠΟΓΡΑΦΕΣ</td>
-              ${'<td class="k2310-signature-grid-cell"></td>'.repeat(11)}
+              <td class="k2310-signature-grid-cell k2310-department-signature">
+                <strong>${escapeHtml(departmentHead.name)}</strong>
+                <span>${escapeHtml(departmentHead.rank)}</span>
+              </td>
+              ${'<td class="k2310-signature-grid-cell"></td>'.repeat(10)}
             </tr>
           </tfoot>
         </table>
@@ -349,25 +355,19 @@ function renderK2310Row(row) {
   if (row.type === 'component') {
     const component = row.component;
     const issueCells = [
-      component.issuedQuantity ? formatQuantity(component.issuedQuantity) : '',
+      component.finalQuantity ? formatQuantity(component.finalQuantity) : '',
       '', '', '', ''
     ];
-    const returnCells = [
-      component.returnedQuantity ? formatQuantity(component.returnedQuantity) : '',
-      '', '', '', ''
-    ];
-    return `<tr class="k2310-composition-row"><td></td><td></td><td>${escapeHtml(component.componentNominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(component.componentDescription)}</td><td>${escapeHtml(component.measurementUnit)}</td><td></td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
+    const returnCells = ['', '', '', '', ''];
+    return `<tr class="k2310-composition-row"><td></td><td></td><td>${escapeHtml(component.componentNominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(component.componentDescription)}</td><td>${escapeHtml(component.measurementUnit)}</td><td></td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td>${component.finalQuantity ? formatQuantity(component.finalQuantity) : ''}</td></tr>`;
   }
   const { balance, serial } = row;
   const issueCells = [
-    balance.issuedQuantity ? formatQuantity(balance.issuedQuantity) : '',
+    balance.finalQuantity ? formatQuantity(balance.finalQuantity) : '',
     '', '', '', ''
   ];
-  const returnCells = [
-    balance.returnedQuantity ? formatQuantity(balance.returnedQuantity) : '',
-    '', '', '', ''
-  ];
-  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td>${formatQuantity(balance.projectedQuantity)}</td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
+  const returnCells = ['', '', '', '', ''];
+  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td>${formatQuantity(balance.projectedQuantity)}</td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td>${formatQuantity(balance.finalQuantity)}</td></tr>`;
 }
 
 function openInternalCompositionDialog(share, defaultQuantity = '') {
