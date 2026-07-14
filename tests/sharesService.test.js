@@ -5,6 +5,7 @@ const path = require('path');
 const { AppError } = require('../src/core/errorHandler');
 const { initializeDatabase } = require('../src/db/database');
 const { createSharesService } = require('../src/services/sharesService');
+const { createSharesRepository } = require('../src/db/sharesRepository');
 
 const baseShare = {
   shareNumber: '100',
@@ -33,6 +34,10 @@ async function run() {
     {
       label: 'saveComposition() rejects invalid rows with VALIDATION_ERROR',
       run: testSaveCompositionValidation
+    },
+    {
+      label: 'serial registry follows final department charges and preserves entered values',
+      run: testSerialNumberRegistry
     }
   ];
 
@@ -81,6 +86,7 @@ function testAddShareDefaults({ service }) {
   assert.strictEqual(created.availableQuantity, 6);
   assert.strictEqual(created.differenceQuantity, -6);
   assert.strictEqual(created.requiresComposition, false);
+  assert.strictEqual(created.requiresSerialNumber, false);
   assert.strictEqual(created.requiresChangeSheet, false);
   assert.strictEqual(created.photoPath, '');
   assert.strictEqual(created.status, 'Έλλειμμα');
@@ -193,6 +199,55 @@ function testSaveCompositionValidation({ service }) {
       projectedQuantity: 1
     }
   ]));
+}
+
+function testSerialNumberRegistry({ db, service }) {
+  const share = createShare(service, '500', { chargedQuantity: 3 });
+  service.updateShareDetails(share.id, { requiresSerialNumber: true });
+
+  const firstManager = db.prepare(`
+    INSERT INTO department_managers (department_name, department_head, sort_order)
+    VALUES (?, ?, ?)
+  `).run('Α Πυρχία', 'Αξκός Α', 1).lastInsertRowid;
+  const secondManager = db.prepare(`
+    INSERT INTO department_managers (department_name, department_head, sort_order)
+    VALUES (?, ?, ?)
+  `).run('Β Πυρχία', 'Αξκός Β', 2).lastInsertRowid;
+
+  insertInternalMovement(db, share, firstManager, 'Α Πυρχία', 'Αξκός Α', 'Χορήγηση', 2, 1);
+  insertInternalMovement(db, share, secondManager, 'Β Πυρχία', 'Αξκός Β', 'Χορήγηση', 1, 2);
+
+  assert.deepStrictEqual(createSharesRepository(db).listShareAssignments(share.id).map((item) => item.department), ['Α Πυρχία', 'Β Πυρχία']);
+
+  let [registry] = service.listSerialNumberRegistry();
+  assert.strictEqual(registry.quantity, 3);
+  assert.deepStrictEqual(registry.entries.map((entry) => entry.department), ['Α Πυρχία', 'Α Πυρχία', 'Β Πυρχία']);
+
+  service.saveSerialNumbers(share.id, registry.entries.map((entry) => ({
+    position: entry.position,
+    serialNumber: `SN-${entry.position}`,
+    notes: `Σημείωση ${entry.position}`
+  })));
+  [registry] = service.listSerialNumberRegistry();
+  assert.deepStrictEqual(registry.entries.map((entry) => entry.serialNumber), ['SN-1', 'SN-2', 'SN-3']);
+}
+
+function insertInternalMovement(db, share, managerId, department, head, movementType, quantity, serialNumber) {
+  db.prepare(`
+    INSERT INTO internal_documents (
+      fiscal_year, serial_number, document_date, department_manager_id,
+      department_name, department_head, movement_type, notes
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, '')
+  `).run(2026, serialNumber, '2026-01-01', managerId, department, head, movementType);
+  const documentId = db.prepare(
+    'SELECT id FROM internal_documents WHERE fiscal_year = ? AND serial_number = ?'
+  ).get(2026, serialNumber).id;
+  db.prepare(`
+    INSERT INTO internal_items (
+      internal_document_id, share_id, share_number, nominal_number,
+      description, measurement_unit, quantity
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(documentId, share.id, share.shareNumber, share.nominalNumber, share.description, 'Τεμάχια', quantity);
 }
 
 function createShare(service, shareNumber, overrides = {}) {

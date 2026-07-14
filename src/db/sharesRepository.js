@@ -19,6 +19,7 @@ function createSharesRepository(db) {
               unit_price,
               photo_path,
               requires_composition,
+              requires_serial_number,
               requires_change_sheet
             FROM shares
             WHERE archive_status = 'Ενεργή'
@@ -89,6 +90,7 @@ function createSharesRepository(db) {
               unit_price = ?,
               photo_path = ?,
               requires_composition = ?,
+              requires_serial_number = ?,
               requires_change_sheet = ?
           WHERE id = ?
         `
@@ -105,6 +107,7 @@ function createSharesRepository(db) {
         payload.unitPrice,
         payload.photoPath,
         payload.requiresComposition ? 1 : 0,
+        payload.requiresSerialNumber ? 1 : 0,
         payload.requiresChangeSheet ? 1 : 0,
         id
       );
@@ -182,32 +185,70 @@ function createSharesRepository(db) {
       return db
         .prepare(
           `
-            SELECT
-              MIN(document.id) AS id,
-              document.department_head AS holder_name,
-              document.department_name AS department,
-              SUM(
-                CASE
-                  WHEN document.movement_type = 'Χορήγηση' THEN item.quantity
-                  ELSE -item.quantity
-                END
-              ) AS quantity,
-              MAX(document.document_date) AS assigned_at,
-              '' AS notes
-            FROM internal_items item
-            JOIN internal_documents document ON document.id = item.internal_document_id
-            WHERE item.share_id = ?
-            GROUP BY document.department_manager_id, document.department_name, document.department_head
-            HAVING SUM(
-              CASE
-                WHEN document.movement_type = 'Χορήγηση' THEN item.quantity
-                ELSE -item.quantity
-              END
-            ) > 0
-            ORDER BY document.department_name COLLATE NOCASE ASC
+            SELECT *
+            FROM (
+              SELECT
+                MIN(document.id) AS id,
+                document.department_head AS holder_name,
+                document.department_name AS department,
+                SUM(
+                  CASE
+                    WHEN document.movement_type = 'Χορήγηση' THEN item.quantity
+                    ELSE -item.quantity
+                  END
+                ) AS quantity,
+                MAX(document.document_date) AS assigned_at,
+                '' AS notes
+              FROM internal_items item
+              JOIN internal_documents document ON document.id = item.internal_document_id
+              WHERE item.share_id = ?
+              GROUP BY document.department_manager_id, document.department_name, document.department_head
+            ) assignment
+            WHERE assignment.quantity > 0
+            ORDER BY assignment.department COLLATE NOCASE ASC
           `
         )
         .all(shareId);
+    },
+
+    listSerialNumberShares() {
+      return db.prepare(`
+        SELECT *
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+          AND requires_serial_number = 1
+        ORDER BY
+          CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+          CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
+      `).all();
+    },
+
+    listSerialNumbers(shareId) {
+      return db.prepare(`
+        SELECT position, serial_number, notes
+        FROM share_serial_numbers
+        WHERE share_id = ?
+        ORDER BY position
+      `).all(shareId);
+    },
+
+    saveSerialNumbers(shareId, entries) {
+      db.transaction(() => {
+        const statement = db.prepare(`
+          INSERT INTO share_serial_numbers (share_id, position, serial_number, notes)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(share_id, position) DO UPDATE SET
+            serial_number = excluded.serial_number,
+            notes = excluded.notes,
+            updated_at = CURRENT_TIMESTAMP
+        `);
+        entries.forEach((entry) => statement.run(
+          shareId,
+          entry.position,
+          entry.serialNumber,
+          entry.notes
+        ));
+      })();
     },
 
     listCompositionItems(shareId) {

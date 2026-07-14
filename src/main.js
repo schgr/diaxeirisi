@@ -58,6 +58,12 @@ function registerIpcHandlers() {
   ipcMain.handle('shares:update-details', async (_event, id, payload) =>
     safeInvoke(() => services.shares.updateShareDetails(id, payload))
   );
+  ipcMain.handle('shares:list-serial-registry', async () =>
+    safeInvoke(() => services.shares.listSerialNumberRegistry())
+  );
+  ipcMain.handle('shares:save-serial-numbers', async (_event, id, entries) =>
+    safeInvoke(() => services.shares.saveSerialNumbers(id, entries))
+  );
   ipcMain.handle('shares:save-composition', async (_event, id, items) =>
     safeInvoke(() => services.shares.saveComposition(id, items))
   );

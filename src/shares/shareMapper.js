@@ -20,6 +20,7 @@ function mapShare(row) {
     unitPrice: row.unit_price,
     photoPath: row.photo_path || '',
     requiresComposition: Boolean(row.requires_composition),
+    requiresSerialNumber: Boolean(row.requires_serial_number),
     requiresChangeSheet: Boolean(row.requires_change_sheet),
     status: balance.status,
     statusTone: balance.statusTone

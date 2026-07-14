@@ -153,6 +153,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
           ${summaryItem('Σε Μερικές Διαχειρίσεις', formatQuantity(card.share.chargedQuantity))}
           ${summaryItem('Διαφορά', formatDifference(card.share.differenceQuantity))}
           ${toggleField('Απαιτεί Σύνθεση', 'requiresComposition', card.share.requiresComposition)}
+          ${toggleField('Απαιτεί Σειριακό Αριθμό', 'requiresSerialNumber', card.share.requiresSerialNumber)}
         </div>
         <div class="material-details-form">
           <div class="material-photo-box" data-photo-path="${escapeHtml(card.share.photoPath || '')}">
@@ -288,6 +289,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
         unitPrice: details.unitPrice.value,
         photoPath: photoBox.dataset.photoPath || '',
         requiresComposition: details.requiresComposition.checked,
+        requiresSerialNumber: details.requiresSerialNumber.checked,
         requiresChangeSheet: card.share.requiresChangeSheet
       }).then(async () => {
         showToast('Τα στοιχεία της μερίδας αποθηκεύτηκαν.');

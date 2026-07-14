@@ -23,6 +23,7 @@ const HOME_TILE_META = {
   'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
+  'administration-serial-numbers': { code: '§ 03-Δ', icon: 'SN' },
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
   'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
   'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' }

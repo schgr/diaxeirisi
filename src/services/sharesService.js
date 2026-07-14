@@ -31,9 +31,12 @@ function createSharesService(db) {
 
     updateShareDetails(id, payload) {
       const shareId = requirePositiveId(id);
-      const unitPriceText = payload && payload.unitPrice !== undefined ? String(payload.unitPrice).trim() : '';
-      const unitPrice = unitPriceText ? Number(unitPriceText) : null;
       const share = repository.getShare(shareId);
+
+      const unitPriceText = payload && payload.unitPrice !== undefined
+        ? String(payload.unitPrice).trim()
+        : String(share && share.unit_price !== null && share.unit_price !== undefined ? share.unit_price : '').trim();
+      const unitPrice = unitPriceText ? Number(unitPriceText) : null;
 
       if (unitPriceText && (!Number.isFinite(unitPrice) || unitPrice < 0)) {
         throw new AppError('Η τιμή πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
@@ -63,10 +66,15 @@ function createSharesService(db) {
             : share.main_material_number || ''
         ).trim(),
         unitPrice,
-        photoPath: String((payload && payload.photoPath) || '').trim(),
+        photoPath: String(
+          payload && payload.photoPath !== undefined ? payload.photoPath : share.photo_path || ''
+        ).trim(),
         requiresComposition: payload && payload.requiresComposition !== undefined
           ? Boolean(payload.requiresComposition)
           : Boolean(share.requires_composition),
+        requiresSerialNumber: payload && payload.requiresSerialNumber !== undefined
+          ? Boolean(payload.requiresSerialNumber)
+          : Boolean(share.requires_serial_number),
         requiresChangeSheet: payload && payload.requiresChangeSheet !== undefined
           ? Boolean(payload.requiresChangeSheet)
           : Boolean(share.requires_change_sheet)
@@ -231,6 +239,59 @@ function createSharesService(db) {
       });
       repository.replaceChangeSheetEntries(shareId, cleanEntries);
       return { message: 'Το φύλλο μεταβολών αποθηκεύτηκε.' };
+    },
+
+    listSerialNumberRegistry() {
+      return repository.listSerialNumberShares().map((row) => {
+        const share = mapShare(row);
+        const assignments = repository.listShareAssignments(row.id);
+        const quantity = Math.max(0, Math.trunc(Number(share.chargedQuantity || 0)));
+        const departments = assignments.flatMap((assignment) =>
+          Array.from(
+            { length: Math.max(0, Math.trunc(Number(assignment.quantity || 0))) },
+            () => assignment.department || ''
+          )
+        );
+        const saved = new Map(
+          repository.listSerialNumbers(row.id).map((entry) => [Number(entry.position), entry])
+        );
+        return {
+          share,
+          quantity,
+          entries: Array.from({ length: quantity }, (_, index) => {
+            const position = index + 1;
+            const entry = saved.get(position);
+            return {
+              position,
+              serialNumber: entry ? entry.serial_number : '',
+              department: departments[index] || '',
+              notes: entry ? entry.notes : ''
+            };
+          })
+        };
+      });
+    },
+
+    saveSerialNumbers(id, entries) {
+      const shareId = requirePositiveId(id);
+      const share = repository.getShare(shareId);
+      if (!share || !share.requires_serial_number) {
+        throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο σειριακό αριθμό.', 'VALIDATION_ERROR');
+      }
+      const maximum = Math.max(0, Math.trunc(Number(share.charged_quantity || 0)));
+      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
+        const position = Number(entry.position);
+        if (!Number.isInteger(position) || position < 1 || position > maximum) {
+          throw new AppError('Η θέση του σειριακού αριθμού δεν είναι έγκυρη.', 'VALIDATION_ERROR');
+        }
+        return {
+          position,
+          serialNumber: String(entry.serialNumber || '').trim(),
+          notes: String(entry.notes || '').trim()
+        };
+      });
+      repository.saveSerialNumbers(shareId, cleanEntries);
+      return { message: 'Οι σειριακοί αριθμοί αποθηκεύτηκαν.' };
     }
   };
 }

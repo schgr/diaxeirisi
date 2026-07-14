@@ -6544,3 +6544,43 @@ th {
     display: none !important;
   }
 }
+.material-card-flags-table th:nth-last-child(-n + 2),
+.material-card-flags-table td:nth-last-child(-n + 2) {
+  width: 150px;
+  text-align: center;
+}
+
+.material-card-flags-table input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.serial-number-registry-wrap {
+  max-height: calc(100vh - 290px);
+  overflow: auto;
+}
+
+.serial-number-registry-table {
+  min-width: 1180px;
+}
+
+.serial-number-registry-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.serial-number-registry-table td[rowspan] {
+  vertical-align: top;
+}
+
+.serial-number-registry-table input {
+  width: 100%;
+  min-width: 145px;
+}
+
+.serial-department-cell {
+  min-width: 180px;
+  white-space: normal;
+}

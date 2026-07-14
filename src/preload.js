@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('appApi', {
     add: (payload) => invoke('shares:add', payload),
     getCard: (id, year) => invoke('shares:get-card', id, year),
     updateDetails: (id, payload) => invoke('shares:update-details', id, payload),
+    listSerialRegistry: () => invoke('shares:list-serial-registry'),
+    saveSerialNumbers: (id, entries) => invoke('shares:save-serial-numbers', id, entries),
     saveComposition: (id, items) => invoke('shares:save-composition', id, items),
     saveChangeSheet: (id, entries) => invoke('shares:save-change-sheet', id, entries),
     choosePhoto: () => invoke('shares:choose-photo')

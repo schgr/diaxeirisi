@@ -2,10 +2,11 @@ import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
-export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '') {
-  const [data, settings] = await Promise.all([
+export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '', sharesApi = window.appApi.shares) {
+  const [data, settings, serialRegistry] = await Promise.all([
     api.getReferenceData(),
-    settingsApi.get()
+    settingsApi.get(),
+    sharesApi.listSerialRegistry()
   ]);
   const selectedHandover = selectedHandoverId ? await api.getHandover(selectedHandoverId) : null;
 
@@ -21,6 +22,7 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
       <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span class="home-tile-icon">ΑΜ</span><span class="home-tile-title">Αρχείο Μερίδων</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
     </section>
     <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
@@ -31,10 +33,42 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     <div data-administration-panel="aggregate-prints" hidden>
       ${renderAggregatePrintsPanel()}
     </div>
+    <div data-administration-panel="serial-numbers" hidden>
+      ${renderSerialNumberRegistry(serialRegistry)}
+    </div>
   `;
 
   if (initialTab) container.querySelector('.page-header')?.remove();
-  bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast, initialTab);
+  bindAdministrationPage(container, api, annualAccountsApi, settingsApi, sharesApi, data, selectedHandover, settings, showToast, initialTab);
+}
+
+function renderSerialNumberRegistry(registry) {
+  let sequence = 0;
+  const rows = registry.map((item) => {
+    sequence += 1;
+    if (!item.entries.length) {
+      return `<tr data-serial-share="${item.share.id}"><td>${sequence}</td><td>${escapeHtml(item.share.shareNumber)}</td><td>${escapeHtml(item.share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(item.share.description)}</td><td>0</td><td colspan="3" class="empty-table">Δεν υπάρχει τελικώς χρεωμένη ποσότητα.</td></tr>`;
+    }
+    return item.entries.map((entry, index) => `
+      <tr data-serial-share="${item.share.id}" data-serial-position="${entry.position}">
+        ${index === 0 ? `<td rowspan="${item.entries.length}">${sequence}</td><td rowspan="${item.entries.length}">${escapeHtml(item.share.shareNumber)}</td><td rowspan="${item.entries.length}">${escapeHtml(item.share.nominalNumber)}</td><td rowspan="${item.entries.length}" class="material-description-cell">${escapeHtml(item.share.description)}</td><td rowspan="${item.entries.length}">${item.quantity}</td>` : ''}
+        <td><input data-serial-number value="${escapeHtml(entry.serialNumber)}" aria-label="S/N ${entry.position}" /></td>
+        <td class="serial-department-cell">${escapeHtml(entry.department || '—')}</td>
+        <td><input data-serial-notes value="${escapeHtml(entry.notes)}" aria-label="Παρατηρήσεις ${entry.position}" /></td>
+      </tr>
+    `).join('');
+  }).join('');
+  return `
+    <section class="page-panel wide-panel serial-number-registry-panel">
+      <div class="requests-status-header"><div><h3>Μητρώο Σειριακών Αριθμών</h3><p class="muted">Οι γραμμές και τα τμήματα προκύπτουν αυτόματα από την τελικώς χρεωμένη ποσότητα κάθε μερίδας.</p></div><button class="primary-button" data-save-serial-registry type="button">Αποθήκευση</button></div>
+      <div class="table-wrap serial-number-registry-wrap">
+        <table class="index-table serial-number-registry-table">
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ποσότητα</th><th>S/N</th><th>Τμήμα</th><th>Παρατηρήσεις</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν μερίδες με ενεργοποιημένο Σειριακό Αριθμό.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
 }
 
 function renderHandoverPanel(data, selected, settings) {
@@ -223,7 +257,7 @@ function renderArchivePanel(data) {
   `;
 }
 
-function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, data, selectedHandover, settings, showToast, initialTab = '') {
+function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, sharesApi, data, selectedHandover, settings, showToast, initialTab = '') {
   const menu = container.querySelector('[data-administration-menu]');
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -247,6 +281,23 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
       detail: { sectionId: 'prints' }
     }));
   });
+
+  container.querySelector('[data-save-serial-registry]')?.addEventListener('click', async () => run(async () => {
+    const grouped = new Map();
+    container.querySelectorAll('[data-serial-position]').forEach((row) => {
+      const shareId = Number(row.dataset.serialShare);
+      if (!grouped.has(shareId)) grouped.set(shareId, []);
+      grouped.get(shareId).push({
+        position: Number(row.dataset.serialPosition),
+        serialNumber: row.querySelector('[data-serial-number]').value,
+        notes: row.querySelector('[data-serial-notes]').value
+      });
+    });
+    for (const [shareId, entries] of grouped) {
+      await sharesApi.saveSerialNumbers(shareId, entries);
+    }
+    showToast('Οι σειριακοί αριθμοί αποθηκεύτηκαν.');
+  }, showToast));
 
   container.querySelector('#handover-create').addEventListener('click', async () => run(async () => {
     const result = await api.createHandover({

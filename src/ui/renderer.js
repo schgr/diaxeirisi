@@ -83,7 +83,8 @@ const homeGroups = [
     items: [
       { id: 'administration-handover', sectionId: 'administration', tab: 'handover', title: 'Παράδοση - Παραλαβή' },
       { id: 'administration-archive', sectionId: 'administration', tab: 'archive', title: 'Αρχείο Μερίδων' },
-      { id: 'administration-aggregate-prints', sectionId: 'administration', tab: 'aggregate-prints', title: 'Συγκεντρωτικές Εκτυπώσεις' }
+      { id: 'administration-aggregate-prints', sectionId: 'administration', tab: 'aggregate-prints', title: 'Συγκεντρωτικές Εκτυπώσεις' },
+      { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' }
     ]
   },
   {
@@ -299,7 +300,8 @@ async function renderActivePage() {
         window.appApi.settings,
         window.appApi.clothing,
         showToast,
-        state.settingsTab
+        state.settingsTab,
+        window.appApi.shares
       );
       return;
     }
@@ -349,7 +351,8 @@ async function renderActivePage() {
         window.appApi.settings,
         showToast,
         null,
-        state.administrationTab
+        state.administrationTab,
+        window.appApi.shares
       );
       return;
     }

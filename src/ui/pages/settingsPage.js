@@ -12,8 +12,8 @@ const materialCategorySection = {
   deleteMessage: 'Η κατηγορία υλικού διαγράφηκε.'
 };
 
-export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '') {
-  const settings = await settingsApi.get();
+export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '', sharesApi = window.appApi.shares) {
+  const [settings, shares] = await Promise.all([settingsApi.get(), sharesApi.list()]);
 
   container.innerHTML = `
     <section class="page-header">
@@ -93,13 +93,39 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <button class="primary-button" type="submit">Προσθήκη</button>
           </form>
         </section>
+
+        <section class="page-panel wide-panel">
+          <h3>Πεδία Καρτελών Υλικού</h3>
+          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού ή/και την παρακολούθηση Σειριακού Αριθμού.</p>
+          ${renderMaterialCardFlags(shares)}
+        </section>
       </div>
     </div>
   `;
 
   if (initialTab) container.querySelector('.page-header')?.remove();
   bindSettingsTabs(container, initialTab);
-  bindSettingsEvents(container, settingsApi, clothingApi, showToast);
+  bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, showToast);
+}
+
+function renderMaterialCardFlags(shares) {
+  return `
+    <div class="table-wrap material-card-flags-wrap">
+      <table class="index-table material-card-flags-table">
+        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th></tr></thead>
+        <tbody>${shares.length ? shares.map((share, index) => `
+          <tr data-material-card-flags="${share.id}">
+            <td>${index + 1}</td>
+            <td>${escapeHtml(share.shareNumber)}</td>
+            <td>${escapeHtml(share.nominalNumber)}</td>
+            <td class="material-description-cell">${escapeHtml(share.description)}</td>
+            <td><input data-material-flag="requiresComposition" type="checkbox" ${share.requiresComposition ? 'checked' : ''} aria-label="Σύνθεση Υλικού ${escapeHtml(share.shareNumber)}" /></td>
+            <td><input data-material-flag="requiresSerialNumber" type="checkbox" ${share.requiresSerialNumber ? 'checked' : ''} aria-label="Σειριακός Αριθμός ${escapeHtml(share.shareNumber)}" /></td>
+          </tr>
+        `).join('') : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderClothingItemsSection(items) {
@@ -390,7 +416,7 @@ export function syncExhpIssueReasonSettings(container, items, selectedReasonName
   row.querySelector('[data-field="secondOpinionText"]').value = selectedItem.secondOpinionText || '';
 }
 
-function bindSettingsEvents(container, settingsApi, clothingApi, showToast) {
+function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, showToast) {
   bindAutosaveForm(container, '#service-form', showToast, async (form) => {
     await settingsApi.saveServiceInfo(getFormData(form));
   });
@@ -420,6 +446,22 @@ function bindSettingsEvents(container, settingsApi, clothingApi, showToast) {
   });
 
   bindDeletes(container, settingsApi, showToast);
+
+  container.querySelectorAll('[data-material-flag]').forEach((checkbox) => {
+    checkbox.addEventListener('change', async () => {
+      const row = checkbox.closest('[data-material-card-flags]');
+      const inputs = Object.fromEntries(
+        [...row.querySelectorAll('[data-material-flag]')].map((input) => [input.dataset.materialFlag, input.checked])
+      );
+      try {
+        await sharesApi.updateDetails(Number(row.dataset.materialCardFlags), inputs);
+        showToast('Τα πεδία της καρτέλας υλικού ενημερώθηκαν.');
+      } catch (error) {
+        checkbox.checked = !checkbox.checked;
+        showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της καρτέλας.', 'error');
+      }
+    });
+  });
 }
 
 function bindClothingSettings(container, clothingApi, showToast, initialItems) {
@@ -642,7 +684,7 @@ function debounce(operation, delay, showToast) {
 }
 
 async function refresh(container, settingsApi, showToast, message) {
-  await renderSettingsPage(container, settingsApi, window.appApi.clothing, showToast);
+  await renderSettingsPage(container, settingsApi, window.appApi.clothing, showToast, '', window.appApi.shares);
   const content = container.closest('.content');
   if (content) content.scrollTop = 0;
   showToast(message);

@@ -1819,6 +1819,28 @@ const migrations = [
       WHERE reason.name LIKE 'Λογιστική Τακτοποίηση Διαφορών Ομοειδών%'
         AND template.title = 'Κατάσταση Απογραφής';
     `
+  },
+  {
+    version: 53,
+    name: 'material_serial_number_registry',
+    up: `
+      ALTER TABLE shares ADD COLUMN requires_serial_number INTEGER NOT NULL DEFAULT 0;
+
+      CREATE TABLE share_serial_numbers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        share_id INTEGER NOT NULL,
+        position INTEGER NOT NULL,
+        serial_number TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (share_id) REFERENCES shares(id) ON DELETE CASCADE,
+        UNIQUE (share_id, position)
+      );
+
+      CREATE INDEX idx_share_serial_numbers_share
+      ON share_serial_numbers (share_id, position);
+    `
   }
 ];
 
