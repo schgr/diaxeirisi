@@ -3162,7 +3162,8 @@ table.administration-table td {
 
 .exhp-page-number {
   position: absolute;
-  right: 7mm;
+  left: 7mm;
+  right: auto;
   bottom: 6mm;
   color: #000000;
   font-size: 10px;
@@ -4537,6 +4538,19 @@ th {
   min-width: 297mm;
   height: 210mm;
   min-height: 210mm;
+}
+
+@media screen {
+  .exhp-document-backdrop .exhp-unit-overlay {
+    width: 18% !important;
+    overflow: visible;
+    white-space: nowrap;
+  }
+
+  .exhp-document-backdrop .exhp-field-15-signature {
+    height: 4.3% !important;
+    overflow: visible;
+  }
 }
 
 .exhp-document-backdrop[data-exhp-preview-side='front'] .exhp-faithful-back-side,

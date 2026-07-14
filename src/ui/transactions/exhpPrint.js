@@ -2,7 +2,12 @@ import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { formatDate, formatQuantity } from './shared.js';
 import { printLandscapeDocument } from './addyPrint.js';
-import { shouldFillExhpSecondOpinion } from './exhpFormModuleBridge.js';
+import {
+  getAitiologiaCodeForIssueReason,
+  shouldFillExhpSecondOpinion
+} from './exhpFormModuleBridge.js';
+
+const EXHP_FIELD_23_COMMANDER_EXCLUDED_REASON_CODES = new Set(['a', 'd', 'th', 'i', 'ib']);
 export function openExhpDocument(documentData) {
   const existing = window.document.querySelector('.exhp-document-backdrop');
   if (existing) existing.remove();
@@ -75,9 +80,10 @@ export function renderExhpDocument(documentData) {
     documentData.reasonCode || '',
     documentData.reasonTexts?.secondOpinion
   );
-  const frontField23Officer = fillSecondOpinion
-    ? documentData.financialOfficers?.manager
-    : documentData.financialOfficers?.commander;
+  const showCommanderInField23 = shouldShowCommanderInExhpField23(
+    documentData.reason,
+    documentData.reasonCode || ''
+  );
   const supportingDocuments = [
     ...documentData.items.map((item) => item.supportingDocuments).filter(Boolean),
     ...(documentData.supports || [])
@@ -93,20 +99,23 @@ export function renderExhpDocument(documentData) {
       <article class="exhp-faithful-page exhp-paged-document exhp-faithful-front-side print-document-area">
         <div class="exhp-page-content">
           <img src="./assets/official-forms/exhp-front-clean.png" alt="Εντολή Χρεωπιστώσεως - εμπρός πλευρά" />
-          ${exhpStaticOverlay(documentData.unit, 14.2, 16.4, 10.8, 2.2)}
+          ${exhpStaticOverlay(documentData.unit, 14.2, 16.4, 10.8, 2.2, 'exhp-unit-overlay')}
           ${exhpStaticOverlay(documentData.registryNumber, 83.2, 14.2, 9.2, 2.2)}
           ${exhpStaticOverlay(formatDate(documentData.date), 81.6, 17.0, 10.5, 2.2)}
           ${chargeItems.length ? exhpStaticOverlay(documentData.managementType || '', 20.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7)}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 76.1, 11.5, 2.7)}
-          ${renderExhpFrontSignature(frontField23Officer, 79.5, 76.1, 8.0, 2.7)}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(supportingDocuments.join(' · '), 50.8, 81.0, 46.0, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.approvalReference || '', 51.0, 89.0, 23.0, 4.3)}
+          ${showCommanderInField23
+            ? renderExhpFrontSignature(documentData.financialOfficers?.commander, 76.0, 89.0, 20.5, 4.3, 'exhp-field-23-signature')
+            : ''}
         </div>
         ${renderExhpPageNumber(frontPageNumber, pageCount)}
       </article>
@@ -181,16 +190,23 @@ export function renderExhpOfficerSignature(value) {
 
 
 
-export function renderExhpFrontSignature(value, left, top, width, height) {
+export function renderExhpFrontSignature(value, left, top, width, height, className = '') {
   return exhpStaticOverlay(
     renderExhpOfficerSignature(value),
     left,
     top,
     width,
     height,
-    'exhp-front-signature',
+    `exhp-front-signature ${className}`.trim(),
     true
   );
+}
+
+
+
+export function shouldShowCommanderInExhpField23(issueReason, explicitCode = '') {
+  const code = getAitiologiaCodeForIssueReason(issueReason, explicitCode);
+  return !EXHP_FIELD_23_COMMANDER_EXCLUDED_REASON_CODES.has(code);
 }
 
 
