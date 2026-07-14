@@ -23,7 +23,8 @@ function createInternalService(db) {
           departmentHead: row.department_head
         })),
         today: new Date().toISOString().slice(0, 10),
-        serviceName: serviceSettings ? serviceSettings.service_name : ''
+        serviceName: serviceSettings ? serviceSettings.service_name : '',
+        financialManager: serviceSettings ? serviceSettings.manager : ''
       };
     },
 

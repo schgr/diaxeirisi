@@ -207,7 +207,12 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
     }
     try {
       selectedBalances = await internalApi.listDepartmentBalances(departmentId);
-      openK2310Document(referenceData.serviceName, department, selectedBalances);
+      openK2310Document(
+        referenceData.serviceName,
+        department,
+        selectedBalances,
+        referenceData.financialManager
+      );
     } catch (error) {
       showToast(error.message || 'ΔΕΝ ΗΤΑΝ ΔΥΝΑΤΗ Η ΠΡΟΒΟΛΗ ΤΟΥ Κ2310/ΔΥΠ.', 'error');
     }
@@ -232,24 +237,51 @@ function renderDraftRows(drafts) {
   `).join('');
 }
 
-function openK2310Document(serviceName, department, balances) {
+function openK2310Document(serviceName, department, balances, financialManager) {
   const modal = document.createElement('div');
+  let signatureMode = 'none';
   modal.className = 'modal-backdrop';
   modal.innerHTML = `
     <section class="request-document-modal">
       <header class="material-card-header no-print">
         <div><p class="eyebrow">Κ2310/ΔΥΠ</p><h2>ΔΕΛΤΙΟ ΔΟΣΟΛΗΨΙΩΝ</h2></div>
-        <div class="row-actions"><button class="secondary-button" data-close-k2310 type="button">ΚΛΕΙΣΙΜΟ</button><button class="primary-button" data-print-k2310 type="button">ΕΚΤΥΠΩΣΗ</button></div>
+        <div class="row-actions k2310-preview-actions">
+          <button class="secondary-button" data-k2310-signature="manager" type="button">Υπογραφή ΔΧΣΤΗ</button>
+          <button class="secondary-button" data-k2310-signature="department" type="button">Υπογραφή Μερικού Διαχειριστή</button>
+          <button class="secondary-button" data-k2310-signature="all" type="button">Όλες οι υπογραφές</button>
+          <button class="secondary-button" data-close-k2310 type="button">ΚΛΕΙΣΙΜΟ</button>
+          <button class="primary-button" data-print-k2310 type="button">ΕΚΤΥΠΩΣΗ</button>
+        </div>
       </header>
-      ${renderK2310Pages(serviceName, department, balances)}
+      <div data-k2310-pages></div>
     </section>
   `;
+  const renderPreview = () => {
+    modal.querySelector('[data-k2310-pages]').innerHTML = renderK2310Pages(
+      serviceName,
+      department,
+      balances,
+      { signatureMode, financialManager }
+    );
+    modal.querySelectorAll('[data-k2310-signature]').forEach((button) => {
+      const active = button.dataset.k2310Signature === signatureMode;
+      button.classList.toggle('primary-button', active);
+      button.classList.toggle('secondary-button', !active);
+    });
+  };
   modal.addEventListener('click', async (event) => {
     if (event.target === modal || event.target.closest('[data-close-k2310]')) modal.remove();
+    const signatureButton = event.target.closest('[data-k2310-signature]');
+    if (signatureButton) {
+      signatureMode = signatureButton.dataset.k2310Signature;
+      renderPreview();
+      return;
+    }
     if (event.target.closest('[data-print-k2310]')) {
       await printK2310Document(modal);
     }
   });
+  renderPreview();
   document.body.appendChild(modal);
 }
 
@@ -269,7 +301,7 @@ async function printK2310Document(modal) {
   }
 }
 
-export function renderK2310Pages(serviceName, department, balances) {
+export function renderK2310Pages(serviceName, department, balances, options = {}) {
   const pageSize = 17;
   const printableRows = balances.flatMap((balance, index) => [
     { type: 'share', balance, serial: index + 1 },
@@ -281,6 +313,8 @@ export function renderK2310Pages(serviceName, department, balances) {
   const pageCount = Math.max(1, Math.ceil(printableRows.length / pageSize));
   const documentDate = new Date().toLocaleDateString('el-GR');
   const departmentHead = splitOfficerSignature(department.departmentHead || '');
+  const financialManager = splitOfficerSignature(options.financialManager || '');
+  const signatureMode = options.signatureMode || 'none';
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
     const pageItems = printableRows.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
     const rows = Array.from({ length: pageSize }, (_row, index) => pageItems[index] || null);
@@ -336,12 +370,7 @@ export function renderK2310Pages(serviceName, department, balances) {
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="6" class="k2310-signatures">(14) ΥΠΟΓΡΑΦΕΣ</td>
-              <td class="k2310-signature-grid-cell k2310-department-signature">
-                <strong>${escapeHtml(departmentHead.name)}</strong>
-                <span>${escapeHtml(departmentHead.rank)}</span>
-              </td>
-              ${'<td class="k2310-signature-grid-cell"></td>'.repeat(10)}
+              ${renderK2310SignatureRow(signatureMode, financialManager, departmentHead)}
             </tr>
           </tfoot>
         </table>
@@ -359,7 +388,7 @@ function renderK2310Row(row) {
       '', '', '', ''
     ];
     const returnCells = ['', '', '', '', ''];
-    return `<tr class="k2310-composition-row"><td></td><td></td><td>${escapeHtml(component.componentNominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(component.componentDescription)}</td><td>${escapeHtml(component.measurementUnit)}</td><td></td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td>${component.finalQuantity ? formatQuantity(component.finalQuantity) : ''}</td></tr>`;
+    return `<tr class="k2310-composition-row"><td></td><td></td><td>${escapeHtml(component.componentNominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(component.componentDescription)}</td><td>${escapeHtml(component.measurementUnit)}</td><td></td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
   }
   const { balance, serial } = row;
   const issueCells = [
@@ -367,7 +396,27 @@ function renderK2310Row(row) {
     '', '', '', ''
   ];
   const returnCells = ['', '', '', '', ''];
-  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td>${formatQuantity(balance.projectedQuantity)}</td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td>${formatQuantity(balance.finalQuantity)}</td></tr>`;
+  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td>${formatQuantity(balance.projectedQuantity)}</td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
+}
+
+function renderK2310SignatureRow(mode, financialManager, departmentHead) {
+  const selectedIdentity = mode === 'manager' ? financialManager : departmentHead;
+  const managerInLabel = mode === 'all';
+  const showAdjacent = ['manager', 'department', 'all'].includes(mode);
+  const adjacentIdentity = mode === 'all' ? departmentHead : selectedIdentity;
+  return `
+    <td colspan="6" class="k2310-signatures${managerInLabel ? ' k2310-manager-signature' : ''}">
+      <span>(14) ΥΠΟΓΡΑΦΕΣ</span>
+      ${managerInLabel ? renderK2310Identity(financialManager) : ''}
+    </td>
+    ${showAdjacent ? `<td colspan="5" class="k2310-signature-grid-cell k2310-department-signature">${renderK2310Identity(adjacentIdentity)}</td>` : '<td colspan="5" class="k2310-signature-grid-cell"></td>'}
+    <td colspan="6" class="k2310-signature-grid-cell"></td>
+  `;
+}
+
+function renderK2310Identity(identity) {
+  if (!identity.name && !identity.rank) return '';
+  return `<strong>${escapeHtml(identity.name)}</strong><span>${escapeHtml(identity.rank)}</span>`;
 }
 
 function openInternalCompositionDialog(share, defaultQuantity = '') {

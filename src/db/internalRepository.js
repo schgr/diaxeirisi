@@ -43,7 +43,7 @@ function createInternalRepository(db) {
 
     getServiceSettings() {
       return db.prepare(`
-        SELECT service_name
+        SELECT service_name, manager
         FROM service_settings
         WHERE id = 1
       `).get();

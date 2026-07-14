@@ -5040,9 +5040,25 @@ th {
   line-height: 1.2;
 }
 
+.k2310-table .k2310-manager-signature {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.k2310-manager-signature > span:first-child {
+  display: block;
+  margin-bottom: 3px;
+  text-align: left;
+}
+
 .k2310-department-signature strong,
 .k2310-department-signature span {
   display: block;
+}
+
+.k2310-preview-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .material-card-section {
