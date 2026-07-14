@@ -404,13 +404,16 @@ function renderK2310SignatureRow(mode, financialManager, departmentHead) {
   const managerInLabel = mode === 'all';
   const showAdjacent = ['manager', 'department', 'all'].includes(mode);
   const adjacentIdentity = mode === 'all' ? departmentHead : selectedIdentity;
+  const adjacentSignatureCell = showAdjacent
+    ? `<td class="k2310-signature-grid-cell k2310-vertical-signature">${renderK2310Identity(adjacentIdentity)}</td>`
+    : '<td class="k2310-signature-grid-cell"></td>';
   return `
     <td colspan="6" class="k2310-signatures${managerInLabel ? ' k2310-manager-signature' : ''}">
-      <span>(14) ΥΠΟΓΡΑΦΕΣ</span>
+      <span class="k2310-signature-label">(14) ΥΠΟΓΡΑΦΕΣ</span>
       ${managerInLabel ? renderK2310Identity(financialManager) : ''}
     </td>
-    ${showAdjacent ? `<td colspan="5" class="k2310-signature-grid-cell k2310-department-signature">${renderK2310Identity(adjacentIdentity)}</td>` : '<td colspan="5" class="k2310-signature-grid-cell"></td>'}
-    <td colspan="6" class="k2310-signature-grid-cell"></td>
+    ${adjacentSignatureCell}
+    ${'<td class="k2310-signature-grid-cell"></td>'.repeat(10)}
   `;
 }
 

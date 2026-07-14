@@ -30,7 +30,8 @@ assert.doesNotMatch(html, /Αζίζογλου Πρόδρομος/u);
 const departmentSignatureHtml = renderK2310Pages(
   'Μονάδα Δοκιμής', department, balances, { signatureMode: 'department' }
 );
-assert.match(departmentSignatureHtml, /colspan="5" class="k2310-signature-grid-cell k2310-department-signature"/u);
+assert.match(departmentSignatureHtml, /<td class="k2310-signature-grid-cell k2310-vertical-signature">/u);
+assert.doesNotMatch(departmentSignatureHtml, /colspan="5" class="k2310-signature-grid-cell/u);
 assert.match(departmentSignatureHtml, /Αζίζογλου Πρόδρομος/u);
 assert.match(departmentSignatureHtml, /Λγός \(ΠΒ\)/u);
 
@@ -41,7 +42,7 @@ const allSignaturesHtml = renderK2310Pages(
   { signatureMode: 'all', financialManager: 'Ανθλγός (ΠΒ) Διαχειριστής Δήμος' }
 );
 assert.match(allSignaturesHtml, /k2310-signatures k2310-manager-signature/u);
-assert.match(allSignaturesHtml, /Διαχειριστής Δήμος/u);
+assert.match(allSignaturesHtml, /<strong>Διαχειριστής Δήμος<\/strong><span>Ανθλγός \(ΠΒ\)<\/span>/u);
 assert.match(allSignaturesHtml, /Αζίζογλου Πρόδρομος/u);
 
 console.log('K2310 net issue quantity and department signature test passed.');
