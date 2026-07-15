@@ -13,17 +13,17 @@ export function createNavigation({ container, sections, activeSection, onNavigat
 }
 
 const HOME_TILE_META = {
-  shares: { code: '§ 01-Α', icon: 'MR' },
-  transactions: { code: '§ 01-Β', icon: 'DX' },
-  indexes: { code: '§ 01-Γ', icon: 'EV' },
-  charges: { code: '§ 01-Δ', icon: 'XR' },
-  requests: { code: '§ 01-Ε', icon: 'AI' },
-  as: { code: '§ 02-Α', icon: 'AP' },
-  'movement-differences': { code: '§ 02-Β', icon: 'DF' },
+  shares: { code: '§ 01-Α', icon: 'ΜΕ' },
+  transactions: { code: '§ 01-Β', icon: 'ΔΣ' },
+  indexes: { code: '§ 01-Γ', icon: 'ΕΥ' },
+  charges: { code: '§ 01-Δ', icon: 'ΧΡ' },
+  requests: { code: '§ 01-Ε', icon: 'ΑΙ' },
+  as: { code: '§ 02-Α', icon: 'ΑΠ' },
+  'movement-differences': { code: '§ 02-Β', icon: 'ΔΦ' },
   'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
-  'administration-serial-numbers': { code: '§ 03-Δ', icon: 'SN' },
+  'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
   'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
   'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' }
@@ -71,7 +71,7 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
 }
 
 function homeTileMeta(item) {
-  return HOME_TILE_META[item.id] || { code: '§ 00-Α', icon: 'MN' };
+  return HOME_TILE_META[item.id] || { code: '§ 00-Α', icon: 'ΜΝ' };
 }
 
 function escapeHtml(value) {

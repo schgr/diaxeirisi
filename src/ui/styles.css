@@ -6556,6 +6556,14 @@ th {
   accent-color: var(--accent);
 }
 
+.material-card-flags-table th,
+.material-card-flags-table td,
+.serial-number-registry-table th,
+.serial-number-registry-table td {
+  border-color: var(--line);
+  color: var(--text);
+}
+
 .serial-number-registry-wrap {
   max-height: calc(100vh - 290px);
   overflow: auto;

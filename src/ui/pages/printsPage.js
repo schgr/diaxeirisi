@@ -5,6 +5,10 @@ import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../
 
 const ROWS_PER_REGISTRY_PAGE = 50;
 const ROWS_PER_INDEX_PAGE = 34;
+const INDEX_TILE_META = {
+  external: { icon: 'ΕΔ', code: '§ ΕΥ-Α' },
+  orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' }
+};
 const printTabGroups = [
   {
     key: 'shares',
@@ -97,7 +101,9 @@ export async function renderPrintsPage(
       <section class="transaction-flow-home print-index-tile-menu no-print" data-print-tile-menu aria-label="${escapeHtml(options.menuTitle || 'Ευρετήρια')}">
         ${visiblePrintTabGroups[0].tabs.map((tab) => `
           <button class="home-tile transaction-flow-tile" data-print-tab="${tab.key}" type="button">
-            <span>${escapeHtml(tab.label)}</span>
+            <span class="home-tile-icon" aria-hidden="true">${escapeHtml(INDEX_TILE_META[tab.key]?.icon || 'ΕΥ')}</span>
+            <span class="home-tile-title">${escapeHtml(tab.label)}</span>
+            <span class="home-tile-code">${escapeHtml(INDEX_TILE_META[tab.key]?.code || '§ ΕΥ')}</span>
           </button>
         `).join('')}
       </section>
