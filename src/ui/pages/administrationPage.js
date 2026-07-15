@@ -30,9 +30,6 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     <div data-administration-panel="archive" hidden>
       ${renderArchivePanel(data)}
     </div>
-    <div data-administration-panel="aggregate-prints" hidden>
-      ${renderAggregatePrintsPanel()}
-    </div>
     <div data-administration-panel="serial-numbers" hidden>
       ${renderSerialNumberRegistry(serialRegistry)}
     </div>
@@ -109,18 +106,6 @@ function renderHandoverPanel(data, selected, settings) {
       </div>
     </section>
     ${selected ? renderHandoverWorkspace(selected, data.today, settings) : ''}
-  `;
-}
-
-function renderAggregatePrintsPanel() {
-  return `
-    <section class="page-panel">
-      <h3>Συγκεντρωτικές Εκτυπώσεις</h3>
-      <p class="muted">Προσωρινή θέση για εκτυπώσεις πολλών μερίδων, ευρετηρίων και ετών.</p>
-      <div class="row-actions">
-        <button class="primary-button" data-open-aggregate-prints type="button">Άνοιγμα Εκτυπώσεων</button>
-      </div>
-    </section>
   `;
 }
 
@@ -364,6 +349,12 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.administrationTab;
+      if (tab === 'aggregate-prints') {
+        document.dispatchEvent(new CustomEvent('diaxeirisi:navigate', {
+          detail: { sectionId: 'prints' }
+        }));
+        return;
+      }
       menu.hidden = true;
       container.querySelectorAll('[data-administration-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.administrationPanel !== tab;
@@ -376,13 +367,6 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
   } else if (initialTab) {
     container.querySelector(`[data-administration-tab="${initialTab}"]`)?.click();
   }
-
-  container.querySelector('[data-open-aggregate-prints]')?.addEventListener('click', () => {
-    // TODO: Move each aggregate report to its final contextual home as the print page is retired.
-    document.dispatchEvent(new CustomEvent('diaxeirisi:navigate', {
-      detail: { sectionId: 'prints' }
-    }));
-  });
 
   container.querySelector('[data-save-serial-registry]')?.addEventListener('click', async () => run(async () => {
     const grouped = new Map();
