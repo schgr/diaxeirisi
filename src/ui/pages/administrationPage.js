@@ -52,15 +52,15 @@ function renderSerialNumberRegistry(registry) {
     return item.entries.map((entry, index) => `
       <tr data-serial-share="${item.share.id}" data-serial-position="${entry.position}">
         ${index === 0 ? `<td rowspan="${item.entries.length}">${sequence}</td><td rowspan="${item.entries.length}">${escapeHtml(item.share.shareNumber)}</td><td rowspan="${item.entries.length}">${escapeHtml(item.share.nominalNumber)}</td><td rowspan="${item.entries.length}" class="material-description-cell">${escapeHtml(item.share.description)}</td><td rowspan="${item.entries.length}">${item.quantity}</td>` : ''}
-        <td><input data-serial-number value="${escapeHtml(entry.serialNumber)}" aria-label="S/N ${entry.position}" /></td>
+        <td><input data-serial-number value="${escapeHtml(entry.serialNumber)}" aria-label="S/N ${entry.position}" disabled /></td>
         <td class="serial-department-cell">${escapeHtml(entry.department || '—')}</td>
-        <td><input data-serial-notes value="${escapeHtml(entry.notes)}" aria-label="Παρατηρήσεις ${entry.position}" /></td>
+        <td><input data-serial-notes value="${escapeHtml(entry.notes)}" aria-label="Παρατηρήσεις ${entry.position}" disabled /></td>
       </tr>
     `).join('');
   }).join('');
   return `
     <section class="page-panel wide-panel serial-number-registry-panel">
-      <div class="requests-status-header"><div><h3>Μητρώο Σειριακών Αριθμών</h3><p class="muted">Οι γραμμές και τα τμήματα προκύπτουν αυτόματα από την τελικώς χρεωμένη ποσότητα κάθε μερίδας.</p></div><button class="primary-button" data-save-serial-registry type="button">Αποθήκευση</button></div>
+      <div class="requests-status-header"><div><h3>Μητρώο Σειριακών Αριθμών</h3><p class="muted">Οι γραμμές και τα τμήματα προκύπτουν αυτόματα από την τελικώς χρεωμένη ποσότητα κάθε μερίδας.</p></div><div class="row-actions serial-registry-actions"><button class="secondary-button" data-edit-serial-registry type="button">Επεξεργασία</button><button class="primary-button" data-save-serial-registry type="button" disabled>Αποθήκευση</button><button class="secondary-button" data-preview-serial-registry type="button">Προβολή</button></div></div>
       <div class="table-wrap serial-number-registry-wrap">
         <table class="index-table serial-number-registry-table">
           <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ποσότητα</th><th>S/N</th><th>Τμήμα</th><th>Παρατηρήσεις</th></tr></thead>
@@ -257,6 +257,108 @@ function renderArchivePanel(data) {
   `;
 }
 
+function setSerialRegistryEditing(container, editing) {
+  container.querySelectorAll('[data-serial-number], [data-serial-notes]').forEach((input) => {
+    input.disabled = !editing;
+  });
+  const editButton = container.querySelector('[data-edit-serial-registry]');
+  const saveButton = container.querySelector('[data-save-serial-registry]');
+  if (editButton) editButton.disabled = editing;
+  if (saveButton) saveButton.disabled = !editing;
+  if (editing) container.querySelector('[data-serial-number]')?.focus();
+}
+
+function collectSerialRegistryPreviewRows(container) {
+  let sharedCells = [];
+  return [...container.querySelectorAll('.serial-number-registry-table tbody tr')].map((row) => {
+    const cells = [...row.children];
+    if (!row.dataset.serialPosition) {
+      return { emptyHtml: row.innerHTML };
+    }
+    if (cells[0]?.hasAttribute('rowspan')) {
+      sharedCells = cells.slice(0, 5).map((cell) => cell.textContent.trim());
+    }
+    return {
+      group: row.dataset.serialShare,
+      sharedCells,
+      serialNumber: row.querySelector('[data-serial-number]')?.value || '',
+      department: row.querySelector('.serial-department-cell')?.textContent.trim() || '',
+      notes: row.querySelector('[data-serial-notes]')?.value || ''
+    };
+  });
+}
+
+function renderSerialRegistryPreviewPage(rows, pageNumber, pageCount) {
+  const body = rows.map((row, index) => {
+    if (row.emptyHtml) return `<tr>${row.emptyHtml}</tr>`;
+    const previous = rows[index - 1];
+    const startsGroup = !previous || previous.group !== row.group;
+    let shared = '';
+    if (startsGroup) {
+      let rowspan = 1;
+      while (rows[index + rowspan]?.group === row.group) rowspan += 1;
+      shared = row.sharedCells.map((value, cellIndex) => `<td rowspan="${rowspan}"${cellIndex === 3 ? ' class="material-description-cell"' : ''}>${escapeHtml(value)}</td>`).join('');
+    }
+    return `<tr>${shared}<td>${escapeHtml(row.serialNumber)}</td><td class="serial-department-cell">${escapeHtml(row.department)}</td><td>${escapeHtml(row.notes)}</td></tr>`;
+  }).join('');
+  return `
+    <article class="serial-registry-print-page">
+      <h2>Μητρώο Σειριακών Αριθμών</h2>
+      <table class="index-table serial-number-registry-print-table">
+        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ποσότητα</th><th>S/N</th><th>Τμήμα</th><th>Παρατηρήσεις</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+      <footer>Σελίδα ${pageNumber} από Σελίδες ${pageCount}</footer>
+    </article>`;
+}
+
+function openSerialRegistryPreview(container, showToast) {
+  const rows = collectSerialRegistryPreviewRows(container);
+  const rowsPerPage = 18;
+  const pages = [];
+  for (let index = 0; index < rows.length; index += rowsPerPage) {
+    pages.push(rows.slice(index, index + rowsPerPage));
+  }
+  if (!pages.length) pages.push([]);
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop handover-document-backdrop serial-registry-preview-backdrop';
+  modal.innerHTML = `
+    <section class="request-document-modal handover-document-modal serial-registry-preview-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ</p><h2>Μητρώο Σειριακών Αριθμών</h2></div>
+        <div class="row-actions"><button class="secondary-button" data-close-serial-preview type="button">Κλείσιμο</button><button class="primary-button" data-print-serial-preview type="button">Εκτύπωση</button></div>
+      </header>
+      <div class="handover-document-preview serial-registry-preview">${pages.map((page, index) => renderSerialRegistryPreviewPage(page, index + 1, pages.length)).join('')}</div>
+    </section>`;
+  modal.querySelector('[data-close-serial-preview]').addEventListener('click', () => modal.remove());
+  modal.querySelector('[data-print-serial-preview]').addEventListener('click', async () => {
+    try {
+      await printSerialRegistryPreview(modal.querySelector('.serial-registry-preview'));
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση του μητρώου σειριακών αριθμών.', 'error');
+    }
+  });
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) modal.remove();
+  });
+  document.body.appendChild(modal);
+}
+
+async function printSerialRegistryPreview(preview) {
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root serial-registry-print-root';
+  printRoot.innerHTML = preview.innerHTML;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  try {
+    await window.appApi.print.currentDocument({ landscape: true });
+  } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
+}
+
 function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, sharesApi, data, selectedHandover, settings, showToast, initialTab = '') {
   const menu = container.querySelector('[data-administration-menu]');
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
@@ -296,8 +398,17 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     for (const [shareId, entries] of grouped) {
       await sharesApi.saveSerialNumbers(shareId, entries);
     }
+    setSerialRegistryEditing(container, false);
     showToast('Οι σειριακοί αριθμοί αποθηκεύτηκαν.');
   }, showToast));
+
+  container.querySelector('[data-edit-serial-registry]')?.addEventListener('click', () => {
+    setSerialRegistryEditing(container, true);
+  });
+
+  container.querySelector('[data-preview-serial-registry]')?.addEventListener('click', () => {
+    openSerialRegistryPreview(container, showToast);
+  });
 
   container.querySelector('#handover-create').addEventListener('click', async () => run(async () => {
     const result = await api.createHandover({

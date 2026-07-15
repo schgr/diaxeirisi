@@ -30,6 +30,7 @@ function createWindow() {
     title: 'diaxeirisi Ylikoy',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     backgroundColor: '#f4f6f8',
+    fullscreen: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -42,6 +43,30 @@ function createWindow() {
 
 function registerIpcHandlers() {
   ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion()));
+  ipcMain.handle('window:set-fullscreen', async (event, value) =>
+    safeInvoke(() => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        window.setFullScreen(Boolean(value));
+      }
+      return window ? window.isFullScreen() : false;
+    })
+  );
+  ipcMain.handle('window:minimize', async (event) =>
+    safeInvoke(() => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        window.minimize();
+      }
+      return true;
+    })
+  );
+  ipcMain.handle('window:quit', async () =>
+    safeInvoke(() => {
+      app.quit();
+      return true;
+    })
+  );
   ipcMain.handle('print:current-document', async (event, options) =>
     safeInvoke(() => printCurrentDocument(event.sender, options))
   );

@@ -30,7 +30,13 @@ const sections = [
     title: 'ΕΚΤΥΠΩΣΕΙΣ',
     type: 'prints',
     hidden: true,
-    printOptions: { visibleGroups: ['shares'] }
+    printOptions: {
+      title: 'Συγκεντρωτικές Εκτυπώσεις',
+      menuTitle: 'Μερίδες Υλικού',
+      visibleGroups: ['shares'],
+      initialGroup: 'shares',
+      tileMenu: true
+    }
   },
   {
     id: 'indexes',

@@ -12,6 +12,11 @@ contextBridge.exposeInMainWorld('appApi', {
   app: {
     getVersion: () => invoke('app:get-version')
   },
+  windowControls: {
+    setFullscreen: (value) => invoke('window:set-fullscreen', value),
+    minimize: () => invoke('window:minimize'),
+    quit: () => invoke('window:quit')
+  },
   print: {
     currentDocument: (options) => invoke('print:current-document', options)
   },

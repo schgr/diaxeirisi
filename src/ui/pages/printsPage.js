@@ -5,7 +5,9 @@ import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../
 
 const ROWS_PER_REGISTRY_PAGE = 50;
 const ROWS_PER_INDEX_PAGE = 34;
-const INDEX_TILE_META = {
+const PRINT_TILE_META = {
+  registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
+  'share-card': { icon: 'ΜΥ', code: '§ ΣΕ-Β' },
   external: { icon: 'ΕΔ', code: '§ ΕΥ-Α' },
   orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' }
 };
@@ -98,14 +100,22 @@ export async function renderPrintsPage(
     </section>
 
     ${options.tileMenu ? `
-      <section class="transaction-flow-home print-index-tile-menu no-print" data-print-tile-menu aria-label="${escapeHtml(options.menuTitle || 'Ευρετήρια')}">
-        ${visiblePrintTabGroups[0].tabs.map((tab) => `
-          <button class="home-tile transaction-flow-tile" data-print-tab="${tab.key}" type="button">
-            <span class="home-tile-icon" aria-hidden="true">${escapeHtml(INDEX_TILE_META[tab.key]?.icon || 'ΕΥ')}</span>
-            <span class="home-tile-title">${escapeHtml(tab.label)}</span>
-            <span class="home-tile-code">${escapeHtml(INDEX_TILE_META[tab.key]?.code || '§ ΕΥ')}</span>
-          </button>
-        `).join('')}
+      <section class="print-index-tile-menu no-print" data-print-tile-menu aria-label="${escapeHtml(options.menuTitle || 'Ευρετήρια')}">
+        <div class="home-group corner print-tile-group">
+          <div class="home-group-header">
+            <p class="home-group-label">${escapeHtml(options.menuTitle || visiblePrintTabGroups[0].label)}</p>
+            <span class="home-zone-tag">§ ${visiblePrintTabGroups[0].key === 'shares' ? 'ΣΕ' : 'ΕΥ'}</span>
+          </div>
+          <div class="home-tile-grid print-tile-grid">
+            ${visiblePrintTabGroups[0].tabs.map((tab) => `
+              <button class="home-tile panel corner" data-print-tab="${tab.key}" type="button">
+                <span class="home-tile-icon" aria-hidden="true">${escapeHtml(PRINT_TILE_META[tab.key]?.icon || 'ΕΥ')}</span>
+                <span class="home-tile-title">${escapeHtml(tab.label)}</span>
+                <span class="home-tile-code">${escapeHtml(PRINT_TILE_META[tab.key]?.code || '§ ΕΥ')}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
       </section>
       <div class="page-toolbar no-print" data-print-menu-back hidden>
         <button class="secondary-button" type="button">Πίσω στα Ευρετήρια</button>
@@ -128,10 +138,15 @@ export async function renderPrintsPage(
 
   async function renderActiveTab() {
     if (options.tileMenu) {
+      container.classList.toggle('print-index-menu-mode', state.showTileMenu);
       tileMenu.hidden = !state.showTileMenu;
+      tileMenu.style.display = state.showTileMenu ? '' : 'none';
       menuBack.hidden = state.showTileMenu;
+      menuBack.style.display = state.showTileMenu ? 'none' : '';
       controlsPanel.hidden = state.showTileMenu;
+      controlsPanel.style.display = state.showTileMenu ? 'none' : '';
       preview.hidden = state.showTileMenu;
+      preview.style.display = state.showTileMenu ? 'none' : '';
       if (state.showTileMenu) {
         title.textContent = options.title || 'Ευρετήρια';
         controls.innerHTML = '';
