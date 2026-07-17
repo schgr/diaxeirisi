@@ -1,6 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
-import { numberToGreekWords } from '../pages/sharesPage.js';
+import { numberToGreekWords, renderCompositionDocumentFooter } from '../pages/sharesPage.js';
 import { formatDate, formatQuantity, isCommerceUnit } from './shared.js';
 export function shouldOpenAddyDocument(documentData) {
   return hasCredit(documentData.items) || (hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit));
@@ -86,6 +86,9 @@ export function renderAddyCompositionDocument(documentData, items) {
           </tr>
           <tr><th colspan="2">ΠΡΟΒΛΕΠΟΜ.</th><th colspan="2">ΜΗ ΧΟΡΗΓΗΘΕΙΣΑ</th></tr>
           <tr><th>ΑΡΙΘ.</th><th>ΟΛΟΓΡΑΦ.</th><th>ΑΡΙΘ.</th><th>ΟΛΟΓΡΑΦ.</th></tr>
+          <tr class="composition-column-numbers">
+            <th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+          </tr>
         </thead>
         <tbody>
           ${compositionRows.map(({ component }, index) => `
@@ -102,10 +105,7 @@ export function renderAddyCompositionDocument(documentData, items) {
           `).join('')}
         </tbody>
       </table>
-      <div class="composition-document-footer">
-        <span>13. ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ</span>
-        <span>14. ΠΑΡΑΛΑΜΒΑΝΟΥΣΑ ΜΟΝΑΔΑ</span>
-      </div>
+      ${renderCompositionDocumentFooter()}
     </article>
   `;
 }

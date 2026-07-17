@@ -5446,9 +5446,11 @@ th {
 
 .composition-document-page {
   width: 210mm;
+  height: 297mm;
   min-height: 297mm;
   padding: 18mm 15mm 12mm;
   font-size: 10px;
+  overflow: hidden;
 }
 
 .composition-document-page + .composition-document-page {
@@ -5560,22 +5562,30 @@ th {
 }
 
 .composition-document-footer {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12mm;
   margin-top: 4mm;
   font-size: 10px;
+}
+
+.composition-footer-field > span {
+  display: block;
   text-decoration: underline;
 }
 
-.composition-document-footer span:last-child {
+.composition-footer-field-14 {
   text-align: right;
 }
 
-.composition-document-footer small {
+.composition-footer-field small {
   display: block;
   margin-top: 4mm;
   text-decoration: none;
+}
+
+.composition-footer-field .composition-footer-reference {
+  margin-top: 3mm;
 }
 
 .material-form-page-number {
@@ -6082,6 +6092,41 @@ th {
     background: #ffffff;
   }
 
+  .material-form-preview-backdrop {
+    position: static;
+    display: block;
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .material-form-preview-backdrop .request-document-modal {
+    position: static;
+    display: block;
+    width: 210mm;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .material-form-preview-backdrop .request-document-preview {
+    display: block;
+    width: 210mm;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
   .exhp-document-backdrop {
     position: static;
     display: block;
@@ -6537,10 +6582,17 @@ th {
     top: auto;
     left: auto;
     width: 210mm;
+    height: 297mm;
     min-height: 297mm;
     margin: 0;
+    overflow: hidden;
     break-after: page;
     page-break-after: always;
+  }
+
+  .composition-document-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .addy-composition-document.print-document-area {

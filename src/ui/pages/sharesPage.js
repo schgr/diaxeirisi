@@ -1,17 +1,25 @@
 import { escapeHtml } from '../components/forms.js';
 
-export async function renderSharesPage(container, sharesApi, settingsApi, showToast) {
-  const [shares, settings] = await Promise.all([
+export async function renderSharesPage(container, sharesApi, settingsApi, showToast, options = {}) {
+  const [allShares, settings] = await Promise.all([
     sharesApi.list(),
     settingsApi.get()
   ]);
+  const shares = options.compositionOnly
+    ? allShares.filter((share) => share.requiresComposition)
+    : allShares;
   const materialTypes = collectMaterialTypes(shares, settings.materialCategories);
+  const heading = options.compositionOnly ? 'Συνθέσεις μερίδων' : 'Κατάσταση μερίδων';
+  const eyebrow = options.compositionOnly ? 'ΣΥΝΘΕΣΕΙΣ ΜΕΡΙΔΩΝ' : 'ΜΕΡΙΔΕΣ';
 
   container.innerHTML = `
     <section class="page-header">
       <div>
-        <p class="eyebrow">ΜΕΡΙΔΕΣ</p>
-        <h2>Κατάσταση μερίδων</h2>
+        <p class="eyebrow">${eyebrow}</p>
+        <h2>${heading}</h2>
+        ${options.compositionOnly
+          ? '<p class="page-description">Εμφανίζονται μόνο οι μερίδες στις οποίες έχει επιλεγεί ότι υπάρχει σύνθεση. Με διπλό κλικ ανοίγει η καρτέλα και το φύλλο σύνθεσης.</p>'
+          : ''}
       </div>
       <div class="record-count"><span id="shares-count">${shares.length}</span> εγγραφές</div>
     </section>
@@ -616,8 +624,8 @@ async function printMaterialFormDocument(landscape) {
   }
 }
 
-function renderCompositionDocument(card, settings) {
-  const rowsPerPage = 20;
+export function renderCompositionDocument(card, settings) {
+  const rowsPerPage = 16;
   const items = card.compositionItems || [];
   const pageCount = Math.max(1, Math.ceil(items.length / rowsPerPage));
 
@@ -700,13 +708,17 @@ function renderCompositionDocumentRow(item, rowNumber) {
   `;
 }
 
-function renderCompositionDocumentFooter() {
+export function renderCompositionDocumentFooter() {
   return `
     <div class="composition-document-footer">
-      <span>13. ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ</span>
-      <span>14. ΠΑΡΑΛΑΜΒΑΝΟΥΣΑ ΜΟΝΑΔΑ<br />
-        <small>Αριθμ. Ημερ. Ευρετ. Δικ. Εξωτ. Δοσ.<br />......../........................ 20....</small>
-      </span>
+      <div class="composition-footer-field composition-footer-field-13">
+        <span><b>13.</b> ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ</span>
+      </div>
+      <div class="composition-footer-field composition-footer-field-14">
+        <span><b>14.</b> ΠΑΡΑΛΑΜΒΑΝΟΥΣΑ ΜΟΝΑΔΑ</span>
+        <small>Αριθμ. Ημερ. Ευρετ. Δικ. Εξωτ. Δοσ.</small>
+        <small class="composition-footer-reference">......../........................ 20....</small>
+      </div>
     </div>
   `;
 }

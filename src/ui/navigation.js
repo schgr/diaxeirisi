@@ -14,6 +14,7 @@ export function createNavigation({ container, sections, activeSection, onNavigat
 
 const HOME_TILE_META = {
   shares: { code: '§ 01-Α', icon: 'ΜΕ' },
+  'share-compositions': { code: '§ 01-Σ', icon: 'ΣΜ' },
   transactions: { code: '§ 01-Β', icon: 'ΔΣ' },
   indexes: { code: '§ 01-Γ', icon: 'ΕΥ' },
   charges: { code: '§ 01-Δ', icon: 'ΧΡ' },

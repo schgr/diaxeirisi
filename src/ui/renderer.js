@@ -19,6 +19,7 @@ applyStoredTheme();
 
 const sections = [
   { id: 'shares', title: 'ΜΕΡΙΔΕΣ', type: 'shares' },
+  { id: 'share-compositions', title: 'ΣΥΝΘΕΣΕΙΣ ΜΕΡΙΔΩΝ', type: 'share-compositions', hidden: true },
   { id: 'charges', title: 'ΧΟΡΗΓΗΣΕΙΣ ΣΕ ΤΜΗΜΑΤΑ', type: 'charges' },
   { id: 'transactions', title: 'ΔΟΣΟΛΗΨΙΕΣ', type: 'transactions' },
   { id: 'movement-differences', title: 'ΔΙΑΦΟΡΕΣ', type: 'movement-differences' },
@@ -71,6 +72,7 @@ const homeGroups = [
     label: 'Υλικό και κινήσεις',
     items: [
       { id: 'shares', title: 'Μερίδες' },
+      { id: 'share-compositions', title: 'Συνθέσεις Μερίδων' },
       { id: 'transactions', title: 'Δοσοληψίες' },
       { id: 'indexes', title: 'Ευρετήρια' },
       { id: 'charges', title: 'Χορηγήσεις σε τμήματα' },
@@ -324,6 +326,17 @@ async function renderActivePage() {
 
     if (section.type === 'shares') {
       await renderSharesPage(sectionRoot, window.appApi.shares, window.appApi.settings, showToast);
+      return;
+    }
+
+    if (section.type === 'share-compositions') {
+      await renderSharesPage(
+        sectionRoot,
+        window.appApi.shares,
+        window.appApi.settings,
+        showToast,
+        { compositionOnly: true }
+      );
       return;
     }
 
