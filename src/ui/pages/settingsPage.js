@@ -53,6 +53,8 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             ${field('ΔΧΣΤΗΣ', 'manager', settings.financialOfficers.manager, '', 'data-preserve-case="true"')}
           </form>
         </section>
+
+        ${renderInitialInventorySection()}
       </div>
     </div>
 
@@ -162,6 +164,30 @@ function renderMaterialCardFlags(shares) {
         `).join('') : '<tr><td colspan="7" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
       </table>
     </div>
+  `;
+}
+
+export function renderInitialInventorySection() {
+  const today = new Date().toISOString().slice(0, 10);
+  return `
+    <section class="page-panel wide-panel initial-inventory-panel">
+      <div>
+        <h3>Αρχική ενημέρωση μερίδων</h3>
+        <p class="muted">Κατεβάστε το πρότυπο Excel, συμπληρώστε τα στοιχεία της τελευταίας ετήσιας απογραφής και εισαγάγετέ το. Οι υπάρχουσες μερίδες ενημερώνονται βάσει του αριθμού μερίδας και οι νέες δημιουργούνται αυτόματα.</p>
+        <p class="muted">Υποχρεωτικές στήλες: Α/Α, Αριθμός Μερίδας, Αριθμός Ονομαστικού, Περιγραφή, Μονάδα Μέτρησης και Ποσότητα.</p>
+      </div>
+      <div class="initial-inventory-actions">
+        <button class="secondary-button" data-download-initial-inventory-template type="button">Λήψη προτύπου Excel</button>
+        <form id="initial-inventory-form" class="stacked-form initial-inventory-form">
+          <label class="field">
+            <span>Ημερομηνία τελευταίας ετήσιας απογραφής</span>
+            <input name="inventoryDate" type="date" max="${today}" required />
+          </label>
+          <button class="primary-button" type="submit">Εισαγωγή αρχικής απογραφής</button>
+        </form>
+        <p class="muted" data-initial-inventory-status aria-live="polite">Δεν έχει επιλεγεί αρχείο.</p>
+      </div>
+    </section>
   `;
 }
 
@@ -462,6 +488,8 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     await settingsApi.saveFinancialOfficers(getFormData(form));
   });
 
+  bindInitialInventoryEvents(container, settingsApi, showToast);
+
   bindForm(container, '#department-form', showToast, async (form) => {
     await settingsApi.addDepartmentManager(getFormData(form));
     await refresh(container, settingsApi, showToast, 'Ο μερικός διαχειριστής προστέθηκε.');
@@ -534,6 +562,56 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
         showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της καρτέλας.', 'error');
       }
     });
+  });
+}
+
+function bindInitialInventoryEvents(container, settingsApi, showToast) {
+  const downloadButton = container.querySelector('[data-download-initial-inventory-template]');
+  const form = container.querySelector('#initial-inventory-form');
+  const status = container.querySelector('[data-initial-inventory-status]');
+
+  downloadButton?.addEventListener('click', async () => {
+    downloadButton.disabled = true;
+    try {
+      const result = await settingsApi.downloadInitialInventoryTemplate();
+      if (!result) return;
+      status.textContent = `Το πρότυπο αποθηκεύτηκε: ${result.filePath}`;
+      showToast(result.message || 'Το πρότυπο Excel δημιουργήθηκε.');
+    } catch (error) {
+      status.textContent = error.message || 'Δεν ήταν δυνατή η δημιουργία του προτύπου.';
+      showToast(status.textContent, 'error');
+    } finally {
+      downloadButton.disabled = false;
+    }
+  });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const inventoryDate = form.elements.inventoryDate.value;
+    if (!inventoryDate) {
+      showToast('Συμπληρώστε την ημερομηνία της τελευταίας ετήσιας απογραφής.', 'error');
+      return;
+    }
+    if (!window.confirm('Η εισαγωγή θα δημιουργήσει νέες μερίδες και θα ενημερώσει τις υπάρχουσες βάσει του αριθμού μερίδας. Να συνεχιστεί;')) return;
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    status.textContent = 'Δημιουργία αντιγράφου ασφαλείας και έλεγχος του αρχείου Excel...';
+    try {
+      await window.appApi.backup.createAutomatic();
+      const result = await settingsApi.importInitialInventory(inventoryDate);
+      if (!result) {
+        status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
+        return;
+      }
+      status.textContent = `${result.message} Αριθμός απογραφής: ${result.serialNumber}.`;
+      showToast(result.message || 'Η αρχική απογραφή εισήχθη επιτυχώς.');
+    } catch (error) {
+      status.textContent = error.message || 'Δεν ήταν δυνατή η εισαγωγή της αρχικής απογραφής.';
+      showToast(status.textContent, 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 }
 
