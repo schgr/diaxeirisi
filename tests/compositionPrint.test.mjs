@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import {
   renderCompositionDocument,
-  renderCompositionDocumentFooter
+  renderCompositionDocumentFooter,
+  renderRows
 } from '../src/ui/pages/sharesPage.js';
+import { renderShareNumberOptions } from '../src/ui/pages/transactionsPage.js';
 import { renderAddyCompositionDocument } from '../src/ui/transactions/addyPrint.js';
 
 const card = {
@@ -50,6 +52,31 @@ const addyDocument = renderAddyCompositionDocument(
 );
 assert.ok(addyDocument.includes(footer), 'The ADDY composition must use the complete official footer.');
 assert.match(addyDocument, /class="composition-column-numbers"/);
+
+const compactRows = renderRows([{
+  id: 13,
+  shareNumber: '13',
+  nominalNumber: '1005-13',
+  mainMaterialNumber: 'ΚΥ-13',
+  description: 'ΔΟΚΙΜΑΣΤΙΚΟ ΥΛΙΚΟ',
+  materialType: 'ΟΠΛΙΣΜΟΣ',
+  accountingBalance: 4,
+  chargedQuantity: 2,
+  differenceQuantity: 2,
+  status: 'Διαφορά',
+  statusTone: 'warning'
+}], true);
+assert.match(compactRows, /1005-13/);
+assert.match(compactRows, /ΔΟΚΙΜΑΣΤΙΚΟ ΥΛΙΚΟ/);
+assert.doesNotMatch(compactRows, /ΚΥ-13|ΟΠΛΙΣΜΟΣ|status-pill/);
+
+const shareOptions = renderShareNumberOptions([{
+  shareNumber: '13',
+  nominalNumber: '1005-13',
+  description: 'ΔΟΚΙΜΑΣΤΙΚΟ ΥΛΙΚΟ'
+}]);
+assert.match(shareOptions, /value="13"/);
+assert.doesNotMatch(shareOptions, /1005-13|ΔΟΚΙΜΑΣΤΙΚΟ ΥΛΙΚΟ/);
 
 console.log('compositionPrint.test.mjs: OK');
 

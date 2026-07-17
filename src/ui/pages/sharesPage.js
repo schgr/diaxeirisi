@@ -18,13 +18,13 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
         <p class="eyebrow">${eyebrow}</p>
         <h2>${heading}</h2>
         ${options.compositionOnly
-          ? '<p class="page-description">Εμφανίζονται μόνο οι μερίδες στις οποίες έχει επιλεγεί ότι υπάρχει σύνθεση. Με διπλό κλικ ανοίγει η καρτέλα και το φύλλο σύνθεσης.</p>'
+          ? '<p class="page-description">Εμφανίζονται μόνο οι μερίδες στις οποίες έχει επιλεγεί ότι υπάρχει σύνθεση. Με διπλό κλικ ανοίγουν η σύνθεση και το φύλλο μεταβολών.</p>'
           : ''}
       </div>
       <div class="record-count"><span id="shares-count">${shares.length}</span> εγγραφές</div>
     </section>
 
-    <section class="page-panel shares-filter-panel">
+    ${options.compositionOnly ? '' : `<section class="page-panel shares-filter-panel">
       <div class="shares-filter-grid">
         <label class="field">
           <span>Αριθμός μερίδας</span>
@@ -46,23 +46,13 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
           </select>
         </label>
       </div>
-    </section>
+    </section>`}
 
     <section class="page-panel shares-panel">
       <div class="shares-table-wrap">
         <table class="shares-table">
           <thead>
-            <tr>
-              <th>Αριθμός μερίδας</th>
-              <th>Αριθμός ονομαστικού</th>
-              <th>Αριθμός Κυρίου Υλικού</th>
-              <th class="share-description-column">Περιγραφή</th>
-              <th>Είδος υλικού</th>
-              <th class="number-cell">Λογιστικό</th>
-              <th class="number-cell">Σε Μερικές Διαχειρίσεις</th>
-              <th class="number-cell">Διαφορά</th>
-              <th>Κατάσταση</th>
-            </tr>
+            ${renderSharesTableHeader(options.compositionOnly)}
           </thead>
           <tbody id="shares-body"></tbody>
         </table>
@@ -70,8 +60,39 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
     </section>
   `;
 
-  bindLiveFilters(container, shares, showToast);
-  bindShareCardOpen(container, sharesApi, showToast, settings);
+  if (options.compositionOnly) {
+    container.querySelector('#shares-body').innerHTML = renderRows(shares, true);
+  } else {
+    bindLiveFilters(container, shares, showToast);
+  }
+  bindShareCardOpen(container, sharesApi, showToast, settings, options);
+}
+
+function renderSharesTableHeader(compositionOnly) {
+  if (compositionOnly) {
+    return `
+      <tr>
+        <th>Αριθμός μερίδας</th>
+        <th>Αριθμός ονομαστικού</th>
+        <th class="share-description-column">Περιγραφή</th>
+        <th class="number-cell">Λογιστικό</th>
+      </tr>
+    `;
+  }
+
+  return `
+    <tr>
+      <th>Αριθμός μερίδας</th>
+      <th>Αριθμός ονομαστικού</th>
+      <th>Αριθμός Κυρίου Υλικού</th>
+      <th class="share-description-column">Περιγραφή</th>
+      <th>Είδος υλικού</th>
+      <th class="number-cell">Λογιστικό</th>
+      <th class="number-cell">Σε Μερικές Διαχειρίσεις</th>
+      <th class="number-cell">Διαφορά</th>
+      <th>Κατάσταση</th>
+    </tr>
+  `;
 }
 
 function bindLiveFilters(container, shares, showToast) {
@@ -110,7 +131,7 @@ function bindLiveFilters(container, shares, showToast) {
   }
 }
 
-function bindShareCardOpen(container, sharesApi, showToast, settings) {
+function bindShareCardOpen(container, sharesApi, showToast, settings, options) {
   container.addEventListener('dblclick', async (event) => {
     const row = event.target.closest('tr[data-share-id]');
     if (!row) {
@@ -119,14 +140,14 @@ function bindShareCardOpen(container, sharesApi, showToast, settings) {
 
     try {
       const card = await sharesApi.getCard(Number(row.dataset.shareId), new Date().getFullYear());
-      openShareCard(card, sharesApi, showToast, settings);
+      openShareCard(card, sharesApi, showToast, settings, options);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατό το άνοιγμα της καρτέλας υλικού.', 'error');
     }
   });
 }
 
-function openShareCard(card, sharesApi, showToast, settings) {
+function openShareCard(card, sharesApi, showToast, settings, options = {}) {
   const existing = document.querySelector('.modal-backdrop');
   if (existing) {
     existing.remove();
@@ -140,7 +161,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
     <div class="material-card-modal" role="dialog" aria-modal="true">
       <header class="material-card-header">
         <div>
-          <p class="eyebrow">Καρτέλα υλικού</p>
+          <p class="eyebrow">${options.compositionOnly ? 'Σύνθεση μερίδας' : 'Καρτέλα υλικού'}</p>
           <h2>${escapeHtml(card.share.description)}</h2>
         </div>
         <div class="row-actions">
@@ -148,7 +169,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
         </div>
       </header>
 
-      <section class="material-card-top">
+      ${options.compositionOnly ? '' : `<section class="material-card-top">
         <div class="material-card-summary material-card-fields">
           ${detailField('Αριθμός μερίδας', 'shareNumber', card.share.shareNumber, 'text', true)}
           ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', true)}
@@ -172,7 +193,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
             <button class="primary-button" data-save-share-details type="button">Αποθήκευση</button>
           </div>
         </div>
-      </section>
+      </section>`}
 
       ${card.share.requiresComposition ? `
       <section class="material-card-section material-records-section">
@@ -218,7 +239,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
       </section>
       ` : ''}
 
-      <section class="material-card-section">
+      ${options.compositionOnly ? '' : `<section class="material-card-section">
         <div class="material-card-section-title">
           <h3>Δοσοληψίες Έτους</h3>
           <label class="field compact-year-field">
@@ -260,7 +281,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
             <tbody>${renderAssignmentRows(card.assignments)}</tbody>
           </table>
         </div>
-      </section>
+      </section>`}
     </div>
   `;
 
@@ -303,7 +324,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
         showToast('Τα στοιχεία της μερίδας αποθηκεύτηκαν.');
         const refreshed = await sharesApi.getCard(card.share.id, card.year);
         modal.remove();
-        openShareCard(refreshed, sharesApi, showToast, settings);
+        openShareCard(refreshed, sharesApi, showToast, settings, options);
       })
         .catch((error) => showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση.', 'error'));
       return;
@@ -368,7 +389,7 @@ function openShareCard(card, sharesApi, showToast, settings) {
           showToast(result.message);
           const refreshed = await sharesApi.getCard(card.share.id, card.year);
           modal.remove();
-          openShareCard(refreshed, sharesApi, showToast, settings);
+          openShareCard(refreshed, sharesApi, showToast, settings, options);
         })
         .catch((error) => showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση της σύνθεσης.', 'error'));
       return;
@@ -395,11 +416,11 @@ function openShareCard(card, sharesApi, showToast, settings) {
     row.querySelector('[data-component-description]').textContent = item ? item.componentDescription : '';
   });
 
-  modal.querySelector('#share-card-year').addEventListener('change', async (event) => {
+  modal.querySelector('#share-card-year')?.addEventListener('change', async (event) => {
     try {
       const refreshed = await sharesApi.getCard(card.share.id, Number(event.target.value) || new Date().getFullYear());
       modal.remove();
-      openShareCard(refreshed, sharesApi, showToast, settings);
+      openShareCard(refreshed, sharesApi, showToast, settings, options);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αλλαγή έτους.', 'error');
     }
@@ -1000,18 +1021,25 @@ function normalize(value) {
   return String(value || '').trim().toLocaleLowerCase('el-GR');
 }
 
-function renderRows(shares) {
+export function renderRows(shares, compositionOnly = false) {
   if (!shares.length) {
     return `
       <tr>
-        <td colspan="9" class="empty-table">Δεν βρέθηκαν μερίδες.</td>
+        <td colspan="${compositionOnly ? 4 : 9}" class="empty-table">Δεν βρέθηκαν μερίδες.</td>
       </tr>
     `;
   }
 
   return shares
     .map(
-      (share) => `
+      (share) => compositionOnly ? `
+        <tr data-share-id="${share.id}">
+          <td class="strong-cell">${escapeHtml(share.shareNumber)}</td>
+          <td>${escapeHtml(share.nominalNumber)}</td>
+          <td class="share-description-cell">${escapeHtml(share.description)}</td>
+          <td class="number-cell">${formatQuantity(share.accountingBalance)}</td>
+        </tr>
+      ` : `
         <tr data-share-id="${share.id}">
           <td class="strong-cell">${escapeHtml(share.shareNumber)}</td>
           <td>${escapeHtml(share.nominalNumber)}</td>
