@@ -12,6 +12,7 @@ const { createMovementDifferencesService } = require('./services/movementDiffere
 const { createAdministrationService } = require('./services/administrationService');
 const { createAnnualAccountsService } = require('./services/annualAccountsService');
 const { createInitialInventoryService } = require('./services/initialInventoryService');
+const { createCompositionImportService } = require('./services/compositionImportService');
 const { createExhpDocumentsService } = require('./services/exhpDocumentsService');
 const { createClothingService } = require('./services/clothingService');
 const { createSecurityService } = require('./services/securityService');
@@ -48,14 +49,17 @@ function createWindow() {
 function registerIpcHandlers() {
   ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion(), true));
   ipcMain.handle('auth:status', async () => safeInvoke(() => securityService.status(), true));
-  ipcMain.handle('auth:setup', async (_event, password, confirmation) =>
-    safeInvoke(() => securityService.setup(password, confirmation), true)
+  ipcMain.handle('auth:setup', async (_event, username, password, confirmation) =>
+    safeInvoke(() => securityService.setup(username, password, confirmation), true)
   );
-  ipcMain.handle('auth:login', async (_event, password) =>
-    safeInvoke(() => securityService.login(password), true)
+  ipcMain.handle('auth:login', async (_event, username, password) =>
+    safeInvoke(() => securityService.login(username, password), true)
   );
   ipcMain.handle('auth:change-password', async (_event, currentPassword, newPassword, confirmation) =>
     safeInvoke(() => securityService.changePassword(currentPassword, newPassword, confirmation))
+  );
+  ipcMain.handle('auth:change-credentials', async (_event, currentPassword, username, newPassword, confirmation) =>
+    safeInvoke(() => securityService.changeCredentials(currentPassword, username, newPassword, confirmation))
   );
   ipcMain.handle('auth:lock', async () => safeInvoke(() => securityService.lock()));
   ipcMain.handle('backup:list', async () => safeInvoke(() => backupService.list()));
@@ -184,6 +188,29 @@ function registerIpcHandlers() {
       });
       if (result.canceled || !result.filePaths.length) return null;
       return services.initialInventory.importWorkbook(result.filePaths[0], inventoryDate);
+    })
+  );
+  ipcMain.handle('settings:download-composition-template', async () =>
+    safeInvoke(async () => {
+      const result = await dialog.showSaveDialog({
+        title: 'Αποθήκευση προτύπου συνθέσεων μερίδων',
+        defaultPath: 'Πρότυπο-Συνθέσεων-Μερίδων.xlsx',
+        filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
+      });
+      if (result.canceled || !result.filePath) return null;
+      return services.compositionImport.writeTemplate(result.filePath);
+    })
+  );
+  ipcMain.handle('settings:import-compositions', async () =>
+    safeInvoke(async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Επιλογή αρχείου συνθέσεων μερίδων',
+        properties: ['openFile'],
+        filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
+      });
+      if (result.canceled || !result.filePaths.length) return null;
+      backupService.createAutomatic(true);
+      return services.compositionImport.importWorkbook(result.filePaths[0]);
     })
   );
   ipcMain.handle('settings:save-service', async (_event, payload) =>
@@ -551,6 +578,7 @@ app.whenReady().then(async () => {
     administration: createAdministrationService(database),
     annualAccounts: createAnnualAccountsService(database),
     initialInventory: createInitialInventoryService(database),
+    compositionImport: createCompositionImportService(database),
     exhpDocs: createExhpDocumentsService(database),
     clothing: createClothingService(database)
   };

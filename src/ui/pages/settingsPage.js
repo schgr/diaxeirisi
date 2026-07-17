@@ -55,6 +55,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
         </section>
 
         ${renderInitialInventorySection()}
+        ${renderCompositionImportSection()}
       </div>
     </div>
 
@@ -113,10 +114,11 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
     <div class="transaction-tab-panel" data-settings-panel="security" hidden>
       <div class="settings-layout security-settings-layout">
         <section class="page-panel">
-          <h3>Κωδικός Εισόδου</h3>
+          <h3>Στοιχεία Εισόδου</h3>
           <p class="muted">Η προστασία είναι ${authStatus.configured ? 'ενεργή' : 'ανενεργή'}. Ο κωδικός δεν αποθηκεύεται σε αναγνώσιμη μορφή.</p>
           <form id="change-password-form" class="stacked-form">
             <label class="field"><span>Τρέχων κωδικός</span><input name="currentPassword" type="password" autocomplete="current-password" required /></label>
+            <label class="field"><span>Όνομα χρήστη</span><input name="username" value="${escapeHtml(authStatus.username || 'admin')}" minlength="3" maxlength="50" autocomplete="username" required /></label>
             <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="6" autocomplete="new-password" required /></label>
             <label class="field"><span>Επιβεβαίωση νέου κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
             <button class="primary-button" type="submit">Αλλαγή κωδικού</button>
@@ -186,6 +188,23 @@ export function renderInitialInventorySection() {
           <button class="primary-button" type="submit">Εισαγωγή αρχικής απογραφής</button>
         </form>
         <p class="muted" data-initial-inventory-status aria-live="polite">Δεν έχει επιλεγεί αρχείο.</p>
+      </div>
+    </section>
+  `;
+}
+
+export function renderCompositionImportSection() {
+  return `
+    <section class="page-panel wide-panel initial-inventory-panel">
+      <div>
+        <h3>Ενημέρωση συνθέσεων μερίδων</h3>
+        <p class="muted">Το πρότυπο περιλαμβάνει τις ενεργές συνθέσεις. Η εισαγωγή αντικαθιστά τις γραμμές των μερίδων που υπάρχουν στο Excel, χωρίς να επηρεάζει τις υπόλοιπες.</p>
+        <p class="muted">Η Μη Χορηγηθείσα Ποσότητα υπολογίζεται αυτόματα: Προβλεπόμενη − Υπάρχουσα, με ελάχιστη τιμή το μηδέν.</p>
+      </div>
+      <div class="initial-inventory-actions">
+        <button class="secondary-button" data-download-composition-template type="button">Λήψη προτύπου συνθέσεων</button>
+        <button class="primary-button" data-import-compositions type="button">Εισαγωγή συνθέσεων από Excel</button>
+        <p class="muted" data-composition-import-status aria-live="polite">Δεν έχει επιλεγεί αρχείο.</p>
       </div>
     </section>
   `;
@@ -489,6 +508,7 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
   });
 
   bindInitialInventoryEvents(container, settingsApi, showToast);
+  bindCompositionImportEvents(container, settingsApi, showToast);
 
   bindForm(container, '#department-form', showToast, async (form) => {
     await settingsApi.addDepartmentManager(getFormData(form));
@@ -512,9 +532,9 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
 
   bindForm(container, '#change-password-form', showToast, async (form) => {
     const data = getFormData(form);
-    await window.appApi.auth.changePassword(data.currentPassword, data.newPassword, data.confirmation);
+    await window.appApi.auth.changeCredentials(data.currentPassword, data.username, data.newPassword, data.confirmation);
     form.reset();
-    showToast('Ο κωδικός εισόδου άλλαξε.');
+    showToast('Το όνομα χρήστη και ο κωδικός εισόδου ενημερώθηκαν.');
   });
 
   container.querySelector('[data-backup-now]')?.addEventListener('click', async () => {
@@ -611,6 +631,47 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
       showToast(status.textContent, 'error');
     } finally {
       submitButton.disabled = false;
+    }
+  });
+}
+
+function bindCompositionImportEvents(container, settingsApi, showToast) {
+  const downloadButton = container.querySelector('[data-download-composition-template]');
+  const importButton = container.querySelector('[data-import-compositions]');
+  const status = container.querySelector('[data-composition-import-status]');
+
+  downloadButton?.addEventListener('click', async () => {
+    downloadButton.disabled = true;
+    try {
+      const result = await settingsApi.downloadCompositionTemplate();
+      if (!result) return;
+      status.textContent = `Το πρότυπο αποθηκεύτηκε: ${result.filePath}`;
+      showToast(result.message || 'Το πρότυπο συνθέσεων δημιουργήθηκε.');
+    } catch (error) {
+      status.textContent = error.message || 'Δεν ήταν δυνατή η δημιουργία του προτύπου.';
+      showToast(status.textContent, 'error');
+    } finally {
+      downloadButton.disabled = false;
+    }
+  });
+
+  importButton?.addEventListener('click', async () => {
+    if (!window.confirm('Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;')) return;
+    importButton.disabled = true;
+    status.textContent = 'Έλεγχος και εισαγωγή του αρχείου συνθέσεων...';
+    try {
+      const result = await settingsApi.importCompositions();
+      if (!result) {
+        status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
+        return;
+      }
+      status.textContent = result.message;
+      showToast(result.message || 'Οι συνθέσεις ενημερώθηκαν.');
+    } catch (error) {
+      status.textContent = error.message || 'Δεν ήταν δυνατή η εισαγωγή των συνθέσεων.';
+      showToast(status.textContent, 'error');
+    } finally {
+      importButton.disabled = false;
     }
   });
 }

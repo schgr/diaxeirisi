@@ -18,24 +18,39 @@ function runSecurityTests(root) {
   const security = createSecurityService(path.join(root, 'security'), () => currentTime);
 
   assert.deepStrictEqual(security.status().configured, false);
-  expectCode(() => security.setup('123', '123'), 'PASSWORD_TOO_SHORT');
-  security.setup('ασφαλής-κωδικός', 'ασφαλής-κωδικός');
+  expectCode(() => security.setup('ab', '123456', '123456'), 'USERNAME_INVALID');
+  expectCode(() => security.setup('admin', '123', '123'), 'PASSWORD_TOO_SHORT');
+  security.setup('διαχειριστής', 'ασφαλής-κωδικός', 'ασφαλής-κωδικός');
   assert.strictEqual(security.isUnlocked(), true);
 
   security.lock();
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    expectCode(() => security.login('λάθος'), 'AUTH_INVALID_PASSWORD');
+    expectCode(() => security.login('διαχειριστής', 'λάθος'), 'AUTH_INVALID_CREDENTIALS');
   }
-  expectCode(() => security.login('ασφαλής-κωδικός'), 'AUTH_RATE_LIMITED');
+  expectCode(() => security.login('διαχειριστής', 'ασφαλής-κωδικός'), 'AUTH_RATE_LIMITED');
   currentTime += 31_000;
-  security.login('ασφαλής-κωδικός');
-  security.changePassword('ασφαλής-κωδικός', 'νέος-κωδικός', 'νέος-κωδικός');
+  security.login('διαχειριστής', 'ασφαλής-κωδικός');
+  security.changeCredentials('ασφαλής-κωδικός', 'υπεύθυνος', 'νέος-κωδικός', 'νέος-κωδικός');
   security.lock();
-  expectCode(() => security.login('ασφαλής-κωδικός'), 'AUTH_INVALID_PASSWORD');
-  security.login('νέος-κωδικός');
+  expectCode(() => security.login('διαχειριστής', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
+  security.login('υπεύθυνος', 'νέος-κωδικός');
 
   const stored = fs.readFileSync(path.join(root, 'security', 'security.json'), 'utf8');
   assert.ok(!stored.includes('νέος-κωδικός'));
+  assert.ok(stored.includes('υπεύθυνος'));
+
+  const legacyPath = path.join(root, 'legacy-security');
+  const legacyWriter = createSecurityService(legacyPath, () => currentTime);
+  legacyWriter.setup('admin', 'παλιός-κωδικός', 'παλιός-κωδικός');
+  legacyWriter.lock();
+  const legacyConfigPath = path.join(legacyPath, 'security.json');
+  const legacyConfig = JSON.parse(fs.readFileSync(legacyConfigPath, 'utf8'));
+  delete legacyConfig.username;
+  legacyConfig.version = 1;
+  fs.writeFileSync(legacyConfigPath, JSON.stringify(legacyConfig), 'utf8');
+  const legacyReader = createSecurityService(legacyPath, () => currentTime);
+  assert.strictEqual(legacyReader.status().username, 'admin');
+  legacyReader.login('admin', 'παλιός-κωδικός');
 }
 
 function runBackupTests(root) {

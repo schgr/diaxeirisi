@@ -459,16 +459,18 @@ function renderAuthGate(status) {
     <main class="auth-screen">
       <section class="auth-card corner" aria-labelledby="auth-title">
         <p class="home-kicker">ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ · ΑΣΦΑΛΗΣ ΠΡΟΣΒΑΣΗ</p>
-        <h1 id="auth-title">${isSetup ? 'Ορισμός κωδικού εισόδου' : 'Είσοδος στην εφαρμογή'}</h1>
+        <h1 id="auth-title">${isSetup ? 'Ορισμός στοιχείων εισόδου' : 'Είσοδος στην εφαρμογή'}</h1>
         <p class="muted">${isSetup
-          ? 'Δημιουργήστε έναν κωδικό τουλάχιστον 6 χαρακτήρων. Θα απαιτείται σε κάθε εκκίνηση.'
-          : 'Πληκτρολογήστε τον κωδικό για πρόσβαση στα δεδομένα της διαχείρισης.'}</p>
+          ? 'Δημιουργήστε όνομα χρήστη και κωδικό τουλάχιστον 6 χαρακτήρων. Θα απαιτούνται σε κάθε εκκίνηση.'
+          : 'Πληκτρολογήστε το όνομα χρήστη και τον κωδικό για πρόσβαση στα δεδομένα της διαχείρισης.'}</p>
         <form class="auth-form" data-auth-form>
           ${isSetup ? `
-            <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="6" autocomplete="new-password" required autofocus /></label>
+            <label class="field"><span>Όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required autofocus /></label>
+            <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
             <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
           ` : `
-            <label class="field"><span>Κωδικός εισόδου</span><input name="password" type="password" autocomplete="current-password" required autofocus ${lockedSeconds ? 'disabled' : ''} /></label>
+            <label class="field"><span>Όνομα χρήστη</span><input name="username" value="${escapeHtml(status.username || 'admin')}" autocomplete="username" required autofocus ${lockedSeconds ? 'disabled' : ''} /></label>
+            <label class="field"><span>Κωδικός εισόδου</span><input name="password" type="password" autocomplete="current-password" required ${lockedSeconds ? 'disabled' : ''} /></label>
           `}
           <p class="auth-message" data-auth-message role="alert">${lockedSeconds ? `Η είσοδος είναι προσωρινά κλειδωμένη για ${lockedSeconds} δευτερόλεπτα.` : ''}</p>
           <button class="primary-button" type="submit" ${lockedSeconds ? 'disabled' : ''}>${isSetup ? 'Ενεργοποίηση προστασίας' : 'Είσοδος'}</button>
@@ -489,9 +491,9 @@ function renderAuthGate(status) {
     try {
       const data = new FormData(form);
       if (isSetup) {
-        await window.appApi.auth.setup(data.get('password'), data.get('confirmation'));
+        await window.appApi.auth.setup(data.get('username'), data.get('password'), data.get('confirmation'));
       } else {
-        await window.appApi.auth.login(data.get('password'));
+        await window.appApi.auth.login(data.get('username'), data.get('password'));
       }
       startUnlockedApplication();
     } catch (error) {

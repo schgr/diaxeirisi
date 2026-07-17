@@ -14,10 +14,12 @@ contextBridge.exposeInMainWorld('appApi', {
   },
   auth: {
     status: () => invoke('auth:status'),
-    setup: (password, confirmation) => invoke('auth:setup', password, confirmation),
-    login: (password) => invoke('auth:login', password),
+    setup: (username, password, confirmation) => invoke('auth:setup', username, password, confirmation),
+    login: (username, password) => invoke('auth:login', username, password),
     changePassword: (currentPassword, newPassword, confirmation) =>
       invoke('auth:change-password', currentPassword, newPassword, confirmation),
+    changeCredentials: (currentPassword, username, newPassword, confirmation) =>
+      invoke('auth:change-credentials', currentPassword, username, newPassword, confirmation),
     lock: () => invoke('auth:lock')
   },
   backup: {
@@ -52,6 +54,8 @@ contextBridge.exposeInMainWorld('appApi', {
       invoke('settings:download-initial-inventory-template'),
     importInitialInventory: (inventoryDate) =>
       invoke('settings:import-initial-inventory', inventoryDate),
+    downloadCompositionTemplate: () => invoke('settings:download-composition-template'),
+    importCompositions: () => invoke('settings:import-compositions'),
     saveServiceInfo: (payload) => invoke('settings:save-service', payload),
     saveFinancialOfficers: (payload) => invoke('settings:save-financial-officers', payload),
     saveAuditSettings: (payload) => invoke('settings:save-audit', payload),

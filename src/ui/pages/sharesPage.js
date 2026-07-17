@@ -154,8 +154,9 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
   }
 
   const modal = document.createElement('div');
-  const compositionLocked = card.compositionItems.length > 0;
-  const changeSheetLocked = card.changeSheetEntries.length > 0;
+  const compositionEditor = Boolean(options.compositionOnly);
+  const compositionLocked = !compositionEditor || card.compositionItems.length > 0;
+  const changeSheetLocked = !compositionEditor || card.changeSheetEntries.length > 0;
   modal.className = 'modal-backdrop';
   modal.innerHTML = `
     <div class="material-card-modal" role="dialog" aria-modal="true">
@@ -201,8 +202,10 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           <div><h3>Σύνθεση Υλικού</h3><p class="muted">ΔΥΠ/190 · εξαρτήματα και προβλεπόμενες ποσότητες.</p></div>
           <div class="row-actions">
             <button class="secondary-button" data-view-composition type="button">Προβολή</button>
-            <button class="secondary-button" data-edit-composition type="button" ${compositionLocked ? '' : 'hidden'}>Επεξεργασία</button>
-            <button class="secondary-button" data-add-composition-row type="button" ${compositionLocked ? 'disabled' : ''}>Προσθήκη γραμμής</button>
+            ${compositionEditor ? `
+              <button class="secondary-button" data-edit-composition type="button" ${compositionLocked ? '' : 'hidden'}>Επεξεργασία</button>
+              <button class="secondary-button" data-add-composition-row type="button" ${compositionLocked ? 'disabled' : ''}>Προσθήκη γραμμής</button>
+            ` : ''}
           </div>
         </div>
         <div class="card-table-wrap">
@@ -211,10 +214,10 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
             <tbody data-composition-body>${renderCompositionRows(card.compositionItems, compositionLocked)}</tbody>
           </table>
         </div>
-        <div class="addy-save-row">
+        ${compositionEditor ? `<div class="addy-save-row">
           <span class="muted" data-composition-lock-state>${compositionLocked ? 'Η σύνθεση είναι κλειδωμένη.' : 'Η σύνθεση είναι σε επεξεργασία.'}</span>
           <button class="primary-button" data-save-composition type="button" ${compositionLocked ? 'disabled' : ''}>Αποθήκευση Σύνθεσης</button>
-        </div>
+        </div>` : ''}
       </section>
 
       <section class="material-card-section material-records-section">
@@ -222,8 +225,10 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           <div><h3>Φύλλο Μεταβολών</h3><p class="muted">ΔΥΠ/191 · ιστορικό μεταβολών των ειδών συνθέσεως.</p></div>
           <div class="row-actions">
             <button class="secondary-button" data-view-change-sheet type="button">Προβολή</button>
-            <button class="secondary-button" data-edit-change-sheet type="button" ${changeSheetLocked ? '' : 'hidden'}>Επεξεργασία</button>
-            <button class="secondary-button" data-add-change-row type="button" ${changeSheetLocked ? 'disabled' : ''}>Προσθήκη μεταβολής</button>
+            ${compositionEditor ? `
+              <button class="secondary-button" data-edit-change-sheet type="button" ${changeSheetLocked ? '' : 'hidden'}>Επεξεργασία</button>
+              <button class="secondary-button" data-add-change-row type="button" ${changeSheetLocked ? 'disabled' : ''}>Προσθήκη μεταβολής</button>
+            ` : ''}
           </div>
         </div>
         <div class="card-table-wrap">
@@ -232,10 +237,10 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
             <tbody data-change-sheet-body>${renderChangeSheetRows(card.changeSheetEntries, card.compositionItems, changeSheetLocked)}</tbody>
           </table>
         </div>
-        <div class="addy-save-row">
+        ${compositionEditor ? `<div class="addy-save-row">
           <span class="muted" data-change-sheet-lock-state>${changeSheetLocked ? 'Το φύλλο μεταβολών είναι κλειδωμένο.' : 'Το φύλλο μεταβολών είναι σε επεξεργασία.'}</span>
           <button class="primary-button" data-save-change-sheet type="button" ${changeSheetLocked ? 'disabled' : ''}>Αποθήκευση Φύλλου</button>
-        </div>
+        </div>` : ''}
       </section>
       ` : ''}
 
