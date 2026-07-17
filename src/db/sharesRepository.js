@@ -20,6 +20,7 @@ function createSharesRepository(db) {
               photo_path,
               requires_composition,
               requires_serial_number,
+              requires_weapon_registry,
               requires_change_sheet
             FROM shares
             WHERE archive_status = 'Ενεργή'
@@ -91,6 +92,7 @@ function createSharesRepository(db) {
               photo_path = ?,
               requires_composition = ?,
               requires_serial_number = ?,
+              requires_weapon_registry = ?,
               requires_change_sheet = ?
           WHERE id = ?
         `
@@ -108,6 +110,7 @@ function createSharesRepository(db) {
         payload.photoPath,
         payload.requiresComposition ? 1 : 0,
         payload.requiresSerialNumber ? 1 : 0,
+        payload.requiresWeaponRegistry ? 1 : 0,
         payload.requiresChangeSheet ? 1 : 0,
         id
       );

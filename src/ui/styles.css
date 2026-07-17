@@ -1066,6 +1066,10 @@ h3 {
   min-width: 0;
 }
 
+.settings-layout > .measurement-units-panel {
+  min-width: 350px;
+}
+
 .settings-request-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -6586,8 +6590,8 @@ th {
     display: none !important;
   }
 }
-.material-card-flags-table th:nth-last-child(-n + 2),
-.material-card-flags-table td:nth-last-child(-n + 2) {
+.material-card-flags-table th:nth-last-child(-n + 3),
+.material-card-flags-table td:nth-last-child(-n + 3) {
   width: 150px;
   text-align: center;
 }

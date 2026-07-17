@@ -66,7 +66,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
     <div class="transaction-tab-panel" data-settings-panel="parameters" hidden>
       <div class="settings-layout">
-        <section class="page-panel">
+        <section class="page-panel measurement-units-panel">
           <h3>Μονάδες Μέτρησης</h3>
           ${renderMeasurementUnitTable(settings.measurementUnits)}
           <form id="measurement-unit-form" class="inline-form">
@@ -96,7 +96,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
         <section class="page-panel wide-panel">
           <h3>Πεδία Καρτελών Υλικού</h3>
-          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού ή/και την παρακολούθηση Σειριακού Αριθμού.</p>
+          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, την παρακολούθηση Σειριακού Αριθμού ή/και το Μητρώο Οπλισμού.</p>
           ${renderMaterialCardFlags(shares)}
         </section>
       </div>
@@ -112,7 +112,7 @@ function renderMaterialCardFlags(shares) {
   return `
     <div class="table-wrap material-card-flags-wrap">
       <table class="index-table material-card-flags-table">
-        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th></tr></thead>
+        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th><th>Μητρώο Οπλισμού</th></tr></thead>
         <tbody>${shares.length ? shares.map((share, index) => `
           <tr data-material-card-flags="${share.id}">
             <td>${index + 1}</td>
@@ -121,8 +121,9 @@ function renderMaterialCardFlags(shares) {
             <td class="material-description-cell">${escapeHtml(share.description)}</td>
             <td><input data-material-flag="requiresComposition" type="checkbox" ${share.requiresComposition ? 'checked' : ''} aria-label="Σύνθεση Υλικού ${escapeHtml(share.shareNumber)}" /></td>
             <td><input data-material-flag="requiresSerialNumber" type="checkbox" ${share.requiresSerialNumber ? 'checked' : ''} aria-label="Σειριακός Αριθμός ${escapeHtml(share.shareNumber)}" /></td>
+            <td><input data-material-flag="requiresWeaponRegistry" type="checkbox" ${share.requiresWeaponRegistry ? 'checked' : ''} aria-label="Μητρώο Οπλισμού ${escapeHtml(share.shareNumber)}" /></td>
           </tr>
-        `).join('') : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
+        `).join('') : '<tr><td colspan="7" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
       </table>
     </div>
   `;

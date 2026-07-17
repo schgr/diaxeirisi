@@ -1841,6 +1841,13 @@ const migrations = [
       CREATE INDEX idx_share_serial_numbers_share
       ON share_serial_numbers (share_id, position);
     `
+  },
+  {
+    version: 54,
+    name: 'material_weapon_registry_flag',
+    up: `
+      ALTER TABLE shares ADD COLUMN requires_weapon_registry INTEGER NOT NULL DEFAULT 0;
+    `
   }
 ];
 

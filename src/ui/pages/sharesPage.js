@@ -343,7 +343,8 @@ function openShareCard(card, sharesApi, showToast, settings) {
           ...card,
           compositionItems: collectCompositionRows(modal),
           changeSheetEntries: collectChangeSheetRows(modal)
-        })
+        }),
+        true
       );
       return;
     }
@@ -570,7 +571,7 @@ function renderAssignmentRows(assignments) {
     .join('');
 }
 
-function openMaterialFormPreview(title, documentHtml) {
+function openMaterialFormPreview(title, documentHtml, landscape = false) {
   const existing = document.querySelector('.material-form-preview-backdrop');
   if (existing) existing.remove();
 
@@ -596,7 +597,7 @@ function openMaterialFormPreview(title, documentHtml) {
     }
 
     if (event.target.closest('[data-print-material-form]')) {
-      window.print();
+      void window.appApi.print.currentDocument({ landscape });
     }
   });
 

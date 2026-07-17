@@ -87,6 +87,7 @@ function testAddShareDefaults({ service }) {
   assert.strictEqual(created.differenceQuantity, -6);
   assert.strictEqual(created.requiresComposition, false);
   assert.strictEqual(created.requiresSerialNumber, false);
+  assert.strictEqual(created.requiresWeaponRegistry, false);
   assert.strictEqual(created.requiresChangeSheet, false);
   assert.strictEqual(created.photoPath, '');
   assert.strictEqual(created.status, 'Έλλειμμα');
@@ -105,16 +106,19 @@ function testRequiresFlagsAreIndependent({ service }) {
 
   updated = service.updateShareDetails(share.id, {
     requiresComposition: true,
-    requiresChangeSheet: false
+    requiresChangeSheet: false,
+    requiresWeaponRegistry: true
   });
   assert.strictEqual(updated.requiresComposition, true);
   assert.strictEqual(updated.requiresChangeSheet, false);
+  assert.strictEqual(updated.requiresWeaponRegistry, true);
 
   updated = service.updateShareDetails(share.id, {
     requiresComposition: false
   });
   assert.strictEqual(updated.requiresComposition, false);
   assert.strictEqual(updated.requiresChangeSheet, false);
+  assert.strictEqual(updated.requiresWeaponRegistry, true);
 }
 
 function testShareCardBalances({ db, service }) {

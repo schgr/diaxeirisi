@@ -9,14 +9,26 @@ export async function renderMovementDifferencesPage(container, api, showToast) {
       </div>
     </section>
 
-    <div class="home-tile-grid transaction-flow-home">
-      <button class="home-tile transaction-flow-tile" data-md-open-protocols type="button">
-        <span>Πρωτόκολλα Διαφορών από Διακίνηση Υλικού</span>
-      </button>
-      <button class="home-tile transaction-flow-tile" data-md-open-indexes type="button">
-        <span>Ευρετήρια Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού</span>
-      </button>
-    </div>
+    <section class="print-index-tile-menu" aria-label="Διαφορές από Διακίνηση Υλικού">
+      <div class="home-group corner print-tile-group">
+        <div class="home-group-header">
+          <p class="home-group-label">Διαφορές από Διακίνηση Υλικού</p>
+          <span class="home-zone-tag">§ ΔΥ</span>
+        </div>
+        <div class="home-tile-grid print-tile-grid">
+          <button class="home-tile panel corner" data-md-open-protocols type="button">
+            <span class="home-tile-icon" aria-hidden="true">ΠΔ</span>
+            <span class="home-tile-title">Πρωτόκολλα Διαφορών από Διακίνηση Υλικού</span>
+            <span class="home-tile-code">§ ΔΥ-Α</span>
+          </button>
+          <button class="home-tile panel corner" data-md-open-indexes type="button">
+            <span class="home-tile-icon" aria-hidden="true">ΕΔ</span>
+            <span class="home-tile-title">Ευρετήρια Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού</span>
+            <span class="home-tile-code">§ ΔΥ-Β</span>
+          </button>
+        </div>
+      </div>
+    </section>
   `;
 
   container.querySelector('[data-md-open-protocols]').addEventListener('click', () => {

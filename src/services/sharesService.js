@@ -75,6 +75,9 @@ function createSharesService(db) {
         requiresSerialNumber: payload && payload.requiresSerialNumber !== undefined
           ? Boolean(payload.requiresSerialNumber)
           : Boolean(share.requires_serial_number),
+        requiresWeaponRegistry: payload && payload.requiresWeaponRegistry !== undefined
+          ? Boolean(payload.requiresWeaponRegistry)
+          : Boolean(share.requires_weapon_registry),
         requiresChangeSheet: payload && payload.requiresChangeSheet !== undefined
           ? Boolean(payload.requiresChangeSheet)
           : Boolean(share.requires_change_sheet)
