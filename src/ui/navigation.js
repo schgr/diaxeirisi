@@ -26,7 +26,8 @@ const HOME_TILE_META = {
   'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
   'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
-  'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' }
+  'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' },
+  'settings-security': { code: '§ 04-Δ', icon: 'ΑΣ' }
 };
 
 export function renderHomeTiles({ container, groups, onNavigate }) {

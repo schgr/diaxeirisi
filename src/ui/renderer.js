@@ -98,7 +98,8 @@ const homeGroups = [
     items: [
       { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Γενικά' },
       { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Προσωπικό' },
-      { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' }
+      { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' },
+      { id: 'settings-security', sectionId: 'settings', tab: 'security', title: 'Ασφάλεια και Backup' }
     ]
   }
 ];
@@ -111,6 +112,7 @@ const state = {
 };
 
 const app = document.querySelector('#app');
+let applicationUnlocked = false;
 
 document.addEventListener('diaxeirisi:navigate', (event) => {
   const detail = event.detail || {};
@@ -119,6 +121,7 @@ document.addEventListener('diaxeirisi:navigate', (event) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
+  if (!applicationUnlocked) return;
 
   const modals = [...document.querySelectorAll('.modal-backdrop')];
   const modal = modals[modals.length - 1];
@@ -200,6 +203,7 @@ function showWindowOptions() {
       <div class="window-options-actions">
         <button class="secondary-button" data-window-action="exit-fullscreen" type="button">Έξοδος από πλήρη οθόνη</button>
         <button class="secondary-button" data-window-action="minimize" type="button">Ελαχιστοποίηση παραθύρου</button>
+        <button class="secondary-button" data-window-action="lock" type="button">Κλείδωμα εφαρμογής</button>
         <button class="primary-button" data-window-action="save" type="button">Αποθήκευση αλλαγών</button>
         <button class="danger-button" data-window-action="save-exit" type="button">Αποθήκευση και έξοδος</button>
         <button class="secondary-button" data-window-action="exit" type="button">Έξοδος χωρίς νέα αποθήκευση</button>
@@ -228,6 +232,12 @@ function showWindowOptions() {
       if (action === 'minimize') {
         modal.remove();
         await window.appApi.windowControls.minimize();
+        return;
+      }
+
+      if (action === 'lock') {
+        modal.remove();
+        await lockApplication();
         return;
       }
 
@@ -398,8 +408,90 @@ async function renderActivePage() {
   }
 }
 
-renderShell();
-showRequestRenewalNotice();
+initializeApplication();
+
+async function initializeApplication() {
+  try {
+    const status = await window.appApi.auth.status();
+    if (status.unlocked) {
+      startUnlockedApplication();
+      return;
+    }
+    renderAuthGate(status);
+  } catch (error) {
+    app.innerHTML = `<main class="auth-screen"><section class="auth-card"><h2>Σφάλμα ασφαλείας</h2><p>${escapeHtml(error.message || 'Δεν ήταν δυνατή η εκκίνηση της εφαρμογής.')}</p></section></main>`;
+  }
+}
+
+function startUnlockedApplication() {
+  applicationUnlocked = true;
+  state.activeSection = 'home';
+  renderShell();
+  void showRequestRenewalNotice();
+}
+
+async function lockApplication() {
+  await window.appApi.auth.lock();
+  applicationUnlocked = false;
+  renderAuthGate(await window.appApi.auth.status());
+}
+
+function renderAuthGate(status) {
+  applicationUnlocked = false;
+  const isSetup = !status.configured;
+  const lockedSeconds = status.lockedUntil
+    ? Math.max(1, Math.ceil((status.lockedUntil - Date.now()) / 1000))
+    : 0;
+  app.innerHTML = `
+    <main class="auth-screen">
+      <section class="auth-card corner" aria-labelledby="auth-title">
+        <p class="home-kicker">ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ · ΑΣΦΑΛΗΣ ΠΡΟΣΒΑΣΗ</p>
+        <h1 id="auth-title">${isSetup ? 'Ορισμός κωδικού εισόδου' : 'Είσοδος στην εφαρμογή'}</h1>
+        <p class="muted">${isSetup
+          ? 'Δημιουργήστε έναν κωδικό τουλάχιστον 6 χαρακτήρων. Θα απαιτείται σε κάθε εκκίνηση.'
+          : 'Πληκτρολογήστε τον κωδικό για πρόσβαση στα δεδομένα της διαχείρισης.'}</p>
+        <form class="auth-form" data-auth-form>
+          ${isSetup ? `
+            <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="6" autocomplete="new-password" required autofocus /></label>
+            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+          ` : `
+            <label class="field"><span>Κωδικός εισόδου</span><input name="password" type="password" autocomplete="current-password" required autofocus ${lockedSeconds ? 'disabled' : ''} /></label>
+          `}
+          <p class="auth-message" data-auth-message role="alert">${lockedSeconds ? `Η είσοδος είναι προσωρινά κλειδωμένη για ${lockedSeconds} δευτερόλεπτα.` : ''}</p>
+          <button class="primary-button" type="submit" ${lockedSeconds ? 'disabled' : ''}>${isSetup ? 'Ενεργοποίηση προστασίας' : 'Είσοδος'}</button>
+          <button class="secondary-button" data-auth-quit type="button">Έξοδος</button>
+        </form>
+      </section>
+    </main>
+  `;
+
+  app.querySelector('[data-auth-quit]')?.addEventListener('click', () => window.appApi.windowControls.quit());
+  app.querySelector('[data-auth-form]')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = form.querySelector('[data-auth-message]');
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    message.textContent = '';
+    try {
+      const data = new FormData(form);
+      if (isSetup) {
+        await window.appApi.auth.setup(data.get('password'), data.get('confirmation'));
+      } else {
+        await window.appApi.auth.login(data.get('password'));
+      }
+      startUnlockedApplication();
+    } catch (error) {
+      message.textContent = error.message || 'Δεν ήταν δυνατή η είσοδος.';
+      submit.disabled = false;
+      form.querySelector('input:not([disabled])')?.focus();
+    }
+  });
+
+  if (lockedSeconds) {
+    window.setTimeout(() => initializeApplication(), Math.min(lockedSeconds * 1000 + 100, 31_000));
+  }
+}
 
 async function showRequestRenewalNotice() {
   try {

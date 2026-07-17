@@ -13,7 +13,12 @@ const materialCategorySection = {
 };
 
 export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '', sharesApi = window.appApi.shares) {
-  const [settings, shares] = await Promise.all([settingsApi.get(), sharesApi.list()]);
+  const [settings, shares, authStatus, backups] = await Promise.all([
+    settingsApi.get(),
+    sharesApi.list(),
+    window.appApi.auth.status(),
+    window.appApi.backup.list()
+  ]);
 
   container.innerHTML = `
     <section class="page-header">
@@ -27,6 +32,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
       <button class="home-tile transaction-flow-tile" data-settings-tab="general" type="button"><span class="home-tile-icon">ΓΕ</span><span class="home-tile-title">Γενικά</span><span class="home-tile-code">§ ΡΥ-Α</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΠΡ</span><span class="home-tile-title">Προσωπικό</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΠΑ</span><span class="home-tile-title">Παράμετροι</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="security" type="button"><span class="home-tile-icon">ΑΣ</span><span class="home-tile-title">Ασφάλεια και Backup</span><span class="home-tile-code">§ ΡΥ-Δ</span></button>
     </nav>
     <div class="transaction-tab-panel" data-settings-panel="general" hidden>
       <div class="settings-layout">
@@ -98,6 +104,36 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
           <h3>Πεδία Καρτελών Υλικού</h3>
           <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, την παρακολούθηση Σειριακού Αριθμού ή/και το Μητρώο Οπλισμού.</p>
           ${renderMaterialCardFlags(shares)}
+        </section>
+      </div>
+    </div>
+
+    <div class="transaction-tab-panel" data-settings-panel="security" hidden>
+      <div class="settings-layout security-settings-layout">
+        <section class="page-panel">
+          <h3>Κωδικός Εισόδου</h3>
+          <p class="muted">Η προστασία είναι ${authStatus.configured ? 'ενεργή' : 'ανενεργή'}. Ο κωδικός δεν αποθηκεύεται σε αναγνώσιμη μορφή.</p>
+          <form id="change-password-form" class="stacked-form">
+            <label class="field"><span>Τρέχων κωδικός</span><input name="currentPassword" type="password" autocomplete="current-password" required /></label>
+            <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label class="field"><span>Επιβεβαίωση νέου κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <button class="primary-button" type="submit">Αλλαγή κωδικού</button>
+          </form>
+        </section>
+
+        <section class="page-panel">
+          <h3>Αντίγραφα Ασφαλείας</h3>
+          <p class="muted">Τα αντίγραφα περιλαμβάνουν τη βάση δεδομένων και τις αποθηκευμένες φωτογραφίες. Διατηρούνται αυτόματα τα 15 νεότερα.</p>
+          <div class="backup-actions">
+            <button class="primary-button" data-backup-now type="button">Αυτόματο αντίγραφο τώρα</button>
+            <button class="secondary-button" data-backup-export type="button">Αποθήκευση σε φάκελο</button>
+            <button class="danger-button" data-backup-restore type="button">Επαναφορά αντιγράφου</button>
+          </div>
+          <div class="backup-list">
+            ${backups.length ? backups.map((backup) => `
+              <article><strong>${escapeHtml(formatBackupDate(backup.createdAt))}</strong><span>${backup.kind === 'automatic' ? 'Αυτόματο' : 'Χειροκίνητο'} · ${backup.includesPhotos ? 'με φωτογραφίες' : 'χωρίς φωτογραφίες'}</span></article>
+            `).join('') : '<p class="empty-table">Δεν υπάρχουν ακόμη αυτόματα αντίγραφα.</p>'}
+          </div>
         </section>
       </div>
     </div>
@@ -446,6 +482,42 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     await refresh(container, settingsApi, showToast, 'Η μονάδα δοσοληψιών προστέθηκε.');
   });
 
+  bindForm(container, '#change-password-form', showToast, async (form) => {
+    const data = getFormData(form);
+    await window.appApi.auth.changePassword(data.currentPassword, data.newPassword, data.confirmation);
+    form.reset();
+    showToast('Ο κωδικός εισόδου άλλαξε.');
+  });
+
+  container.querySelector('[data-backup-now]')?.addEventListener('click', async () => {
+    try {
+      await window.appApi.backup.createAutomatic();
+      showToast('Δημιουργήθηκε νέο αυτόματο αντίγραφο.');
+      await renderSettingsPage(container, settingsApi, clothingApi, showToast, 'security', sharesApi);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η δημιουργία αντιγράφου.', 'error');
+    }
+  });
+
+  container.querySelector('[data-backup-export]')?.addEventListener('click', async () => {
+    try {
+      const backup = await window.appApi.backup.createManual();
+      if (backup) showToast('Το αντίγραφο ασφαλείας αποθηκεύτηκε στον επιλεγμένο φάκελο.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση του αντιγράφου.', 'error');
+    }
+  });
+
+  container.querySelector('[data-backup-restore]')?.addEventListener('click', async () => {
+    if (!window.confirm('Η εφαρμογή θα επανεκκινηθεί και τα τρέχοντα δεδομένα θα αντικατασταθούν. Θα δημιουργηθεί πρώτα αντίγραφο ασφαλείας. Συνέχεια;')) return;
+    try {
+      const result = await window.appApi.backup.restore();
+      if (result) showToast('Το αντίγραφο ετοιμάστηκε. Η εφαρμογή επανεκκινείται.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η επαναφορά του αντιγράφου.', 'error');
+    }
+  });
+
   bindDeletes(container, settingsApi, showToast);
 
   container.querySelectorAll('[data-material-flag]').forEach((checkbox) => {
@@ -463,6 +535,14 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
       }
     });
   });
+}
+
+function formatBackupDate(value) {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('el-GR', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(value));
 }
 
 function bindClothingSettings(container, clothingApi, showToast, initialItems) {

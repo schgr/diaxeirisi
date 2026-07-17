@@ -14,12 +14,16 @@ const { createAnnualAccountsService } = require('./services/annualAccountsServic
 const { createInitialInventoryService } = require('./services/initialInventoryService');
 const { createExhpDocumentsService } = require('./services/exhpDocumentsService');
 const { createClothingService } = require('./services/clothingService');
+const { createSecurityService } = require('./services/securityService');
+const { createBackupService, applyPendingRestore } = require('./services/backupService');
 const { createLogger } = require('./utils/logger');
-const { toAppError } = require('./core/errorHandler');
+const { AppError, toAppError } = require('./core/errorHandler');
 
 const logger = createLogger('main');
 
 let services;
+let securityService;
+let backupService;
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -42,7 +46,47 @@ function createWindow() {
 }
 
 function registerIpcHandlers() {
-  ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion()));
+  ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion(), true));
+  ipcMain.handle('auth:status', async () => safeInvoke(() => securityService.status(), true));
+  ipcMain.handle('auth:setup', async (_event, password, confirmation) =>
+    safeInvoke(() => securityService.setup(password, confirmation), true)
+  );
+  ipcMain.handle('auth:login', async (_event, password) =>
+    safeInvoke(() => securityService.login(password), true)
+  );
+  ipcMain.handle('auth:change-password', async (_event, currentPassword, newPassword, confirmation) =>
+    safeInvoke(() => securityService.changePassword(currentPassword, newPassword, confirmation))
+  );
+  ipcMain.handle('auth:lock', async () => safeInvoke(() => securityService.lock()));
+  ipcMain.handle('backup:list', async () => safeInvoke(() => backupService.list()));
+  ipcMain.handle('backup:create-automatic', async () =>
+    safeInvoke(() => backupService.createAutomatic(true))
+  );
+  ipcMain.handle('backup:create-manual', async () =>
+    safeInvoke(async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Επιλογή φακέλου αποθήκευσης αντιγράφου',
+        properties: ['openDirectory', 'createDirectory']
+      });
+      if (result.canceled || !result.filePaths.length) return null;
+      return backupService.createManual(result.filePaths[0]);
+    })
+  );
+  ipcMain.handle('backup:restore', async () =>
+    safeInvoke(async () => {
+      const result = await dialog.showOpenDialog({
+        title: 'Επιλογή αντιγράφου για επαναφορά',
+        properties: ['openDirectory']
+      });
+      if (result.canceled || !result.filePaths.length) return null;
+      const prepared = backupService.prepareRestore(result.filePaths[0]);
+      setTimeout(() => {
+        app.relaunch();
+        app.exit(0);
+      }, 250);
+      return prepared;
+    })
+  );
   ipcMain.handle('window:set-fullscreen', async (event, value) =>
     safeInvoke(() => {
       const window = BrowserWindow.fromWebContents(event.sender);
@@ -50,7 +94,7 @@ function registerIpcHandlers() {
         window.setFullScreen(Boolean(value));
       }
       return window ? window.isFullScreen() : false;
-    })
+    }, true)
   );
   ipcMain.handle('window:minimize', async (event) =>
     safeInvoke(() => {
@@ -59,13 +103,13 @@ function registerIpcHandlers() {
         window.minimize();
       }
       return true;
-    })
+    }, true)
   );
   ipcMain.handle('window:quit', async () =>
     safeInvoke(() => {
       app.quit();
       return true;
-    })
+    }, true)
   );
   ipcMain.handle('print:current-document', async (event, options) =>
     safeInvoke(() => printCurrentDocument(event.sender, options))
@@ -471,8 +515,11 @@ function printCurrentDocument(webContents, options) {
   });
 }
 
-async function safeInvoke(operation) {
+async function safeInvoke(operation, allowLocked = false) {
   try {
+    if (!allowLocked && securityService && !securityService.isUnlocked()) {
+      throw new AppError('Η εφαρμογή είναι κλειδωμένη.', 'AUTH_REQUIRED');
+    }
     return { ok: true, data: await operation() };
   } catch (error) {
     const appError = toAppError(error);
@@ -482,7 +529,16 @@ async function safeInvoke(operation) {
 }
 
 app.whenReady().then(async () => {
-  const database = await initializeDatabase(app.getPath('userData'));
+  const userDataPath = app.getPath('userData');
+  applyPendingRestore(userDataPath);
+  securityService = createSecurityService(userDataPath);
+  const database = await initializeDatabase(userDataPath);
+  backupService = createBackupService(userDataPath);
+  try {
+    backupService.createAutomatic();
+  } catch (error) {
+    logger.error('Δεν ήταν δυνατή η δημιουργία αυτόματου αντιγράφου.', error);
+  }
   const settingsService = createSettingsService(database);
   services = {
     shares: createSharesService(database),
@@ -500,6 +556,15 @@ app.whenReady().then(async () => {
   };
   registerIpcHandlers();
   createWindow();
+
+  const backupInterval = setInterval(() => {
+    try {
+      backupService.createAutomatic();
+    } catch (error) {
+      logger.error('Δεν ήταν δυνατή η δημιουργία προγραμματισμένου αντιγράφου.', error);
+    }
+  }, 6 * 60 * 60 * 1000);
+  backupInterval.unref();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.136",
+  "version": "0.13.138",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Local Prototype",
   "main": "src/main.js",
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "check": "node --check src/main.js && node --check src/preload.js",
-    "test": "node tests/shareBalance.test.js && node tests/shareValidation.test.js && node tests/sharesService.test.js && node tests/ledger-smoke.test.js && node tests/clothingService.test.js && node tests/exhpFormShared.test.js && node tests/docIAPyromaxika.test.js && node tests/exhpFormModuleBridge.test.js && node tests/exhpPrint.test.mjs && node tests/internalK2310.test.mjs",
+    "test": "node tests/shareBalance.test.js && node tests/shareValidation.test.js && node tests/sharesService.test.js && node tests/securityBackup.test.js && node tests/ledger-smoke.test.js && node tests/clothingService.test.js && node tests/exhpFormShared.test.js && node tests/docIAPyromaxika.test.js && node tests/exhpFormModuleBridge.test.js && node tests/exhpPrint.test.mjs && node tests/internalK2310.test.mjs",
     "pack:source": "node scripts/pack-source.js",
     "build": "npm run dist:win",
     "dist:win": "electron-builder --win nsis"

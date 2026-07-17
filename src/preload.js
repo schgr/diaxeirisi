@@ -12,6 +12,20 @@ contextBridge.exposeInMainWorld('appApi', {
   app: {
     getVersion: () => invoke('app:get-version')
   },
+  auth: {
+    status: () => invoke('auth:status'),
+    setup: (password, confirmation) => invoke('auth:setup', password, confirmation),
+    login: (password) => invoke('auth:login', password),
+    changePassword: (currentPassword, newPassword, confirmation) =>
+      invoke('auth:change-password', currentPassword, newPassword, confirmation),
+    lock: () => invoke('auth:lock')
+  },
+  backup: {
+    list: () => invoke('backup:list'),
+    createAutomatic: () => invoke('backup:create-automatic'),
+    createManual: () => invoke('backup:create-manual'),
+    restore: () => invoke('backup:restore')
+  },
   windowControls: {
     setFullscreen: (value) => invoke('window:set-fullscreen', value),
     minimize: () => invoke('window:minimize'),
