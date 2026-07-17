@@ -1067,7 +1067,7 @@ h3 {
 }
 
 .settings-layout > .measurement-units-panel {
-  min-width: 350px;
+  min-width: 440px;
 }
 
 .settings-request-grid {
@@ -2512,8 +2512,11 @@ table.administration-table td {
 }
 
 .registry-table td {
-  height: 13px;
+  height: 22px;
   font-size: 10px;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .registry-footer {

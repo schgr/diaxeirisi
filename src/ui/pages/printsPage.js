@@ -3,7 +3,7 @@ import { escapeHtml } from '../components/forms.js';
 import { renderSharePrintDocument } from './sharesPage.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 
-const ROWS_PER_REGISTRY_PAGE = 50;
+const ROWS_PER_REGISTRY_PAGE = 34;
 const ROWS_PER_INDEX_PAGE = 34;
 const PRINT_TILE_META = {
   registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },

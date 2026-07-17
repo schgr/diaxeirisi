@@ -597,11 +597,23 @@ function openMaterialFormPreview(title, documentHtml, landscape = false) {
     }
 
     if (event.target.closest('[data-print-material-form]')) {
-      void window.appApi.print.currentDocument({ landscape });
+      void printMaterialFormDocument(landscape);
     }
   });
 
   document.body.appendChild(backdrop);
+}
+
+async function printMaterialFormDocument(landscape) {
+  const pageStyle = document.createElement('style');
+  pageStyle.dataset.materialFormPageStyle = 'true';
+  pageStyle.textContent = `@page { size: A4 ${landscape ? 'landscape' : 'portrait'} !important; margin: 0; }`;
+  document.head.appendChild(pageStyle);
+  try {
+    await window.appApi.print.currentDocument({ landscape });
+  } finally {
+    pageStyle.remove();
+  }
 }
 
 function renderCompositionDocument(card, settings) {

@@ -4,6 +4,8 @@ export function showToast(message, type = 'success') {
     return;
   }
 
+  root.replaceChildren();
+
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
