@@ -2513,10 +2513,17 @@ table.administration-table td {
 
 .registry-table td {
   height: 22px;
+  max-height: 22px;
   font-size: 10px;
   line-height: 1.15;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.registry-table tbody tr {
+  height: 22px;
+  max-height: 22px;
 }
 
 .registry-footer {
