@@ -333,6 +333,9 @@ function registerIpcHandlers() {
   ipcMain.handle('transactions:exhp-index-rows', async (_event, year) =>
     safeInvoke(() => services.transactions.listExhpIndexRows(year))
   );
+  ipcMain.handle('transactions:financial-year-movements', async (_event, source, year, transactionType) =>
+    safeInvoke(() => services.transactions.listFinancialYearMovementRows(source, year, transactionType))
+  );
   ipcMain.handle('exhp-docs:get-by-exhp', async (_event, exhpId) =>
     safeInvoke(() => services.exhpDocs.getDocumentsForExhp(exhpId))
   );

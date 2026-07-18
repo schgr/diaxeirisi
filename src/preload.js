@@ -108,7 +108,9 @@ contextBridge.exposeInMainWorld('appApi', {
       invoke('transactions:save-exhp-support-form', documentId, supportId, payload),
     updateExhpIndexFields: (documentId, payload) =>
       invoke('transactions:update-exhp-index-fields', documentId, payload),
-    listExhpIndexRows: (year) => invoke('transactions:exhp-index-rows', year)
+    listExhpIndexRows: (year) => invoke('transactions:exhp-index-rows', year),
+    listFinancialYearMovementRows: (source, year, transactionType) =>
+      invoke('transactions:financial-year-movements', source, year, transactionType)
   },
   exhpDocs: {
     getByExhp: (exhpId) => invoke('exhp-docs:get-by-exhp', exhpId),

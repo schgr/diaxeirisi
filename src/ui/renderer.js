@@ -9,6 +9,7 @@ import { renderChargesPage } from './pages/chargesPage.js';
 import { renderInventoryPage } from './pages/inventoryPage.js';
 import { renderMovementDifferencesPage } from './pages/movementDifferencesPage.js';
 import { renderAdministrationPage } from './pages/administrationPage.js';
+import { renderFinancialYearTasksPage } from './pages/financialYearTasksPage.js';
 import { showToast } from './components/toast.js';
 import { escapeHtml } from './components/forms.js';
 
@@ -23,6 +24,7 @@ const sections = [
   { id: 'charges', title: 'ΧΟΡΗΓΗΣΕΙΣ ΣΕ ΤΜΗΜΑΤΑ', type: 'charges' },
   { id: 'transactions', title: 'ΔΟΣΟΛΗΨΙΕΣ', type: 'transactions' },
   { id: 'movement-differences', title: 'ΔΙΑΦΟΡΕΣ', type: 'movement-differences' },
+  { id: 'financial-year-tasks', title: 'ΕΡΓΑΣΙΕΣ ΟΙΚΟΝΟΜΙΚΟΥ ΕΤΟΥΣ', type: 'financial-year-tasks' },
   { id: 'requests', title: 'ΑΙΤΗΣΕΙΣ', type: 'requests' },
   { id: 'as', title: 'ΑΠΟΓΡΑΦΕΣ', type: 'inventory' },
   { id: 'administration', title: 'ΔΙΑΧΕΙΡΙΣΗ', type: 'administration' },
@@ -83,7 +85,8 @@ const homeGroups = [
     label: 'Έλεγχος και συμφωνία',
     items: [
       { id: 'as', title: 'Απογραφές' },
-      { id: 'movement-differences', title: 'Διαφορές' }
+      { id: 'movement-differences', title: 'Διαφορές' },
+      { id: 'financial-year-tasks', title: 'Εργασίες Οικονομικού Έτους' }
     ]
   },
   {
@@ -369,6 +372,11 @@ async function renderActivePage() {
 
     if (section.type === 'movement-differences') {
       await renderMovementDifferencesPage(sectionRoot, window.appApi.movementDifferences, showToast);
+      return;
+    }
+
+    if (section.type === 'financial-year-tasks') {
+      await renderFinancialYearTasksPage(sectionRoot, window.appApi.transactions, showToast);
       return;
     }
 

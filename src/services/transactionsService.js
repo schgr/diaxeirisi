@@ -430,6 +430,59 @@ function createTransactionsService(db, settingsService) {
       }));
     },
 
+    listFinancialYearMovementRows(source, year = new Date().getFullYear(), transactionType = 'Πίστωση') {
+      const normalizedSource = String(source || '').toLowerCase();
+      if (!['addy', 'exhp'].includes(normalizedSource)) {
+        throw new Error('Η κατηγορία κινήσεων δεν είναι έγκυρη.');
+      }
+      const fiscalYear = Number(year);
+      if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
+        throw new Error('Το οικονομικό έτος δεν είναι έγκυρο.');
+      }
+      if (!['Χρέωση', 'Πίστωση'].includes(transactionType)) {
+        throw new Error('Το είδος δοσοληψίας πρέπει να είναι Χρέωση ή Πίστωση.');
+      }
+
+      const rows = normalizedSource === 'addy'
+        ? repository.listAddyFinancialYearMovementRows(fiscalYear, transactionType)
+        : repository.listExhpFinancialYearMovementRows(fiscalYear, transactionType);
+
+      return rows.map((row, index) => {
+        const linkedTransaction = row.share_transaction_id
+          ? { id: row.share_transaction_id }
+          : normalizedSource === 'addy'
+            ? repository.findAddyShareTransaction(
+                row.share_id,
+                row.document_id,
+                row.document_date,
+                row.transaction_type,
+                row.quantity
+              )
+            : repository.findExhpShareTransaction(
+                row.share_id,
+                row.registry_number,
+                row.fiscal_year,
+                row.transaction_type,
+                row.quantity
+              );
+        return {
+          serial: index + 1,
+          shareNumber: row.share_number,
+          ledgerSerial: linkedTransaction
+            ? repository.getShareTransactionSerialForYear(
+                row.share_id,
+                linkedTransaction.id,
+                row.document_date
+              )
+            : '',
+          transactionKind: row.transaction_type === 'Πίστωση' ? 'Π' : 'Χ',
+          date: row.document_date,
+          quantity: Number(row.quantity || 0),
+          ...(normalizedSource === 'addy' ? { transactionUnit: row.transaction_unit } : {})
+        };
+      });
+    },
+
     listAddyDocuments() {
       return repository.listAddyDocuments().map((row) => ({
         id: row.id,
