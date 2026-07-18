@@ -74,7 +74,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
     </div>
 
     <div class="transaction-tab-panel" data-settings-panel="parameters" hidden>
-      <div class="settings-layout">
+      <div class="settings-layout parameters-settings-layout">
         <section class="page-panel measurement-units-panel">
           <h3>Μονάδες Μέτρησης</h3>
           ${renderMeasurementUnitTable(settings.measurementUnits)}

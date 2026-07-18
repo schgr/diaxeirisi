@@ -1070,6 +1070,14 @@ h3 {
   min-width: 440px;
 }
 
+.parameters-settings-layout {
+  grid-template-columns: minmax(440px, 1.35fr) repeat(2, minmax(280px, 1fr));
+}
+
+.parameters-settings-layout > .measurement-units-panel {
+  min-width: 0;
+}
+
 .settings-request-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
