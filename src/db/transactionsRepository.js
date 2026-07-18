@@ -628,13 +628,19 @@ function createTransactionsRepository(db) {
 
     listAddyFinancialYearMovementRows(year, transactionType) {
       return db.prepare(`
+        WITH ranked_documents AS (
+          SELECT document.*,
+                 ROW_NUMBER() OVER (ORDER BY document.document_date ASC, document.id ASC) AS registry_number
+          FROM addy_documents document
+          WHERE document.document_date BETWEEN ? AND ?
+        )
         SELECT item.id, item.share_id, item.share_number, item.transaction_type,
                item.quantity, item.share_transaction_id,
-               document.id AS document_id, document.document_date, document.transaction_unit
+               document.id AS document_id, document.document_date, document.transaction_unit,
+               document.registry_number
         FROM addy_items item
-        JOIN addy_documents document ON document.id = item.addy_document_id
-        WHERE document.document_date BETWEEN ? AND ?
-          AND item.transaction_type = ?
+        JOIN ranked_documents document ON document.id = item.addy_document_id
+        WHERE item.transaction_type = ?
         ORDER BY document.document_date ASC, item.id ASC
       `).all(`${year}-01-01`, `${year}-12-31`, transactionType);
     },

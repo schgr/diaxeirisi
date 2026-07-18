@@ -467,6 +467,7 @@ function createTransactionsService(db, settingsService) {
               );
         return {
           serial: index + 1,
+          registryNumber: row.registry_number,
           shareNumber: row.share_number,
           ledgerSerial: linkedTransaction
             ? repository.getShareTransactionSerialForYear(

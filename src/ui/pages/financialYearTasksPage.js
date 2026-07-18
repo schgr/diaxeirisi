@@ -2,7 +2,7 @@ import { escapeHtml } from '../components/forms.js';
 
 export async function renderFinancialYearTasksPage(container, transactionsApi, showToast) {
   const state = {
-    source: 'addy',
+    source: null,
     fiscalYear: new Date().getFullYear(),
     transactionType: 'Πίστωση'
   };
@@ -14,33 +14,51 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
         <h2>Εργασίες Οικονομικού Έτους</h2>
       </div>
     </section>
-    <section class="page-panel">
-      <div class="transaction-tabs" aria-label="Κατηγορία ελέγχου κινήσεων">
-        <button class="transaction-tab active" data-financial-source="addy" type="button">Έλεγχος Κινήσεων ΑΔΔΥ</button>
-        <button class="transaction-tab" data-financial-source="exhp" type="button">Έλεγχος Κινήσεων ΕΧΠ</button>
-      </div>
-      <div class="inline-form">
-        <label class="field">
-          <span>Οικονομικό Έτος</span>
-          <input data-financial-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
-        </label>
-        <label class="field">
-          <span>Κινήσεις</span>
-          <select data-financial-type>
-            <option value="Πίστωση">Πιστωτικές</option>
-            <option value="Χρέωση">Χρεωστικές</option>
-          </select>
-        </label>
-      </div>
+
+    <section class="transaction-flow-home" data-financial-menu aria-label="Επιλογή ελέγχου κινήσεων">
+      <button class="home-tile transaction-flow-tile" data-financial-source="addy" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
+        <span class="home-tile-title">Έλεγχος Κινήσεων ΑΔΔΥ</span>
+        <span class="home-tile-code">§ ΕΟΕ-Α</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="exhp" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΕΧ</span>
+        <span class="home-tile-title">Έλεγχος Κινήσεων ΕΧΠ</span>
+        <span class="home-tile-code">§ ΕΟΕ-Β</span>
+      </button>
     </section>
-    <section class="page-panel">
-      <div data-financial-results></div>
-    </section>
+
+    <div data-financial-detail hidden>
+      <div class="page-toolbar no-print">
+        <button class="secondary-button" data-financial-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+      </div>
+      <section class="page-panel">
+        <div class="inline-form">
+          <label class="field">
+            <span>Οικονομικό Έτος</span>
+            <input data-financial-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+          </label>
+          <label class="field">
+            <span>Κινήσεις</span>
+            <select data-financial-type>
+              <option value="Πίστωση">Πιστωτικές</option>
+              <option value="Χρέωση">Χρεωστικές</option>
+            </select>
+          </label>
+        </div>
+      </section>
+      <section class="page-panel">
+        <div data-financial-results></div>
+      </section>
+    </div>
   `;
 
+  const menu = container.querySelector('[data-financial-menu]');
+  const detail = container.querySelector('[data-financial-detail]');
   const results = container.querySelector('[data-financial-results]');
 
   async function refresh() {
+    if (!state.source) return;
     results.innerHTML = '<p class="muted">Φόρτωση κινήσεων...</p>';
     try {
       const rows = await transactionsApi.listFinancialYearMovementRows(
@@ -58,13 +76,17 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
   container.querySelectorAll('[data-financial-source]').forEach((button) => {
     button.addEventListener('click', () => {
       state.source = button.dataset.financialSource;
-      container.querySelectorAll('[data-financial-source]').forEach((item) => {
-        item.classList.toggle('active', item === button);
-      });
+      menu.hidden = true;
+      detail.hidden = false;
       void refresh();
     });
   });
 
+  container.querySelector('[data-financial-back]').addEventListener('click', () => {
+    state.source = null;
+    detail.hidden = true;
+    menu.hidden = false;
+  });
   container.querySelector('[data-financial-year]').addEventListener('change', (event) => {
     state.fiscalYear = Number(event.target.value) || new Date().getFullYear();
     void refresh();
@@ -73,8 +95,6 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
     state.transactionType = event.target.value;
     void refresh();
   });
-
-  await refresh();
 }
 
 export function renderFinancialYearMovementTable(rows, source, transactionType) {
@@ -85,6 +105,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
     ? rows.map((row) => `
         <tr>
           <td>${escapeHtml(row.serial)}</td>
+          <td>${escapeHtml(row.registryNumber)}</td>
           <td>${escapeHtml(row.shareNumber)}</td>
           <td>${escapeHtml(row.ledgerSerial)}</td>
           <td>${escapeHtml(row.transactionKind)}</td>
@@ -93,7 +114,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
           ${source === 'addy' ? `<td>${escapeHtml(row.transactionUnit)}</td>` : ''}
         </tr>
       `).join('')
-    : `<tr><td colspan="${source === 'addy' ? 7 : 6}" class="empty-table">Δεν βρέθηκαν κινήσεις.</td></tr>`;
+    : `<tr><td colspan="${source === 'addy' ? 8 : 7}" class="empty-table">Δεν βρέθηκαν κινήσεις.</td></tr>`;
 
   return `
     <div class="section-heading">
@@ -102,7 +123,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>Α/Α ΔΟΣΟΛΗΨΙΑΣ</th>
+          <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>Α/Α ΔΟΣΟΛΗΨΙΑΣ</th>
           <th>ΕΙΔΟΣ ΔΟΣΟΛΗΨΙΑΣ</th><th>ΗΜΕΡΟΜΗΝΙΑ</th><th>ΠΟΣΟΤΗΤΑ</th>${unitHeader}
         </tr></thead>
         <tbody>${body}</tbody>

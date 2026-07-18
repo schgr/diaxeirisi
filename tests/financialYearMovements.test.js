@@ -35,16 +35,30 @@ async function run() {
         transactionType: 'Πίστωση', quantity: 4, supportingDocuments: ''
       }]
     });
+    transactions.saveAddy({
+      documentDate: '2026-03-01',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
+      notes: '',
+      items: [{
+        shareNumber: '1', nominalNumber: 'TEST-1', description: 'Υλικό δοκιμής',
+        quantity: 1, unitPrice: 1, measurementUnit: 'Τεμάχια',
+        transactionType: 'Πίστωση', materialType: 'Κύριο Υλικό'
+      }]
+    });
 
     assert.deepStrictEqual(transactions.listFinancialYearMovementRows('addy', 2026, 'Χρέωση'), [{
-      serial: 1, shareNumber: '1', ledgerSerial: 1, transactionKind: 'Χ',
+      serial: 1, registryNumber: 1, shareNumber: '1', ledgerSerial: 1, transactionKind: 'Χ',
       date: '2026-02-03', quantity: 10, transactionUnit: 'ΕΜΠΟΡΙΟ'
     }]);
     const exhpRows = transactions.listFinancialYearMovementRows('exhp', 2026, 'Πίστωση');
     assert.strictEqual(exhpRows.length, 1);
+    assert.strictEqual(exhpRows[0].registryNumber, 1);
     assert.strictEqual(exhpRows[0].ledgerSerial, 2);
     assert.strictEqual(exhpRows[0].transactionKind, 'Π');
     assert.strictEqual(Object.hasOwn(exhpRows[0], 'transactionUnit'), false);
+    const addyCreditRows = transactions.listFinancialYearMovementRows('addy', 2026, 'Πίστωση');
+    assert.strictEqual(addyCreditRows.length, 1);
+    assert.strictEqual(addyCreditRows[0].registryNumber, 2);
     const addyHtml = renderFinancialYearMovementTable(
       transactions.listFinancialYearMovementRows('addy', 2026, 'Χρέωση'),
       'addy',
@@ -52,6 +66,7 @@ async function run() {
     );
     const exhpHtml = renderFinancialYearMovementTable(exhpRows, 'exhp', 'Πίστωση');
     assert.match(addyHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
+    assert.match(addyHtml, /ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ/);
     assert.match(addyHtml, /ΕΜΠΟΡΙΟ/);
     assert.doesNotMatch(exhpHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(exhpHtml, />Π</);
