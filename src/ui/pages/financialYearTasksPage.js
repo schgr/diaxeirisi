@@ -161,21 +161,30 @@ async function printFinancialYearResults(results) {
   printRoot.innerHTML = `
     <style>
       @page { size: A4 landscape; margin: 8mm; }
-      .financial-year-print-sheet { box-sizing: border-box; width: 100%; padding: 4mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
+      .financial-year-print-sheet.print-document-area { position: relative; inset: auto; box-sizing: border-box; width: 100%; min-height: 0; padding: 4mm; page: landscape; page-break-after: auto; background: #fff; color: #000; font-family: Arial, sans-serif; visibility: visible; }
       .financial-year-print-sheet h3 { margin: 0 0 3mm; font-size: 16pt; }
       .financial-year-print-sheet .muted { margin: 0 0 5mm; color: #333; }
       .financial-year-print-sheet table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 9pt; }
       .financial-year-print-sheet th, .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: left; }
       .financial-year-print-sheet th { background: #e8eef5; font-size: 8pt; }
     </style>
-    <section class="financial-year-print-sheet">${results.innerHTML}</section>
+    <section class="financial-year-print-sheet print-document-area">${results.innerHTML}</section>
   `;
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {
+    await waitForPrintLayout();
     return await window.appApi.print.currentDocument({ landscape: true });
   } finally {
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }
+}
+
+function waitForPrintLayout() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
 }
