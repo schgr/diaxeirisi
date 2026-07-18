@@ -476,6 +476,7 @@ function createTransactionsService(db, settingsService) {
                 row.document_date
               )
             : '',
+          description: row.description,
           transactionKind: row.transaction_type === 'Πίστωση' ? 'Π' : 'Χ',
           date: row.document_date,
           quantity: Number(row.quantity || 0),

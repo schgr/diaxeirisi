@@ -427,7 +427,7 @@ function createTransactionsRepository(db) {
 
     listExhpFinancialYearMovementRows(year, transactionType) {
       return db.prepare(`
-        SELECT item.id, item.share_id, item.share_number, item.transaction_type,
+        SELECT item.id, item.share_id, item.share_number, item.description, item.transaction_type,
                item.quantity, item.share_transaction_id,
                document.document_date, document.fiscal_year, document.registry_number
         FROM exhp_items item
@@ -634,7 +634,7 @@ function createTransactionsRepository(db) {
           FROM addy_documents document
           WHERE document.document_date BETWEEN ? AND ?
         )
-        SELECT item.id, item.share_id, item.share_number, item.transaction_type,
+        SELECT item.id, item.share_id, item.share_number, item.description, item.transaction_type,
                item.quantity, item.share_transaction_id,
                document.id AS document_id, document.document_date, document.transaction_unit,
                document.registry_number

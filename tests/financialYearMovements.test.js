@@ -47,7 +47,8 @@ async function run() {
     });
 
     assert.deepStrictEqual(transactions.listFinancialYearMovementRows('addy', 2026, 'Χρέωση'), [{
-      serial: 1, registryNumber: 1, shareNumber: '1', ledgerSerial: 1, transactionKind: 'Χ',
+      serial: 1, registryNumber: 1, shareNumber: '1', ledgerSerial: 1,
+      description: 'Υλικό δοκιμής', transactionKind: 'Χ',
       date: '2026-02-03', quantity: 10, transactionUnit: 'ΕΜΠΟΡΙΟ'
     }]);
     const exhpRows = transactions.listFinancialYearMovementRows('exhp', 2026, 'Πίστωση');
@@ -67,6 +68,8 @@ async function run() {
     const exhpHtml = renderFinancialYearMovementTable(exhpRows, 'exhp', 'Πίστωση');
     assert.match(addyHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(addyHtml, /ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ/);
+    assert.match(addyHtml, /ΠΕΡΙΓΡΑΦΗ/);
+    assert.match(exhpHtml, /Υλικό δοκιμής/);
     assert.match(addyHtml, /ΕΜΠΟΡΙΟ/);
     assert.doesNotMatch(exhpHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(exhpHtml, />Π</);

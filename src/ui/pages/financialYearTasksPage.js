@@ -31,6 +31,7 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
     <div data-financial-detail hidden>
       <div class="page-toolbar no-print">
         <button class="secondary-button" data-financial-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+        <button class="primary-button" data-financial-print type="button">Εκτύπωση Κατάστασης</button>
       </div>
       <section class="page-panel">
         <div class="inline-form">
@@ -76,6 +77,7 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
   container.querySelectorAll('[data-financial-source]').forEach((button) => {
     button.addEventListener('click', () => {
       state.source = button.dataset.financialSource;
+      menu.classList.add('is-hidden');
       menu.hidden = true;
       detail.hidden = false;
       void refresh();
@@ -85,7 +87,18 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
   container.querySelector('[data-financial-back]').addEventListener('click', () => {
     state.source = null;
     detail.hidden = true;
+    menu.classList.remove('is-hidden');
     menu.hidden = false;
+  });
+  container.querySelector('[data-financial-print]').addEventListener('click', async () => {
+    try {
+      const result = await printFinancialYearResults(results);
+      if (result && result.printed === false && result.failureReason) {
+        showToast(`Η εκτύπωση δεν ολοκληρώθηκε: ${result.failureReason}`, 'error');
+      }
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση της κατάστασης.', 'error');
+    }
   });
   container.querySelector('[data-financial-year]').addEventListener('change', (event) => {
     state.fiscalYear = Number(event.target.value) || new Date().getFullYear();
@@ -108,13 +121,14 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
           <td>${escapeHtml(row.registryNumber)}</td>
           <td>${escapeHtml(row.shareNumber)}</td>
           <td>${escapeHtml(row.ledgerSerial)}</td>
+          <td>${escapeHtml(row.description)}</td>
           <td>${escapeHtml(row.transactionKind)}</td>
           <td>${escapeHtml(formatDate(row.date))}</td>
           <td>${escapeHtml(formatQuantity(row.quantity))}</td>
           ${source === 'addy' ? `<td>${escapeHtml(row.transactionUnit)}</td>` : ''}
         </tr>
       `).join('')
-    : `<tr><td colspan="${source === 'addy' ? 8 : 7}" class="empty-table">Δεν βρέθηκαν κινήσεις.</td></tr>`;
+    : `<tr><td colspan="${source === 'addy' ? 9 : 8}" class="empty-table">Δεν βρέθηκαν κινήσεις.</td></tr>`;
 
   return `
     <div class="section-heading">
@@ -124,7 +138,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
       <table>
         <thead><tr>
           <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>Α/Α ΔΟΣΟΛΗΨΙΑΣ</th>
-          <th>ΕΙΔΟΣ ΔΟΣΟΛΗΨΙΑΣ</th><th>ΗΜΕΡΟΜΗΝΙΑ</th><th>ΠΟΣΟΤΗΤΑ</th>${unitHeader}
+          <th>ΠΕΡΙΓΡΑΦΗ</th><th>ΕΙΔΟΣ ΔΟΣΟΛΗΨΙΑΣ</th><th>ΗΜΕΡΟΜΗΝΙΑ</th><th>ΠΟΣΟΤΗΤΑ</th>${unitHeader}
         </tr></thead>
         <tbody>${body}</tbody>
       </table>
@@ -139,4 +153,29 @@ function formatDate(value) {
 
 function formatQuantity(value) {
   return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3 }).format(Number(value || 0));
+}
+
+async function printFinancialYearResults(results) {
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root';
+  printRoot.innerHTML = `
+    <style>
+      @page { size: A4 landscape; margin: 8mm; }
+      .financial-year-print-sheet { box-sizing: border-box; width: 100%; padding: 4mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
+      .financial-year-print-sheet h3 { margin: 0 0 3mm; font-size: 16pt; }
+      .financial-year-print-sheet .muted { margin: 0 0 5mm; color: #333; }
+      .financial-year-print-sheet table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 9pt; }
+      .financial-year-print-sheet th, .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: left; }
+      .financial-year-print-sheet th { background: #e8eef5; font-size: 8pt; }
+    </style>
+    <section class="financial-year-print-sheet">${results.innerHTML}</section>
+  `;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  try {
+    return await window.appApi.print.currentDocument({ landscape: true });
+  } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
 }
