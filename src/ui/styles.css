@@ -2614,6 +2614,23 @@ table.administration-table td {
   height: 4%;
 }
 
+.official-index-page-counter {
+  position: absolute;
+  z-index: 3;
+  left: 39%;
+  top: 5.2%;
+  width: 22%;
+  height: 4%;
+  display: grid;
+  place-items: center;
+  color: #000000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(7px, 0.7vw, 10px);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .official-index-footer-mask {
   left: 0;
   bottom: 0;
@@ -2652,13 +2669,24 @@ table.administration-table td {
   font-weight: 700;
 }
 
-.official-index-signature-column b {
+.official-index-signature-name {
   display: block;
   max-width: 100%;
   margin-top: auto;
   padding-top: 4.2%;
   overflow: hidden;
   font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.official-index-signature-rank {
+  display: block;
+  max-width: 100%;
+  min-height: 1.15em;
+  overflow: hidden;
+  font-style: normal;
+  font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
 }

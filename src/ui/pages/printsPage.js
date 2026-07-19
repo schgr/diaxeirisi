@@ -558,7 +558,6 @@ function renderIndexTableControls(state, type) {
         <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
       </label>
       <div class="row-actions index-table-actions">
-        <button id="save-index-table" class="primary-button" type="button">Αποθήκευση</button>
         <button id="preview-index-document" class="secondary-button" type="button" data-index-type="${type}">Προβολή</button>
       </div>
     </div>
@@ -649,29 +648,37 @@ function bindExternalIndexControls(
   showToast
 ) {
   bindFiscalYearControls(container, state, renderActiveTab);
-  const saveButton = container.querySelector('#save-index-table');
   const previewButton = container.querySelector('#preview-index-document');
-  if (!saveButton || !previewButton) return;
-  saveButton.disabled = !rows.length;
-  saveButton.addEventListener('click', async () => {
+  if (!previewButton) return;
+  const saveRows = async (rowsToSave = rows) => {
+    const values = collectIndexTableValues(preview, [7, 8, 9]);
+    await Promise.all(rowsToSave.map((row) => transactionsApi.updateAddyIndexFields(row.id, {
+      field7: values.get(row.id)?.[7] || '',
+      field8: values.get(row.id)?.[8] || '',
+      field9: values.get(row.id)?.[9] || ''
+    })));
+  };
+  preview.onchange = async (event) => {
+    const input = event.target.closest('.index-cell-input');
+    if (!input) return;
     try {
-      const values = collectIndexTableValues(preview, [7, 8, 9]);
-      await Promise.all(rows.map((row) => transactionsApi.updateAddyIndexFields(row.id, {
-        field7: values.get(row.id)?.[7] || '',
-        field8: values.get(row.id)?.[8] || '',
-        field9: values.get(row.id)?.[9] || ''
-      })));
-      showToast('Το Ευρετήριο Εξωτερικών Δοσοληψιών αποθηκεύτηκε.');
-      await renderActiveTab();
+      await saveRows(rows.filter((row) => Number(row.id) === Number(input.dataset.indexId)));
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
+    }
+  };
+  previewButton.addEventListener('click', async () => {
+    try {
+      await saveRows();
+      openIndexDocumentPreview(
+        'Ευρετήριο Εξωτερικών Δοσοληψιών',
+        renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9])),
+        settings.financialOfficers
+      );
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
     }
   });
-  previewButton.addEventListener('click', () => openIndexDocumentPreview(
-    'Ευρετήριο Εξωτερικών Δοσοληψιών',
-    renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9])),
-    settings.financialOfficers
-  ));
 }
 
 function bindOrdersIndexControls(
@@ -685,28 +692,36 @@ function bindOrdersIndexControls(
   showToast
 ) {
   bindFiscalYearControls(container, state, renderActiveTab);
-  const saveButton = container.querySelector('#save-index-table');
   const previewButton = container.querySelector('#preview-index-document');
-  if (!saveButton || !previewButton) return;
-  saveButton.disabled = !rows.length;
-  saveButton.addEventListener('click', async () => {
+  if (!previewButton) return;
+  const saveRows = async (rowsToSave = rows) => {
+    const values = collectIndexTableValues(preview, [6, 7]);
+    await Promise.all(rowsToSave.map((row) => transactionsApi.updateExhpIndexFields(row.id, {
+      field6: values.get(row.id)?.[6] || '',
+      field7: values.get(row.id)?.[7] || ''
+    })));
+  };
+  preview.onchange = async (event) => {
+    const input = event.target.closest('.index-cell-input');
+    if (!input) return;
     try {
-      const values = collectIndexTableValues(preview, [6, 7]);
-      await Promise.all(rows.map((row) => transactionsApi.updateExhpIndexFields(row.id, {
-        field6: values.get(row.id)?.[6] || '',
-        field7: values.get(row.id)?.[7] || ''
-      })));
-      showToast('Το Ευρετήριο Εντολών Χρεωπιστώσεως αποθηκεύτηκε.');
-      await renderActiveTab();
+      await saveRows(rows.filter((row) => Number(row.id) === Number(input.dataset.indexId)));
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
+    }
+  };
+  previewButton.addEventListener('click', async () => {
+    try {
+      await saveRows();
+      openIndexDocumentPreview(
+        'Ευρετήριο Εντολών Χρεωπιστώσεως',
+        renderChargeCreditOrdersIndex(settings, collectIndexRows(preview, rows, [6, 7])),
+        settings.financialOfficers
+      );
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
     }
   });
-  previewButton.addEventListener('click', () => openIndexDocumentPreview(
-    'Ευρετήριο Εντολών Χρεωπιστώσεως',
-    renderChargeCreditOrdersIndex(settings, collectIndexRows(preview, rows, [6, 7])),
-    settings.financialOfficers
-  ));
 }
 
 function collectIndexTableValues(preview, fields) {
@@ -770,23 +785,36 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}) {
   document.body.appendChild(backdrop);
 }
 
-function renderIndexAnnualSignatures(financialOfficers = {}) {
+export function renderIndexAnnualSignatures(financialOfficers = {}) {
+  const commander = splitOfficerSignature(financialOfficers.commander);
+  const ped = splitOfficerSignature(financialOfficers.ped);
+  const manager = splitOfficerSignature(financialOfficers.manager);
   return `
     <div class="official-index-annual-signatures">
       <div class="official-index-signature-column">
         <strong>Θεωρήθηκε</strong>
-        <span>Ο Δκτης</span>
-        <b>${escapeHtml(financialOfficers.commander || '')}</b>
+        <span>Ο</span>
+        <span>ΔΚΤΗΣ</span>
+        ${renderIndexSignatureIdentity(commander)}
       </div>
       <div class="official-index-signature-column">
-        <span>Ο Π.Ε.Δ</span>
-        <b>${escapeHtml(financialOfficers.ped || '')}</b>
+        <span>Ο</span>
+        <span>Π.Ε.Δ</span>
+        ${renderIndexSignatureIdentity(ped)}
       </div>
       <div class="official-index-signature-column">
-        <span>Ο ΔΧΣΤΗΣ</span>
-        <b>${escapeHtml(financialOfficers.manager || '')}</b>
+        <span>Ο</span>
+        <span>ΔΧΣΤΗΣ</span>
+        ${renderIndexSignatureIdentity(manager)}
       </div>
     </div>
+  `;
+}
+
+function renderIndexSignatureIdentity(officer) {
+  return `
+    <b class="official-index-signature-name">${escapeHtml(officer.name)}</b>
+    <em class="official-index-signature-rank">${escapeHtml(officer.rank)}</em>
   `;
 }
 
@@ -954,11 +982,11 @@ function renderOfficialIndexPages(config) {
       pageIndex * config.rowsPerPage,
       (pageIndex + 1) * config.rowsPerPage
     );
-    return renderOfficialIndexPage({ ...config, rows });
+    return renderOfficialIndexPage({ ...config, rows, pageNumber: pageIndex + 1, pageCount });
   }).join('');
 }
 
-function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns }) {
+function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns, pageNumber, pageCount }) {
   const overlays = [
     officialIndexOverlay(unit, 13.2, 11.75, 16, 2.7, 'official-index-unit')
   ];
@@ -981,6 +1009,7 @@ function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowSt
       <img src="./assets/official-forms/${image}" alt="Επίσημο ευρετήριο ΤΕ 34-254" />
       <div class="official-index-cleanup official-index-page-number-mask"></div>
       <div class="official-index-cleanup official-index-footer-mask"></div>
+      <div class="official-index-page-counter">Σελίδα ${pageNumber} από Σελίδα ${pageCount}</div>
       ${overlays.join('')}
     </article>
   `;
