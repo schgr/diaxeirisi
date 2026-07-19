@@ -669,7 +669,8 @@ function bindExternalIndexControls(
   });
   previewButton.addEventListener('click', () => openIndexDocumentPreview(
     'Ευρετήριο Εξωτερικών Δοσοληψιών',
-    renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9]))
+    renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9])),
+    settings.financialOfficers
   ));
 }
 
@@ -703,7 +704,8 @@ function bindOrdersIndexControls(
   });
   previewButton.addEventListener('click', () => openIndexDocumentPreview(
     'Ευρετήριο Εντολών Χρεωπιστώσεως',
-    renderChargeCreditOrdersIndex(settings, collectIndexRows(preview, rows, [6, 7]))
+    renderChargeCreditOrdersIndex(settings, collectIndexRows(preview, rows, [6, 7])),
+    settings.financialOfficers
   ));
 }
 
@@ -728,7 +730,7 @@ function collectIndexRows(preview, rows, fields) {
   });
 }
 
-function openIndexDocumentPreview(title, documentHtml) {
+function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}) {
   document.querySelector('.index-document-preview-backdrop')?.remove();
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop';
@@ -737,6 +739,7 @@ function openIndexDocumentPreview(title, documentHtml) {
       <header class="material-card-header no-print">
         <div><p class="eyebrow">ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ</p><h2>${escapeHtml(title)}</h2></div>
         <div class="row-actions">
+          <button class="secondary-button" data-toggle-index-signatures type="button">Υπογραφές Έτους</button>
           <button class="secondary-button" data-close-index-preview type="button">Κλείσιμο</button>
           <button class="primary-button" data-print-index-preview type="button">Εκτύπωση</button>
         </div>
@@ -744,12 +747,47 @@ function openIndexDocumentPreview(title, documentHtml) {
       <div class="print-preview-shell index-document-preview-content">${documentHtml}</div>
     </div>
   `;
+  const signaturesButton = backdrop.querySelector('[data-toggle-index-signatures]');
+  signaturesButton.addEventListener('click', () => {
+    const lastPage = backdrop.querySelector('.official-index-page:last-child');
+    if (!lastPage) return;
+    const existing = lastPage.querySelector('.official-index-annual-signatures');
+    if (existing) {
+      existing.remove();
+      signaturesButton.textContent = 'Υπογραφές Έτους';
+      signaturesButton.classList.remove('active');
+      return;
+    }
+    lastPage.insertAdjacentHTML('beforeend', renderIndexAnnualSignatures(financialOfficers));
+    signaturesButton.textContent = 'Απόκρυψη Υπογραφών';
+    signaturesButton.classList.add('active');
+  });
   backdrop.querySelector('[data-close-index-preview]').addEventListener('click', () => backdrop.remove());
   backdrop.querySelector('[data-print-index-preview]').addEventListener('click', () => {
     void printIsolatedPreview(backdrop.querySelector('.index-document-preview-content'), true);
   });
   backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.remove(); });
   document.body.appendChild(backdrop);
+}
+
+function renderIndexAnnualSignatures(financialOfficers = {}) {
+  return `
+    <div class="official-index-annual-signatures">
+      <div class="official-index-signature-column">
+        <strong>Θεωρήθηκε</strong>
+        <span>Ο Δκτης</span>
+        <b>${escapeHtml(financialOfficers.commander || '')}</b>
+      </div>
+      <div class="official-index-signature-column">
+        <span>Ο Π.Ε.Δ</span>
+        <b>${escapeHtml(financialOfficers.ped || '')}</b>
+      </div>
+      <div class="official-index-signature-column">
+        <span>Ο ΔΧΣΤΗΣ</span>
+        <b>${escapeHtml(financialOfficers.manager || '')}</b>
+      </div>
+    </div>
+  `;
 }
 
 function bindFiscalYearControls(container, state, renderActiveTab) {
