@@ -2617,17 +2617,17 @@ table.administration-table td {
 .official-index-page-counter {
   position: absolute;
   z-index: 3;
-  left: 39%;
-  top: 5.2%;
-  width: 22%;
-  height: 4%;
+  right: 5.5%;
+  top: 87.7%;
+  width: 27%;
+  height: 2.2%;
   display: grid;
-  place-items: center;
+  place-items: center end;
   color: #000000;
   font-family: Arial, sans-serif;
   font-size: clamp(7px, 0.7vw, 10px);
   line-height: 1;
-  text-align: center;
+  text-align: right;
   white-space: nowrap;
 }
 

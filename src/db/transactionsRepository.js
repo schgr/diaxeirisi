@@ -593,7 +593,8 @@ function createTransactionsRepository(db) {
         .prepare(
           `
             SELECT
-              d.id,
+              d.id AS document_id,
+              item.id AS item_id,
               d.document_date,
               d.transaction_unit,
               d.justification_reference,
@@ -601,26 +602,19 @@ function createTransactionsRepository(db) {
               d.index_field_8,
               d.index_field_9,
               d.notes,
-              first_item.nominal_number,
-              first_item.description,
-              first_item.transaction_type,
+              item.nominal_number,
+              item.description,
+              item.transaction_type,
               (
                 SELECT COALESCE(SUM(quantity), 0)
                 FROM addy_items
                 WHERE addy_document_id = d.id
               ) AS total_quantity
             FROM addy_documents d
-            LEFT JOIN addy_items first_item
-              ON first_item.id = (
-                SELECT id
-                FROM addy_items
-                WHERE addy_document_id = d.id
-                ORDER BY id ASC
-                LIMIT 1
-              )
+            LEFT JOIN addy_items item ON item.addy_document_id = d.id
             WHERE d.document_date >= ?
               AND d.document_date <= ?
-            ORDER BY d.document_date ASC, d.id ASC
+            ORDER BY d.document_date ASC, d.id ASC, item.id ASC
           `
         )
         .all(`${year}-01-01`, `${year}-12-31`);

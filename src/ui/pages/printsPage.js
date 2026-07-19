@@ -652,11 +652,22 @@ function bindExternalIndexControls(
   if (!previewButton) return;
   const saveRows = async (rowsToSave = rows) => {
     const values = collectIndexTableValues(preview, [7, 8, 9]);
-    await Promise.all(rowsToSave.map((row) => transactionsApi.updateAddyIndexFields(row.id, {
+    const uniqueRows = [...new Map(rowsToSave.map((row) => [Number(row.id), row])).values()];
+    await Promise.all(uniqueRows.map((row) => transactionsApi.updateAddyIndexFields(row.id, {
       field7: values.get(row.id)?.[7] || '',
       field8: values.get(row.id)?.[8] || '',
       field9: values.get(row.id)?.[9] || ''
     })));
+  };
+  preview.oninput = (event) => {
+    const input = event.target.closest('.index-cell-input');
+    if (!input) return;
+    preview.querySelectorAll('.index-cell-input').forEach((candidate) => {
+      if (candidate === input) return;
+      if (candidate.dataset.indexId !== input.dataset.indexId) return;
+      if (candidate.dataset.indexField !== input.dataset.indexField) return;
+      candidate.value = input.value;
+    });
   };
   preview.onchange = async (event) => {
     const input = event.target.closest('.index-cell-input');
@@ -670,10 +681,17 @@ function bindExternalIndexControls(
   previewButton.addEventListener('click', async () => {
     try {
       await saveRows();
+      const allRows = collectIndexRows(preview, rows, [7, 8, 9]);
       openIndexDocumentPreview(
         'Ευρετήριο Εξωτερικών Δοσοληψιών',
-        renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9])),
-        settings.financialOfficers
+        renderExternalTransactionsIndex(settings, allRows),
+        settings.financialOfficers,
+        {
+          singleMaterialHtml: renderExternalTransactionsIndex(
+            settings,
+            selectFirstMaterialPerAddy(allRows)
+          )
+        }
       );
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
@@ -696,7 +714,8 @@ function bindOrdersIndexControls(
   if (!previewButton) return;
   const saveRows = async (rowsToSave = rows) => {
     const values = collectIndexTableValues(preview, [6, 7]);
-    await Promise.all(rowsToSave.map((row) => transactionsApi.updateExhpIndexFields(row.id, {
+    const uniqueRows = [...new Map(rowsToSave.map((row) => [Number(row.id), row])).values()];
+    await Promise.all(uniqueRows.map((row) => transactionsApi.updateExhpIndexFields(row.id, {
       field6: values.get(row.id)?.[6] || '',
       field7: values.get(row.id)?.[7] || ''
     })));
@@ -745,7 +764,19 @@ function collectIndexRows(preview, rows, fields) {
   });
 }
 
-function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}) {
+export function selectFirstMaterialPerAddy(rows = []) {
+  const documentIds = new Set();
+  return rows
+    .filter((row) => {
+      const id = Number(row.id);
+      if (documentIds.has(id)) return false;
+      documentIds.add(id);
+      return true;
+    })
+    .map((row, index) => ({ ...row, serial: index + 1 }));
+}
+
+function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}, options = {}) {
   document.querySelector('.index-document-preview-backdrop')?.remove();
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop';
@@ -754,6 +785,7 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}) {
       <header class="material-card-header no-print">
         <div><p class="eyebrow">ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ</p><h2>${escapeHtml(title)}</h2></div>
         <div class="row-actions">
+          ${options.singleMaterialHtml ? '<button class="secondary-button" data-toggle-index-materials type="button">Εκτύπωση με ένα υλικό ανά ΑΔΔΥ</button>' : ''}
           <button class="secondary-button" data-toggle-index-signatures type="button">Υπογραφές Έτους</button>
           <button class="secondary-button" data-close-index-preview type="button">Κλείσιμο</button>
           <button class="primary-button" data-print-index-preview type="button">Εκτύπωση</button>
@@ -762,24 +794,39 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}) {
       <div class="print-preview-shell index-document-preview-content">${documentHtml}</div>
     </div>
   `;
+  const content = backdrop.querySelector('.index-document-preview-content');
   const signaturesButton = backdrop.querySelector('[data-toggle-index-signatures]');
-  signaturesButton.addEventListener('click', () => {
-    const lastPage = backdrop.querySelector('.official-index-page:last-child');
-    if (!lastPage) return;
-    const existing = lastPage.querySelector('.official-index-annual-signatures');
-    if (existing) {
-      existing.remove();
-      signaturesButton.textContent = 'Υπογραφές Έτους';
-      signaturesButton.classList.remove('active');
-      return;
+  const materialsButton = backdrop.querySelector('[data-toggle-index-materials]');
+  let signaturesVisible = false;
+  let singleMaterialVisible = false;
+
+  const renderPreviewContent = () => {
+    content.innerHTML = singleMaterialVisible ? options.singleMaterialHtml : documentHtml;
+    if (signaturesVisible) {
+      content.querySelector('.official-index-page:last-child')?.insertAdjacentHTML(
+        'beforeend',
+        renderIndexAnnualSignatures(financialOfficers)
+      );
     }
-    lastPage.insertAdjacentHTML('beforeend', renderIndexAnnualSignatures(financialOfficers));
-    signaturesButton.textContent = 'Απόκρυψη Υπογραφών';
-    signaturesButton.classList.add('active');
+  };
+
+  materialsButton?.addEventListener('click', () => {
+    singleMaterialVisible = !singleMaterialVisible;
+    materialsButton.textContent = singleMaterialVisible
+      ? 'Εκτύπωση με όλα τα υλικά'
+      : 'Εκτύπωση με ένα υλικό ανά ΑΔΔΥ';
+    materialsButton.classList.toggle('active', singleMaterialVisible);
+    renderPreviewContent();
+  });
+  signaturesButton.addEventListener('click', () => {
+    signaturesVisible = !signaturesVisible;
+    signaturesButton.textContent = signaturesVisible ? 'Απόκρυψη Υπογραφών' : 'Υπογραφές Έτους';
+    signaturesButton.classList.toggle('active', signaturesVisible);
+    renderPreviewContent();
   });
   backdrop.querySelector('[data-close-index-preview]').addEventListener('click', () => backdrop.remove());
   backdrop.querySelector('[data-print-index-preview]').addEventListener('click', () => {
-    void printIsolatedPreview(backdrop.querySelector('.index-document-preview-content'), true);
+    void printIsolatedPreview(content, true);
   });
   backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.remove(); });
   document.body.appendChild(backdrop);
@@ -792,7 +839,7 @@ export function renderIndexAnnualSignatures(financialOfficers = {}) {
   return `
     <div class="official-index-annual-signatures">
       <div class="official-index-signature-column">
-        <strong>Θεωρήθηκε</strong>
+        <strong>ΘΕΩΡΗΘΗΚΕ</strong>
         <span>Ο</span>
         <span>ΔΚΤΗΣ</span>
         ${renderIndexSignatureIdentity(commander)}

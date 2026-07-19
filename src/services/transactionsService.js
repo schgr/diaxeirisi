@@ -249,7 +249,8 @@ function createTransactionsService(db, settingsService) {
 
     listExhpDocuments() {
       return repository.listExhpDocuments().map((row) => ({
-        id: row.id,
+        id: row.document_id,
+        itemId: row.item_id,
         fiscalYear: row.fiscal_year,
         registryNumber: row.registry_number,
         documentDate: row.document_date,
@@ -578,7 +579,7 @@ function createTransactionsService(db, settingsService) {
         nominalNumber: row.nominal_number || '',
         documentReference: row.transaction_type === 'Χρέωση'
           ? row.justification_reference || ''
-          : `Π-${row.id} / ${formatDate(row.document_date)}`,
+          : `Π-${row.document_id} / ${formatDate(row.document_date)}`,
         movementDate: row.document_date,
         returnDate: '',
         indexField7: row.index_field_7,

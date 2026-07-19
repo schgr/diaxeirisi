@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 const {
   renderChargeCreditOrdersIndex,
   renderExternalTransactionsIndex,
-  renderIndexAnnualSignatures
+  renderIndexAnnualSignatures,
+  selectFirstMaterialPerAddy
 } = await import('../src/ui/pages/printsPage.js');
 
 const settings = { serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' } };
@@ -35,9 +36,20 @@ const signaturesHtml = renderIndexAnnualSignatures({
   ped: 'ΛΓΟΣ ΠΕΤΡΟΣ ΕΛΕΓΧΟΣ',
   manager: 'ΥΠΛΓΟΣ ΝΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ'
 });
-assert.match(signaturesHtml, /Θεωρήθηκε[\s\S]*<span>Ο<\/span>[\s\S]*<span>ΔΚΤΗΣ<\/span>/);
+assert.match(signaturesHtml, /ΘΕΩΡΗΘΗΚΕ[\s\S]*<span>Ο<\/span>[\s\S]*<span>ΔΚΤΗΣ<\/span>/);
 assert.match(signaturesHtml, /<span>Ο<\/span>[\s\S]*<span>Π\.Ε\.Δ<\/span>/);
 assert.match(signaturesHtml, /<span>Ο<\/span>[\s\S]*<span>ΔΧΣΤΗΣ<\/span>/);
 assert.match(signaturesHtml, /Ιωαννης Δοκιμη[\s\S]*Ανθλγος/);
+assert.match(signaturesHtml, /ΘΕΩΡΗΘΗΚΕ/);
+
+const oneMaterialRows = selectFirstMaterialPerAddy([
+  { id: 10, itemId: 1, serial: 1 },
+  { id: 10, itemId: 2, serial: 2 },
+  { id: 11, itemId: 3, serial: 3 }
+]);
+assert.deepEqual(oneMaterialRows.map((row) => [row.id, row.itemId, row.serial]), [
+  [10, 1, 1],
+  [11, 3, 2]
+]);
 
 console.log('Index pagination and annual signatures test passed.');
