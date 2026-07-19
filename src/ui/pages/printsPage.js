@@ -156,6 +156,7 @@ export async function renderPrintsPage(
     }
     renderPrintNavigation(container, state, visiblePrintTabGroups);
     preview.classList.toggle('share-card-preview', state.activeTab === 'share-card');
+    preview.classList.toggle('index-table-preview', ['external', 'orders'].includes(state.activeTab));
 
     container.querySelectorAll('[data-print-tab]').forEach((button) => {
       button.classList.toggle('active', button.dataset.printTab === state.activeTab);
@@ -179,17 +180,16 @@ export async function renderPrintsPage(
 
     if (state.activeTab === 'external') {
       const rows = await transactionsApi.listExternalIndexRows(state.fiscalYear);
-      if (!rows.some((row) => Number(row.id) === Number(state.selectedAddyIndexId))) {
-        state.selectedAddyIndexId = rows[0] ? rows[0].id : '';
-      }
       title.textContent = 'Ευρετήριο Εξωτερικών Δοσοληψιών';
-      controls.innerHTML = renderExternalIndexControls(state, rows);
-      preview.innerHTML = renderExternalTransactionsIndex(settings, rows);
+      controls.innerHTML = renderIndexTableControls(state, 'external');
+      preview.innerHTML = renderExternalIndexTable(rows);
       bindExternalIndexControls(
         container,
         transactionsApi,
         state,
         rows,
+        settings,
+        preview,
         renderActiveTab,
         showToast
       );
@@ -219,17 +219,16 @@ export async function renderPrintsPage(
     }
 
     const rows = await transactionsApi.listExhpIndexRows(state.fiscalYear);
-    if (!rows.some((row) => Number(row.id) === Number(state.selectedExhpIndexId))) {
-      state.selectedExhpIndexId = rows[0] ? rows[0].id : '';
-    }
     title.textContent = 'Ευρετήριο Εντολών Χρεωπιστώσεως';
-    controls.innerHTML = renderOrdersIndexControls(state, rows);
-    preview.innerHTML = renderChargeCreditOrdersIndex(settings, rows);
+    controls.innerHTML = renderIndexTableControls(state, 'orders');
+    preview.innerHTML = renderOrdersIndexTable(rows);
     bindOrdersIndexControls(
       container,
       transactionsApi,
       state,
       rows,
+      settings,
+      preview,
       renderActiveTab,
       showToast
     );
@@ -551,38 +550,92 @@ function renderFiscalYearControls(state) {
   `;
 }
 
-function renderExternalIndexControls(state, rows) {
-  const selected = rows.find((row) => Number(row.id) === Number(state.selectedAddyIndexId));
+function renderIndexTableControls(state, type) {
   return `
-    <div class="registry-controls external-index-controls">
+    <div class="registry-controls index-table-controls">
       <label class="field">
         <span>Οικονομικό Έτος</span>
         <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
       </label>
-      <label class="field">
-        <span>ΑΔΔΥ Ευρετηρίου</span>
-        <select id="external-addy-id" ${rows.length ? '' : 'disabled'}>
-          ${rows.length
-            ? rows.map((row) => `<option value="${row.id}" ${Number(row.id) === Number(state.selectedAddyIndexId) ? 'selected' : ''}>ΑΔΔΥ ${escapeHtml(row.id)} - ${formatDate(row.date)} - ${escapeHtml(row.unit)} - ${escapeHtml(row.documentType)}</option>`).join('')
-            : '<option value="">Δεν υπάρχουν ΑΔΔΥ</option>'}
-        </select>
-      </label>
-      <label class="field">
-        <span>Αριθμός/Ημερομηνία Δικαιολογητικού</span>
-        <input id="external-field-7" value="${escapeHtml(selected?.indexField7 || '')}" ${selected ? '' : 'disabled'} />
-      </label>
-      <label class="field">
-        <span>Ημερομηνία Παραλαβής ή (ΔΙΑΖ) Αποστολής Υλικού</span>
-        <input id="external-field-8" value="${escapeHtml(selected?.indexField8 || '')}" ${selected ? '' : 'disabled'} />
-      </label>
-      <label class="field">
-        <span>Ημερομηνία Επιστροφής ή (ΔΙΑΖ) Παραλαβής Οριστικού «Π»-«Χ» Δικαιολογητικού Δοσοληψίας</span>
-        <input id="external-field-9" value="${escapeHtml(selected?.indexField9 || '')}" ${selected ? '' : 'disabled'} />
-      </label>
-      <button id="update-external-index" class="secondary-button" type="button" ${selected ? '' : 'disabled'}>Ενημέρωση</button>
-      <button id="print-current-document" class="primary-button" type="button">Εκτύπωση</button>
+      <div class="row-actions index-table-actions">
+        <button id="save-index-table" class="primary-button" type="button">Αποθήκευση</button>
+        <button id="preview-index-document" class="secondary-button" type="button" data-index-type="${type}">Προβολή</button>
+      </div>
     </div>
   `;
+}
+
+function renderExternalIndexTable(rows) {
+  return renderEditableIndexTable({
+    className: 'external-index-data-table',
+    headers: [
+      'Α/Α',
+      'Ημερομηνία',
+      'Μονάδα',
+      'Είδος Δικ/κού',
+      'Α/Ο Υλικού',
+      'Αριθμός / Ημερομηνία Δικαιολογητικού',
+      'Ημερομηνία Παραλαβής ή (ΔΙΑΖ) Αποστολής Υλικού',
+      'Ημερομηνία Επιστροφής ή (ΔΙΑΖ) Παραλαβής Οριστικού «Π»-«Χ» Δικαιολογητικού Δοσοληψίας',
+      'Παρατηρήσεις'
+    ],
+    rows,
+    cells: (row) => [
+      escapeHtml(row.serial),
+      escapeHtml(formatDate(row.date)),
+      escapeHtml(row.unit),
+      escapeHtml(row.documentType),
+      escapeHtml(row.nominalNumber),
+      indexTableInput(row, 7, row.indexField7),
+      indexTableInput(row, 8, row.indexField8),
+      indexTableInput(row, 9, row.indexField9),
+      escapeHtml(row.notes)
+    ]
+  });
+}
+
+function renderOrdersIndexTable(rows) {
+  return renderEditableIndexTable({
+    className: 'orders-index-data-table',
+    headers: [
+      'Α/Α',
+      'Ημερομηνία',
+      'Αιτιολογία Εκδόσεως',
+      'Ημερομηνία Αποστολής προς Έγκριση',
+      'Αριθμός / Ημερομηνία Εγκρίσεως',
+      'Παρατηρήσεις'
+    ],
+    rows,
+    cells: (row) => [
+      escapeHtml(row.serial),
+      escapeHtml(formatDate(row.date)),
+      escapeHtml(row.reason),
+      escapeHtml(formatDate(row.date)),
+      indexTableInput(row, 6, row.indexField6),
+      indexTableInput(row, 7, row.indexField7)
+    ]
+  });
+}
+
+function renderEditableIndexTable({ className, headers, rows, cells }) {
+  return `
+    <section class="page-panel index-table-panel">
+      <div class="table-wrap index-table-editor-wrap">
+        <table class="index-table index-table-editor ${className}">
+          <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.length
+              ? rows.map((row) => `<tr data-index-row="${row.id}">${cells(row).map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')
+              : `<tr><td colspan="${headers.length}" class="empty-table">Δεν υπάρχουν εγγραφές για το επιλεγμένο οικονομικό έτος.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function indexTableInput(row, field, value) {
+  return `<input class="index-cell-input" data-index-id="${row.id}" data-index-field="${field}" value="${escapeHtml(value || '')}" />`;
 }
 
 function bindExternalIndexControls(
@@ -590,66 +643,34 @@ function bindExternalIndexControls(
   transactionsApi,
   state,
   rows,
+  settings,
+  preview,
   renderActiveTab,
   showToast
 ) {
   bindFiscalYearControls(container, state, renderActiveTab);
-  const select = container.querySelector('#external-addy-id');
-  const field7 = container.querySelector('#external-field-7');
-  const field8 = container.querySelector('#external-field-8');
-  const field9 = container.querySelector('#external-field-9');
-  const updateButton = container.querySelector('#update-external-index');
-  if (!select || !field7 || !field8 || !field9 || !updateButton) return;
-  select.addEventListener('change', () => {
-    state.selectedAddyIndexId = select.value;
-    const selected = rows.find((row) => Number(row.id) === Number(select.value));
-    field7.value = selected?.indexField7 || '';
-    field8.value = selected?.indexField8 || '';
-    field9.value = selected?.indexField9 || '';
-  });
-  updateButton.addEventListener('click', async () => {
+  const saveButton = container.querySelector('#save-index-table');
+  const previewButton = container.querySelector('#preview-index-document');
+  if (!saveButton || !previewButton) return;
+  saveButton.disabled = !rows.length;
+  saveButton.addEventListener('click', async () => {
     try {
-      const result = await transactionsApi.updateAddyIndexFields(Number(select.value), {
-        field7: field7.value,
-        field8: field8.value,
-        field9: field9.value
-      });
-      showToast(result.message);
+      const values = collectIndexTableValues(preview, [7, 8, 9]);
+      await Promise.all(rows.map((row) => transactionsApi.updateAddyIndexFields(row.id, {
+        field7: values.get(row.id)?.[7] || '',
+        field8: values.get(row.id)?.[8] || '',
+        field9: values.get(row.id)?.[9] || ''
+      })));
+      showToast('Το Ευρετήριο Εξωτερικών Δοσοληψιών αποθηκεύτηκε.');
       await renderActiveTab();
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
     }
   });
-}
-
-function renderOrdersIndexControls(state, rows) {
-  const selected = rows.find((row) => Number(row.id) === Number(state.selectedExhpIndexId));
-  return `
-    <div class="registry-controls orders-index-controls">
-      <label class="field">
-        <span>Οικονομικό Έτος</span>
-        <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
-      </label>
-      <label class="field">
-        <span>ΕΧΠ Ευρετηρίου</span>
-        <select id="orders-exhp-id" ${rows.length ? '' : 'disabled'}>
-          ${rows.length
-            ? rows.map((row) => `<option value="${row.id}" ${Number(row.id) === Number(state.selectedExhpIndexId) ? 'selected' : ''}>${escapeHtml(row.serial)} - ${formatDate(row.date)} - ${escapeHtml(row.reason)}</option>`).join('')
-            : '<option value="">Δεν υπάρχουν ΕΧΠ</option>'}
-        </select>
-      </label>
-      <label class="field">
-        <span>Αριθμός/Ημερομηνία Έγκρισης</span>
-        <input id="orders-field-6" value="${escapeHtml(selected?.indexField6 || '')}" ${selected ? '' : 'disabled'} />
-      </label>
-      <label class="field">
-        <span>Παρατηρήσεις</span>
-        <input id="orders-field-7" value="${escapeHtml(selected?.indexField7 || '')}" ${selected ? '' : 'disabled'} />
-      </label>
-      <button id="update-orders-index" class="secondary-button" type="button" ${selected ? '' : 'disabled'}>Ενημέρωση</button>
-      <button id="print-current-document" class="primary-button" type="button">Εκτύπωση</button>
-    </div>
-  `;
+  previewButton.addEventListener('click', () => openIndexDocumentPreview(
+    'Ευρετήριο Εξωτερικών Δοσοληψιών',
+    renderExternalTransactionsIndex(settings, collectIndexRows(preview, rows, [7, 8, 9]))
+  ));
 }
 
 function bindOrdersIndexControls(
@@ -657,33 +678,78 @@ function bindOrdersIndexControls(
   transactionsApi,
   state,
   rows,
+  settings,
+  preview,
   renderActiveTab,
   showToast
 ) {
   bindFiscalYearControls(container, state, renderActiveTab);
-  const select = container.querySelector('#orders-exhp-id');
-  const field6 = container.querySelector('#orders-field-6');
-  const field7 = container.querySelector('#orders-field-7');
-  const updateButton = container.querySelector('#update-orders-index');
-  if (!select || !field6 || !field7 || !updateButton) return;
-  select.addEventListener('change', () => {
-    state.selectedExhpIndexId = select.value;
-    const selected = rows.find((row) => Number(row.id) === Number(select.value));
-    field6.value = selected?.indexField6 || '';
-    field7.value = selected?.indexField7 || '';
-  });
-  updateButton.addEventListener('click', async () => {
+  const saveButton = container.querySelector('#save-index-table');
+  const previewButton = container.querySelector('#preview-index-document');
+  if (!saveButton || !previewButton) return;
+  saveButton.disabled = !rows.length;
+  saveButton.addEventListener('click', async () => {
     try {
-      const result = await transactionsApi.updateExhpIndexFields(Number(select.value), {
-        field6: field6.value,
-        field7: field7.value
-      });
-      showToast(result.message);
+      const values = collectIndexTableValues(preview, [6, 7]);
+      await Promise.all(rows.map((row) => transactionsApi.updateExhpIndexFields(row.id, {
+        field6: values.get(row.id)?.[6] || '',
+        field7: values.get(row.id)?.[7] || ''
+      })));
+      showToast('Το Ευρετήριο Εντολών Χρεωπιστώσεως αποθηκεύτηκε.');
       await renderActiveTab();
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ευρετηρίου.', 'error');
     }
   });
+  previewButton.addEventListener('click', () => openIndexDocumentPreview(
+    'Ευρετήριο Εντολών Χρεωπιστώσεως',
+    renderChargeCreditOrdersIndex(settings, collectIndexRows(preview, rows, [6, 7]))
+  ));
+}
+
+function collectIndexTableValues(preview, fields) {
+  const values = new Map();
+  preview.querySelectorAll('.index-cell-input').forEach((input) => {
+    const id = Number(input.dataset.indexId);
+    const field = Number(input.dataset.indexField);
+    if (!fields.includes(field)) return;
+    if (!values.has(id)) values.set(id, {});
+    values.get(id)[field] = input.value.trim();
+  });
+  return values;
+}
+
+function collectIndexRows(preview, rows, fields) {
+  const values = collectIndexTableValues(preview, fields);
+  return rows.map((row) => {
+    const result = { ...row };
+    fields.forEach((field) => { result[`indexField${field}`] = values.get(Number(row.id))?.[field] || ''; });
+    return result;
+  });
+}
+
+function openIndexDocumentPreview(title, documentHtml) {
+  document.querySelector('.index-document-preview-backdrop')?.remove();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop';
+  backdrop.innerHTML = `
+    <div class="request-document-modal index-document-preview-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ</p><h2>${escapeHtml(title)}</h2></div>
+        <div class="row-actions">
+          <button class="secondary-button" data-close-index-preview type="button">Κλείσιμο</button>
+          <button class="primary-button" data-print-index-preview type="button">Εκτύπωση</button>
+        </div>
+      </header>
+      <div class="print-preview-shell index-document-preview-content">${documentHtml}</div>
+    </div>
+  `;
+  backdrop.querySelector('[data-close-index-preview]').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('[data-print-index-preview]').addEventListener('click', () => {
+    void printIsolatedPreview(backdrop.querySelector('.index-document-preview-content'), true);
+  });
+  backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.remove(); });
+  document.body.appendChild(backdrop);
 }
 
 function bindFiscalYearControls(container, state, renderActiveTab) {

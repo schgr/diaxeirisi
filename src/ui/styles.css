@@ -2521,17 +2521,10 @@ table.administration-table td {
 
 .registry-table td {
   height: 22px;
-  max-height: 22px;
   font-size: 10px;
   line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.registry-table tbody tr {
-  height: 22px;
-  max-height: 22px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .registry-footer {
@@ -2818,6 +2811,79 @@ table.administration-table td {
 
 .external-index-controls {
   grid-template-columns: 130px minmax(240px, 1.3fr) repeat(3, minmax(130px, 0.7fr)) auto auto;
+}
+
+.index-table-controls {
+  grid-template-columns: 170px 1fr auto;
+}
+
+.index-table-actions {
+  justify-self: end;
+}
+
+.index-table-panel {
+  width: 100%;
+  min-width: min-content;
+  margin: 0;
+}
+
+.print-preview-shell.index-table-preview {
+  display: block;
+  max-height: none;
+}
+
+.index-table-editor-wrap {
+  max-height: calc(100vh - 390px);
+}
+
+.index-table-editor {
+  min-width: 1180px;
+  table-layout: fixed;
+}
+
+.index-table-editor th,
+.index-table-editor td {
+  padding: 8px 6px;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.index-table-editor thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.index-cell-input {
+  width: 100%;
+  min-width: 110px;
+}
+
+.external-index-data-table th:nth-child(1) { width: 5%; }
+.external-index-data-table th:nth-child(2) { width: 9%; }
+.external-index-data-table th:nth-child(3) { width: 11%; }
+.external-index-data-table th:nth-child(4) { width: 9%; }
+.external-index-data-table th:nth-child(5) { width: 10%; }
+.external-index-data-table th:nth-child(6) { width: 13%; }
+.external-index-data-table th:nth-child(7) { width: 13%; }
+.external-index-data-table th:nth-child(8) { width: 16%; }
+.external-index-data-table th:nth-child(9) { width: 14%; }
+
+.orders-index-data-table th:nth-child(1) { width: 6%; }
+.orders-index-data-table th:nth-child(2) { width: 11%; }
+.orders-index-data-table th:nth-child(3) { width: 29%; }
+.orders-index-data-table th:nth-child(4) { width: 16%; }
+.orders-index-data-table th:nth-child(5) { width: 23%; }
+.orders-index-data-table th:nth-child(6) { width: 15%; }
+
+.index-document-preview-modal {
+  width: min(1280px, 96vw);
+  max-height: 96vh;
+}
+
+.index-document-preview-content {
+  max-height: calc(96vh - 100px);
 }
 
 .checkbox-field input {
