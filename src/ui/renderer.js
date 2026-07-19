@@ -74,11 +74,11 @@ const homeGroups = [
     label: 'Υλικό και κινήσεις',
     items: [
       { id: 'shares', title: 'Μερίδες' },
-      { id: 'share-compositions', title: 'Συνθέσεις Μερίδων' },
       { id: 'transactions', title: 'Δοσοληψίες' },
       { id: 'indexes', title: 'Ευρετήρια' },
       { id: 'charges', title: 'Χορηγήσεις σε τμήματα' },
-      { id: 'requests', title: 'Αιτήσεις' }
+      { id: 'requests', title: 'Αιτήσεις' },
+      { id: 'share-compositions', title: 'Συνθέσεις Μερίδων' }
     ]
   },
   {

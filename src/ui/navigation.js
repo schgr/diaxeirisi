@@ -14,13 +14,14 @@ export function createNavigation({ container, sections, activeSection, onNavigat
 
 const HOME_TILE_META = {
   shares: { code: '§ 01-Α', icon: 'ΜΕ' },
-  'share-compositions': { code: '§ 01-Σ', icon: 'ΣΜ' },
+  'share-compositions': { code: '§ 01-Ζ', icon: 'ΣΜ' },
   transactions: { code: '§ 01-Β', icon: 'ΔΣ' },
   indexes: { code: '§ 01-Γ', icon: 'ΕΥ' },
   charges: { code: '§ 01-Δ', icon: 'ΧΡ' },
   requests: { code: '§ 01-Ε', icon: 'ΑΙ' },
   as: { code: '§ 02-Α', icon: 'ΑΠ' },
   'movement-differences': { code: '§ 02-Β', icon: 'ΔΦ' },
+  'financial-year-tasks': { code: '§ 03-Γ', icon: 'ΕΕ' },
   'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
@@ -37,7 +38,7 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
       <header class="home-heading corner">
         <div>
           <p class="home-kicker">ΣΧΕΔΙΟ ΛΕΙΤΟΥΡΓΙΑΣ · ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</p>
-          <h2>Διαχείριση υλικού</h2>
+          <h2>Διαχείριση Υλικού</h2>
           <span class="home-subtitle">Offline-first prototype</span>
         </div>
         <div class="home-title-block" aria-hidden="true">
