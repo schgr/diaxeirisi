@@ -8,6 +8,7 @@ const { createTransactionsService } = require('./services/transactionsService');
 const { createRequestsService } = require('./services/requestsService');
 const { createInternalService } = require('./services/internalService');
 const { createInventoryService } = require('./services/inventoryService');
+const { createYearEndService } = require('./services/yearEndService');
 const { createMovementDifferencesService } = require('./services/movementDifferencesService');
 const { createAdministrationService } = require('./services/administrationService');
 const { createAnnualAccountsService } = require('./services/annualAccountsService');
@@ -456,6 +457,15 @@ function registerIpcHandlers() {
   ipcMain.handle('inventory:settle-difference', async (_event, id, reference) =>
     safeInvoke(() => services.inventory.settleDifference(id, reference))
   );
+  ipcMain.handle('year-end:renumbering-data', async () =>
+    safeInvoke(() => services.yearEnd.getRenumberingData())
+  );
+  ipcMain.handle('year-end:validate-renumbering', async (_event, payload) =>
+    safeInvoke(() => services.yearEnd.validateRenumbering(payload))
+  );
+  ipcMain.handle('year-end:apply-renumbering', async (_event, payload) =>
+    safeInvoke(() => services.yearEnd.applyRenumbering(payload))
+  );
   ipcMain.handle('movement-differences:reference-data', async () =>
     safeInvoke(() => services.movementDifferences.getReferenceData())
   );
@@ -577,6 +587,7 @@ app.whenReady().then(async () => {
     requests: createRequestsService(database, settingsService),
     internal: createInternalService(database),
     inventory: createInventoryService(database),
+    yearEnd: createYearEndService(database),
     movementDifferences: createMovementDifferencesService(database),
     administration: createAdministrationService(database),
     annualAccounts: createAnnualAccountsService(database),

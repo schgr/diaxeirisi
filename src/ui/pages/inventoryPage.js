@@ -44,6 +44,13 @@ export async function renderInventoryPage(
               <input id="inventory-title" value="Ετήσια Απογραφή Γενικής Διαχείρισης" />
             </label>
             <label class="field">
+              <span>Αιτιολογία</span>
+              <select id="inventory-reason">
+                <option value="Τακτική Απογραφή">Τακτική Απογραφή</option>
+                <option value="Ετήσια απογραφή Διαχείρισης">Ετήσια απογραφή Διαχείρισης</option>
+              </select>
+            </label>
+            <label class="field">
               <span>Παρατηρήσεις</span>
               <input id="inventory-session-notes" autocomplete="off" />
             </label>
@@ -108,19 +115,13 @@ function renderSelectedSession(session, shares) {
         </div>
         ${locked ? '<span class="status-pill balanced">Ολοκληρωμένη</span>' : '<button id="inventory-complete" class="primary-button" type="button">Ολοκλήρωση και Κλείδωμα</button>'}
       </div>
-      ${
-        locked
-          ? ''
-          : `
-            <fieldset class="inventory-committee-fields inventory-selected-committee">
-              <legend>Επιτροπή Καταμέτρησης</legend>
-              ${renderCommitteeMemberFields('Πρόεδρος', 'selected-president', session.committeePresidentRank, session.committeePresidentName)}
-              ${renderCommitteeMemberFields('Α΄ Μέλος', 'selected-member-a', session.committeeMemberARank, session.committeeMemberAName)}
-              ${renderCommitteeMemberFields('Β΄ Μέλος', 'selected-member-b', session.committeeMemberBRank, session.committeeMemberBName)}
-              <button id="inventory-save-committee" class="secondary-button" type="button">Αποθήκευση Επιτροπής</button>
-            </fieldset>
-          `
-      }
+      <fieldset class="inventory-committee-fields inventory-selected-committee">
+        <legend>Επιτροπή Καταμέτρησης</legend>
+        ${renderCommitteeMemberFields('Πρόεδρος', 'selected-president', session.committeePresidentRank, session.committeePresidentName)}
+        ${renderCommitteeMemberFields('Α΄ Μέλος', 'selected-member-a', session.committeeMemberARank, session.committeeMemberAName)}
+        ${renderCommitteeMemberFields('Β΄ Μέλος', 'selected-member-b', session.committeeMemberBRank, session.committeeMemberBName)}
+        <button id="inventory-save-committee" class="secondary-button" type="button">Αποθήκευση Επιτροπής</button>
+      </fieldset>
       ${
         locked
           ? ''
@@ -189,6 +190,7 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
     try {
       const result = await inventoryApi.createSession({
         inventoryDate: container.querySelector('#inventory-date').value,
+        inventoryReason: container.querySelector('#inventory-reason').value,
         title: container.querySelector('#inventory-title').value,
         notes: container.querySelector('#inventory-session-notes').value,
         committeePresidentRank: container.querySelector('#inventory-president-rank').value,
@@ -221,7 +223,26 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
 
   });
 
-  if (!selectedSession || selectedSession.status === 'Ολοκληρωμένη') return;
+  if (!selectedSession) return;
+
+  container.querySelector('#inventory-save-committee').addEventListener('click', async () => {
+    try {
+      const result = await inventoryApi.saveCommittee(selectedSession.id, {
+        committeePresidentRank: container.querySelector('#inventory-selected-president-rank').value,
+        committeePresidentName: container.querySelector('#inventory-selected-president-name').value,
+        committeeMemberARank: container.querySelector('#inventory-selected-member-a-rank').value,
+        committeeMemberAName: container.querySelector('#inventory-selected-member-a-name').value,
+        committeeMemberBRank: container.querySelector('#inventory-selected-member-b-rank').value,
+        committeeMemberBName: container.querySelector('#inventory-selected-member-b-name').value
+      });
+      showToast(result.message);
+      await renderInventoryPage(container, inventoryApi, settingsApi, showToast, selectedSession.id);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση της επιτροπής.', 'error');
+    }
+  });
+
+  if (selectedSession.status === 'Ολοκληρωμένη') return;
 
   const shareSelect = container.querySelector('#inventory-share');
   shareSelect.addEventListener('change', () => {
@@ -242,23 +263,6 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
       await renderInventoryPage(container, inventoryApi, settingsApi, showToast, selectedSession.id);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η καταχώριση.', 'error');
-    }
-  });
-
-  container.querySelector('#inventory-save-committee').addEventListener('click', async () => {
-    try {
-      const result = await inventoryApi.saveCommittee(selectedSession.id, {
-        committeePresidentRank: container.querySelector('#inventory-selected-president-rank').value,
-        committeePresidentName: container.querySelector('#inventory-selected-president-name').value,
-        committeeMemberARank: container.querySelector('#inventory-selected-member-a-rank').value,
-        committeeMemberAName: container.querySelector('#inventory-selected-member-a-name').value,
-        committeeMemberBRank: container.querySelector('#inventory-selected-member-b-rank').value,
-        committeeMemberBName: container.querySelector('#inventory-selected-member-b-name').value
-      });
-      showToast(result.message);
-      await renderInventoryPage(container, inventoryApi, settingsApi, showToast, selectedSession.id);
-    } catch (error) {
-      showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση της επιτροπής.', 'error');
     }
   });
 

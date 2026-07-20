@@ -21,16 +21,30 @@ function createInventoryService(db) {
 
     createSession(payload) {
       const session = validateInventorySession(payload);
+      const isAnnual = session.inventoryReason === 'Ετήσια απογραφή Διαχείρισης';
+      if (isAnnual) {
+        session.inventoryDate = `${session.fiscalYear}-12-31`;
+        session.periodStart = `${session.fiscalYear}-01-01`;
+        session.periodEnd = session.inventoryDate;
+        session.title = `Ετήσια απογραφή Διαχείρισης ${session.fiscalYear}`;
+      }
       let id;
       let serialNumber;
+      let itemCount = 0;
       repository.transaction(() => {
         serialNumber = repository.getNextSerial(session.fiscalYear);
         id = repository.createSession({ ...session, serialNumber });
+        if (isAnnual) {
+          itemCount = repository.populateAnnualSession(id, session.fiscalYear);
+          repository.completeSession(id);
+        }
       });
       return {
         id,
         serialNumber,
-        message: `Η απογραφή ${serialNumber}/${session.fiscalYear} δημιουργήθηκε.`
+        message: isAnnual
+          ? `Η ετήσια απογραφή ${serialNumber}/${session.fiscalYear} δημιουργήθηκε με ${itemCount} μερίδες.`
+          : `Η απογραφή ${serialNumber}/${session.fiscalYear} δημιουργήθηκε.`
       };
     },
 
@@ -106,9 +120,6 @@ function createInventoryService(db) {
       const sessionId = requirePositiveId(id);
       const session = repository.getSession(sessionId);
       if (!session) throw new AppError('Η απογραφή δεν βρέθηκε.', 'NOT_FOUND');
-      if (session.status === 'Ολοκληρωμένη') {
-        throw new AppError('Η ολοκληρωμένη απογραφή δεν μπορεί να τροποποιηθεί.', 'VALIDATION_ERROR');
-      }
       repository.updateCommittee(sessionId, validateInventoryCommittee(payload));
       return { message: 'Η Επιτροπή Καταμέτρησης αποθηκεύτηκε.' };
     },
@@ -151,6 +162,9 @@ function mapSession(row) {
     title: row.title,
     status: row.status,
     notes: row.notes,
+    inventoryReason: row.inventory_reason || 'Τακτική Απογραφή',
+    periodStart: row.period_start || row.inventory_date,
+    periodEnd: row.period_end || row.inventory_date,
     committeePresidentRank: row.committee_president_rank || '',
     committeePresidentName: row.committee_president_name || '',
     committeeMemberARank: row.committee_member_a_rank || '',

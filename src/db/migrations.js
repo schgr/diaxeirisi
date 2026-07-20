@@ -1848,6 +1848,38 @@ const migrations = [
     up: `
       ALTER TABLE shares ADD COLUMN requires_weapon_registry INTEGER NOT NULL DEFAULT 0;
     `
+  },
+  {
+    version: 55,
+    name: 'share_renumbering_and_inventory_periods',
+    up: `
+      ALTER TABLE shares ADD COLUMN previous_share_number TEXT NOT NULL DEFAULT '';
+
+      ALTER TABLE inventory_sessions ADD COLUMN inventory_reason TEXT NOT NULL DEFAULT 'Τακτική Απογραφή';
+      ALTER TABLE inventory_sessions ADD COLUMN period_start TEXT NOT NULL DEFAULT '';
+      ALTER TABLE inventory_sessions ADD COLUMN period_end TEXT NOT NULL DEFAULT '';
+
+      CREATE TABLE share_renumbering_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fiscal_year INTEGER NOT NULL UNIQUE,
+        effective_date TEXT NOT NULL,
+        inventory_session_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (inventory_session_id) REFERENCES inventory_sessions(id) ON DELETE RESTRICT
+      );
+
+      CREATE TABLE share_renumbering_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id INTEGER NOT NULL,
+        share_id INTEGER NOT NULL,
+        old_share_number TEXT NOT NULL,
+        new_share_number TEXT NOT NULL DEFAULT '',
+        archived INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (run_id) REFERENCES share_renumbering_runs(id) ON DELETE CASCADE,
+        FOREIGN KEY (share_id) REFERENCES shares(id) ON DELETE RESTRICT,
+        UNIQUE (run_id, share_id)
+      );
+    `
   }
 ];
 

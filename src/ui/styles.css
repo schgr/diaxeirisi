@@ -728,6 +728,43 @@ select {
   max-width: 620px;
 }
 
+[data-renumber-detail] .section-heading {
+  align-items: end;
+  gap: 18px;
+}
+
+[data-renumber-detail] .compact-field {
+  width: min(220px, 100%);
+}
+
+[data-renumber-detail] .table-input {
+  width: 100%;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+[data-renumber-detail] .form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+[data-renumber-message] {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+[data-renumber-message].success-message {
+  border-color: #41c98e;
+}
+
+[data-renumber-message].error-message {
+  border-color: var(--danger);
+  color: #ffb8b8;
+}
+
 .print-index-menu-mode {
   min-height: 0;
 }

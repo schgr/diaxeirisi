@@ -287,7 +287,7 @@ function renderSerialRegistryPreviewPage(rows, pageNumber, pageCount) {
     return `<tr>${shared}<td>${escapeHtml(row.serialNumber)}</td><td class="serial-department-cell">${escapeHtml(row.department)}</td><td>${escapeHtml(row.notes)}</td></tr>`;
   }).join('');
   return `
-    <article class="serial-registry-print-page">
+    <article class="serial-registry-print-page print-document-area">
       <h2>Μητρώο Σειριακών Αριθμών</h2>
       <table class="index-table serial-number-registry-print-table">
         <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ποσότητα</th><th>S/N</th><th>Τμήμα</th><th>Παρατηρήσεις</th></tr></thead>
@@ -337,6 +337,9 @@ async function printSerialRegistryPreview(preview) {
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {
+    await new Promise((resolve) => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+    });
     await window.appApi.print.currentDocument({ landscape: true });
   } finally {
     printRoot.remove();

@@ -6,6 +6,7 @@ function validateInventorySession(payload) {
   return {
     inventoryDate,
     fiscalYear: Number(inventoryDate.slice(0, 4)),
+    inventoryReason: optionalText(payload && payload.inventoryReason) || 'Τακτική Απογραφή',
     title: optionalText(payload && payload.title) || 'Ετήσια Απογραφή Γενικής Διαχείρισης',
     notes: optionalText(payload && payload.notes),
     committeePresidentRank: optionalText(payload && payload.committeePresidentRank),

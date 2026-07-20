@@ -1,6 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 
-export async function renderFinancialYearTasksPage(container, transactionsApi, showToast) {
+export async function renderFinancialYearTasksPage(container, transactionsApi, yearEndApi, showToast) {
   const state = {
     source: null,
     fiscalYear: new Date().getFullYear(),
@@ -25,6 +25,11 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
         <span class="home-tile-icon" aria-hidden="true">ΕΧ</span>
         <span class="home-tile-title">Έλεγχος Κινήσεων ΕΧΠ</span>
         <span class="home-tile-code">§ ΕΟΕ-Β</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="renumber" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΑΡ</span>
+        <span class="home-tile-title">Αλλαγή Αρίθμησης Μερίδων</span>
+        <span class="home-tile-code">§ ΕΟΕ-Γ</span>
       </button>
     </section>
 
@@ -52,11 +57,78 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
         <div data-financial-results></div>
       </section>
     </div>
+
+    <div data-renumber-detail hidden>
+      <div class="page-toolbar no-print">
+        <button class="secondary-button" data-renumber-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+      </div>
+      <section class="page-panel">
+        <div class="section-heading">
+          <div>
+            <h3>Αλλαγή Αρίθμησης Μερίδων</h3>
+            <p class="muted">Η εφαρμογή δημιουργεί πρώτα Κατάσταση Απογραφής με την παλιά αρίθμηση. Ο παλιός αριθμός εμφανίζεται στο πεδίο 15.</p>
+          </div>
+          <label class="field compact-field">
+            <span>Οικονομικό Έτος</span>
+            <input data-renumber-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+          </label>
+        </div>
+        <div data-renumber-results><p class="muted">Φόρτωση μερίδων...</p></div>
+        <div class="form-message" data-renumber-message hidden></div>
+        <div class="form-actions no-print">
+          <button class="secondary-button" data-renumber-check type="button">Έλεγχος</button>
+          <button class="primary-button" data-renumber-save type="button">Αποθήκευση Νέας Αρίθμησης</button>
+        </div>
+      </section>
+    </div>
   `;
 
   const menu = container.querySelector('[data-financial-menu]');
   const detail = container.querySelector('[data-financial-detail]');
   const results = container.querySelector('[data-financial-results]');
+  const renumberDetail = container.querySelector('[data-renumber-detail]');
+  const renumberResults = container.querySelector('[data-renumber-results]');
+  const renumberMessage = container.querySelector('[data-renumber-message]');
+
+  function showMenu() {
+    state.source = null;
+    detail.hidden = true;
+    renumberDetail.hidden = true;
+    menu.classList.remove('is-hidden');
+    menu.hidden = false;
+  }
+
+  async function loadRenumbering() {
+    renumberResults.innerHTML = '<p class="muted">Φόρτωση μερίδων...</p>';
+    renumberMessage.hidden = true;
+    try {
+      const data = await yearEndApi.getRenumberingData();
+      state.fiscalYear = Number(data.fiscalYear || state.fiscalYear);
+      container.querySelector('[data-renumber-year]').value = state.fiscalYear;
+      renumberResults.innerHTML = renderRenumberingTable(data.shares);
+      bindArchiveToggles(renumberResults);
+    } catch (error) {
+      renumberResults.innerHTML = '<p class="muted">Δεν ήταν δυνατή η φόρτωση των μερίδων.</p>';
+      showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση των μερίδων.', 'error');
+    }
+  }
+
+  function collectRenumberingPayload() {
+    return {
+      fiscalYear: Number(container.querySelector('[data-renumber-year]').value),
+      items: [...renumberResults.querySelectorAll('[data-renumber-row]')].map((row) => ({
+        shareId: Number(row.dataset.shareId),
+        newShareNumber: row.querySelector('[data-new-share-number]').value,
+        archive: row.querySelector('[data-archive-share]').checked
+      }))
+    };
+  }
+
+  function setRenumberMessage(message, type = 'success') {
+    renumberMessage.textContent = message;
+    renumberMessage.className = `form-message ${type === 'error' ? 'error-message' : 'success-message'}`;
+    renumberMessage.hidden = false;
+  }
 
   async function refresh() {
     if (!state.source) return;
@@ -79,16 +151,46 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
       state.source = button.dataset.financialSource;
       menu.classList.add('is-hidden');
       menu.hidden = true;
-      detail.hidden = false;
-      void refresh();
+      if (state.source === 'renumber') {
+        renumberDetail.hidden = false;
+        void loadRenumbering();
+      } else {
+        detail.hidden = false;
+        void refresh();
+      }
     });
   });
 
   container.querySelector('[data-financial-back]').addEventListener('click', () => {
-    state.source = null;
-    detail.hidden = true;
-    menu.classList.remove('is-hidden');
-    menu.hidden = false;
+    showMenu();
+  });
+  container.querySelector('[data-renumber-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-renumber-check]').addEventListener('click', async () => {
+    try {
+      const validation = await yearEndApi.validateRenumbering(collectRenumberingPayload());
+      setRenumberMessage(validation.message);
+      showToast(validation.message, 'success');
+    } catch (error) {
+      setRenumberMessage(error.message || 'Ο έλεγχος απέτυχε.', 'error');
+      showToast(error.message || 'Ο έλεγχος απέτυχε.', 'error');
+    }
+  });
+  container.querySelector('[data-renumber-save]').addEventListener('click', async () => {
+    try {
+      const payload = collectRenumberingPayload();
+      await yearEndApi.validateRenumbering(payload);
+      const accepted = window.confirm(
+        'Η αλλαγή αρίθμησης θα εφαρμοστεί σε όλες τις καρτέλες υλικού και είναι μη αναστρέψιμη. Θέλετε να συνεχίσετε;'
+      );
+      if (!accepted) return;
+      const result = await yearEndApi.applyRenumbering(payload);
+      await loadRenumbering();
+      setRenumberMessage(result.message);
+      showToast(result.message, 'success');
+    } catch (error) {
+      setRenumberMessage(error.message || 'Η αποθήκευση απέτυχε.', 'error');
+      showToast(error.message || 'Η αποθήκευση απέτυχε.', 'error');
+    }
   });
   container.querySelector('[data-financial-print]').addEventListener('click', async () => {
     try {
@@ -107,6 +209,43 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, s
   container.querySelector('[data-financial-type]').addEventListener('change', (event) => {
     state.transactionType = event.target.value;
     void refresh();
+  });
+}
+
+function renderRenumberingTable(shares) {
+  const body = shares.length
+    ? shares.map((share, index) => `
+        <tr data-renumber-row data-share-id="${escapeHtml(share.id)}">
+          <td>${index + 1}</td>
+          <td>${escapeHtml(share.shareNumber)}</td>
+          <td><input class="table-input" data-new-share-number type="text" autocomplete="off" aria-label="Νέος αριθμός μερίδας ${escapeHtml(share.shareNumber)}" /></td>
+          <td>${escapeHtml(share.description)}</td>
+          <td>${escapeHtml(formatQuantity(share.quantity))}</td>
+          <td>
+            <label class="checkbox-field">
+              <input data-archive-share type="checkbox" ${share.canArchive ? '' : 'disabled'} />
+              <span>Αρχείο</span>
+            </label>
+          </td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν ενεργές μερίδες.</td></tr>';
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΝΕΟΣ ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΠΕΡΙΓΡΑΦΗ</th><th>ΠΟΣΟΤΗΤΑ</th><th>ΑΡΧΕΙΟ</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
+
+function bindArchiveToggles(root) {
+  root.querySelectorAll('[data-archive-share]').forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+      const input = checkbox.closest('[data-renumber-row]').querySelector('[data-new-share-number]');
+      input.disabled = checkbox.checked;
+      if (checkbox.checked) input.value = '';
+    });
   });
 }
 

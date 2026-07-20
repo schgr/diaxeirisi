@@ -168,6 +168,11 @@ contextBridge.exposeInMainWorld('appApi', {
     listDifferences: () => invoke('inventory:differences'),
     settleDifference: (id, reference) => invoke('inventory:settle-difference', id, reference)
   },
+  yearEnd: {
+    getRenumberingData: () => invoke('year-end:renumbering-data'),
+    validateRenumbering: (payload) => invoke('year-end:validate-renumbering', payload),
+    applyRenumbering: (payload) => invoke('year-end:apply-renumbering', payload)
+  },
   movementDifferences: {
     getReferenceData: () => invoke('movement-differences:reference-data'),
     create: (payload) => invoke('movement-differences:create', payload),

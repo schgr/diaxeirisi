@@ -23,9 +23,10 @@ function createInventoryRepository(db) {
               fiscal_year, serial_number, inventory_date, title, notes,
               committee_president_rank, committee_president_name,
               committee_member_a_rank, committee_member_a_name,
-              committee_member_b_rank, committee_member_b_name
+              committee_member_b_rank, committee_member_b_name,
+              inventory_reason, period_start, period_end
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
         )
         .run(
@@ -39,8 +40,33 @@ function createInventoryRepository(db) {
           payload.committeeMemberARank,
           payload.committeeMemberAName,
           payload.committeeMemberBRank,
-          payload.committeeMemberBName
+          payload.committeeMemberBName,
+          payload.inventoryReason,
+          payload.periodStart || payload.inventoryDate,
+          payload.periodEnd || payload.inventoryDate
         ).lastInsertRowid;
+    },
+
+    populateAnnualSession(sessionId, fiscalYear) {
+      const shares = listActiveShares(db);
+      shares.forEach((share) => this.upsertItem({
+        sessionId,
+        shareId: share.id,
+        shareNumber: share.share_number,
+        nominalNumber: share.nominal_number,
+        description: share.description,
+        measurementUnit: share.measurement_unit,
+        accountingBalance: Number(share.accounting_balance || 0),
+        partialManagementQuantity: 0,
+        expectedWarehouseQuantity: 0,
+        firstCount: Number(share.accounting_balance || 0),
+        secondCount: null,
+        finalCount: Number(share.accounting_balance || 0),
+        difference: 0,
+        differenceStatus: 'Ισοσκελισμένη',
+        notes: ''
+      }));
+      return shares.length;
     },
 
     listSessions() {

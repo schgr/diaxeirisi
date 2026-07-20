@@ -380,8 +380,8 @@ export function renderInventoryStatement(settings, session) {
         ${inventoryDocumentOverlay(pageCount, 74.5, 11.05, 10.0, 1.8, 'inventory-meta-overlay')}
         ${inventoryDocumentOverlay(settings.serviceInfo.serviceName || '', 20.0, 13.15, 13.5, 2.2, 'inventory-meta-overlay')}
         ${inventoryDocumentOverlay(settings.serviceInfo.managementType || '', 42.0, 13.45, 12.0, 1.8, 'inventory-meta-overlay')}
-        ${inventoryDocumentOverlay(formatDate(session.inventoryDate), 64.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
-        ${inventoryDocumentOverlay(formatDate(session.inventoryDate), 82.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
+        ${inventoryDocumentOverlay(formatDate(session.periodStart || session.inventoryDate), 64.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
+        ${inventoryDocumentOverlay(formatDate(session.periodEnd || session.inventoryDate), 82.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
         ${renderOfficialInventoryRows(rows, pageIndex * rowsPerPage)}
         ${renderInventoryOfficerSignature(settings.financialOfficers?.commander, 9.0, 86.0, 20.8, 4.8)}
         ${renderInventoryCommitteeSignatures(session, 31.0, 85.6, 20.5, 5.4)}

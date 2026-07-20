@@ -376,7 +376,12 @@ async function renderActivePage() {
     }
 
     if (section.type === 'financial-year-tasks') {
-      await renderFinancialYearTasksPage(sectionRoot, window.appApi.transactions, showToast);
+      await renderFinancialYearTasksPage(
+        sectionRoot,
+        window.appApi.transactions,
+        window.appApi.yearEnd,
+        showToast
+      );
       return;
     }
 
