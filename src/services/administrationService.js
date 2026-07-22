@@ -172,6 +172,7 @@ function createAdministrationService(db) {
       }
       repository.transaction(() => {
         repository.setShareArchiveStatus(archive.shareId, 'Αρχειοθετημένη', archive.actionDate, archive.reason);
+        repository.setLatestAnnualInventoryArchiveMarker(archive.shareId, true);
         repository.createArchiveEvent(archive.shareId, 'Αρχειοθέτηση', archive.actionDate, archive.reason);
       });
       return { message: 'Η Μερίδα μεταφέρθηκε στο αρχείο.' };
@@ -187,6 +188,7 @@ function createAdministrationService(db) {
       }
       repository.transaction(() => {
         repository.setShareArchiveStatus(shareId, 'Ενεργή', null, '');
+        repository.setLatestAnnualInventoryArchiveMarker(shareId, false);
         repository.createArchiveEvent(shareId, 'Επαναφορά', date, 'Επαναφορά σε ενεργή χρήση');
       });
       return { message: 'Η Μερίδα επανήλθε στις ενεργές Μερίδες.' };

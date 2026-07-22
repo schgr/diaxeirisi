@@ -171,6 +171,22 @@ function createAdministrationRepository(db) {
       `).run(status, status === 'Αρχειοθετημένη' ? date : null, reason, id);
     },
 
+    setLatestAnnualInventoryArchiveMarker(shareId, archived) {
+      const session = db.prepare(`
+        SELECT id
+        FROM inventory_sessions
+        WHERE inventory_reason = 'Ετήσια απογραφή Διαχείρισης'
+        ORDER BY fiscal_year DESC, inventory_date DESC, id DESC
+        LIMIT 1
+      `).get();
+      if (!session) return;
+      db.prepare(`
+        UPDATE inventory_items
+        SET settlement_reference = ?
+        WHERE inventory_session_id = ? AND share_id = ?
+      `).run(archived ? 'Αρχείο' : '', session.id, shareId);
+    },
+
     createArchiveEvent(shareId, actionType, actionDate, reason) {
       db.prepare(`
         INSERT INTO share_archive_events (share_id, action_type, action_date, reason)

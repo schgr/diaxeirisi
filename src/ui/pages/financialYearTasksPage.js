@@ -63,22 +63,20 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
         <button class="secondary-button" data-renumber-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
       </div>
       <section class="page-panel">
-        <div class="section-heading">
-          <div>
-            <h3>Αλλαγή Αρίθμησης Μερίδων</h3>
-            <p class="muted">Η εφαρμογή δημιουργεί πρώτα Κατάσταση Απογραφής με την παλιά αρίθμηση. Ο παλιός αριθμός εμφανίζεται στο πεδίο 15.</p>
-          </div>
-          <label class="field compact-field">
+        <div class="renumber-header">
+          <h3>Αλλαγή Αρίθμησης Μερίδων</h3>
+          <p class="muted">Η εφαρμογή δημιουργεί πρώτα Κατάσταση Απογραφής με την παλιά αρίθμηση. Στο πεδίο 15 εμφανίζεται «Αρχείο» μόνο για τις αρχειοθετημένες μερίδες.</p>
+          <label class="field compact-field renumber-year-field">
             <span>Οικονομικό Έτος</span>
             <input data-renumber-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
           </label>
         </div>
-        <div data-renumber-results><p class="muted">Φόρτωση μερίδων...</p></div>
-        <div class="form-message" data-renumber-message hidden></div>
-        <div class="form-actions no-print">
+        <div class="form-actions renumber-top-actions no-print">
           <button class="secondary-button" data-renumber-check type="button">Έλεγχος</button>
           <button class="primary-button" data-renumber-save type="button">Αποθήκευση Νέας Αρίθμησης</button>
         </div>
+        <div class="form-message" data-renumber-message hidden></div>
+        <div data-renumber-results><p class="muted">Φόρτωση μερίδων...</p></div>
       </section>
     </div>
   `;
@@ -106,7 +104,6 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       state.fiscalYear = Number(data.fiscalYear || state.fiscalYear);
       container.querySelector('[data-renumber-year]').value = state.fiscalYear;
       renumberResults.innerHTML = renderRenumberingTable(data.shares);
-      bindArchiveToggles(renumberResults);
     } catch (error) {
       renumberResults.innerHTML = '<p class="muted">Δεν ήταν δυνατή η φόρτωση των μερίδων.</p>';
       showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση των μερίδων.', 'error');
@@ -118,8 +115,7 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       fiscalYear: Number(container.querySelector('[data-renumber-year]').value),
       items: [...renumberResults.querySelectorAll('[data-renumber-row]')].map((row) => ({
         shareId: Number(row.dataset.shareId),
-        newShareNumber: row.querySelector('[data-new-share-number]').value,
-        archive: row.querySelector('[data-archive-share]').checked
+        newShareNumber: row.querySelector('[data-new-share-number]').value
       }))
     };
   }
@@ -221,32 +217,16 @@ function renderRenumberingTable(shares) {
           <td><input class="table-input" data-new-share-number type="text" autocomplete="off" aria-label="Νέος αριθμός μερίδας ${escapeHtml(share.shareNumber)}" /></td>
           <td>${escapeHtml(share.description)}</td>
           <td>${escapeHtml(formatQuantity(share.quantity))}</td>
-          <td>
-            <label class="checkbox-field">
-              <input data-archive-share type="checkbox" ${share.canArchive ? '' : 'disabled'} />
-              <span>Αρχείο</span>
-            </label>
-          </td>
         </tr>
       `).join('')
-    : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν ενεργές μερίδες.</td></tr>';
+    : '<tr><td colspan="5" class="empty-table">Δεν υπάρχουν ενεργές μερίδες.</td></tr>';
   return `
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΝΕΟΣ ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΠΕΡΙΓΡΑΦΗ</th><th>ΠΟΣΟΤΗΤΑ</th><th>ΑΡΧΕΙΟ</th></tr></thead>
+        <thead><tr><th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΝΕΟΣ ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>ΠΕΡΙΓΡΑΦΗ</th><th>ΠΟΣΟΤΗΤΑ</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>`;
-}
-
-function bindArchiveToggles(root) {
-  root.querySelectorAll('[data-archive-share]').forEach((checkbox) => {
-    checkbox.addEventListener('change', () => {
-      const input = checkbox.closest('[data-renumber-row]').querySelector('[data-new-share-number]');
-      input.disabled = checkbox.checked;
-      if (checkbox.checked) input.value = '';
-    });
-  });
 }
 
 export function renderFinancialYearMovementTable(rows, source, transactionType) {

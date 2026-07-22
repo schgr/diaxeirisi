@@ -219,23 +219,32 @@ function renderArchivePanel(data) {
   return `
     <section class="page-panel">
       <h3>Αρχειοθέτηση Ανενεργής Μερίδας</h3>
-      <p class="muted">Επιτρέπεται μόνο για Μερίδα με μηδενικό λογιστικό και μηδενικό χρεωμένο υπόλοιπο.</p>
-      <div class="administration-form-grid">
-        <label class="field administration-wide-field"><span>Μερίδα</span><select id="archive-share"><option value="">Επιλογή</option>${eligible.map((share) => `<option value="${share.id}">${escapeHtml(share.shareNumber)} · ${escapeHtml(share.nominalNumber)} · ${escapeHtml(share.description)}</option>`).join('')}</select></label>
+      <p class="muted">Εμφανίζονται όλες οι ενεργές Μερίδες με μηδενικό λογιστικό και μηδενικό χρεωμένο υπόλοιπο. Επιλέξτε «Αρχείο» για όσες θα αρχειοθετηθούν.</p>
+      <div class="administration-form-grid archive-options-grid">
         <label class="field"><span>Ημερομηνία</span><input id="archive-date" type="date" value="${data.today}" /></label>
         <label class="field administration-wide-field"><span>Αιτιολογία</span><input id="archive-reason" placeholder="Κατάργηση είδους, μεταβολή ΑΟ ή άλλη διαταγή" /></label>
-        <button id="archive-submit" class="primary-button" type="button">Αρχειοθέτηση</button>
       </div>
-      ${eligible.length ? '' : '<p class="empty-table">Δεν υπάρχουν Μερίδες που πληρούν τις προϋποθέσεις.</p>'}
+      <div class="table-wrap">
+        <table class="index-table administration-table archive-selection-table">
+          <thead><tr><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Α/Ο</th><th>Περιγραφή</th><th>Ποσότητα</th><th>Αρχείο</th></tr></thead>
+          <tbody>${eligible.length ? eligible.map((share, index) => `
+            <tr><td>${index + 1}</td><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(share.description)}</td><td>${escapeHtml(formatQuantity(share.accountingBalance))}</td><td><label class="checkbox-field"><input data-archive-share="${share.id}" type="checkbox" /><span>Αρχείο</span></label></td></tr>
+          `).join('') : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν Μερίδες που πληρούν τις προϋποθέσεις.</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="form-actions archive-submit-actions"><button id="archive-submit" class="primary-button" type="button" ${eligible.length ? '' : 'disabled'}>Αρχειοθέτηση Επιλεγμένων</button></div>
     </section>
     <section class="page-panel">
-      <h3>Αρχειοθετημένες Μερίδες</h3>
+      <div class="section-heading">
+        <h3>Αρχειοθετημένες Μερίδες</h3>
+        <button class="primary-button compact-print-button no-print" data-print-archive-table type="button" ${data.archivedShares.length ? '' : 'disabled'}>Εκτύπωση</button>
+      </div>
       <div class="table-wrap">
-        <table class="index-table administration-table">
-          <thead><tr><th>Μερίδα</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ημερομηνία</th><th>Αιτιολογία</th><th></th></tr></thead>
-          <tbody>${data.archivedShares.length ? data.archivedShares.map((share) => `
-            <tr><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(share.description)}</td><td>${formatDate(share.archivedAt)}</td><td>${escapeHtml(share.archiveReason)}</td><td><button data-restore-share="${share.id}" class="secondary-button" type="button">Επαναφορά</button></td></tr>
-          `).join('') : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν αρχειοθετημένες Μερίδες.</td></tr>'}</tbody>
+        <table class="index-table administration-table" data-archived-shares-table>
+          <thead><tr><th>Α/Α</th><th>Μερίδα</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ημερομηνία</th><th>Αιτιολογία</th><th class="no-print"></th></tr></thead>
+          <tbody>${data.archivedShares.length ? data.archivedShares.map((share, index) => `
+            <tr><td>${index + 1}</td><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(share.description)}</td><td>${formatDate(share.archivedAt)}</td><td>${escapeHtml(share.archiveReason)}</td><td class="no-print"><button data-restore-share="${share.id}" class="secondary-button" type="button">Επαναφορά</button></td></tr>
+          `).join('') : '<tr><td colspan="7" class="empty-table">Δεν υπάρχουν αρχειοθετημένες Μερίδες.</td></tr>'}</tbody>
         </table>
       </div>
     </section>
@@ -411,13 +420,21 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
   }, showToast));
 
   container.querySelector('#archive-submit').addEventListener('click', async () => run(async () => {
-    const result = await api.archiveShare({
-      shareId: Number(value(container, '#archive-share')),
-      actionDate: value(container, '#archive-date'),
-      reason: value(container, '#archive-reason')
-    });
-    showToast(result.message);
-    await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast);
+    const selected = [...container.querySelectorAll('[data-archive-share]:checked')];
+    if (!selected.length) throw new Error('Επιλέξτε τουλάχιστον μία Μερίδα για αρχειοθέτηση.');
+    for (const checkbox of selected) {
+      await api.archiveShare({
+        shareId: Number(checkbox.dataset.archiveShare),
+        actionDate: value(container, '#archive-date'),
+        reason: value(container, '#archive-reason')
+      });
+    }
+    showToast(`${selected.length} ${selected.length === 1 ? 'Μερίδα μεταφέρθηκε' : 'Μερίδες μεταφέρθηκαν'} στο αρχείο.`);
+    await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'archive');
+  }, showToast));
+
+  container.querySelector('[data-print-archive-table]')?.addEventListener('click', async () => run(async () => {
+    await printArchivedSharesTable(container.querySelector('[data-archived-shares-table]'));
   }, showToast));
 
   container.addEventListener('click', async (event) => {
@@ -585,6 +602,34 @@ function renderOfficerIdentity(value) {
   return `<strong>${escapeHtml(officer.name)}</strong><em>${escapeHtml(officer.rank)}</em>`;
 }
 
+async function printArchivedSharesTable(table) {
+  if (!table) return;
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root';
+  printRoot.innerHTML = `
+    <style>
+      @page { size: A4 landscape; margin: 10mm; }
+      .archived-shares-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
+      .archived-shares-print h2 { margin: 0 0 8mm; font-size: 18pt; }
+      .archived-shares-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+      .archived-shares-print th, .archived-shares-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
+      .archived-shares-print th { background: #e8eef5; }
+      .archived-shares-print .no-print { display: none !important; }
+    </style>
+    <section class="archived-shares-print print-document-area">
+      <h2>Αρχειοθετημένες Μερίδες</h2>
+      ${table.outerHTML}
+    </section>`;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  try {
+    await window.appApi.print.currentDocument({ landscape: true });
+  } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
+}
+
 async function run(operation, showToast) {
   try {
     await operation();
@@ -601,4 +646,8 @@ function formatDate(value) {
   if (!value) return '';
   const [year, month, day] = value.slice(0, 10).split('-');
   return `${day}/${month}/${year}`;
+}
+
+function formatQuantity(value) {
+  return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3 }).format(Number(value || 0));
 }

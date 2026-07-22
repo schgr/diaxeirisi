@@ -11,6 +11,16 @@ function createYearEndRepository(db) {
       `).all();
     },
 
+    listInventoryShares() {
+      return db.prepare(`
+        SELECT id, share_number, nominal_number, description, measurement_unit,
+               accounting_balance, charged_quantity, archive_status
+        FROM shares
+        ORDER BY CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+                 CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
+      `).all();
+    },
+
     getRunForYear(fiscalYear) {
       return db.prepare('SELECT * FROM share_renumbering_runs WHERE fiscal_year = ?').get(fiscalYear);
     },
@@ -65,7 +75,7 @@ function createYearEndRepository(db) {
           balance,
           balance,
           balance,
-          share.share_number
+          share.archive_status === 'Αρχειοθετημένη' ? 'Αρχείο' : ''
         );
       });
       return { sessionId, serialNumber };
@@ -75,7 +85,7 @@ function createYearEndRepository(db) {
       let result;
       db.transaction(() => {
         const shares = this.listActiveShares();
-        const inventory = this.createAnnualInventory(fiscalYear, shares);
+        const inventory = this.createAnnualInventory(fiscalYear, this.listInventoryShares());
         const runId = db.prepare(`
           INSERT INTO share_renumbering_runs (fiscal_year, effective_date, inventory_session_id)
           VALUES (?, ?, ?)
@@ -88,7 +98,7 @@ function createYearEndRepository(db) {
 
         items.forEach((item) => {
           const share = shares.find((candidate) => Number(candidate.id) === Number(item.shareId));
-          audit.run(runId, share.id, share.share_number, item.newShareNumber || '', item.archive ? 1 : 0);
+          audit.run(runId, share.id, share.share_number, item.newShareNumber, 0);
           db.prepare(`
             UPDATE shares
             SET share_number = ?, previous_share_number = ?
@@ -98,21 +108,8 @@ function createYearEndRepository(db) {
 
         items.forEach((item) => {
           const share = shares.find((candidate) => Number(candidate.id) === Number(item.shareId));
-          if (item.archive) {
-            db.prepare(`
-              UPDATE shares
-              SET share_number = ?, archive_status = 'Αρχειοθετημένη',
-                  archived_at = ?, archive_reason = 'Αλλαγή αρίθμησης μερίδων'
-              WHERE id = ?
-            `).run(share.share_number, effectiveDate, share.id);
-            db.prepare(`
-              INSERT INTO share_archive_events (share_id, action_type, action_date, reason)
-              VALUES (?, 'Αρχειοθέτηση', ?, 'Αλλαγή αρίθμησης μερίδων')
-            `).run(share.id, effectiveDate);
-          } else {
-            db.prepare('UPDATE shares SET share_number = ? WHERE id = ?')
-              .run(item.newShareNumber, share.id);
-          }
+          db.prepare('UPDATE shares SET share_number = ? WHERE id = ?')
+            .run(item.newShareNumber, share.id);
         });
         result = { runId, inventorySessionId: inventory.sessionId, inventorySerial: inventory.serialNumber };
       })();

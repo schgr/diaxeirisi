@@ -16,8 +16,8 @@ function createYearEndService(db) {
       const validated = validatePayload(repository, payload);
       return {
         valid: true,
-        activeCount: validated.items.filter((item) => !item.archive).length,
-        archiveCount: validated.items.filter((item) => item.archive).length,
+        activeCount: validated.items.length,
+        archiveCount: 0,
         message: 'Ο έλεγχος ολοκληρώθηκε. Όλες οι μερίδες έχουν έγκυρο και μοναδικό νέο αριθμό.'
       };
     },
@@ -58,28 +58,19 @@ function validatePayload(repository, payload) {
   const seen = new Map();
   const items = shares.map((share) => {
     const item = byId.get(Number(share.id));
-    const archive = Boolean(item.archive);
-    const quantity = Number(share.accounting_balance || 0);
-    const charged = Number(share.charged_quantity || 0);
-    if (archive && (quantity !== 0 || charged !== 0)) {
-      throw new AppError(
-        `Η μερίδα ${share.share_number} δεν μπορεί να αρχειοθετηθεί επειδή έχει ποσότητα ή χρέωση.`,
-        'VALIDATION_ERROR'
-      );
-    }
-    const newShareNumber = archive ? '' : normalizeShareNumber(item.newShareNumber);
-    if (!archive && !newShareNumber) {
+    const newShareNumber = normalizeShareNumber(item.newShareNumber);
+    if (!newShareNumber) {
       throw new AppError(`Δεν έχει δοθεί νέος αριθμός στη μερίδα ${share.share_number}.`, 'VALIDATION_ERROR');
     }
     const duplicateKey = newShareNumber.toLocaleLowerCase('el-GR');
-    if (!archive && seen.has(duplicateKey)) {
+    if (seen.has(duplicateKey)) {
       throw new AppError(
         `Ο νέος αριθμός ${newShareNumber} χρησιμοποιείται σε περισσότερες από μία μερίδες.`,
         'VALIDATION_ERROR'
       );
     }
-    if (!archive) seen.set(duplicateKey, share.id);
-    return { shareId: share.id, newShareNumber, archive };
+    seen.set(duplicateKey, share.id);
+    return { shareId: share.id, newShareNumber };
   });
   return { fiscalYear, items };
 }

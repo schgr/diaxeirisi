@@ -6,6 +6,7 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSharesService } = require('../src/services/sharesService');
 const { createInventoryService } = require('../src/services/inventoryService');
 const { createYearEndService } = require('../src/services/yearEndService');
+const { createAdministrationService } = require('../src/services/administrationService');
 
 async function run() {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-year-end-'));
@@ -14,54 +15,68 @@ async function run() {
     const shares = createSharesService(db);
     const inventory = createInventoryService(db);
     const yearEnd = createYearEndService(db);
+    const administration = createAdministrationService(db);
 
     shares.addShare(makeShare('10', 'Ενεργό υλικό', 12));
     shares.addShare(makeShare('20', 'Υλικό μηδενικού υπολοίπου', 0));
+    shares.addShare(makeShare('30', 'Δεύτερο ενεργό υλικό', 5));
+    const inactiveShare = shares.listShares().find((share) => share.shareNumber === '20');
+    administration.archiveShare({
+      shareId: inactiveShare.id,
+      actionDate: '2026-12-30',
+      reason: 'Κατάργηση είδους'
+    });
     const data = yearEnd.getRenumberingData();
     assert.strictEqual(data.shares.length, 2);
     assert.throws(() => yearEnd.validateRenumbering({
       fiscalYear: 2026,
-      items: data.shares.map((share) => ({ shareId: share.id, newShareNumber: '', archive: false }))
+      items: data.shares.map((share) => ({ shareId: share.id, newShareNumber: '' }))
     }), /Δεν έχει δοθεί νέος αριθμός/);
     assert.throws(() => yearEnd.validateRenumbering({
       fiscalYear: 2026,
-      items: data.shares.map((share) => ({ shareId: share.id, newShareNumber: '100', archive: false }))
+      items: data.shares.map((share) => ({ shareId: share.id, newShareNumber: '100' }))
     }), /περισσότερες από μία μερίδες/);
-    assert.throws(() => yearEnd.validateRenumbering({
-      fiscalYear: 2026,
-      items: data.shares.map((share) => ({
-        shareId: share.id,
-        newShareNumber: share.shareNumber,
-        archive: share.shareNumber === '10'
-      }))
-    }), /δεν μπορεί να αρχειοθετηθεί/);
 
     const payload = {
       fiscalYear: 2026,
       items: data.shares.map((share) => ({
         shareId: share.id,
-        newShareNumber: share.shareNumber === '10' ? '101' : '',
-        archive: share.shareNumber === '20'
+        newShareNumber: share.shareNumber === '10' ? '101' : '103'
       }))
     };
     assert.strictEqual(yearEnd.validateRenumbering(payload).valid, true);
     const result = yearEnd.applyRenumbering(payload);
     assert.ok(result.inventorySessionId);
-    assert.deepStrictEqual(shares.listShares().map((share) => share.shareNumber), ['101']);
+    assert.deepStrictEqual(shares.listShares().map((share) => share.shareNumber), ['101', '103']);
 
     const snapshot = inventory.getSession(result.inventorySessionId);
     assert.strictEqual(snapshot.inventoryReason, 'Ετήσια απογραφή Διαχείρισης');
     assert.strictEqual(snapshot.status, 'Ολοκληρωμένη');
     assert.strictEqual(snapshot.periodStart, '2026-01-01');
     assert.strictEqual(snapshot.periodEnd, '2026-12-31');
-    assert.strictEqual(snapshot.items.length, 2);
+    assert.strictEqual(snapshot.items.length, 3);
     assert.strictEqual(snapshot.items.find((item) => item.shareNumber === '10').accountingBalance, 12);
     assert.strictEqual(snapshot.items.find((item) => item.shareNumber === '10').finalCount, 12);
-    assert.strictEqual(snapshot.items.find((item) => item.shareNumber === '10').settlementReference, '10');
+    assert.strictEqual(snapshot.items.find((item) => item.shareNumber === '10').settlementReference, '');
+    assert.strictEqual(snapshot.items.find((item) => item.shareNumber === '20').settlementReference, 'Αρχείο');
+    administration.restoreShare(inactiveShare.id, '2026-12-31');
+    assert.strictEqual(
+      inventory.getSession(result.inventorySessionId).items.find((item) => item.shareNumber === '20').settlementReference,
+      ''
+    );
+    administration.archiveShare({
+      shareId: inactiveShare.id,
+      actionDate: '2026-12-31',
+      reason: 'Οριστική αρχειοθέτηση'
+    });
+    assert.strictEqual(
+      inventory.getSession(result.inventorySessionId).items.find((item) => item.shareNumber === '20').settlementReference,
+      'Αρχείο'
+    );
     assert.throws(() => yearEnd.applyRenumbering({
       fiscalYear: 2026,
-      items: [{ shareId: data.shares[0].id, newShareNumber: '102', archive: false }]
-    }), /έχει ήδη πραγματοποιηθεί|όλες τις ενεργές μερίδες/);
+      items: [{ shareId: data.shares[0].id, newShareNumber: '102' }]
+    }), /έχει ήδη πραγματοποιηθεί|ενεργές μερίδες/);
 
     inventory.completeSession(result.inventorySessionId);
     inventory.saveCommittee(result.inventorySessionId, {

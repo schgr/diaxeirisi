@@ -343,7 +343,7 @@ function renderMovementDifferencesIndex(settings, protocols) {
 
 function renderInventoryPrintControls(sessions, state) {
   return `
-    <div class="registry-controls">
+    <div class="registry-controls inventory-print-controls">
       <label class="field">
         <span>Απογραφή</span>
         <select id="prints-inventory-id">
