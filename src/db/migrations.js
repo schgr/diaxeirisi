@@ -1933,6 +1933,29 @@ const migrations = [
       SET name = 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.'
       WHERE sort_order = 3;
     `
+  },
+  {
+    version: 58,
+    name: 'ammunition_batch_book',
+    up: `
+      ALTER TABLE shares ADD COLUMN requires_ammunition_batch_book INTEGER NOT NULL DEFAULT 0;
+
+      CREATE TABLE share_ammunition_batches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        share_id INTEGER NOT NULL,
+        position INTEGER NOT NULL,
+        batch_number TEXT NOT NULL DEFAULT '',
+        quantity REAL NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+        notes TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (share_id) REFERENCES shares(id) ON DELETE CASCADE,
+        UNIQUE (share_id, position)
+      );
+
+      CREATE INDEX idx_share_ammunition_batches_share
+      ON share_ammunition_batches(share_id, position);
+    `
   }
 ];
 

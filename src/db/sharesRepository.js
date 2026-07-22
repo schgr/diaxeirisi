@@ -21,6 +21,7 @@ function createSharesRepository(db) {
               requires_composition,
               requires_serial_number,
               requires_weapon_registry,
+              requires_ammunition_batch_book,
               requires_change_sheet
             FROM shares
             WHERE archive_status = 'Ενεργή'
@@ -93,6 +94,7 @@ function createSharesRepository(db) {
               requires_composition = ?,
               requires_serial_number = ?,
               requires_weapon_registry = ?,
+              requires_ammunition_batch_book = ?,
               requires_change_sheet = ?
           WHERE id = ?
         `
@@ -111,6 +113,7 @@ function createSharesRepository(db) {
         payload.requiresComposition ? 1 : 0,
         payload.requiresSerialNumber ? 1 : 0,
         payload.requiresWeaponRegistry ? 1 : 0,
+        payload.requiresAmmunitionBatchBook ? 1 : 0,
         payload.requiresChangeSheet ? 1 : 0,
         id
       );
@@ -249,6 +252,43 @@ function createSharesRepository(db) {
           shareId,
           entry.position,
           entry.serialNumber,
+          entry.notes
+        ));
+      })();
+    },
+
+    listAmmunitionBatchShares() {
+      return db.prepare(`
+        SELECT *
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+          AND requires_ammunition_batch_book = 1
+        ORDER BY CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+                 CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
+      `).all();
+    },
+
+    listAmmunitionBatches(shareId) {
+      return db.prepare(`
+        SELECT position, batch_number, quantity, notes
+        FROM share_ammunition_batches
+        WHERE share_id = ?
+        ORDER BY position
+      `).all(shareId);
+    },
+
+    replaceAmmunitionBatches(shareId, entries) {
+      db.transaction(() => {
+        db.prepare('DELETE FROM share_ammunition_batches WHERE share_id = ?').run(shareId);
+        const insert = db.prepare(`
+          INSERT INTO share_ammunition_batches (share_id, position, batch_number, quantity, notes)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        entries.forEach((entry, index) => insert.run(
+          shareId,
+          index + 1,
+          entry.batchNumber,
+          entry.quantity,
           entry.notes
         ));
       })();

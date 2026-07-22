@@ -1,6 +1,7 @@
 import { escapeHtml } from '../components/forms.js';
+import { printArchivedSharesTable, renderArchivePanel } from './administrationPage.js';
 
-export async function renderFinancialYearTasksPage(container, transactionsApi, yearEndApi, showToast) {
+export async function renderFinancialYearTasksPage(container, transactionsApi, yearEndApi, administrationApi, showToast) {
   const state = {
     source: null,
     fiscalYear: new Date().getFullYear(),
@@ -19,17 +20,22 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       <button class="home-tile transaction-flow-tile" data-financial-source="addy" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
         <span class="home-tile-title">Έλεγχος Κινήσεων ΑΔΔΥ</span>
-        <span class="home-tile-code">§ ΕΟΕ-Α</span>
+        <span class="home-tile-code">§ ΕΟΕ-1</span>
       </button>
       <button class="home-tile transaction-flow-tile" data-financial-source="exhp" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΕΧ</span>
         <span class="home-tile-title">Έλεγχος Κινήσεων ΕΧΠ</span>
-        <span class="home-tile-code">§ ΕΟΕ-Β</span>
+        <span class="home-tile-code">§ ΕΟΕ-2</span>
       </button>
       <button class="home-tile transaction-flow-tile" data-financial-source="renumber" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΡ</span>
         <span class="home-tile-title">Αλλαγή Αρίθμησης Μερίδων</span>
-        <span class="home-tile-code">§ ΕΟΕ-Γ</span>
+        <span class="home-tile-code">§ ΕΟΕ-3</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="archive" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΑΜ</span>
+        <span class="home-tile-title">Αρχείο Μερίδων</span>
+        <span class="home-tile-code">§ ΕΟΕ-4</span>
       </button>
     </section>
 
@@ -79,6 +85,11 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
         <div data-renumber-results><p class="muted">Φόρτωση μερίδων...</p></div>
       </section>
     </div>
+
+    <div data-archive-detail hidden>
+      <div class="page-toolbar no-print"><button class="secondary-button" data-archive-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button></div>
+      <div data-archive-content><p class="muted">Φόρτωση αρχείου μερίδων...</p></div>
+    </div>
   `;
 
   const menu = container.querySelector('[data-financial-menu]');
@@ -87,13 +98,26 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
   const renumberDetail = container.querySelector('[data-renumber-detail]');
   const renumberResults = container.querySelector('[data-renumber-results]');
   const renumberMessage = container.querySelector('[data-renumber-message]');
+  const archiveDetail = container.querySelector('[data-archive-detail]');
+  const archiveContent = container.querySelector('[data-archive-content]');
 
   function showMenu() {
     state.source = null;
     detail.hidden = true;
     renumberDetail.hidden = true;
+    archiveDetail.hidden = true;
     menu.classList.remove('is-hidden');
     menu.hidden = false;
+  }
+
+  async function loadArchive() {
+    archiveContent.innerHTML = '<p class="muted">Φόρτωση αρχείου μερίδων...</p>';
+    try {
+      archiveContent.innerHTML = renderArchivePanel(await administrationApi.getReferenceData());
+    } catch (error) {
+      archiveContent.innerHTML = '<p class="muted">Δεν ήταν δυνατή η φόρτωση του αρχείου μερίδων.</p>';
+      showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση του αρχείου μερίδων.', 'error');
+    }
   }
 
   async function loadRenumbering() {
@@ -150,6 +174,9 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       if (state.source === 'renumber') {
         renumberDetail.hidden = false;
         void loadRenumbering();
+      } else if (state.source === 'archive') {
+        archiveDetail.hidden = false;
+        void loadArchive();
       } else {
         detail.hidden = false;
         void refresh();
@@ -161,6 +188,36 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
     showMenu();
   });
   container.querySelector('[data-renumber-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-archive-back]').addEventListener('click', showMenu);
+  archiveDetail.addEventListener('click', async (event) => {
+    const submit = event.target.closest('#archive-submit');
+    const restore = event.target.closest('[data-restore-share]');
+    const print = event.target.closest('[data-print-archive-table]');
+    try {
+      if (submit) {
+        const selected = [...archiveContent.querySelectorAll('[data-archive-share]:checked')];
+        if (!selected.length) throw new Error('Επιλέξτε τουλάχιστον μία Μερίδα για αρχειοθέτηση.');
+        for (const checkbox of selected) {
+          await administrationApi.archiveShare({
+            shareId: Number(checkbox.dataset.archiveShare),
+            actionDate: archiveContent.querySelector('#archive-date').value,
+            reason: archiveContent.querySelector('#archive-reason').value
+          });
+        }
+        showToast(`${selected.length} ${selected.length === 1 ? 'Μερίδα μεταφέρθηκε' : 'Μερίδες μεταφέρθηκαν'} στο αρχείο.`);
+        await loadArchive();
+      } else if (restore) {
+        const data = await administrationApi.getReferenceData();
+        const result = await administrationApi.restoreShare(Number(restore.dataset.restoreShare), data.today);
+        showToast(result.message);
+        await loadArchive();
+      } else if (print) {
+        await printArchivedSharesTable(archiveContent.querySelector('[data-archived-shares-table]'));
+      }
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια αρχείου.', 'error');
+    }
+  });
   container.querySelector('[data-renumber-check]').addEventListener('click', async () => {
     try {
       const validation = await yearEndApi.validateRenumbering(collectRenumberingPayload());

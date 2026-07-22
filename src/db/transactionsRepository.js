@@ -130,6 +130,7 @@ function createTransactionsRepository(db) {
           accounting_balance, charged_quantity, unit_price, photo_path,
           archive_status, archived_at, archive_reason, requires_composition,
           requires_change_sheet, requires_serial_number, requires_weapon_registry,
+          requires_ammunition_batch_book,
           previous_share_number
         )
         SELECT ?, nominal_number, description, material_type, material_code,
@@ -137,6 +138,7 @@ function createTransactionsRepository(db) {
                0, charged_quantity, unit_price, photo_path,
                'Ενεργή', NULL, '', requires_composition,
                requires_change_sheet, requires_serial_number, requires_weapon_registry,
+               requires_ammunition_batch_book,
                ''
         FROM shares
         WHERE id = ?
@@ -162,7 +164,8 @@ function createTransactionsRepository(db) {
         'share_assignments',
         'share_composition_items',
         'share_change_sheet_entries',
-        'share_serial_numbers'
+        'share_serial_numbers',
+        'share_ammunition_batches'
       ]) {
         db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
           .run(targetShare.id, sourceShareId);

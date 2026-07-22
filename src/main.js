@@ -138,6 +138,12 @@ function registerIpcHandlers() {
   ipcMain.handle('shares:save-serial-numbers', async (_event, id, entries) =>
     safeInvoke(() => services.shares.saveSerialNumbers(id, entries))
   );
+  ipcMain.handle('shares:list-ammunition-batch-registry', async () =>
+    safeInvoke(() => services.shares.listAmmunitionBatchRegistry())
+  );
+  ipcMain.handle('shares:save-ammunition-batches', async (_event, id, entries) =>
+    safeInvoke(() => services.shares.saveAmmunitionBatches(id, entries))
+  );
   ipcMain.handle('shares:save-composition', async (_event, id, items) =>
     safeInvoke(() => services.shares.saveComposition(id, items))
   );

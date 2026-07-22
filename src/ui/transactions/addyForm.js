@@ -81,8 +81,9 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   const applyExhpReason = async (reason, reasonCode = '', clearDrafts = true) => {
     if (clearDrafts) {
       state.exhpDraftSupports.clear();
-      state.exhpItems = syncSupportDocumentMaterialsToExhpItems(state.exhpItems, null);
+      state.exhpItems = [];
       state.exhpDocumentsState.currentItems = state.exhpItems;
+      clearExhpLine(exhpControls);
       renderExhpEntryState(container, state);
     }
     exhpWizardReason.value = reason;

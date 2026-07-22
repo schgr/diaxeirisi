@@ -105,7 +105,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
         <section class="page-panel wide-panel">
           <h3>Πεδία Καρτελών Υλικού</h3>
-          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, την παρακολούθηση Σειριακού Αριθμού ή/και το Μητρώο Οπλισμού.</p>
+          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, τον Σειριακό Αριθμό, το Μητρώο Οπλισμού ή/και τα Πυρομαχικά Β.Φ.</p>
           ${renderMaterialCardFlags(shares)}
         </section>
       </div>
@@ -152,7 +152,7 @@ function renderMaterialCardFlags(shares) {
   return `
     <div class="table-wrap material-card-flags-wrap">
       <table class="index-table material-card-flags-table">
-        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th><th>Μητρώο Οπλισμού</th></tr></thead>
+        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th><th>Μητρώο Οπλισμού</th><th>Πυρομαχικά Β.Φ.</th></tr></thead>
         <tbody>${shares.length ? shares.map((share, index) => `
           <tr data-material-card-flags="${share.id}">
             <td>${index + 1}</td>
@@ -162,8 +162,9 @@ function renderMaterialCardFlags(shares) {
             <td><input data-material-flag="requiresComposition" type="checkbox" ${share.requiresComposition ? 'checked' : ''} aria-label="Σύνθεση Υλικού ${escapeHtml(share.shareNumber)}" /></td>
             <td><input data-material-flag="requiresSerialNumber" type="checkbox" ${share.requiresSerialNumber ? 'checked' : ''} aria-label="Σειριακός Αριθμός ${escapeHtml(share.shareNumber)}" /></td>
             <td><input data-material-flag="requiresWeaponRegistry" type="checkbox" ${share.requiresWeaponRegistry ? 'checked' : ''} aria-label="Μητρώο Οπλισμού ${escapeHtml(share.shareNumber)}" /></td>
+            <td><input data-material-flag="requiresAmmunitionBatchBook" type="checkbox" ${share.requiresAmmunitionBatchBook ? 'checked' : ''} aria-label="Πυρομαχικά Β.Φ. ${escapeHtml(share.shareNumber)}" /></td>
           </tr>
-        `).join('') : '<tr><td colspan="7" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
+        `).join('') : '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
       </table>
     </div>
   `;

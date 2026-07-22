@@ -37,7 +37,8 @@ async function run() {
     db.prepare(`
       UPDATE shares
       SET measurement_unit = 'Τεμάχια', requires_composition = 1,
-          requires_change_sheet = 1, requires_serial_number = 1
+          requires_change_sheet = 1, requires_serial_number = 1,
+          requires_ammunition_batch_book = 1
       WHERE id = ?
     `).run(source.id);
     shares.saveComposition(source.id, [{
@@ -60,6 +61,7 @@ async function run() {
       quantity: 1
     }]);
     shares.saveSerialNumbers(source.id, [{ position: 1, serialNumber: 'SN-1', notes: '' }]);
+    shares.saveAmmunitionBatches(source.id, [{ batchNumber: 'ΠΥΡ-1', quantity: 4, notes: '' }]);
 
     const departmentId = db.prepare(`
       INSERT INTO department_managers (department_name, department_head, sort_order)
@@ -120,6 +122,7 @@ async function run() {
     assert.strictEqual(newShare.archive_status, 'Ενεργή');
     assert.strictEqual(Number(newShare.accounting_balance), 10);
     assert.strictEqual(Number(newShare.charged_quantity), 4);
+    assert.strictEqual(Boolean(newShare.requires_ammunition_batch_book), true);
 
     const movedInternal = db.prepare('SELECT * FROM internal_items WHERE id = 1').get();
     assert.strictEqual(movedInternal.share_id, newShare.id);
@@ -127,6 +130,7 @@ async function run() {
     assert.strictEqual(db.prepare('SELECT share_id FROM share_composition_items').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_change_sheet_entries').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_serial_numbers').get().share_id, newShare.id);
+    assert.strictEqual(db.prepare('SELECT share_id FROM share_ammunition_batches').get().share_id, newShare.id);
 
     const card = shares.getShareCard(newShare.id, 2026);
     assert.strictEqual(card.openingTransfer.balance, 0);

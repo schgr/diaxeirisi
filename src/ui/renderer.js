@@ -93,9 +93,9 @@ const homeGroups = [
     label: 'Διαχείριση',
     items: [
       { id: 'administration-handover', sectionId: 'administration', tab: 'handover', title: 'Παράδοση - Παραλαβή' },
-      { id: 'administration-archive', sectionId: 'administration', tab: 'archive', title: 'Αρχείο Μερίδων' },
       { id: 'administration-aggregate-prints', sectionId: 'prints', title: 'Συγκεντρωτικές Εκτυπώσεις' },
-      { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' }
+      { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' },
+      { id: 'administration-ammunition-batches', sectionId: 'administration', tab: 'ammunition-batches', title: 'Βιβλίο Μερίδων Β.Φ.' }
     ]
   },
   {
@@ -380,6 +380,7 @@ async function renderActivePage() {
         sectionRoot,
         window.appApi.transactions,
         window.appApi.yearEnd,
+        window.appApi.administration,
         showToast
       );
       return;

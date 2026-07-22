@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('appApi', {
     updateDetails: (id, payload) => invoke('shares:update-details', id, payload),
     listSerialRegistry: () => invoke('shares:list-serial-registry'),
     saveSerialNumbers: (id, entries) => invoke('shares:save-serial-numbers', id, entries),
+    listAmmunitionBatchRegistry: () => invoke('shares:list-ammunition-batch-registry'),
+    saveAmmunitionBatches: (id, entries) => invoke('shares:save-ammunition-batches', id, entries),
     saveComposition: (id, items) => invoke('shares:save-composition', id, items),
     saveChangeSheet: (id, entries) => invoke('shares:save-change-sheet', id, entries),
     choosePhoto: () => invoke('shares:choose-photo')

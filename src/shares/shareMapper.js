@@ -22,6 +22,7 @@ function mapShare(row) {
     requiresComposition: Boolean(row.requires_composition),
     requiresSerialNumber: Boolean(row.requires_serial_number),
     requiresWeaponRegistry: Boolean(row.requires_weapon_registry),
+    requiresAmmunitionBatchBook: Boolean(row.requires_ammunition_batch_book),
     requiresChangeSheet: Boolean(row.requires_change_sheet),
     status: balance.status,
     statusTone: balance.statusTone

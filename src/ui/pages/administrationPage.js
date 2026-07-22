@@ -3,10 +3,11 @@ import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
 export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '', sharesApi = window.appApi.shares) {
-  const [data, settings, serialRegistry] = await Promise.all([
+  const [data, settings, serialRegistry, ammunitionBatchRegistry] = await Promise.all([
     api.getReferenceData(),
     settingsApi.get(),
-    sharesApi.listSerialRegistry()
+    sharesApi.listSerialRegistry(),
+    sharesApi.listAmmunitionBatchRegistry()
   ]);
   const selectedHandover = selectedHandoverId ? await api.getHandover(selectedHandoverId) : null;
 
@@ -14,24 +15,24 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     <section class="page-header">
       <div>
         <p class="eyebrow">ΓΕΝΙΚΗ ΔΙΑΧΕΙΡΙΣΗ</p>
-        <h2>Παράδοση - Παραλαβή και Αρχείο Μερίδων</h2>
+        <h2>Διαχείριση Υλικού</h2>
       </div>
     </section>
 
     <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
       <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="archive" type="button"><span class="home-tile-icon">ΑΜ</span><span class="home-tile-title">Αρχείο Μερίδων</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="ammunition-batches" type="button"><span class="home-tile-icon">ΒΦ</span><span class="home-tile-title">Βιβλίο Μερίδων Β.Φ.</span><span class="home-tile-code">§ ΔΧ-Ε</span></button>
     </section>
     <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
     </div>
-    <div data-administration-panel="archive" hidden>
-      ${renderArchivePanel(data)}
-    </div>
     <div data-administration-panel="serial-numbers" hidden>
       ${renderSerialNumberRegistry(serialRegistry)}
+    </div>
+    <div data-administration-panel="ammunition-batches" hidden>
+      ${renderAmmunitionBatchRegistry(ammunitionBatchRegistry)}
     </div>
   `;
 
@@ -65,6 +66,48 @@ function renderSerialNumberRegistry(registry) {
         </table>
       </div>
     </section>
+  `;
+}
+
+function renderAmmunitionBatchRegistry(registry) {
+  const rows = registry.flatMap((item, shareIndex) => {
+    const entries = item.entries.length ? item.entries : [{}];
+    return entries.map((entry, entryIndex) => renderAmmunitionBatchRow(item.share, entry, shareIndex, entryIndex));
+  }).join('');
+  return `
+    <section class="page-panel wide-panel ammunition-batch-registry-panel">
+      <div class="requests-status-header">
+        <div>
+          <h3>Βιβλίο Μερίδων Β.Φ.</h3>
+          <p class="muted">Εμφανίζονται μόνο οι καρτέλες με ενεργό το πεδίο «Πυρομαχικά Β.Φ.». Σε κάθε καρτέλα μπορούν να καταχωριστούν όσες Μερίδες Πυρκού απαιτούνται, με ξεχωριστή ποσότητα.</p>
+        </div>
+        <div class="row-actions">
+          <button class="primary-button" data-save-ammunition-batches type="button">Αποθήκευση</button>
+          <button class="secondary-button" data-print-ammunition-batches type="button">Εκτύπωση</button>
+        </div>
+      </div>
+      <div class="table-wrap ammunition-batch-registry-wrap">
+        <table class="index-table ammunition-batch-registry-table" data-ammunition-batch-table>
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Β.Φ.».</td></tr>'}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function renderAmmunitionBatchRow(share, entry = {}, shareIndex = 0, entryIndex = 0) {
+  return `
+    <tr data-ammunition-batch-row data-ammunition-share="${share.id}" data-share-index="${shareIndex}">
+      <td>${shareIndex + 1}</td>
+      <td>${escapeHtml(share.shareNumber)}</td>
+      <td>${escapeHtml(share.nominalNumber)}</td>
+      <td class="material-description-cell">${escapeHtml(share.description)}</td>
+      <td><input data-ammunition-batch-number value="${escapeHtml(entry.batchNumber || '')}" aria-label="Μερίδα Πυρκού ${entryIndex + 1}" /></td>
+      <td><input data-ammunition-batch-quantity type="number" min="0.001" step="0.001" value="${escapeHtml(entry.quantity || '')}" aria-label="Ποσότητα Μερίδας Πυρκού ${entryIndex + 1}" /></td>
+      <td><input data-ammunition-batch-notes value="${escapeHtml(entry.notes || '')}" aria-label="Παρατηρήσεις Μερίδας Πυρκού ${entryIndex + 1}" /></td>
+      <td class="no-print"><div class="row-actions"><button class="secondary-button" data-add-ammunition-batch="${share.id}" type="button">+ Νέα</button><button class="danger-button" data-remove-ammunition-batch type="button">Διαγραφή</button></div></td>
+    </tr>
   `;
 }
 
@@ -214,7 +257,7 @@ function protocolTextarea(label, id, value) {
   return `<label class="field administration-wide-field"><span>${label}</span><textarea id="${id}" rows="3">${escapeHtml(value || '')}</textarea></label>`;
 }
 
-function renderArchivePanel(data) {
+export function renderArchivePanel(data) {
   const eligible = data.activeShares.filter((share) => share.accountingBalance === 0 && share.chargedQuantity === 0);
   return `
     <section class="page-panel">
@@ -406,6 +449,48 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     openSerialRegistryPreview(container, showToast);
   });
 
+  container.querySelector('[data-save-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
+    const grouped = new Map();
+    container.querySelectorAll('[data-ammunition-batch-row]').forEach((row) => {
+      const shareId = Number(row.dataset.ammunitionShare);
+      if (!grouped.has(shareId)) grouped.set(shareId, []);
+      const batchNumber = row.querySelector('[data-ammunition-batch-number]').value.trim();
+      const quantity = row.querySelector('[data-ammunition-batch-quantity]').value;
+      const notes = row.querySelector('[data-ammunition-batch-notes]').value.trim();
+      if (batchNumber || quantity || notes) grouped.get(shareId).push({ batchNumber, quantity, notes });
+    });
+    for (const [shareId, entries] of grouped) {
+      await sharesApi.saveAmmunitionBatches(shareId, entries);
+    }
+    showToast('Το Βιβλίο Μερίδων Β.Φ. αποθηκεύτηκε.');
+    await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'ammunition-batches', sharesApi);
+  }, showToast));
+
+  container.querySelector('[data-print-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
+    await printAmmunitionBatchTable(container.querySelector('[data-ammunition-batch-table]'));
+  }, showToast));
+
+  container.querySelector('[data-ammunition-batch-table]')?.addEventListener('click', (event) => {
+    const add = event.target.closest('[data-add-ammunition-batch]');
+    const remove = event.target.closest('[data-remove-ammunition-batch]');
+    const row = event.target.closest('[data-ammunition-batch-row]');
+    if (!row) return;
+    if (add) {
+      const clone = row.cloneNode(true);
+      clone.querySelectorAll('input').forEach((input) => { input.value = ''; });
+      const sameShareRows = [...container.querySelectorAll(`[data-ammunition-batch-row][data-ammunition-share="${row.dataset.ammunitionShare}"]`)];
+      sameShareRows[sameShareRows.length - 1].after(clone);
+      clone.querySelector('[data-ammunition-batch-number]')?.focus();
+    } else if (remove) {
+      const sameShareRows = [...container.querySelectorAll(`[data-ammunition-batch-row][data-ammunition-share="${row.dataset.ammunitionShare}"]`)];
+      if (sameShareRows.length === 1) {
+        row.querySelectorAll('input').forEach((input) => { input.value = ''; });
+      } else {
+        row.remove();
+      }
+    }
+  });
+
   container.querySelector('#handover-create').addEventListener('click', async () => run(async () => {
     const result = await api.createHandover({
       startDate: value(container, '#handover-start'),
@@ -419,7 +504,7 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, result.id);
   }, showToast));
 
-  container.querySelector('#archive-submit').addEventListener('click', async () => run(async () => {
+  container.querySelector('#archive-submit')?.addEventListener('click', async () => run(async () => {
     const selected = [...container.querySelectorAll('[data-archive-share]:checked')];
     if (!selected.length) throw new Error('Επιλέξτε τουλάχιστον μία Μερίδα για αρχειοθέτηση.');
     for (const checkbox of selected) {
@@ -602,7 +687,7 @@ function renderOfficerIdentity(value) {
   return `<strong>${escapeHtml(officer.name)}</strong><em>${escapeHtml(officer.rank)}</em>`;
 }
 
-async function printArchivedSharesTable(table) {
+export async function printArchivedSharesTable(table) {
   if (!table) return;
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
@@ -620,6 +705,37 @@ async function printArchivedSharesTable(table) {
       <h2>Αρχειοθετημένες Μερίδες</h2>
       ${table.outerHTML}
     </section>`;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  try {
+    await window.appApi.print.currentDocument({ landscape: true });
+  } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
+}
+
+async function printAmmunitionBatchTable(table) {
+  if (!table) return;
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root';
+  const printableTable = table.cloneNode(true);
+  printableTable.querySelectorAll('input').forEach((input) => {
+    const text = document.createElement('span');
+    text.textContent = input.value;
+    input.replaceWith(text);
+  });
+  printRoot.innerHTML = `
+    <style>
+      @page { size: A4 landscape; margin: 10mm; }
+      .ammunition-batch-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
+      .ammunition-batch-print h2 { margin: 0 0 8mm; font-size: 18pt; }
+      .ammunition-batch-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+      .ammunition-batch-print th, .ammunition-batch-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
+      .ammunition-batch-print th { background: #e8eef5; }
+      .ammunition-batch-print .no-print { display: none !important; }
+    </style>
+    <section class="ammunition-batch-print print-document-area"><h2>Βιβλίο Μερίδων Β.Φ.</h2>${printableTable.outerHTML}</section>`;
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {

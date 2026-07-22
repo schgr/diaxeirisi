@@ -184,6 +184,8 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           ${summaryItem('Διαφορά', formatDifference(card.share.differenceQuantity))}
           ${toggleField('Απαιτεί Σύνθεση', 'requiresComposition', card.share.requiresComposition)}
           ${toggleField('Απαιτεί Σειριακό Αριθμό', 'requiresSerialNumber', card.share.requiresSerialNumber)}
+          ${toggleField('Μητρώο Οπλισμού', 'requiresWeaponRegistry', card.share.requiresWeaponRegistry)}
+          ${toggleField('Πυρομαχικά Β.Φ.', 'requiresAmmunitionBatchBook', card.share.requiresAmmunitionBatchBook)}
         </div>
         <div class="material-details-form">
           <div class="material-photo-box" data-photo-path="${escapeHtml(card.share.photoPath || '')}">
@@ -324,6 +326,8 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
         photoPath: photoBox.dataset.photoPath || '',
         requiresComposition: details.requiresComposition.checked,
         requiresSerialNumber: details.requiresSerialNumber.checked,
+        requiresWeaponRegistry: details.requiresWeaponRegistry.checked,
+        requiresAmmunitionBatchBook: details.requiresAmmunitionBatchBook.checked,
         requiresChangeSheet: card.share.requiresChangeSheet
       }).then(async () => {
         showToast('Τα στοιχεία της μερίδας αποθηκεύτηκαν.');

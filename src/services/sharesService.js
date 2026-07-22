@@ -78,6 +78,9 @@ function createSharesService(db) {
         requiresWeaponRegistry: payload && payload.requiresWeaponRegistry !== undefined
           ? Boolean(payload.requiresWeaponRegistry)
           : Boolean(share.requires_weapon_registry),
+        requiresAmmunitionBatchBook: payload && payload.requiresAmmunitionBatchBook !== undefined
+          ? Boolean(payload.requiresAmmunitionBatchBook)
+          : Boolean(share.requires_ammunition_batch_book),
         requiresChangeSheet: payload && payload.requiresChangeSheet !== undefined
           ? Boolean(payload.requiresChangeSheet)
           : Boolean(share.requires_change_sheet)
@@ -295,6 +298,43 @@ function createSharesService(db) {
       });
       repository.saveSerialNumbers(shareId, cleanEntries);
       return { message: 'Οι σειριακοί αριθμοί αποθηκεύτηκαν.' };
+    },
+
+    listAmmunitionBatchRegistry() {
+      return repository.listAmmunitionBatchShares().map((row) => ({
+        share: mapShare(row),
+        entries: repository.listAmmunitionBatches(row.id).map((entry) => ({
+          position: Number(entry.position),
+          batchNumber: entry.batch_number,
+          quantity: Number(entry.quantity || 0),
+          notes: entry.notes || ''
+        }))
+      }));
+    },
+
+    saveAmmunitionBatches(id, entries) {
+      const shareId = requirePositiveId(id);
+      const share = repository.getShare(shareId);
+      if (!share || !share.requires_ammunition_batch_book) {
+        throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο το Βιβλίο Μερίδων Β.Φ.', 'VALIDATION_ERROR');
+      }
+      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
+        const batchNumber = String(entry && entry.batchNumber || '').trim();
+        const quantity = Number(entry && entry.quantity);
+        if (!batchNumber) {
+          throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
+        }
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+        }
+        return {
+          batchNumber,
+          quantity,
+          notes: String(entry && entry.notes || '').trim()
+        };
+      });
+      repository.replaceAmmunitionBatches(shareId, cleanEntries);
+      return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
     }
   };
 }
