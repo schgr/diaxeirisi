@@ -1920,6 +1920,19 @@ const migrations = [
       END
       WHERE sort_order BETWEEN 1 AND 12;
     `
+  },
+  {
+    version: 57,
+    name: 'rename_nominal_number_change_reason',
+    up: `
+      UPDATE exhp_documents
+      SET issue_reason = 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.'
+      WHERE issue_reason = 'Μεταβολή Υλικών Λόγω Μεταβολής Του Αριθμού Ονομαστικού.';
+
+      UPDATE exhp_issue_reasons
+      SET name = 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.'
+      WHERE sort_order = 3;
+    `
   }
 ];
 

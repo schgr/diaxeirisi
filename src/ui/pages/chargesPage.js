@@ -97,7 +97,7 @@ function renderMovementForm(referenceData) {
       </div>
     </div>
     <datalist id="internal-share-list">
-      ${referenceData.shares.map((share) => `<option value="${escapeHtml(share.shareNumber)}">${escapeHtml(share.nominalNumber)} - ${escapeHtml(share.description)}</option>`).join('')}
+      ${referenceData.shares.map((share) => `<option value="${escapeHtml(share.shareNumber)}"></option>`).join('')}
     </datalist>
   `;
 }

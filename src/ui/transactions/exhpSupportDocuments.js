@@ -441,7 +441,6 @@ function renderShareSelect(prefix, selectedShareNumber = '', availableShares = [
         const nominalNumber = share.nominalNumber || share.nominal_number || '';
         const description = share.description || '';
         const measurementUnit = share.measurementUnit || share.measurement_unit || '';
-        const label = [description || shareNumber, nominalNumber].filter(Boolean).join(' — ');
         return `
           <option
             value="${escapeHtml(shareNumber)}"
@@ -451,7 +450,7 @@ function renderShareSelect(prefix, selectedShareNumber = '', availableShares = [
             data-measurement-unit="${escapeHtml(measurementUnit)}"
             data-available-quantity="${escapeHtml(share.availableQuantity ?? share.accountingBalance ?? share.accounting_balance ?? '')}"
             ${String(shareNumber) === String(selectedShareNumber) ? 'selected' : ''}
-          >${escapeHtml(label)}</option>
+          >${escapeHtml(shareNumber)}</option>
         `;
       }).join('')}
     </select>

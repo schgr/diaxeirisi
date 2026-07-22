@@ -116,9 +116,7 @@ function isNominalNumberTransferReason(value) {
     .replace(/[().,;:]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  return normalized.includes('μεταβολη υλικων λογω μεταβολης του αριθμου ονομαστικου') ||
-    (normalized.includes('μεταγραφη υλικων λογω μεταβολης του αριθμου') &&
-      (normalized.includes('ονομαστικου') || normalized.includes('στρατιωτικου')));
+  return normalized === 'μεταβολη υλικων λογω αλλαγης του αριθμου ονομαστικου';
 }
 
 function getLocalDate() {

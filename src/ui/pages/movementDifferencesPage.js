@@ -77,7 +77,7 @@ async function renderMovementDifferenceProtocolsPage(container, api, showToast) 
           <span>Αριθμός Μερίδας</span>
           <select id="md-share">
             <option value="">Επιλογή</option>
-            ${referenceData.shares.map((share) => `<option value="${share.id}">${escapeHtml(share.shareNumber)} - ${escapeHtml(share.description)}</option>`).join('')}
+            ${referenceData.shares.map((share) => `<option value="${share.id}">${escapeHtml(share.shareNumber)}</option>`).join('')}
           </select>
         </label>
         <label class="field"><span>Αριθμός Ονομαστικού</span><input id="md-nominal" readonly /></label>

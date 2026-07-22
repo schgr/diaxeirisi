@@ -161,9 +161,7 @@ export async function renderTransactionsPage(
         ${renderShareNumberOptions(referenceData.shares)}
       </datalist>
       <datalist id="share-number-list">
-        ${referenceData.shares
-          .map((share) => `<option value="${escapeHtml(share.shareNumber)}">${escapeHtml(share.nominalNumber)}</option>`)
-          .join('')}
+        ${renderShareNumberOptions(referenceData.shares)}
       </datalist>
       <datalist id="nominal-number-list">
         ${referenceData.shares

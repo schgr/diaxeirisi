@@ -217,8 +217,8 @@ async function run() {
       printSettings,
       { displayCount: 100 }
     );
-    assert.strictEqual((registryHtml.match(/material-registry-page/g) || []).length, 2);
-    assert.match(registryHtml, /Σελίδα 2 από 2/);
+    assert.strictEqual((registryHtml.match(/material-registry-page/g) || []).length, 3);
+    assert.match(registryHtml, /Σελίδα 3 από 3/);
 
     const surplusBalance = calculateShareBalance(3, 2);
     assert.strictEqual(surplusBalance.differenceQuantity, -1);
@@ -289,7 +289,7 @@ async function run() {
     const exhpReferenceData = transactions.getAddyReferenceData();
     assert.strictEqual(
       exhpReferenceData.exhpIssueReasons.some(
-        (reason) => reason.name === 'Λογιστική Τακτοποίηση Πάσης Φύσεως Αχρήστου Υλικού.'
+        (reason) => reason.name === 'Λογιστική Τακτοποίηση Πάσης Φύσεως Άχρηστου Υλικού.'
       ),
       true
     );
@@ -305,7 +305,7 @@ async function run() {
       exhpReferenceData.exhpSupportTemplates.some(
         (template) =>
           template.documentCode === 'ΑΧΡΗΣΤΟ/1-23' &&
-          template.issueReason === 'Λογιστική Τακτοποίηση Πάσης Φύσεως Αχρήστου Υλικού.'
+          template.issueReason === 'Λογιστική Τακτοποίηση Πάσης Φύσεως Άχρηστου Υλικού.'
       ),
       true
     );
@@ -377,7 +377,7 @@ async function run() {
     assert.strictEqual(materialCard.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
     assert.strictEqual(materialCard.changeSheetEntries[0].quantity, 2);
 
-    const consumableDeletionReason = 'Διαγραφή Αναλωσίμου Υλικού και Ειδών Σταθερών Χορηγιών.';
+    const consumableDeletionReason = 'Διαγραφή Αναλώσιμου Υλικού Και Ειδών Σταθερών Χορηγήσεων.';
     const referenceData = transactions.getAddyReferenceData();
     assert.strictEqual(
       referenceData.exhpIssueReasons.filter((item) => item.name === consumableDeletionReason).length,

@@ -3,7 +3,7 @@ import { escapeHtml } from '../components/forms.js';
 import { renderSharePrintDocument } from './sharesPage.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 
-const ROWS_PER_REGISTRY_PAGE = 34;
+const ROWS_PER_REGISTRY_PAGE = 37;
 const ROWS_PER_INDEX_PAGE = 34;
 const PRINT_TILE_META = {
   registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
@@ -483,7 +483,7 @@ function renderShareCardControls(shares, state) {
           ${shares
             .map(
               (share) =>
-                `<option value="${share.id}" ${Number(state.selectedShareId) === Number(share.id) ? 'selected' : ''}>${escapeHtml(share.shareNumber)} - ${escapeHtml(share.description)}</option>`
+                `<option value="${share.id}" ${Number(state.selectedShareId) === Number(share.id) ? 'selected' : ''}>${escapeHtml(share.shareNumber)}</option>`
             )
             .join('')}
         </select>

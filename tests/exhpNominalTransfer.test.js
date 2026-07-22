@@ -6,6 +6,7 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSettingsService } = require('../src/services/settingsService');
 const { createSharesService } = require('../src/services/sharesService');
 const { createTransactionsService } = require('../src/services/transactionsService');
+const { validateExhp, isNominalNumberTransferReason } = require('../src/transactions/exhpValidation');
 
 async function run() {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-exhp-nominal-transfer-'));
@@ -16,7 +17,7 @@ async function run() {
     const transactions = createTransactionsService(db, settings);
     assert.strictEqual(
       settings.getSettings().exhpIssueReasons.find((item) => item.sortOrder === 3).name,
-      'Μεταβολή Υλικών Λόγω Μεταβολής Του Αριθμού Ονομαστικού.'
+      'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.'
     );
     const updatedSettings = settings.addExhpIssueReason({ name: 'νέα αιτιολογία ΕΧΠ - λόγω αλλαγής' });
     assert.ok(updatedSettings.exhpIssueReasons.some((item) =>
@@ -77,7 +78,20 @@ async function run() {
       ) VALUES (?, ?, '10', '1005000001', 'Δοκιμαστικό Υλικό', 'Τεμάχια', 4, '')
     `).run(internalDocumentId, source.id);
 
-    const reason = 'Μεταβολή Υλικών Λόγω Μεταβολής Του Αριθμού Ονομαστικού.';
+    const reason = 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.';
+    assert.strictEqual(isNominalNumberTransferReason(reason), true);
+    assert.strictEqual(
+      isNominalNumberTransferReason('Μεταβολή Υλικών Λόγω Μεταβολής Του Αριθμού Ονομαστικού.'),
+      false
+    );
+    assert.doesNotThrow(() => validateExhp({
+      serviceUnit: '108 Α/Κ ΜΜΠ/ΓΔΥ',
+      issueReason: 'Λογιστική Τακτοποίηση Διαφορών Ομοειδών Υλικών.',
+      items: [{
+        shareNumber: '10', nominalNumber: '1005000001', description: 'Δοκιμαστικό Υλικό',
+        measurementUnit: 'Τεμάχια', transactionType: 'Πίστωση', quantity: 1
+      }]
+    }));
     const result = transactions.saveExhp({
       documentDate: '2026-07-22',
       serviceUnit: '108 Α/Κ ΜΜΠ/ΓΔΥ',

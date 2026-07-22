@@ -7,7 +7,7 @@ import { createDocSTClothingSummary } from './supportingDocs/docST_clothingSumma
 export const EXP_AITIOLOGIES = [
   { code: 'a', label: 'Λογιστική Τακτοποίηση Πάσης Φύσεως Άχρηστου Υλικού', module: createDocAAxristo },
   { code: 'b', label: 'Λογιστική Τακτοποίηση Διαφορών Ομοειδών Υλικών', module: null },
-  { code: 'g', label: 'Μεταβολή Υλικών Λόγω Μεταβολής Του Αριθμού Ονομαστικού', module: null },
+  { code: 'g', label: 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού', module: null },
   { code: 'd', label: 'Μετασχηματισμός Υλικών (Κατασκευή - Μετασκευή)', module: createDocDMetasximatismos },
   { code: 'e', label: 'Συλλογές Εργαλείων - Παρακολουθήματα Κυρίων Υλικών', module: null },
   { code: 'st', label: 'Διαγραφή Ειδών Ιματισμού - Υποδήσεως Και Λοιπών Ατομικών Ειδών - Χρέωση Επιστρεφομένων', module: createDocSTClothingSummary },

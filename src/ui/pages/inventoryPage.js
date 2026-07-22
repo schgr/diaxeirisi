@@ -131,7 +131,7 @@ function renderSelectedSession(session, shares) {
                 <span>Αριθμός Μερίδας</span>
                 <select id="inventory-share">
                   <option value="">Επιλογή</option>
-                  ${shares.map((share) => `<option value="${share.id}">${escapeHtml(share.shareNumber)} - ${escapeHtml(share.description)}</option>`).join('')}
+                  ${shares.map((share) => `<option value="${share.id}">${escapeHtml(share.shareNumber)}</option>`).join('')}
                 </select>
               </label>
               <label class="field"><span>Αριθμός Ονομαστικού</span><input id="inventory-nominal" readonly /></label>
