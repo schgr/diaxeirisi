@@ -90,7 +90,9 @@ export function clearExhpLine(controls) {
 export function renderExhpEntryState(container, state) {
   container.querySelector('#exhp-items-view').innerHTML = renderExhpEntryTables(state.exhpItems);
   container.querySelector('#exhp-limit-text').textContent = `${state.exhpItems.length} καταχωρήσεις`;
-  container.querySelector('#exhp-save').disabled = !state.exhpItems.length;
+  container.querySelector('#exhp-save').disabled = !state.exhpItems.length || state.exhpItems.some((item) =>
+    item.sourceShareNumber && !String(item.shareNumber || '').trim()
+  );
 }
 
 export function renderExhpEntryTables(items) {
@@ -121,7 +123,9 @@ export function renderExhpEntryTables(items) {
                         .map(
                           ({ item, index }) => `
                             <tr>
-                              <td>${escapeHtml(item.shareNumber)}</td>
+                              <td>${item.sourceShareNumber
+                                ? `<input class="table-input exhp-transfer-share-input" data-exhp-transfer-share-number="${index}" value="${escapeHtml(item.shareNumber)}" autocomplete="off" placeholder="Νέα μερίδα" aria-label="Νέος Αριθμός Μερίδας για ${escapeHtml(item.sourceShareNumber)}" />`
+                                : escapeHtml(item.shareNumber)}</td>
                               <td>${escapeHtml(item.nominalNumber)}</td>
                               <td class="material-description-cell">${escapeHtml(item.description)}</td>
                               <td>${escapeHtml(item.measurementUnit)}</td>

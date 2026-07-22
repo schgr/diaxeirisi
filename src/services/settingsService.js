@@ -161,7 +161,9 @@ function createSettingsService(db) {
     },
 
     addExhpIssueReason(payload) {
-      repository.createExhpIssueReason(validateNamedSetting(payload, 'Αιτιολογία Εκδόσεως'));
+      repository.createExhpIssueReason(toTitleCaseWords(
+        validateNamedSetting(payload, 'Αιτιολογία Εκδόσεως')
+      ));
       return getSettings();
     },
 
@@ -181,6 +183,14 @@ function createSettingsService(db) {
   };
 }
 
+function toTitleCaseWords(value) {
+  return String(value || '').replace(
+    /(^|[\s(/-])(\p{L})/gu,
+    (_match, prefix, letter) => `${prefix}${letter.toLocaleUpperCase('el-GR')}`
+  );
+}
+
 module.exports = {
-  createSettingsService
+  createSettingsService,
+  toTitleCaseWords
 };

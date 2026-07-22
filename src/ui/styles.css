@@ -3368,7 +3368,7 @@ table.administration-table td {
 
 .exhp-line-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(120px, 0.8fr) minmax(170px, 1fr) minmax(240px, 1.5fr) minmax(125px, 0.8fr) minmax(100px, 0.65fr) minmax(145px, 0.9fr) auto;
   gap: 10px;
   align-items: end;
   margin-top: 14px;
@@ -3407,6 +3407,12 @@ table.administration-table td {
 
 .exhp-entry-section table {
   min-width: 900px;
+}
+
+.exhp-transfer-share-input {
+  width: 100%;
+  min-width: 105px;
+  box-sizing: border-box;
 }
 
 .exhp-document-description {

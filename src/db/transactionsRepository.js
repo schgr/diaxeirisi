@@ -122,6 +122,66 @@ function createTransactionsRepository(db) {
       return db.prepare('SELECT * FROM shares WHERE id = ?').get(result.lastInsertRowid);
     },
 
+    createTransferredShare(sourceShareId, newShareNumber) {
+      const result = db.prepare(`
+        INSERT INTO shares (
+          share_number, nominal_number, description, material_type, material_code,
+          main_material_number, measurement_unit, projected_quantity,
+          accounting_balance, charged_quantity, unit_price, photo_path,
+          archive_status, archived_at, archive_reason, requires_composition,
+          requires_change_sheet, requires_serial_number, requires_weapon_registry,
+          previous_share_number
+        )
+        SELECT ?, nominal_number, description, material_type, material_code,
+               main_material_number, measurement_unit, projected_quantity,
+               0, charged_quantity, unit_price, photo_path,
+               'Ενεργή', NULL, '', requires_composition,
+               requires_change_sheet, requires_serial_number, requires_weapon_registry,
+               ''
+        FROM shares
+        WHERE id = ?
+      `).run(newShareNumber, sourceShareId);
+      return db.prepare('SELECT * FROM shares WHERE id = ?').get(result.lastInsertRowid);
+    },
+
+    moveCurrentShareState(sourceShareId, targetShare) {
+      db.prepare(`
+        UPDATE internal_items
+        SET share_id = ?, share_number = ?, nominal_number = ?,
+            description = ?, measurement_unit = ?
+        WHERE share_id = ?
+      `).run(
+        targetShare.id,
+        targetShare.share_number,
+        targetShare.nominal_number,
+        targetShare.description,
+        targetShare.measurement_unit,
+        sourceShareId
+      );
+      for (const table of [
+        'share_assignments',
+        'share_composition_items',
+        'share_change_sheet_entries',
+        'share_serial_numbers'
+      ]) {
+        db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
+          .run(targetShare.id, sourceShareId);
+      }
+    },
+
+    archiveTransferredShare(shareId, actionDate, reason) {
+      db.prepare(`
+        UPDATE shares
+        SET accounting_balance = 0, charged_quantity = 0,
+            archive_status = 'Αρχειοθετημένη', archived_at = ?, archive_reason = ?
+        WHERE id = ?
+      `).run(actionDate, reason, shareId);
+      db.prepare(`
+        INSERT INTO share_archive_events (share_id, action_type, action_date, reason)
+        VALUES (?, 'Αρχειοθέτηση', ?, ?)
+      `).run(shareId, actionDate, reason);
+    },
+
     adjustChargedQuantity(shareId, quantityDelta) {
       db.prepare(
         `

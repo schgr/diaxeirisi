@@ -97,6 +97,13 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     exhpSelector.value = '';
     exhpSelector.dataset.issueReason = reason;
     exhpSelector.dataset.issueReasonCode = reasonCode;
+    const nominalTransfer = reasonCode === 'g';
+    container.dataset.exhpNominalTransfer = nominalTransfer ? 'true' : 'false';
+    exhpControls.transactionType.disabled = nominalTransfer;
+    exhpControls.quantity.readOnly = nominalTransfer;
+    if (nominalTransfer) {
+      exhpControls.transactionType.value = 'Πίστωση';
+    }
     exhpSelector.dataset.serviceUnit = referenceData.serviceName || '';
     state.exhpDocumentsState.currentItems = state.exhpItems;
     const useNewModule = hasAitiologiaModule(reason, reasonCode);
@@ -154,12 +161,27 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   exhpControls.shareNumber.addEventListener('input', () => {
     const share = findShareByNumber(referenceData.shares, exhpControls.shareNumber.value);
     applyExhpShareDefaults(exhpControls, share);
+    if (container.dataset.exhpNominalTransfer === 'true') {
+      exhpControls.quantity.value = share ? Number(share.accountingBalance || 0) : '';
+      exhpControls.transactionType.value = 'Πίστωση';
+    }
+  });
+
+  container.addEventListener('input', (event) => {
+    const transferInput = event.target.closest('[data-exhp-transfer-share-number]');
+    if (!transferInput) return;
+    const item = state.exhpItems[Number(transferInput.dataset.exhpTransferShareNumber)];
+    if (item) item.shareNumber = transferInput.value.trim();
+    container.querySelector('#exhp-save').disabled = state.exhpItems.some((entry) =>
+      entry.sourceShareNumber && !String(entry.shareNumber || '').trim()
+    );
   });
 
   exhpControls.addItem.addEventListener('click', () => {
     const share = findShareByNumber(referenceData.shares, exhpControls.shareNumber.value);
     const quantity = Number(exhpControls.quantity.value);
-    const transactionType = exhpControls.transactionType.value;
+    const nominalTransfer = container.dataset.exhpNominalTransfer === 'true';
+    const transactionType = nominalTransfer ? 'Πίστωση' : exhpControls.transactionType.value;
 
     if (!share || !quantity || quantity <= 0 || !transactionType) {
       showToast('Συμπλήρωσε μερίδα, ποσότητα και είδος δοσοληψίας.', 'error');
@@ -171,12 +193,27 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       return;
     }
 
-    if (state.exhpItems.length >= 280) {
+    if (state.exhpItems.length + (nominalTransfer ? 2 : 1) > 280) {
       showToast('Η ΕΧΠ δέχεται έως 280 υλικά.', 'error');
       return;
     }
 
-    state.exhpItems.push({
+    if (nominalTransfer && Math.abs(quantity - Number(share.accountingBalance || 0)) > 0.000001) {
+      showToast('Για τη μεταβολή Αριθμού Ονομαστικού πιστώνεται ολόκληρο το υπόλοιπο της μερίδας.', 'error');
+      return;
+    }
+
+    if (nominalTransfer && state.exhpItems.some((item) =>
+      item.transactionType === 'Πίστωση' && item.shareNumber === share.shareNumber
+    )) {
+      showToast('Η συγκεκριμένη μερίδα έχει ήδη προστεθεί.', 'error');
+      return;
+    }
+
+    const transferGroup = nominalTransfer
+      ? `nominal-transfer-${Date.now()}-${state.exhpItems.length}`
+      : '';
+    const baseItem = {
       shareNumber: share.shareNumber,
       nominalNumber: share.nominalNumber,
       description: share.description,
@@ -185,10 +222,21 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       materialCode: share.materialCode || '',
       quantity,
       transactionType,
-      supportingDocuments: ''
-    });
+      supportingDocuments: '',
+      transferGroup
+    };
+    state.exhpItems.push(baseItem);
+    if (nominalTransfer) {
+      state.exhpItems.push({
+        ...baseItem,
+        shareNumber: '',
+        sourceShareNumber: share.shareNumber,
+        transactionType: 'Χρέωση'
+      });
+    }
     state.exhpItems.sort(compareShareNumbers);
     clearExhpLine(exhpControls);
+    if (nominalTransfer) exhpControls.transactionType.value = 'Πίστωση';
     renderExhpEntryState(container, state);
   });
 
@@ -446,7 +494,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
     const removeExhp = event.target.closest('[data-remove-exhp-item]');
     if (removeExhp) {
-      state.exhpItems.splice(Number(removeExhp.dataset.removeExhpItem), 1);
+      const removed = state.exhpItems[Number(removeExhp.dataset.removeExhpItem)];
+      if (removed?.transferGroup) {
+        state.exhpItems = state.exhpItems.filter((item) => item.transferGroup !== removed.transferGroup);
+      } else {
+        state.exhpItems.splice(Number(removeExhp.dataset.removeExhpItem), 1);
+      }
       renderExhpEntryState(container, state);
     }
   });

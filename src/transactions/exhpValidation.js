@@ -14,7 +14,7 @@ function validateExhp(payload) {
   const documentDate = optionalText(payload && payload.documentDate) || getLocalDate();
   const fiscalYear = Number(documentDate.slice(0, 4));
 
-  return {
+  const validated = {
     documentDate,
     fiscalYear,
     serviceUnit: requireText(payload && payload.serviceUnit, 'Μονάδα'),
@@ -34,6 +34,10 @@ function validateExhp(payload) {
     status: 'Οριστική',
     items: items.map(validateItem)
   };
+  if (isNominalNumberTransferReason(validated.issueReason)) {
+    validateNominalTransferItems(validated.items);
+  }
+  return validated;
 }
 
 function sanitizeFormData(value) {
@@ -64,10 +68,57 @@ function validateItem(item) {
     measurementUnit: requireText(item && item.measurementUnit, 'Μονάδα Μέτρησης'),
     materialType: optionalText(item && item.materialType),
     materialCode: optionalText(item && item.materialCode),
+    sourceShareNumber: optionalText(item && item.sourceShareNumber),
+    transferGroup: optionalText(item && item.transferGroup),
     transactionType,
     quantity,
     supportingDocuments: optionalText(item && item.supportingDocuments)
   };
+}
+
+function validateNominalTransferItems(items) {
+  const credits = items.filter((item) => item.transactionType === 'Πίστωση');
+  const charges = items.filter((item) => item.transactionType === 'Χρέωση');
+  if (!credits.length || credits.length !== charges.length || items.length !== credits.length * 2) {
+    throw new AppError(
+      'Κάθε πίστωση μεταβολής Αριθμού Ονομαστικού πρέπει να έχει μία αντίστοιχη χρέωση.',
+      'VALIDATION_ERROR'
+    );
+  }
+  const newNumbers = new Set();
+  for (const credit of credits) {
+    const charge = charges.find((item) =>
+      item.sourceShareNumber === credit.shareNumber &&
+      (!credit.transferGroup || item.transferGroup === credit.transferGroup)
+    );
+    if (!charge) {
+      throw new AppError(`Δεν βρέθηκε νέα μερίδα για τη μερίδα ${credit.shareNumber}.`, 'VALIDATION_ERROR');
+    }
+    if (charge.shareNumber === credit.shareNumber) {
+      throw new AppError('Ο νέος Αριθμός Μερίδας πρέπει να διαφέρει από τον παλιό.', 'VALIDATION_ERROR');
+    }
+    if (Math.abs(charge.quantity - credit.quantity) > 0.000001) {
+      throw new AppError('Η ποσότητα πίστωσης και χρέωσης πρέπει να είναι ίδια.', 'VALIDATION_ERROR');
+    }
+    const key = charge.shareNumber.toLocaleLowerCase('el-GR');
+    if (newNumbers.has(key)) {
+      throw new AppError(`Ο νέος Αριθμός Μερίδας ${charge.shareNumber} χρησιμοποιείται περισσότερες από μία φορές.`, 'VALIDATION_ERROR');
+    }
+    newNumbers.add(key);
+  }
+}
+
+function isNominalNumberTransferReason(value) {
+  const normalized = String(value || '')
+    .toLocaleLowerCase('el-GR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[().,;:]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized.includes('μεταβολη υλικων λογω μεταβολης του αριθμου ονομαστικου') ||
+    (normalized.includes('μεταγραφη υλικων λογω μεταβολης του αριθμου') &&
+      (normalized.includes('ονομαστικου') || normalized.includes('στρατιωτικου')));
 }
 
 function getLocalDate() {
@@ -79,5 +130,6 @@ function getLocalDate() {
 }
 
 module.exports = {
-  validateExhp
+  validateExhp,
+  isNominalNumberTransferReason
 };

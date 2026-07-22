@@ -1,7 +1,7 @@
 const { transactionSections } = require('../transactions/transactionSections');
 const { createTransactionsRepository } = require('../db/transactionsRepository');
 const { validateAddy } = require('../transactions/addyValidation');
-const { validateExhp } = require('../transactions/exhpValidation');
+const { validateExhp, isNominalNumberTransferReason } = require('../transactions/exhpValidation');
 const { requirePositiveId } = require('../core/validation');
 
 function createTransactionsService(db, settingsService) {
@@ -176,34 +176,12 @@ function createTransactionsService(db, settingsService) {
           registryNumber
         });
 
-        for (const item of exhp.items) {
-          const share = repository.findShareByNumber(item.shareNumber);
-          if (!share) {
-            throw new Error(`Η μερίδα ${item.shareNumber} δεν βρέθηκε.`);
+        if (isNominalNumberTransferReason(exhp.issueReason)) {
+          saveNominalNumberTransfer(repository, exhp, documentId, registryNumber, documentItems);
+        } else {
+          for (const item of exhp.items) {
+            saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems);
           }
-
-          if (item.transactionType === 'Πίστωση' && item.quantity > Number(share.accounting_balance || 0)) {
-            throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
-          }
-
-          const quantityDelta = item.transactionType === 'Χρέωση' ? item.quantity : -item.quantity;
-          repository.adjustAccountingBalance(share.id, quantityDelta);
-          const shareTransactionId = repository.createShareTransaction({
-            shareId: share.id,
-            transactionDate: exhp.documentDate,
-            transactionUnit: exhp.serviceUnit,
-            transactionType: item.transactionType,
-            documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
-            quantity: item.quantity,
-            notes: exhp.issueReason
-          });
-          const ledgerSerial = repository.getShareTransactionSerialForYear(
-            share.id,
-            shareTransactionId,
-            exhp.documentDate
-          );
-          repository.createExhpItem(documentId, item, share.id, shareTransactionId);
-          documentItems.push({ ...item, ledgerSerial });
         }
         repository.createExhpDocumentSupports(documentId, exhp.issueReason, exhp.supports);
         repository.refreshExhpSupportStatus(documentId);
@@ -600,6 +578,121 @@ function mapExhpSupportTemplate(row) {
     required: Boolean(row.required),
     printable: Boolean(row.printable)
   };
+}
+
+function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems) {
+  const share = repository.findShareByNumber(item.shareNumber);
+  if (!share || share.archive_status !== 'Ενεργή') {
+    throw new Error(`Η μερίδα ${item.shareNumber} δεν βρέθηκε.`);
+  }
+  if (item.transactionType === 'Πίστωση' && item.quantity > Number(share.accounting_balance || 0)) {
+    throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
+  }
+  const quantityDelta = item.transactionType === 'Χρέωση' ? item.quantity : -item.quantity;
+  repository.adjustAccountingBalance(share.id, quantityDelta);
+  const shareTransactionId = repository.createShareTransaction({
+    shareId: share.id,
+    transactionDate: exhp.documentDate,
+    transactionUnit: exhp.serviceUnit,
+    transactionType: item.transactionType,
+    documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+    quantity: item.quantity,
+    notes: exhp.issueReason
+  });
+  const ledgerSerial = repository.getShareTransactionSerialForYear(
+    share.id,
+    shareTransactionId,
+    exhp.documentDate
+  );
+  repository.createExhpItem(documentId, item, share.id, shareTransactionId);
+  documentItems.push({ ...item, ledgerSerial });
+}
+
+function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber, documentItems) {
+  const credits = exhp.items.filter((item) => item.transactionType === 'Πίστωση');
+  for (const creditInput of credits) {
+    const chargeInput = exhp.items.find((item) =>
+      item.transactionType === 'Χρέωση' &&
+      item.sourceShareNumber === creditInput.shareNumber &&
+      (!creditInput.transferGroup || item.transferGroup === creditInput.transferGroup)
+    );
+    const sourceShare = repository.findShareByNumber(creditInput.shareNumber);
+    if (!sourceShare || sourceShare.archive_status !== 'Ενεργή') {
+      throw new Error(`Η μερίδα ${creditInput.shareNumber} δεν βρέθηκε.`);
+    }
+    if (repository.findShareByNumber(chargeInput.shareNumber)) {
+      throw new Error(`Ο Αριθμός Μερίδας ${chargeInput.shareNumber} χρησιμοποιείται ήδη.`);
+    }
+    const balance = Number(sourceShare.accounting_balance || 0);
+    if (Math.abs(Number(creditInput.quantity) - balance) > 0.000001) {
+      throw new Error(`Η μερίδα ${sourceShare.share_number} πρέπει να πιστωθεί με ολόκληρο το υπόλοιπο ${balance}.`);
+    }
+
+    const sharedFields = {
+      nominalNumber: sourceShare.nominal_number,
+      description: sourceShare.description,
+      measurementUnit: sourceShare.measurement_unit,
+      materialType: sourceShare.material_type,
+      materialCode: sourceShare.material_code || '',
+      quantity: balance,
+      supportingDocuments: creditInput.supportingDocuments || '',
+      transferGroup: creditInput.transferGroup || chargeInput.transferGroup || ''
+    };
+    const credit = {
+      ...sharedFields,
+      shareNumber: sourceShare.share_number,
+      transactionType: 'Πίστωση',
+      sourceShareNumber: ''
+    };
+    repository.adjustAccountingBalance(sourceShare.id, -balance);
+    const creditTransactionId = repository.createShareTransaction({
+      shareId: sourceShare.id,
+      transactionDate: exhp.documentDate,
+      transactionUnit: exhp.serviceUnit,
+      transactionType: 'Πίστωση',
+      documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+      quantity: balance,
+      notes: exhp.issueReason
+    });
+    const creditSerial = repository.getShareTransactionSerialForYear(
+      sourceShare.id,
+      creditTransactionId,
+      exhp.documentDate
+    );
+    repository.createExhpItem(documentId, credit, sourceShare.id, creditTransactionId);
+    documentItems.push({ ...credit, ledgerSerial: creditSerial });
+
+    const targetShare = repository.createTransferredShare(sourceShare.id, chargeInput.shareNumber);
+    repository.moveCurrentShareState(sourceShare.id, targetShare);
+    const charge = {
+      ...sharedFields,
+      shareNumber: targetShare.share_number,
+      transactionType: 'Χρέωση',
+      sourceShareNumber: sourceShare.share_number
+    };
+    repository.adjustAccountingBalance(targetShare.id, balance);
+    const chargeTransactionId = repository.createShareTransaction({
+      shareId: targetShare.id,
+      transactionDate: exhp.documentDate,
+      transactionUnit: exhp.serviceUnit,
+      transactionType: 'Χρέωση',
+      documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+      quantity: balance,
+      notes: exhp.issueReason
+    });
+    const chargeSerial = repository.getShareTransactionSerialForYear(
+      targetShare.id,
+      chargeTransactionId,
+      exhp.documentDate
+    );
+    repository.createExhpItem(documentId, charge, targetShare.id, chargeTransactionId);
+    documentItems.push({ ...charge, ledgerSerial: chargeSerial });
+    repository.archiveTransferredShare(
+      sourceShare.id,
+      exhp.documentDate,
+      `Μεταβολή Αριθμού Ονομαστικού με ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`
+    );
+  }
 }
 
 function mapExhpDocumentSupport(row) {
