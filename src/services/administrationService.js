@@ -62,6 +62,35 @@ function createAdministrationService(db) {
       };
     },
 
+    getManagementReport(year = new Date().getFullYear()) {
+      const fiscalYear = Number(year);
+      if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
+        throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
+      }
+      const report = repository.getManagementReport(fiscalYear);
+      const duplicateGroups = report.duplicate_nominal_groups || [];
+      return {
+        fiscalYear,
+        totalShares: Number(report.total_shares || 0),
+        zeroBalanceShares: Number(report.zero_balance_shares || 0),
+        sharesWithBalance: Number(report.shares_with_balance || 0),
+        movedShares: Number(report.moved_shares || 0),
+        deficitShares: Number(report.deficit_shares || 0),
+        surplusShares: Number(report.surplus_shares || 0),
+        compositionShares: Number(report.composition_shares || 0),
+        missingCompositionShares: Number(report.missing_composition_shares || 0),
+        duplicateNominalShares: duplicateGroups.reduce(
+          (sum, group) => sum + Number(group.share_count || 0),
+          0
+        ),
+        duplicateNominalGroups: duplicateGroups.map((group) => ({
+          nominalNumber: group.nominal_number,
+          shareCount: Number(group.share_count || 0),
+          shareNumbers: group.share_numbers || ''
+        }))
+      };
+    },
+
     addOfficerTerm(payload) {
       const term = validateOfficerTerm(payload);
       const duplicate = repository.listOfficerTerms().find(

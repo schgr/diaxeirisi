@@ -94,6 +94,26 @@ const changeSheet = renderChangeSheetDocument({
 assert.match(changeSheet, /ΑΠΟΓΡΑΦΗ 31-12-2025/);
 assert.match(changeSheet, />15</);
 
+const documentChangeSheet = renderChangeSheetDocument({
+  share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },
+  compositionItems: [compositionItem(0)],
+  changeSheetEntries: [{
+    changeDate: '2026-05-31',
+    orderReference: 'Χ-37',
+    componentLineNumber: 1,
+    movementType: 'ΧΡΕΩΣΗ',
+    quantity: 2
+  }, {
+    changeDate: '2026-02-15',
+    orderReference: 'ΕΧΠ-1',
+    componentLineNumber: 1,
+    movementType: 'ΠΙΣΤΩΣΗ',
+    quantity: 1
+  }]
+});
+assert.match(documentChangeSheet, /Χ-37\/31-05-2026/);
+assert.match(documentChangeSheet, /ΕΧΠ-1\/15-02-2026/);
+
 const yearOptions = renderFiscalYearOptions(2025);
 assert.match(yearOptions, /value="2025" selected/);
 assert.match(yearOptions, /value="2026"/);

@@ -46,6 +46,42 @@ function createSharesRepository(db) {
       `).all(`${year}-01-01`, `${year}-12-31`).map((row) => Number(row.share_id));
     },
 
+    listDocumentCompositionMovements(shareId, year) {
+      return db.prepare(`
+        SELECT movement.id AS transaction_id,
+               movement.transaction_date,
+               movement.transaction_type,
+               movement.quantity,
+               'ΑΔΔΥ' AS source_type,
+               document.id AS document_number,
+               item.composition_snapshot
+        FROM share_transactions movement
+        JOIN addy_items item ON item.share_transaction_id = movement.id
+        JOIN addy_documents document ON document.id = item.addy_document_id
+        WHERE movement.share_id = ?
+          AND movement.transaction_date >= ?
+          AND movement.transaction_date <= ?
+        UNION ALL
+        SELECT movement.id AS transaction_id,
+               movement.transaction_date,
+               movement.transaction_type,
+               movement.quantity,
+               'ΕΧΠ' AS source_type,
+               document.registry_number AS document_number,
+               item.composition_snapshot
+        FROM share_transactions movement
+        JOIN exhp_items item ON item.share_transaction_id = movement.id
+        JOIN exhp_documents document ON document.id = item.exhp_document_id
+        WHERE movement.share_id = ?
+          AND movement.transaction_date >= ?
+          AND movement.transaction_date <= ?
+        ORDER BY transaction_date, transaction_id
+      `).all(
+        shareId, `${year}-01-01`, `${year}-12-31`,
+        shareId, `${year}-01-01`, `${year}-12-31`
+      );
+    },
+
     createShare(payload) {
       const result = db
         .prepare(

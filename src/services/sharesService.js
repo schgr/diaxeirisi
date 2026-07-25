@@ -134,6 +134,39 @@ function createSharesService(db) {
         : beforeYearBalance;
       const cardShare = createCardShare(share, displayedTransactions, cardBaseBalance);
 
+      const compositionItems = repository.listCompositionItems(shareId).map((row) => ({
+        id: row.id,
+        componentNominalNumber: row.component_nominal_number,
+        componentDescription: row.component_description,
+        measurementUnit: row.measurement_unit,
+        projectedQuantity: Number(row.quantity) * Number(cardShare.accountingBalance || 0),
+        quantityPerMaterial: Number(row.quantity),
+        notIssuedQuantity: Number(row.not_issued_quantity || 0),
+        quantity: Number(row.quantity),
+        notes: row.notes
+      }));
+      const savedChangeEntries = repository.listChangeSheetEntries(shareId).map((row) => ({
+        id: row.id,
+        changeDate: row.change_date,
+        orderReference: row.order_reference,
+        previousValue: row.previous_value,
+        newValue: row.new_value,
+        changeReason: row.change_reason,
+        notes: row.notes,
+        componentLineNumber: Number(row.component_line_number || 1),
+        movementType: row.movement_type || 'ΧΡΕΩΣΗ',
+        quantity: Number(row.quantity || 0)
+      }));
+      const documentChangeEntries = buildDocumentChangeEntries(
+        repository.listDocumentCompositionMovements(shareId, Number(year)),
+        compositionItems
+      ).filter((documentEntry) => !savedChangeEntries.some((savedEntry) =>
+        savedEntry.changeDate === documentEntry.changeDate &&
+        savedEntry.orderReference === documentEntry.orderReference &&
+        savedEntry.componentLineNumber === documentEntry.componentLineNumber &&
+        savedEntry.movementType === documentEntry.movementType
+      ));
+
       return {
         share: cardShare,
         year: Number(year),
@@ -143,29 +176,8 @@ function createSharesService(db) {
           reference: openingInventory ? openingInventory.document_reference : ''
         },
         transactions: displayedTransactions,
-        compositionItems: repository.listCompositionItems(shareId).map((row) => ({
-          id: row.id,
-          componentNominalNumber: row.component_nominal_number,
-          componentDescription: row.component_description,
-          measurementUnit: row.measurement_unit,
-          projectedQuantity: Number(row.quantity) * Number(cardShare.accountingBalance || 0),
-          quantityPerMaterial: Number(row.quantity),
-          notIssuedQuantity: Number(row.not_issued_quantity || 0),
-          quantity: Number(row.quantity),
-          notes: row.notes
-        })),
-        changeSheetEntries: repository.listChangeSheetEntries(shareId).map((row) => ({
-          id: row.id,
-          changeDate: row.change_date,
-          orderReference: row.order_reference,
-          previousValue: row.previous_value,
-          newValue: row.new_value,
-          changeReason: row.change_reason,
-          notes: row.notes,
-          componentLineNumber: Number(row.component_line_number || 1),
-          movementType: row.movement_type || 'ΧΡΕΩΣΗ',
-          quantity: Number(row.quantity || 0)
-        })),
+        compositionItems,
+        changeSheetEntries: [...savedChangeEntries, ...documentChangeEntries],
         assignments: repository.listShareAssignments(shareId).map((row) => ({
           id: row.id,
           holderName: row.holder_name,
@@ -347,6 +359,47 @@ function createSharesService(db) {
       return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
     }
   };
+}
+
+function buildDocumentChangeEntries(movements, compositionItems) {
+  return movements.flatMap((movement) => {
+    const snapshot = parseCompositionSnapshot(movement.composition_snapshot);
+    return compositionItems.map((component, index) => {
+      const snapshotComponent = snapshot[index];
+      const snapshotQuantity = snapshotComponent
+        ? Number(snapshotComponent.projectedQuantity || 0) -
+          Number(snapshotComponent.notIssuedQuantity || 0)
+        : NaN;
+      const quantity = Number.isFinite(snapshotQuantity)
+        ? snapshotQuantity
+        : Number(component.quantityPerMaterial || 0) * Number(movement.quantity || 0);
+      const movementType = movement.transaction_type === 'Πίστωση' ? 'ΠΙΣΤΩΣΗ' : 'ΧΡΕΩΣΗ';
+      const prefix = movement.source_type === 'ΕΧΠ'
+        ? 'ΕΧΠ'
+        : movementType === 'ΠΙΣΤΩΣΗ' ? 'Π' : 'Χ';
+      return {
+        id: `document-${movement.transaction_id}-${index + 1}`,
+        changeDate: movement.transaction_date,
+        orderReference: `${prefix}-${movement.document_number}`,
+        previousValue: '',
+        newValue: '',
+        changeReason: movement.source_type,
+        notes: '',
+        componentLineNumber: index + 1,
+        movementType,
+        quantity
+      };
+    }).filter((entry) => entry.quantity > 0);
+  });
+}
+
+function parseCompositionSnapshot(value) {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
 }
 
 module.exports = {

@@ -7127,6 +7127,48 @@ th {
   font-size: 9pt;
 }
 
+.management-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.management-report-card {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  background: rgba(18, 53, 80, 0.72);
+}
+
+.management-report-card strong {
+  color: var(--accent);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.management-report-card span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.management-report-details {
+  margin-top: 24px;
+}
+
+.management-report-details .index-table th,
+.management-report-details .index-table td {
+  color: var(--text);
+}
+
+@media (max-width: 1050px) {
+  .management-report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media print {
   .serial-registry-print-root .serial-registry-print-page {
     width: 297mm;

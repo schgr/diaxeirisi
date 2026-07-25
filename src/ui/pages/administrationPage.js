@@ -1,13 +1,15 @@
-import { escapeHtml } from '../components/forms.js';
+import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
 export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '', sharesApi = window.appApi.shares) {
-  const [data, settings, serialRegistry, ammunitionBatchRegistry] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+  const [data, settings, serialRegistry, ammunitionBatchRegistry, managementReport] = await Promise.all([
     api.getReferenceData(),
     settingsApi.get(),
     sharesApi.listSerialRegistry(),
-    sharesApi.listAmmunitionBatchRegistry()
+    sharesApi.listAmmunitionBatchRegistry(),
+    api.getManagementReport(currentYear)
   ]);
   const selectedHandover = selectedHandoverId ? await api.getHandover(selectedHandoverId) : null;
 
@@ -21,12 +23,16 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
 
     <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
       <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="management-report" type="button"><span class="home-tile-icon">ΑΝ</span><span class="home-tile-title">Αναφορά Διαχείρισης</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="ammunition-batches" type="button"><span class="home-tile-icon">ΒΦ</span><span class="home-tile-title">Βιβλίο Μερίδων Β.Φ.</span><span class="home-tile-code">§ ΔΧ-Ε</span></button>
     </section>
     <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
+    </div>
+    <div data-administration-panel="management-report" hidden>
+      ${renderManagementReport(managementReport)}
     </div>
     <div data-administration-panel="serial-numbers" hidden>
       ${renderSerialNumberRegistry(serialRegistry)}
@@ -38,6 +44,60 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
 
   if (initialTab) container.querySelector('.page-header')?.remove();
   bindAdministrationPage(container, api, annualAccountsApi, settingsApi, sharesApi, data, selectedHandover, settings, showToast, initialTab);
+}
+
+export function renderManagementReport(report) {
+  const metrics = [
+    ['Σύνολο Μερίδων', report.totalShares],
+    ['Μηδενικές Μερίδες', report.zeroBalanceShares],
+    ['Μερίδες με Υπόλοιπο', report.sharesWithBalance],
+    [`Κίνηση εντός ${report.fiscalYear}`, report.movedShares],
+    ['Μερίδες με Έλλειμμα', report.deficitShares],
+    ['Μερίδες με Πλεόνασμα', report.surplusShares],
+    ['Μερίδες που απαιτούν Σύνθεση', report.compositionShares],
+    ['Σύνθεση που δεν καταχωρίστηκε', report.missingCompositionShares],
+    ['Μερίδες με ίδιο Αριθμό Ονομαστικού', report.duplicateNominalShares]
+  ];
+  return `
+    <section class="page-panel wide-panel management-report-panel">
+      <div class="requests-status-header">
+        <div>
+          <h3>Αναφορά Διαχείρισης</h3>
+          <p class="muted">Συνοπτική εικόνα των ενεργών Μερίδων της Διαχείρισης.</p>
+        </div>
+        <label class="field compact-year-field">
+          <span>Οικονομικό Έτος</span>
+          <select data-management-report-year>${renderFiscalYearOptions(report.fiscalYear)}</select>
+        </label>
+      </div>
+      <div class="management-report-grid">
+        ${metrics.map(([label, value]) => `
+          <article class="management-report-card">
+            <strong>${escapeHtml(value)}</strong>
+            <span>${escapeHtml(label)}</span>
+          </article>
+        `).join('')}
+      </div>
+      <section class="management-report-details">
+        <h4>Επαναλαμβανόμενοι Αριθμοί Ονομαστικού</h4>
+        <div class="table-wrap">
+          <table class="index-table">
+            <thead><tr><th>Αριθμός Ονομαστικού</th><th>Πλήθος Μερίδων</th><th>Αριθμοί Μερίδων</th></tr></thead>
+            <tbody>${report.duplicateNominalGroups.length
+              ? report.duplicateNominalGroups.map((group) => `
+                <tr>
+                  <td>${escapeHtml(group.nominalNumber)}</td>
+                  <td>${group.shareCount}</td>
+                  <td>${escapeHtml(group.shareNumbers)}</td>
+                </tr>
+              `).join('')
+              : '<tr><td colspan="3" class="empty-table">Δεν υπάρχουν ενεργές Μερίδες με ίδιο Αριθμό Ονομαστικού.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  `;
 }
 
 function renderSerialNumberRegistry(registry) {
@@ -424,6 +484,13 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     container.querySelector(`[data-administration-tab="${initialTab}"]`)?.click();
   }
 
+  container.querySelector('[data-management-report-year]')?.addEventListener('change', async (event) => run(async () => {
+    const report = await api.getManagementReport(Number(event.target.value));
+    const panel = container.querySelector('[data-administration-panel="management-report"]');
+    panel.innerHTML = renderManagementReport(report);
+    bindManagementReportYear(panel, api, showToast);
+  }, showToast));
+
   container.querySelector('[data-save-serial-registry]')?.addEventListener('click', async () => run(async () => {
     const grouped = new Map();
     container.querySelectorAll('[data-serial-position]').forEach((row) => {
@@ -584,6 +651,14 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     }, showToast));
   });
 
+}
+
+function bindManagementReportYear(container, api, showToast) {
+  container.querySelector('[data-management-report-year]')?.addEventListener('change', async (event) => run(async () => {
+    const report = await api.getManagementReport(Number(event.target.value));
+    container.innerHTML = renderManagementReport(report);
+    bindManagementReportYear(container, api, showToast);
+  }, showToast));
 }
 
 function openHandoverProtocolDocument(handover, settings, showToast) {

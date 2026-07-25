@@ -372,10 +372,14 @@ async function run() {
     assert.strictEqual(materialCard.compositionItems[0].quantityPerMaterial, 5);
     assert.strictEqual(materialCard.compositionItems[0].projectedQuantity, 50);
     assert.strictEqual(materialCard.compositionItems[0].notIssuedQuantity, 2);
-    assert.strictEqual(materialCard.changeSheetEntries.length, 1);
-    assert.strictEqual(materialCard.changeSheetEntries[0].componentLineNumber, 1);
-    assert.strictEqual(materialCard.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
-    assert.strictEqual(materialCard.changeSheetEntries[0].quantity, 2);
+    assert.strictEqual(materialCard.changeSheetEntries.length, 2);
+    const savedChange = materialCard.changeSheetEntries.find((entry) => !entry.orderReference);
+    const addyChange = materialCard.changeSheetEntries.find((entry) => entry.orderReference === 'Χ-1');
+    assert.strictEqual(savedChange.componentLineNumber, 1);
+    assert.strictEqual(savedChange.movementType, 'ΧΡΕΩΣΗ');
+    assert.strictEqual(savedChange.quantity, 2);
+    assert.strictEqual(addyChange.componentLineNumber, 1);
+    assert.strictEqual(addyChange.movementType, 'ΧΡΕΩΣΗ');
 
     const consumableDeletionReason = 'Διαγραφή Αναλώσιμου Υλικού Και Ειδών Σταθερών Χορηγήσεων.';
     const referenceData = transactions.getAddyReferenceData();

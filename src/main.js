@@ -499,6 +499,9 @@ function registerIpcHandlers() {
   ipcMain.handle('administration:reference-data', async () =>
     safeInvoke(() => services.administration.getReferenceData())
   );
+  ipcMain.handle('administration:management-report', async (_event, year) =>
+    safeInvoke(() => services.administration.getManagementReport(year))
+  );
   ipcMain.handle('administration:add-officer', async (_event, payload) =>
     safeInvoke(() => services.administration.addOfficerTerm(payload))
   );

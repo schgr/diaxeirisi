@@ -801,17 +801,8 @@ export function renderChangeSheetDocument(card) {
   const rowCount = Math.max(10, card.compositionItems.length);
   const items = Array.from({ length: rowCount }, (_unused, index) => card.compositionItems[index] || null);
   const changeEntries = card.changeSheetEntries || [];
-  const changeColumns = [];
-  const seenChangeDates = new Set();
-  changeEntries.forEach((entry) => {
-    if (!entry.changeDate || seenChangeDates.has(entry.changeDate) || changeColumns.length >= 10) return;
-    seenChangeDates.add(entry.changeDate);
-    changeColumns.push({
-      date: entry.changeDate,
-      reference: entry.orderReference || ''
-    });
-  });
-  const changeDates = changeColumns.map((column) => column.date);
+  const chargeColumns = collectChangeColumns(changeEntries, 'ΧΡΕΩΣΗ');
+  const creditColumns = collectChangeColumns(changeEntries, 'ΠΙΣΤΩΣΗ');
   return `
     <article class="change-sheet-document-page print-document-area">
       <div class="material-form-code">ΔΥΠ/191</div>
@@ -838,8 +829,8 @@ export function renderChangeSheetDocument(card) {
           <tr>
             <th>ΑΡΙΘΜΟΣ<br />ΟΝΟΜΑΣΤΙΚΟΥ</th>
             <th>ΠΕΡΙΓΡΑΦΗ</th>
-            ${renderChangeDateHeaders(changeColumns, 10)}
-            ${renderChangeDateHeaders(changeColumns, 10)}
+            ${renderChangeDateHeaders(chargeColumns, 10)}
+            ${renderChangeDateHeaders(creditColumns, 10)}
             <th class="vertical-table-heading">ΠΛΕΟΝΑΣΜΑ</th>
             <th class="vertical-table-heading">ΕΛΛΕΙΜΜΑ</th>
           </tr>
@@ -850,7 +841,8 @@ export function renderChangeSheetDocument(card) {
               renderChangeSheetDocumentRow(
                 item,
                 changeEntries.filter((entry) => Number(entry.componentLineNumber || 1) === index + 1),
-                changeDates
+                chargeColumns.map((column) => column.key),
+                creditColumns.map((column) => column.key)
               )
             )
             .join('')}
@@ -860,28 +852,51 @@ export function renderChangeSheetDocument(card) {
   `;
 }
 
+function collectChangeColumns(entries, movementType) {
+  const columns = [];
+  const seen = new Set();
+  entries
+    .filter((entry) => entry.movementType === movementType)
+    .forEach((entry) => {
+      const key = changeColumnKey(entry);
+      if (!entry.changeDate || seen.has(key) || columns.length >= 10) return;
+      seen.add(key);
+      columns.push({ key, date: entry.changeDate, reference: entry.orderReference || '' });
+    });
+  return columns;
+}
+
 function renderChangeDateHeaders(columns, count) {
   return Array.from({ length: count }, (_unused, index) => {
     const column = columns[index];
     if (!column) return '<th class="vertical-table-heading"></th>';
-    const date = formatDate(column.date).replaceAll('/', '-');
-    const label = column.reference ? `${column.reference} ${date}` : date;
+    const date = formatChangeSheetDate(column.date);
+    const label = column.reference
+      ? column.reference === 'ΑΠΟΓΡΑΦΗ'
+        ? `${column.reference} ${date}`
+        : `${column.reference}/${date}`
+      : date;
     return `<th class="vertical-table-heading">${escapeHtml(label)}</th>`;
   }).join('');
 }
 
-function renderChangeSheetDocumentRow(item, entries, changeDates) {
-  const chargeByDate = sumChangesByDate(entries, 'ΧΡΕΩΣΗ');
-  const creditByDate = sumChangesByDate(entries, 'ΠΙΣΤΩΣΗ');
+function formatChangeSheetDate(value) {
+  const [year, month, day] = String(value || '').slice(0, 10).split('-');
+  return year && month && day ? `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}` : '';
+}
+
+function renderChangeSheetDocumentRow(item, entries, chargeKeys, creditKeys) {
+  const chargeByDate = sumChangesByColumn(entries, 'ΧΡΕΩΣΗ');
+  const creditByDate = sumChangesByColumn(entries, 'ΠΙΣΤΩΣΗ');
   const totalCharge = [...chargeByDate.values()].reduce((sum, value) => sum + value, 0);
   const totalCredit = [...creditByDate.values()].reduce((sum, value) => sum + value, 0);
   const numericDifference = totalCharge - totalCredit;
   const chargeCells = Array.from({ length: 10 }, (_unused, index) => {
-    const quantity = chargeByDate.get(changeDates[index]);
+    const quantity = chargeByDate.get(chargeKeys[index]);
     return `<td>${quantity ? formatQuantity(quantity) : ''}</td>`;
   }).join('');
   const creditCells = Array.from({ length: 10 }, (_unused, index) => {
-    const quantity = creditByDate.get(changeDates[index]);
+    const quantity = creditByDate.get(creditKeys[index]);
     return `<td>${quantity ? formatQuantity(quantity) : ''}</td>`;
   }).join('');
   return `
@@ -896,14 +911,19 @@ function renderChangeSheetDocumentRow(item, entries, changeDates) {
   `;
 }
 
-function sumChangesByDate(entries, movementType) {
+function sumChangesByColumn(entries, movementType) {
   const totals = new Map();
   entries
     .filter((entry) => entry.movementType === movementType)
     .forEach((entry) => {
-      totals.set(entry.changeDate, (totals.get(entry.changeDate) || 0) + Number(entry.quantity || 0));
+      const key = changeColumnKey(entry);
+      totals.set(key, (totals.get(key) || 0) + Number(entry.quantity || 0));
     });
   return totals;
+}
+
+function changeColumnKey(entry) {
+  return `${entry.orderReference || ''}|${entry.changeDate || ''}`;
 }
 
 function openSharePrintDocument(card) {

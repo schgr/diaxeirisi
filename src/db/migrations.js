@@ -1956,6 +1956,14 @@ const migrations = [
       CREATE INDEX idx_share_ammunition_batches_share
       ON share_ammunition_batches(share_id, position);
     `
+  },
+  {
+    version: 59,
+    name: 'exhp_composition_snapshot',
+    up: `
+      ALTER TABLE exhp_items
+      ADD COLUMN composition_snapshot TEXT NOT NULL DEFAULT '';
+    `
   }
 ];
 

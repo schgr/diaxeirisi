@@ -133,17 +133,25 @@ function createTransactionsService(db, settingsService) {
               addy.documentDate
             );
           }
-          repository.createAddyItem(documentId, item, share?.id || null, transactionId);
+          const savedItem = share
+            ? {
+                ...item,
+                composition: item.composition && item.composition.length
+                  ? item.composition
+                  : buildCompositionSnapshot(repository, share.id, item.quantity)
+              }
+            : item;
+          repository.createAddyItem(documentId, savedItem, share?.id || null, transactionId);
           documentItems.push(
             mapAddyDocumentItem({
-              item,
+              item: savedItem,
               share: share || { share_number: item.shareNumber, description: item.description },
               ledgerSerial,
               transactionUnit: addy.transactionUnit,
               serviceName
             })
           );
-          documentItems[documentItems.length - 1].composition = item.composition || [];
+          documentItems[documentItems.length - 1].composition = savedItem.composition || [];
         }
       });
 
@@ -612,8 +620,12 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
     shareTransactionId,
     exhp.documentDate
   );
-  repository.createExhpItem(documentId, item, share.id, shareTransactionId);
-  documentItems.push({ ...item, ledgerSerial });
+  const savedItem = {
+    ...item,
+    composition: buildCompositionSnapshot(repository, share.id, item.quantity)
+  };
+  repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
+  documentItems.push({ ...savedItem, ledgerSerial });
 }
 
 function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber, documentItems) {
@@ -636,6 +648,7 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
       throw new Error(`Η μερίδα ${sourceShare.share_number} πρέπει να πιστωθεί με ολόκληρο το υπόλοιπο ${balance}.`);
     }
 
+    const composition = buildCompositionSnapshot(repository, sourceShare.id, balance);
     const sharedFields = {
       nominalNumber: sourceShare.nominal_number,
       description: sourceShare.description,
@@ -644,7 +657,8 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
       materialCode: sourceShare.material_code || '',
       quantity: balance,
       supportingDocuments: creditInput.supportingDocuments || '',
-      transferGroup: creditInput.transferGroup || chargeInput.transferGroup || ''
+      transferGroup: creditInput.transferGroup || chargeInput.transferGroup || '',
+      composition
     };
     const credit = {
       ...sharedFields,
@@ -701,6 +715,17 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
       `Μεταβολή Αριθμού Ονομαστικού με ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`
     );
   }
+}
+
+function buildCompositionSnapshot(repository, shareId, quantity) {
+  return repository.listCompositionItems(shareId).map((component) => ({
+    componentNominalNumber: component.component_nominal_number,
+    componentDescription: component.component_description,
+    measurementUnit: component.measurement_unit,
+    projectedQuantity: Number(component.quantity || 0) * Number(quantity || 0),
+    notIssuedQuantity: 0,
+    notes: component.notes || ''
+  }));
 }
 
 function mapExhpDocumentSupport(row) {

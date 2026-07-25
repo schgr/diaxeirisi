@@ -264,9 +264,10 @@ function createTransactionsRepository(db) {
             transaction_type,
             quantity,
             supporting_documents,
-            share_transaction_id
+            share_transaction_id,
+            composition_snapshot
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
       ).run(
         documentId,
@@ -280,7 +281,8 @@ function createTransactionsRepository(db) {
         item.transactionType,
         item.quantity,
         item.supportingDocuments || '',
-        shareTransactionId
+        shareTransactionId,
+        item.composition && item.composition.length ? JSON.stringify(item.composition) : ''
       );
     },
 

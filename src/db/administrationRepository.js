@@ -159,6 +159,48 @@ function createAdministrationRepository(db) {
       `).all(status);
     },
 
+    getManagementReport(year) {
+      const totals = db.prepare(`
+        SELECT
+          COUNT(*) AS total_shares,
+          SUM(CASE WHEN accounting_balance = 0 THEN 1 ELSE 0 END) AS zero_balance_shares,
+          SUM(CASE WHEN accounting_balance <> 0 THEN 1 ELSE 0 END) AS shares_with_balance,
+          SUM(CASE WHEN charged_quantity < accounting_balance THEN 1 ELSE 0 END) AS deficit_shares,
+          SUM(CASE WHEN charged_quantity > accounting_balance THEN 1 ELSE 0 END) AS surplus_shares,
+          SUM(CASE WHEN requires_composition = 1 THEN 1 ELSE 0 END) AS composition_shares,
+          SUM(CASE WHEN requires_composition = 1 AND NOT EXISTS (
+            SELECT 1 FROM share_composition_items composition
+            WHERE composition.share_id = shares.id
+          ) THEN 1 ELSE 0 END) AS missing_composition_shares
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+      `).get();
+      const moved = db.prepare(`
+        SELECT COUNT(DISTINCT movement.share_id) AS count
+        FROM share_transactions movement
+        JOIN shares share ON share.id = movement.share_id
+        WHERE share.archive_status = 'Ενεργή'
+          AND movement.transaction_date >= ?
+          AND movement.transaction_date <= ?
+          AND movement.notes <> 'INITIAL_ANNUAL_INVENTORY'
+      `).get(`${year}-01-01`, `${year}-12-31`);
+      const duplicateGroups = db.prepare(`
+        SELECT nominal_number, COUNT(*) AS share_count,
+               GROUP_CONCAT(share_number, ', ') AS share_numbers
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+          AND TRIM(nominal_number) <> ''
+        GROUP BY nominal_number COLLATE NOCASE
+        HAVING COUNT(*) > 1
+        ORDER BY nominal_number COLLATE NOCASE
+      `).all();
+      return {
+        ...totals,
+        moved_shares: Number(moved.count || 0),
+        duplicate_nominal_groups: duplicateGroups
+      };
+    },
+
     getShare(id) {
       return db.prepare('SELECT * FROM shares WHERE id = ?').get(id);
     },
