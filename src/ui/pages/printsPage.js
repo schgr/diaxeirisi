@@ -1,4 +1,4 @@
-import { escapeHtml } from '../components/forms.js';
+import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 
 import { renderSharePrintDocument } from './sharesPage.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
@@ -475,7 +475,7 @@ function renderShareCardControls(shares, state) {
     <div class="registry-controls share-print-controls">
       <label class="field">
         <span>Οικονομικό Έτος</span>
-        <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+        <select id="prints-fiscal-year">${renderFiscalYearOptions(state.fiscalYear)}</select>
       </label>
       <label class="field">
         <span>Καρτέλα Υλικού</span>
@@ -543,7 +543,7 @@ function renderFiscalYearControls(state) {
     <div class="registry-controls">
       <label class="field">
         <span>Οικονομικό Έτος</span>
-        <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+        <select id="prints-fiscal-year">${renderFiscalYearOptions(state.fiscalYear)}</select>
       </label>
       <button id="print-current-document" class="primary-button compact-print-button" type="button">Εκτύπωση</button>
     </div>
@@ -555,7 +555,7 @@ function renderIndexTableControls(state, type) {
     <div class="registry-controls index-table-controls">
       <label class="field">
         <span>Οικονομικό Έτος</span>
-        <input id="prints-fiscal-year" type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+        <select id="prints-fiscal-year">${renderFiscalYearOptions(state.fiscalYear)}</select>
       </label>
       <div class="row-actions index-table-actions">
         <button id="preview-index-document" class="secondary-button" type="button" data-index-type="${type}">Προβολή</button>

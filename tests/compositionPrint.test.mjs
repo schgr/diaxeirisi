@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import {
   renderCompositionDocument,
   renderCompositionDocumentFooter,
+  renderChangeSheetDocument,
   renderRows
 } from '../src/ui/pages/sharesPage.js';
 import { renderShareNumberOptions } from '../src/ui/pages/transactionsPage.js';
 import { renderAddyCompositionDocument } from '../src/ui/transactions/addyPrint.js';
+import { renderFiscalYearOptions } from '../src/ui/components/forms.js';
 
 const card = {
   share: {
@@ -77,6 +79,24 @@ const shareOptions = renderShareNumberOptions([{
 }]);
 assert.match(shareOptions, /value="13"/);
 assert.doesNotMatch(shareOptions, /1005-13|ΔΟΚΙΜΑΣΤΙΚΟ ΥΛΙΚΟ/);
+
+const changeSheet = renderChangeSheetDocument({
+  share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },
+  compositionItems: [compositionItem(0)],
+  changeSheetEntries: [{
+    changeDate: '2025-12-31',
+    orderReference: 'ΑΠΟΓΡΑΦΗ',
+    componentLineNumber: 1,
+    movementType: 'ΧΡΕΩΣΗ',
+    quantity: 15
+  }]
+});
+assert.match(changeSheet, /ΑΠΟΓΡΑΦΗ 31-12-2025/);
+assert.match(changeSheet, />15</);
+
+const yearOptions = renderFiscalYearOptions(2025);
+assert.match(yearOptions, /value="2025" selected/);
+assert.match(yearOptions, /value="2026"/);
 
 console.log('compositionPrint.test.mjs: OK');
 

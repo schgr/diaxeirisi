@@ -1,4 +1,4 @@
-import { escapeHtml } from '../components/forms.js';
+import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 
 export async function renderMovementDifferencesPage(container, api, showToast) {
   container.innerHTML = `
@@ -94,7 +94,7 @@ async function renderMovementDifferenceProtocolsPage(container, api, showToast) 
     <section class="page-panel">
       <div class="requests-status-header">
         <h3>Πρωτόκολλα Διαφορών από Διακίνηση Υλικού</h3>
-        <label class="field compact-year-field"><span>Οικονομικό Έτος</span><input id="md-year" type="number" min="2000" max="2100" value="${currentYear}" /></label>
+        <label class="field compact-year-field"><span>Οικονομικό Έτος</span><select id="md-year">${renderFiscalYearOptions(currentYear)}</select></label>
       </div>
       <div class="table-wrap">
         <table class="movement-differences-table">

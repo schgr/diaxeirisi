@@ -1,4 +1,4 @@
-import { escapeHtml } from '../components/forms.js';
+import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 
 export async function renderSharesPage(container, sharesApi, settingsApi, showToast, options = {}) {
   const [allShares, settings] = await Promise.all([
@@ -251,7 +251,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           <h3>Δοσοληψίες Έτους</h3>
           <label class="field compact-year-field">
             <span>Έτος</span>
-            <input id="share-card-year" type="number" min="2000" max="2100" value="${card.year}" />
+            <select id="share-card-year">${renderFiscalYearOptions(card.year)}</select>
           </label>
         </div>
         <div class="card-table-wrap">
@@ -801,7 +801,17 @@ export function renderChangeSheetDocument(card) {
   const rowCount = Math.max(10, card.compositionItems.length);
   const items = Array.from({ length: rowCount }, (_unused, index) => card.compositionItems[index] || null);
   const changeEntries = card.changeSheetEntries || [];
-  const changeDates = [...new Set(changeEntries.map((entry) => entry.changeDate).filter(Boolean))].slice(0, 10);
+  const changeColumns = [];
+  const seenChangeDates = new Set();
+  changeEntries.forEach((entry) => {
+    if (!entry.changeDate || seenChangeDates.has(entry.changeDate) || changeColumns.length >= 10) return;
+    seenChangeDates.add(entry.changeDate);
+    changeColumns.push({
+      date: entry.changeDate,
+      reference: entry.orderReference || ''
+    });
+  });
+  const changeDates = changeColumns.map((column) => column.date);
   return `
     <article class="change-sheet-document-page print-document-area">
       <div class="material-form-code">ΔΥΠ/191</div>
@@ -828,8 +838,8 @@ export function renderChangeSheetDocument(card) {
           <tr>
             <th>ΑΡΙΘΜΟΣ<br />ΟΝΟΜΑΣΤΙΚΟΥ</th>
             <th>ΠΕΡΙΓΡΑΦΗ</th>
-            ${renderChangeDateHeaders(changeDates, 10)}
-            ${renderChangeDateHeaders(changeDates, 10)}
+            ${renderChangeDateHeaders(changeColumns, 10)}
+            ${renderChangeDateHeaders(changeColumns, 10)}
             <th class="vertical-table-heading">ΠΛΕΟΝΑΣΜΑ</th>
             <th class="vertical-table-heading">ΕΛΛΕΙΜΜΑ</th>
           </tr>
@@ -850,10 +860,13 @@ export function renderChangeSheetDocument(card) {
   `;
 }
 
-function renderChangeDateHeaders(dates, count) {
+function renderChangeDateHeaders(columns, count) {
   return Array.from({ length: count }, (_unused, index) => {
-    const date = dates[index];
-    return `<th class="vertical-table-heading">${date ? escapeHtml(formatDate(date)) : ''}</th>`;
+    const column = columns[index];
+    if (!column) return '<th class="vertical-table-heading"></th>';
+    const date = formatDate(column.date).replaceAll('/', '-');
+    const label = column.reference ? `${column.reference} ${date}` : date;
+    return `<th class="vertical-table-heading">${escapeHtml(label)}</th>`;
   }).join('');
 }
 

@@ -39,6 +39,15 @@ export async function maybeSuggestShareNumber(transactionsApi, referenceData, co
   showToast('Μπορείς να πληκτρολογήσεις δικό σου αριθμό μερίδας.', 'error');
 }
 
+export function confirmFutureTransactionDate(documentDate) {
+  const selectedYear = Number(String(documentDate || '').slice(0, 4));
+  const currentYear = new Date().getFullYear();
+  if (!selectedYear || selectedYear <= currentYear) return true;
+  return window.confirm(
+    `Η κίνηση αυτή θα καταχωρηθεί στο επόμενο οικονομικό έτος (${selectedYear}). Θέλετε να συνεχίσετε;`
+  );
+}
+
 export function getControls(container) {
   return {
     date: container.querySelector('#addy-date'),

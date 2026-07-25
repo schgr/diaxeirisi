@@ -39,15 +39,21 @@ async function run() {
     assert.strictEqual(result.updatedShares, 1);
     assert.strictEqual(result.importedRows, 1);
     const card = shares.getShareCard(share.id, new Date().getFullYear());
-    assert.strictEqual(card.compositionItems[0].projectedQuantity, 20);
-    assert.strictEqual(card.compositionItems[0].quantityPerMaterial, 2);
-    assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 5);
+    assert.strictEqual(card.compositionItems[0].projectedQuantity, 200);
+    assert.strictEqual(card.compositionItems[0].quantityPerMaterial, 20);
+    assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 185);
+    assert.strictEqual(card.changeSheetEntries.length, 1);
+    assert.strictEqual(card.changeSheetEntries[0].changeDate, `${new Date().getFullYear() - 1}-12-31`);
+    assert.strictEqual(card.changeSheetEntries[0].orderReference, 'ΑΠΟΓΡΑΦΗ');
+    assert.strictEqual(card.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
+    assert.strictEqual(card.changeSheetEntries[0].quantity, 15);
 
     const output = path.join(root, 'composition-template.xlsx');
     await importer.writeTemplate(output);
     const exported = new ExcelJS.Workbook();
     await exported.xlsx.readFile(output);
     assert.deepStrictEqual(exported.worksheets[0].getRow(1).values.slice(1), COMPOSITION_HEADERS);
+    assert.strictEqual(exported.worksheets[0].getRow(2).getCell(4).value, 20);
     assert.strictEqual(exported.worksheets[0].getRow(2).getCell(5).value, 15);
     console.log('compositionImport.test.js: OK');
   } finally {

@@ -33,7 +33,7 @@ function createCompositionImportService(db) {
             share.shareNumber,
             item.componentNominalNumber,
             item.componentDescription,
-            item.projectedQuantity,
+            item.quantityPerMaterial,
             Math.max(0, Number(item.projectedQuantity) - Number(item.notIssuedQuantity))
           ]);
         });
@@ -87,16 +87,32 @@ function createCompositionImportService(db) {
         const items = groupRows.map((row) => {
           const existing = existingByNominal.get(normalizeKey(row.nominalNumber));
           const componentShare = sharesByNominal.get(normalizeKey(row.nominalNumber));
+          const projectedTotal = row.projectedQuantity * balance;
           return {
             componentNominalNumber: row.nominalNumber,
             componentDescription: row.description,
             measurementUnit: existing?.measurementUnit || componentShare?.measurementUnit || '',
-            projectedQuantity: balance > 0 ? row.projectedQuantity / balance : row.projectedQuantity,
-            notIssuedQuantity: Math.max(row.projectedQuantity - row.existingQuantity, 0),
+            projectedQuantity: row.projectedQuantity,
+            notIssuedQuantity: Math.max(projectedTotal - row.existingQuantity, 0),
             notes: existing?.notes || ''
           };
         });
         sharesService.saveComposition(share.id, items);
+        const openingDate = card.openingTransfer.inventoryDate || `${Number(card.year) - 1}-12-31`;
+        sharesService.saveChangeSheet(
+          share.id,
+          groupRows.flatMap((row, index) => Number(row.existingQuantity) > 0 ? [{
+            changeDate: openingDate,
+            orderReference: 'ΑΠΟΓΡΑΦΗ',
+            previousValue: '',
+            newValue: String(row.existingQuantity),
+            changeReason: 'Αρχική ενημέρωση σύνθεσης από Excel',
+            notes: 'COMPOSITION_IMPORT_OPENING',
+            componentLineNumber: index + 1,
+            movementType: 'ΧΡΕΩΣΗ',
+            quantity: row.existingQuantity
+          }] : [])
+        );
         importedRows += items.length;
       }
 

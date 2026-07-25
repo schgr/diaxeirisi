@@ -1,4 +1,4 @@
-import { escapeHtml } from '../components/forms.js';
+import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { printArchivedSharesTable, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 
@@ -63,7 +63,7 @@ export async function renderFinancialYearTasksPage(
         <div class="inline-form">
           <label class="field">
             <span>Οικονομικό Έτος</span>
-            <input data-financial-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+            <select data-financial-year>${renderFiscalYearOptions(state.fiscalYear)}</select>
           </label>
           <label class="field">
             <span>Κινήσεις</span>
@@ -89,7 +89,7 @@ export async function renderFinancialYearTasksPage(
           <p class="muted">Η εφαρμογή δημιουργεί πρώτα Κατάσταση Απογραφής με την παλιά αρίθμηση. Στο πεδίο 15 εμφανίζεται «Αρχείο» μόνο για τις αρχειοθετημένες μερίδες.</p>
           <label class="field compact-field renumber-year-field">
             <span>Οικονομικό Έτος</span>
-            <input data-renumber-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+            <select data-renumber-year>${renderFiscalYearOptions(state.fiscalYear)}</select>
           </label>
         </div>
         <div class="form-actions renumber-top-actions no-print">
@@ -118,7 +118,7 @@ export async function renderFinancialYearTasksPage(
           </div>
           <label class="field compact-field">
             <span>Οικονομικό Έτος</span>
-            <input data-year-prints-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+            <select data-year-prints-year>${renderFiscalYearOptions(state.fiscalYear)}</select>
           </label>
         </div>
         <div data-year-prints-results><p class="muted">Φόρτωση Μερίδων...</p></div>

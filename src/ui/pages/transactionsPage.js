@@ -56,6 +56,7 @@ export async function renderTransactionsPage(
         || aitiologia.label
     ])
   );
+  const today = localDateValue();
 
   container.innerHTML = `
     <section class="page-header">
@@ -272,6 +273,10 @@ export async function renderTransactionsPage(
       <h3>Έντυπο ΕΧΠ</h3>
       <div class="exhp-controls">
         <label class="field">
+          <span>Ημερομηνία</span>
+          <input id="exhp-date" type="date" value="${today}" />
+        </label>
+        <label class="field">
           <span>Μονάδα</span>
           <input id="exhp-unit" value="${escapeHtml(referenceData.serviceName || '')}" readonly />
         </label>
@@ -402,6 +407,13 @@ export async function renderTransactionsPage(
     showToast,
     (tab) => renderTransactionsPage(container, transactionsApi, settingsApi, showToast, tab)
   );
+}
+
+function localDateValue() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 export function renderShareNumberOptions(shares) {

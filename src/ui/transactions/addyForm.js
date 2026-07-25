@@ -21,6 +21,7 @@ import {
   clearExhpLine,
   clearLineControls,
   clearShareDefaults,
+  confirmFutureTransactionDate,
   findCurrentShare,
   getControls,
   getExhpControls,
@@ -349,6 +350,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       if (state.viewedExhp) return;
 
       try {
+        const exhpDate = container.querySelector('#exhp-date').value;
+        if (!confirmFutureTransactionDate(exhpDate)) return;
         captureExhpDraftSupports(container, state.exhpDraftSupports);
         state.exhpDocumentsState.currentItems = state.exhpItems;
         let saveExhpItems = state.exhpItems;
@@ -387,6 +390,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         }
         const supports = collectExhpSupports(container, state.exhpDraftSupports);
         const result = await transactionsApi.saveExhp({
+          documentDate: exhpDate,
           serviceUnit: container.querySelector('#exhp-unit').value,
           issueReason: container.querySelector('#exhp-reason').value,
           approvalReference: container.querySelector('#exhp-approval-reference').value,
@@ -512,6 +516,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   controls.save.addEventListener('click', async () => {
     try {
+      if (!confirmFutureTransactionDate(controls.date.value)) return;
       const result = await transactionsApi.saveAddy({
         documentDate: controls.date.value,
         transactionUnit: controls.unit.value.trim(),
