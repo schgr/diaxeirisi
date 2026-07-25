@@ -35,6 +35,17 @@ function createSharesRepository(db) {
         .all();
     },
 
+    listShareIdsWithTransactionsForYear(year) {
+      return db.prepare(`
+        SELECT DISTINCT share_id
+        FROM share_transactions
+        WHERE transaction_date >= ?
+          AND transaction_date <= ?
+          AND notes <> 'INITIAL_ANNUAL_INVENTORY'
+        ORDER BY share_id
+      `).all(`${year}-01-01`, `${year}-12-31`).map((row) => Number(row.share_id));
+    },
+
     createShare(payload) {
       const result = db
         .prepare(

@@ -132,7 +132,7 @@ function renderHandoverPanel(data, selected, settings) {
       <h3>Πρωτόκολλα Παράδοσης</h3>
       <div class="table-wrap">
         <table class="index-table administration-table">
-          <thead><tr><th>Α/Α</th><th>Ημερομηνία Παράδοσης</th><th>Παραδίδων</th><th>Παραλαμβάνων</th><th>Απογραφή</th><th>Έλεγχοι</th><th>Κατάσταση</th><th></th></tr></thead>
+          <thead><tr><th>Α/Α</th><th>Ημερομηνία Παράδοσης</th><th>Παραδίδων</th><th>Παραλαμβάνων</th><th>Απογραφή</th><th>Έλεγχοι</th><th>Κατάσταση</th><th>Άνοιγμα</th><th>Επεξεργασία</th></tr></thead>
           <tbody>
             ${data.handovers.length ? data.handovers.map((item) => `
               <tr>
@@ -141,9 +141,10 @@ function renderHandoverPanel(data, selected, settings) {
                 <td>${escapeHtml(item.inventoryReference || '-')}</td>
                 <td>${item.completedCheckCount}/${item.checkCount}</td>
                 <td><span class="status-pill ${item.status === 'Ολοκληρωμένη' ? 'balanced' : 'pending'}">${escapeHtml(item.status)}</span></td>
-                <td><div class="row-actions"><button data-preview-handover="${item.id}" class="secondary-button" type="button">Άνοιγμα</button><button data-open-handover="${item.id}" class="secondary-button" type="button">Επεξεργασία</button></div></td>
+                <td><button data-preview-handover="${item.id}" class="secondary-button" type="button">Άνοιγμα</button></td>
+                <td><button data-open-handover="${item.id}" class="secondary-button" type="button">Επεξεργασία</button></td>
               </tr>
-            `).join('') : '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν πρωτόκολλα παράδοσης.</td></tr>'}
+            `).join('') : '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν πρωτόκολλα παράδοσης.</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -278,7 +279,7 @@ export function renderArchivePanel(data) {
       <div class="form-actions archive-submit-actions"><button id="archive-submit" class="primary-button" type="button" ${eligible.length ? '' : 'disabled'}>Αρχειοθέτηση Επιλεγμένων</button></div>
     </section>
     <section class="page-panel">
-      <div class="section-heading">
+      <div class="section-heading archived-shares-heading">
         <h3>Αρχειοθετημένες Μερίδες</h3>
         <button class="primary-button compact-print-button no-print" data-print-archive-table type="button" ${data.archivedShares.length ? '' : 'disabled'}>Εκτύπωση</button>
       </div>

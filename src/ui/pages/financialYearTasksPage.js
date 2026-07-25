@@ -1,11 +1,21 @@
 import { escapeHtml } from '../components/forms.js';
 import { printArchivedSharesTable, renderArchivePanel } from './administrationPage.js';
+import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 
-export async function renderFinancialYearTasksPage(container, transactionsApi, yearEndApi, administrationApi, showToast) {
+export async function renderFinancialYearTasksPage(
+  container,
+  transactionsApi,
+  yearEndApi,
+  administrationApi,
+  sharesApi,
+  settingsApi,
+  showToast
+) {
   const state = {
     source: null,
     fiscalYear: new Date().getFullYear(),
-    transactionType: 'Πίστωση'
+    transactionType: 'Πίστωση',
+    movedCards: []
   };
 
   container.innerHTML = `
@@ -16,7 +26,7 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       </div>
     </section>
 
-    <section class="transaction-flow-home" data-financial-menu aria-label="Επιλογή ελέγχου κινήσεων">
+    <section class="transaction-flow-home financial-year-menu" data-financial-menu aria-label="Επιλογή εργασίας οικονομικού έτους">
       <button class="home-tile transaction-flow-tile" data-financial-source="addy" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
         <span class="home-tile-title">Έλεγχος Κινήσεων ΑΔΔΥ</span>
@@ -36,6 +46,11 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
         <span class="home-tile-icon" aria-hidden="true">ΑΜ</span>
         <span class="home-tile-title">Αρχείο Μερίδων</span>
         <span class="home-tile-code">§ ΕΟΕ-4</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="prints" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΕΚ</span>
+        <span class="home-tile-title">Εκτυπώσεις</span>
+        <span class="home-tile-code">§ ΕΟΕ-5</span>
       </button>
     </section>
 
@@ -90,6 +105,29 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       <div class="page-toolbar no-print"><button class="secondary-button" data-archive-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button></div>
       <div data-archive-content><p class="muted">Φόρτωση αρχείου μερίδων...</p></div>
     </div>
+
+    <div data-year-prints-detail hidden>
+      <div class="page-toolbar no-print">
+        <button class="secondary-button" data-year-prints-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+      </div>
+      <section class="page-panel">
+        <div class="section-heading annual-prints-heading">
+          <div>
+            <h3>Εκτυπώσεις Μερίδων Οικονομικού Έτους</h3>
+            <p class="muted">Εμφανίζονται μόνο οι Μερίδες που έχουν κίνηση στο επιλεγμένο έτος. Για Μερίδες με σύνθεση περιλαμβάνεται και το Φύλλο Μεταβολών.</p>
+          </div>
+          <label class="field compact-field">
+            <span>Οικονομικό Έτος</span>
+            <input data-year-prints-year type="number" min="2000" max="2100" value="${state.fiscalYear}" />
+          </label>
+        </div>
+        <div data-year-prints-results><p class="muted">Φόρτωση Μερίδων...</p></div>
+        <div class="form-actions annual-prints-actions no-print">
+          <button class="secondary-button" data-year-prints-toggle type="button">Αποεπιλογή Όλων</button>
+          <button class="primary-button" data-year-prints-open type="button" disabled>Προεπισκόπηση / Εκτύπωση</button>
+        </div>
+      </section>
+    </div>
   `;
 
   const menu = container.querySelector('[data-financial-menu]');
@@ -100,14 +138,39 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
   const renumberMessage = container.querySelector('[data-renumber-message]');
   const archiveDetail = container.querySelector('[data-archive-detail]');
   const archiveContent = container.querySelector('[data-archive-content]');
+  const yearPrintsDetail = container.querySelector('[data-year-prints-detail]');
+  const yearPrintsResults = container.querySelector('[data-year-prints-results]');
 
   function showMenu() {
     state.source = null;
     detail.hidden = true;
     renumberDetail.hidden = true;
     archiveDetail.hidden = true;
+    yearPrintsDetail.hidden = true;
     menu.classList.remove('is-hidden');
     menu.hidden = false;
+  }
+
+  async function loadYearPrints() {
+    yearPrintsResults.innerHTML = '<p class="muted">Φόρτωση Μερίδων...</p>';
+    try {
+      state.movedCards = await sharesApi.listMovedCards(state.fiscalYear);
+      yearPrintsResults.innerHTML = renderMovedShareCardsTable(state.movedCards);
+      updateYearPrintButtons();
+    } catch (error) {
+      state.movedCards = [];
+      yearPrintsResults.innerHTML = '<p class="muted">Δεν ήταν δυνατή η φόρτωση των Μερίδων.</p>';
+      updateYearPrintButtons();
+      showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση των Μερίδων.', 'error');
+    }
+  }
+
+  function updateYearPrintButtons() {
+    const checkboxes = [...yearPrintsResults.querySelectorAll('[data-year-print-card]')];
+    const selectedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
+    container.querySelector('[data-year-prints-open]').disabled = selectedCount === 0;
+    container.querySelector('[data-year-prints-toggle]').textContent =
+      checkboxes.length && selectedCount === checkboxes.length ? 'Αποεπιλογή Όλων' : 'Επιλογή Όλων';
   }
 
   async function loadArchive() {
@@ -177,6 +240,9 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
       } else if (state.source === 'archive') {
         archiveDetail.hidden = false;
         void loadArchive();
+      } else if (state.source === 'prints') {
+        yearPrintsDetail.hidden = false;
+        void loadYearPrints();
       } else {
         detail.hidden = false;
         void refresh();
@@ -189,6 +255,36 @@ export async function renderFinancialYearTasksPage(container, transactionsApi, y
   });
   container.querySelector('[data-renumber-back]').addEventListener('click', showMenu);
   container.querySelector('[data-archive-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-year-prints-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-year-prints-year]').addEventListener('change', (event) => {
+    state.fiscalYear = Number(event.target.value) || new Date().getFullYear();
+    void loadYearPrints();
+  });
+  yearPrintsResults.addEventListener('change', (event) => {
+    if (event.target.matches('[data-year-print-card]')) updateYearPrintButtons();
+  });
+  container.querySelector('[data-year-prints-toggle]').addEventListener('click', () => {
+    const checkboxes = [...yearPrintsResults.querySelectorAll('[data-year-print-card]')];
+    const shouldSelect = checkboxes.some((checkbox) => !checkbox.checked);
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = shouldSelect;
+    });
+    updateYearPrintButtons();
+  });
+  container.querySelector('[data-year-prints-open]').addEventListener('click', async () => {
+    try {
+      const selectedIds = new Set(
+        [...yearPrintsResults.querySelectorAll('[data-year-print-card]:checked')]
+          .map((checkbox) => Number(checkbox.dataset.yearPrintCard))
+      );
+      const selectedCards = state.movedCards.filter((card) => selectedIds.has(Number(card.share.id)));
+      if (!selectedCards.length) throw new Error('Επιλέξτε τουλάχιστον μία Μερίδα.');
+      const settings = await settingsApi.get();
+      openAnnualSharePrintPreview(selectedCards, settings, state.fiscalYear, showToast);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η προεπισκόπηση.', 'error');
+    }
+  });
   archiveDetail.addEventListener('click', async (event) => {
     const submit = event.target.closest('#archive-submit');
     const restore = event.target.closest('[data-restore-share]');
@@ -329,6 +425,108 @@ function formatDate(value) {
 
 function formatQuantity(value) {
   return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3 }).format(Number(value || 0));
+}
+
+export function renderMovedShareCardsTable(cards) {
+  const body = cards.length
+    ? cards.map((card, index) => {
+        const includesChangeSheet = card.compositionItems.length > 0;
+        return `
+          <tr>
+            <td><input data-year-print-card="${escapeHtml(card.share.id)}" type="checkbox" checked aria-label="Επιλογή Μερίδας ${escapeHtml(card.share.shareNumber)}" /></td>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(card.share.shareNumber)}</td>
+            <td>${escapeHtml(card.share.nominalNumber)}</td>
+            <td class="material-description-cell">${escapeHtml(card.share.description)}</td>
+            <td>${card.transactions.length}</td>
+            <td>${includesChangeSheet ? 'Καρτέλα και Φύλλο Μεταβολών' : 'Καρτέλα'}</td>
+          </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" class="empty-table">Δεν υπάρχουν Μερίδες με κίνηση στο επιλεγμένο οικονομικό έτος.</td></tr>';
+  return `
+    <div class="table-wrap annual-share-prints-table-wrap">
+      <table class="index-table administration-table annual-share-prints-table">
+        <thead><tr><th>Επιλογή</th><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Κινήσεις</th><th>Έντυπα</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
+
+function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
+  document.querySelector('.annual-share-print-backdrop')?.remove();
+  const cardsHtml = cards.map((card) => renderSharePrintDocument(card)).join('');
+  const changeSheetCards = cards.filter((card) => card.compositionItems.length > 0);
+  const changeSheetsHtml = changeSheetCards.map((card) => renderChangeSheetDocument({
+    ...card,
+    changeSheetEntries: card.changeSheetEntries.filter((entry) =>
+      String(entry.changeDate || '').startsWith(`${fiscalYear}-`)
+    )
+  })).join('');
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop annual-share-print-backdrop';
+  backdrop.innerHTML = `
+    <div class="request-document-modal annual-share-print-modal">
+      <header class="material-card-header no-print">
+        <div>
+          <p class="eyebrow">ΟΙΚΟΝΟΜΙΚΟ ΕΤΟΣ ${escapeHtml(fiscalYear)}</p>
+          <h2>Μερίδες με Κίνηση${settings?.serviceInfo?.serviceName ? ` · ${escapeHtml(settings.serviceInfo.serviceName)}` : ''}</h2>
+        </div>
+        <div class="row-actions">
+          <button class="secondary-button" data-close-annual-share-print type="button">Κλείσιμο</button>
+          <button class="primary-button" data-print-annual-share-documents type="button">Εκτύπωση Όλων</button>
+        </div>
+      </header>
+      <div class="request-document-preview annual-share-print-preview">
+        <div data-annual-card-pages>${cardsHtml}</div>
+        ${changeSheetsHtml ? `<div data-annual-change-sheet-pages>${changeSheetsHtml}</div>` : ''}
+      </div>
+    </div>`;
+
+  backdrop.addEventListener('click', async (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-annual-share-print]')) {
+      backdrop.remove();
+      return;
+    }
+    if (!event.target.closest('[data-print-annual-share-documents]')) return;
+    const printButton = backdrop.querySelector('[data-print-annual-share-documents]');
+    printButton.disabled = true;
+    try {
+      const cardsResult = await printAnnualDocumentGroup(
+        backdrop.querySelector('[data-annual-card-pages]').innerHTML,
+        false
+      );
+      if (cardsResult?.printed === false) {
+        throw new Error(cardsResult.failureReason || 'Η εκτύπωση των καρτελών ακυρώθηκε.');
+      }
+      const changeSheetPages = backdrop.querySelector('[data-annual-change-sheet-pages]');
+      if (changeSheetPages) {
+        const sheetsResult = await printAnnualDocumentGroup(changeSheetPages.innerHTML, true);
+        if (sheetsResult?.printed === false) {
+          throw new Error(sheetsResult.failureReason || 'Η εκτύπωση των Φύλλων Μεταβολών ακυρώθηκε.');
+        }
+      }
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση.', 'error');
+    } finally {
+      printButton.disabled = false;
+    }
+  });
+  document.body.appendChild(backdrop);
+}
+
+async function printAnnualDocumentGroup(html, landscape) {
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root';
+  printRoot.innerHTML = html;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  try {
+    await waitForPrintLayout();
+    return await window.appApi.print.currentDocument({ landscape });
+  } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
 }
 
 async function printFinancialYearResults(results) {

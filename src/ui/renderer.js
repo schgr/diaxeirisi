@@ -381,6 +381,8 @@ async function renderActivePage() {
         window.appApi.transactions,
         window.appApi.yearEnd,
         window.appApi.administration,
+        window.appApi.shares,
+        window.appApi.settings,
         showToast
       );
       return;

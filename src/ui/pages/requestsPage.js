@@ -31,8 +31,6 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
       <button class="home-tile transaction-flow-tile" data-requests-tab="requests" type="button"><span class="home-tile-icon">ΑΙ</span><span class="home-tile-title">Αιτήσεις</span><span class="home-tile-code">§ ΑΙ-Α</span></button>
       <button class="home-tile transaction-flow-tile" data-requests-tab="settings" type="button"><span class="home-tile-icon">ΡΥ</span><span class="home-tile-title">Ρυθμίσεις</span><span class="home-tile-code">§ ΑΙ-Β</span></button>
     </nav>
-    <div class="page-toolbar" data-requests-back hidden><button class="secondary-button" type="button">Πίσω στις Αιτήσεις</button></div>
-
     <div class="transaction-tab-panel" data-requests-panel="requests" hidden>
     <section class="page-panel request-panel no-print">
       <div class="request-header-grid">
@@ -161,24 +159,14 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
 
 function bindRequestsTabs(container, initialTab = '') {
   const menu = container.querySelector('[data-requests-menu]');
-  const back = container.querySelector('[data-requests-back]');
   container.querySelectorAll('[data-requests-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.requestsTab;
       menu.hidden = true;
-      back.hidden = false;
       container.querySelectorAll('[data-requests-panel]').forEach((panel) => {
         panel.hidden = panel.dataset.requestsPanel !== tab;
         panel.classList.toggle('active', panel.dataset.requestsPanel === tab);
       });
-    });
-  });
-  back?.addEventListener('click', () => {
-    menu.hidden = false;
-    back.hidden = true;
-    container.querySelectorAll('[data-requests-panel]').forEach((panel) => {
-      panel.hidden = true;
-      panel.classList.remove('active');
     });
   });
   if (initialTab) container.querySelector(`[data-requests-tab="${initialTab}"]`)?.click();

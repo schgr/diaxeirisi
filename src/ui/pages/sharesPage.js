@@ -797,7 +797,7 @@ function integerToGreekWords(value) {
   return parts.join(' ');
 }
 
-function renderChangeSheetDocument(card) {
+export function renderChangeSheetDocument(card) {
   const rowCount = Math.max(10, card.compositionItems.length);
   const items = Array.from({ length: rowCount }, (_unused, index) => card.compositionItems[index] || null);
   const changeEntries = card.changeSheetEntries || [];

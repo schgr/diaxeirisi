@@ -9,7 +9,10 @@ const { createTransactionsService } = require('../src/services/transactionsServi
 async function run() {
   const testDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-financial-year-'));
   try {
-    const { renderFinancialYearMovementTable } = await import('../src/ui/pages/financialYearTasksPage.js');
+    const {
+      renderFinancialYearMovementTable,
+      renderMovedShareCardsTable
+    } = await import('../src/ui/pages/financialYearTasksPage.js');
     const db = await initializeDatabase(testDirectory);
     const transactions = createTransactionsService(db, createSettingsService(db));
 
@@ -73,6 +76,13 @@ async function run() {
     assert.match(addyHtml, /ΕΜΠΟΡΙΟ/);
     assert.doesNotMatch(exhpHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(exhpHtml, />Π</);
+    const movedCardsHtml = renderMovedShareCardsTable([{
+      share: { id: 1, shareNumber: '1', nominalNumber: 'TEST-1', description: 'Υλικό δοκιμής' },
+      transactions: [{ id: 1 }],
+      compositionItems: [{ id: 1 }]
+    }]);
+    assert.match(movedCardsHtml, /Καρτέλα και Φύλλο Μεταβολών/);
+    assert.match(movedCardsHtml, /data-year-print-card="1"/);
     assert.deepStrictEqual(transactions.listFinancialYearMovementRows('addy', 2025, 'Χρέωση'), []);
     assert.throws(() => transactions.listFinancialYearMovementRows('invalid', 2026, 'Χρέωση'));
     assert.throws(() => transactions.listFinancialYearMovementRows('addy', 2026, 'Άλλο'));

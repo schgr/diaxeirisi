@@ -728,6 +728,11 @@ select {
   max-width: 620px;
 }
 
+.transaction-flow-home.financial-year-menu {
+  max-width: none;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 [data-renumber-detail] .renumber-header h3 {
   margin-bottom: 6px;
 }
@@ -2071,6 +2076,52 @@ h3 {
   display: flex;
   justify-content: flex-end;
   margin-top: 14px;
+}
+
+.archived-shares-heading,
+.annual-prints-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.archived-shares-heading .compact-print-button {
+  margin-top: -4px;
+}
+
+.annual-prints-heading .compact-field {
+  width: 180px;
+  flex: 0 0 180px;
+}
+
+.annual-prints-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.annual-share-prints-table input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.annual-share-print-modal {
+  width: min(1500px, calc(100vw - 32px));
+}
+
+.annual-share-print-preview {
+  display: grid;
+  justify-content: center;
+  gap: 18px;
+}
+
+.annual-share-print-preview [data-annual-card-pages],
+.annual-share-print-preview [data-annual-change-sheet-pages] {
+  display: grid;
+  gap: 18px;
 }
 
 table.administration-table th,
@@ -5879,6 +5930,10 @@ th {
     padding: 20px;
   }
 
+  .transaction-flow-home.financial-year-menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .settings-layout,
   .split-grid {
     grid-template-columns: 1fr;
@@ -6101,6 +6156,10 @@ th {
 }
 
 @media (max-width: 920px) {
+  .transaction-flow-home.financial-year-menu {
+    grid-template-columns: 1fr;
+  }
+
   .administration-form-grid {
     grid-template-columns: 1fr 1fr;
   }

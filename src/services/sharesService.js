@@ -177,6 +177,16 @@ function createSharesService(db) {
       };
     },
 
+    listMovedShareCards(year = new Date().getFullYear()) {
+      const fiscalYear = Number(year);
+      if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
+        throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
+      }
+      return repository
+        .listShareIdsWithTransactionsForYear(fiscalYear)
+        .map((shareId) => this.getShareCard(shareId, fiscalYear));
+    },
+
     saveComposition(id, items) {
       const shareId = requirePositiveId(id);
       if (!repository.getShare(shareId)) throw new AppError('Η μερίδα δεν βρέθηκε.', 'NOT_FOUND');

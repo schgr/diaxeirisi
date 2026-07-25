@@ -32,6 +32,10 @@ async function run() {
       run: testShareCardBalances
     },
     {
+      label: 'listMovedShareCards() returns only cards with movements in the selected year',
+      run: testMovedShareCardsByYear
+    },
+    {
       label: 'saveComposition() rejects invalid rows with VALIDATION_ERROR',
       run: testSaveCompositionValidation
     },
@@ -92,6 +96,27 @@ function testAddShareDefaults({ service }) {
   assert.strictEqual(created.photoPath, '');
   assert.strictEqual(created.status, 'Έλλειμμα');
   assert.strictEqual(created.statusTone, 'deficit');
+}
+
+function testMovedShareCardsByYear({ db, service }) {
+  const moved = createShare(service, '310', { chargedQuantity: 0 });
+  const otherYear = createShare(service, '311', { chargedQuantity: 0 });
+  const inventoryOnly = createShare(service, '312', { chargedQuantity: 0 });
+  insertShareTransaction(db, moved.id, {
+    date: '2026-04-10', type: 'Χρέωση', quantity: 3, reference: 'ΑΔΔΥ-1'
+  });
+  insertShareTransaction(db, otherYear.id, {
+    date: '2025-04-10', type: 'Χρέωση', quantity: 2, reference: 'ΑΔΔΥ-2'
+  });
+  insertShareTransaction(db, inventoryOnly.id, {
+    date: '2026-01-01', type: 'Χρέωση', quantity: 5, reference: 'ΑΠΟΓΡΑΦΗ',
+    notes: 'INITIAL_ANNUAL_INVENTORY'
+  });
+
+  const cards = service.listMovedShareCards(2026);
+  assert.deepStrictEqual(cards.map((card) => card.share.shareNumber), ['310']);
+  assert.strictEqual(cards[0].transactions.length, 1);
+  assert.throws(() => service.listMovedShareCards(1999), (error) => error.code === 'VALIDATION_ERROR');
 }
 
 function testRequiresFlagsAreIndependent({ service }) {
