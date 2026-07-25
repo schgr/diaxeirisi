@@ -201,6 +201,16 @@ export function applyShareDefaults(controls, share) {
   }
 }
 
+export function clearShareDefaults(controls, { clearShareNumber = false, clearNominalNumber = false } = {}) {
+  if (clearShareNumber) controls.shareNumber.value = '';
+  if (clearNominalNumber) controls.nominalNumber.value = '';
+  controls.description.value = '';
+  controls.quantity.value = '';
+  controls.unitPrice.value = '';
+  controls.measurementUnit.value = '';
+  controls.materialType.value = '';
+}
+
 export function findCurrentShare(controls) {
   return (
     findShareByNumber(controls.referenceData.shares, controls.shareNumber.value) ||

@@ -20,6 +20,7 @@ import {
   canAddItem,
   clearExhpLine,
   clearLineControls,
+  clearShareDefaults,
   findCurrentShare,
   getControls,
   getExhpControls,
@@ -247,6 +248,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     const share = findShareByNumber(referenceData.shares, controls.shareNumber.value);
     if (share) {
       applyShareDefaults(controls, share);
+    } else if (!controls.shareNumber.value.trim()) {
+      clearShareDefaults(controls, { clearNominalNumber: true });
     }
     updateAddButton(controls, state);
   });
@@ -256,6 +259,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     if (share) {
       controls.shareNumber.value = share.shareNumber;
       applyShareDefaults(controls, share);
+    } else if (!controls.nominalNumber.value.trim()) {
+      clearShareDefaults(controls, { clearShareNumber: true });
     }
     updateAddButton(controls, state);
   });

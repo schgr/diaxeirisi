@@ -227,8 +227,7 @@ function createTransactionsService(db, settingsService) {
 
     listExhpDocuments() {
       return repository.listExhpDocuments().map((row) => ({
-        id: row.document_id,
-        itemId: row.item_id,
+        id: row.id,
         fiscalYear: row.fiscal_year,
         registryNumber: row.registry_number,
         documentDate: row.document_date,
@@ -548,23 +547,32 @@ function createTransactionsService(db, settingsService) {
 
     listExternalTransactionIndexRows(year = new Date().getFullYear()) {
       const fiscalYear = Number(year) || new Date().getFullYear();
-      return repository.listExternalTransactionIndexRows(fiscalYear).map((row, index) => ({
-        id: row.id,
-        serial: index + 1,
-        date: row.document_date,
-        unit: row.transaction_unit,
-        documentType: row.transaction_type === 'Χρέωση' ? 'Χ' : 'Π',
-        nominalNumber: row.nominal_number || '',
-        documentReference: row.transaction_type === 'Χρέωση'
-          ? row.justification_reference || ''
-          : `Π-${row.document_id} / ${formatDate(row.document_date)}`,
-        movementDate: row.document_date,
-        returnDate: '',
-        indexField7: row.index_field_7,
-        indexField8: row.index_field_8,
-        indexField9: row.index_field_9,
-        notes: row.description || row.notes || ''
-      }));
+      const serialByDocument = new Map();
+      let nextSerial = 1;
+      return repository.listExternalTransactionIndexRows(fiscalYear).map((row) => {
+        if (!serialByDocument.has(row.document_id)) {
+          serialByDocument.set(row.document_id, nextSerial);
+          nextSerial += 1;
+        }
+        return {
+          id: row.document_id,
+          itemId: row.item_id,
+          serial: serialByDocument.get(row.document_id),
+          date: row.document_date,
+          unit: row.transaction_unit,
+          documentType: row.transaction_type === 'Χρέωση' ? 'Χ' : 'Π',
+          nominalNumber: row.nominal_number || '',
+          documentReference: row.transaction_type === 'Χρέωση'
+            ? row.justification_reference || ''
+            : `Π-${row.document_id} / ${formatDate(row.document_date)}`,
+          movementDate: row.document_date,
+          returnDate: '',
+          indexField7: row.index_field_7,
+          indexField8: row.index_field_8,
+          indexField9: row.index_field_9,
+          notes: row.description || row.notes || ''
+        };
+      });
     }
   };
 }

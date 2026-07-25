@@ -2799,6 +2799,11 @@ table.administration-table td {
   vertical-align: middle;
 }
 
+.ammunition-batch-registry-table th,
+.ammunition-batch-registry-table td {
+  color: var(--text);
+}
+
 .index-table th {
   height: 70px;
   padding: 3px;

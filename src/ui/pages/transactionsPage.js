@@ -110,11 +110,11 @@ export async function renderTransactionsPage(
       <div class="addy-line-grid">
         <label class="field">
           <span>Αριθμός Μερίδας</span>
-          <input id="addy-share-number" list="addy-share-number-list" autocomplete="off" />
+          <input id="addy-share-number" autocomplete="off" />
         </label>
         <label class="field">
           <span>Αριθμός Ονομαστικού</span>
-          <input id="addy-nominal-number" list="nominal-number-list" autocomplete="off" />
+          <input id="addy-nominal-number" autocomplete="off" />
         </label>
         <label class="field">
           <span>Περιγραφή</span>
@@ -157,17 +157,6 @@ export async function renderTransactionsPage(
         <button id="addy-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
       </div>
 
-      <datalist id="addy-share-number-list">
-        ${renderShareNumberOptions(referenceData.shares)}
-      </datalist>
-      <datalist id="share-number-list">
-        ${renderShareNumberOptions(referenceData.shares)}
-      </datalist>
-      <datalist id="nominal-number-list">
-        ${referenceData.shares
-          .map((share) => `<option value="${escapeHtml(share.nominalNumber)}">${escapeHtml(share.shareNumber)}</option>`)
-          .join('')}
-      </datalist>
     </section>
 
     <section class="page-panel shares-panel addy-list-panel">
@@ -305,7 +294,7 @@ export async function renderTransactionsPage(
       <div class="exhp-line-grid">
         <label class="field">
           <span>Αριθμός Μερίδας</span>
-          <input id="exhp-share-number" list="share-number-list" autocomplete="off" />
+          <input id="exhp-share-number" autocomplete="off" />
         </label>
         <label class="field">
           <span>Αριθμός Ονομαστικού</span>
