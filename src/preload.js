@@ -172,9 +172,11 @@ contextBridge.exposeInMainWorld('appApi', {
     settleDifference: (id, reference) => invoke('inventory:settle-difference', id, reference)
   },
   yearEnd: {
+    getStatus: () => invoke('year-end:status'),
     getRenumberingData: () => invoke('year-end:renumbering-data'),
     validateRenumbering: (payload) => invoke('year-end:validate-renumbering', payload),
-    applyRenumbering: (payload) => invoke('year-end:apply-renumbering', payload)
+    applyRenumbering: (payload) => invoke('year-end:apply-renumbering', payload),
+    closeFiscalYear: (year) => invoke('year-end:close', year)
   },
   movementDifferences: {
     getReferenceData: () => invoke('movement-differences:reference-data'),

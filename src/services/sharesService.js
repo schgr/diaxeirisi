@@ -91,6 +91,12 @@ function createSharesService(db) {
 
     getShareCard(id, year = new Date().getFullYear()) {
       const shareId = requirePositiveId(id);
+      const archivedYear = readFiscalYearArchive(repository, Number(year));
+      if (archivedYear) {
+        const archivedCard = archivedYear.cards.find((card) => Number(card.share.id) === shareId);
+        if (!archivedCard) throw new AppError('Η μερίδα δεν βρέθηκε στο αρχείο του έτους.', 'NOT_FOUND');
+        return archivedCard;
+      }
       const share = repository.getShare(shareId);
 
       if (!share) {
@@ -194,6 +200,8 @@ function createSharesService(db) {
       if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
         throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
       }
+      const archivedYear = readFiscalYearArchive(repository, fiscalYear);
+      if (archivedYear) return archivedYear.movedCards || [];
       return repository
         .listShareIdsWithTransactionsForYear(fiscalYear)
         .map((shareId) => this.getShareCard(shareId, fiscalYear));
@@ -399,6 +407,16 @@ function parseCompositionSnapshot(value) {
     return Array.isArray(parsed) ? parsed : [];
   } catch (_error) {
     return [];
+  }
+}
+
+function readFiscalYearArchive(repository, year) {
+  const row = repository.getFiscalYearArchive(year);
+  if (!row) return null;
+  try {
+    return JSON.parse(row.archive_snapshot || '{}');
+  } catch (_error) {
+    return null;
   }
 }
 

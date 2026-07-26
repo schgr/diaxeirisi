@@ -21,6 +21,27 @@ function createYearEndRepository(db) {
       `).all();
     },
 
+    listAllShareIds() {
+      return db.prepare('SELECT id FROM shares ORDER BY id').all().map((row) => Number(row.id));
+    },
+
+    getActiveFiscalYear() {
+      const row = db.prepare('SELECT active_fiscal_year FROM service_settings WHERE id = 1').get();
+      return Number(row?.active_fiscal_year || new Date().getFullYear());
+    },
+
+    listClosures() {
+      return db.prepare(`
+        SELECT fiscal_year, next_fiscal_year, closed_at
+        FROM fiscal_year_closures
+        ORDER BY fiscal_year DESC
+      `).all();
+    },
+
+    getClosure(fiscalYear) {
+      return db.prepare('SELECT * FROM fiscal_year_closures WHERE fiscal_year = ?').get(fiscalYear);
+    },
+
     getRunForYear(fiscalYear) {
       return db.prepare('SELECT * FROM share_renumbering_runs WHERE fiscal_year = ?').get(fiscalYear);
     },
@@ -34,7 +55,7 @@ function createYearEndRepository(db) {
       return Number(row?.next_serial || 1);
     },
 
-    createAnnualInventory(fiscalYear, shares) {
+    createAnnualInventory(fiscalYear, shares, notes = 'Δημιουργήθηκε πριν από την αλλαγή αρίθμησης μερίδων.') {
       const inventoryDate = `${fiscalYear}-12-31`;
       const serialNumber = this.getNextInventorySerial(fiscalYear);
       const sessionId = db.prepare(`
@@ -47,7 +68,7 @@ function createYearEndRepository(db) {
         serialNumber,
         inventoryDate,
         `Ετήσια απογραφή Διαχείρισης ${fiscalYear}`,
-        'Δημιουργήθηκε πριν από την αλλαγή αρίθμησης μερίδων.',
+        notes,
         `${fiscalYear}-01-01`,
         inventoryDate
       ).lastInsertRowid;
@@ -79,6 +100,91 @@ function createYearEndRepository(db) {
         );
       });
       return { sessionId, serialNumber };
+    },
+
+    ensureClosingInventory(fiscalYear) {
+      const existing = db.prepare(`
+        SELECT id, serial_number
+        FROM inventory_sessions
+        WHERE fiscal_year = ?
+          AND inventory_reason = 'Ετήσια απογραφή Διαχείρισης'
+          AND status = 'Ολοκληρωμένη'
+        ORDER BY inventory_date DESC, id DESC
+        LIMIT 1
+      `).get(fiscalYear);
+      if (existing) {
+        return { sessionId: Number(existing.id), serialNumber: Number(existing.serial_number) };
+      }
+      return this.createAnnualInventory(
+        fiscalYear,
+        this.listInventoryShares(),
+        'Δημιουργήθηκε κατά το κλείσιμο του οικονομικού έτους.'
+      );
+    },
+
+    listClosingBalances(inventorySessionId) {
+      return db.prepare(`
+        SELECT share_id, final_count
+        FROM inventory_items
+        WHERE inventory_session_id = ?
+      `).all(inventorySessionId);
+    },
+
+    closeFiscalYear(fiscalYear, inventorySessionId, balances, archiveSnapshot) {
+      const nextFiscalYear = fiscalYear + 1;
+      db.transaction(() => {
+        db.prepare(`
+          INSERT INTO fiscal_year_closures (
+            fiscal_year, next_fiscal_year, inventory_session_id, archive_snapshot
+          ) VALUES (?, ?, ?, ?)
+        `).run(fiscalYear, nextFiscalYear, inventorySessionId, JSON.stringify(archiveSnapshot));
+
+        db.prepare(`
+          DELETE FROM addy_documents
+          WHERE document_date >= ? AND document_date <= ?
+        `).run(`${fiscalYear}-01-01`, `${fiscalYear}-12-31`);
+        db.prepare('DELETE FROM exhp_documents WHERE fiscal_year = ?').run(fiscalYear);
+        db.prepare(`
+          DELETE FROM share_transactions
+          WHERE transaction_date <= ?
+        `).run(`${fiscalYear}-12-31`);
+        db.prepare('DELETE FROM share_change_sheet_entries').run();
+
+        db.prepare(`
+          UPDATE shares
+          SET archive_status = 'Διαγραμμένη στο κλείσιμο',
+              archive_reason = archive_reason || ' · Κλείσιμο Οικονομικού Έτους ' || ?
+          WHERE archive_status = 'Αρχειοθετημένη'
+        `).run(fiscalYear);
+
+        const insertOpening = db.prepare(`
+          INSERT INTO share_transactions (
+            share_id, transaction_date, transaction_unit, transaction_type,
+            document_reference, quantity, notes
+          ) VALUES (?, ?, 'ΑΡΧΙΚΗ ΑΠΟΓΡΑΦΗ', 'Χρέωση', ?, ?, 'INITIAL_ANNUAL_INVENTORY')
+        `);
+        balances.forEach((item) => {
+          const share = db.prepare(`
+            SELECT id FROM shares WHERE id = ? AND archive_status = 'Ενεργή'
+          `).get(item.share_id);
+          if (!share) return;
+          const quantity = Number(item.final_count || 0);
+          db.prepare('UPDATE shares SET accounting_balance = ? WHERE id = ?')
+            .run(quantity, item.share_id);
+          insertOpening.run(
+            item.share_id,
+            `${fiscalYear}-12-31`,
+            `ΤΕΛΕΥΤΑΙΑ ΕΤΗΣΙΑ ΑΠΟΓΡΑΦΗ ${fiscalYear}`,
+            quantity
+          );
+        });
+        db.prepare(`
+          UPDATE service_settings
+          SET active_fiscal_year = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = 1
+        `).run(nextFiscalYear);
+      })();
+      return { fiscalYear, nextFiscalYear, inventorySessionId };
     },
 
     applyRenumbering(fiscalYear, effectiveDate, items) {

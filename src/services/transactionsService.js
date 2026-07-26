@@ -46,6 +46,7 @@ function createTransactionsService(db, settingsService) {
         })),
         serviceName: settings ? settings.serviceInfo.serviceName : repository.getServiceName(),
         managementType: settings ? settings.serviceInfo.managementType : '',
+        fiscalYear: settings ? settings.serviceInfo.activeFiscalYear : new Date().getFullYear(),
         financialOfficers: settings
           ? settings.financialOfficers
           : { commander: '', ped: '', manager: '' },
@@ -71,6 +72,10 @@ function createTransactionsService(db, settingsService) {
 
     saveAddy(payload) {
       const addy = validateAddy(payload);
+      const addyFiscalYear = Number(addy.documentDate.slice(0, 4));
+      if (repository.isFiscalYearClosed(addyFiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${addyFiscalYear} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
+      }
       addy.items.sort(compareShareNumbers);
       addy.justificationReference =
         addy.items.find((item) => item.transactionType === 'Χρέωση' && item.justificationReference)
@@ -172,6 +177,9 @@ function createTransactionsService(db, settingsService) {
 
     saveExhp(payload) {
       const exhp = validateExhp(payload);
+      if (repository.isFiscalYearClosed(exhp.fiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${exhp.fiscalYear} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
+      }
       exhp.items.sort(compareShareNumbers);
       let documentId;
       let registryNumber;
@@ -404,6 +412,8 @@ function createTransactionsService(db, settingsService) {
 
     listExhpIndexRows(year = new Date().getFullYear()) {
       const fiscalYear = Number(year) || new Date().getFullYear();
+      const archivedYear = readTransactionArchive(repository, fiscalYear);
+      if (archivedYear) return archivedYear.exhpIndexRows || [];
       return repository.listExhpIndexRows(fiscalYear).map((row) => ({
         id: row.id,
         fiscalYear: row.fiscal_year,
@@ -427,6 +437,11 @@ function createTransactionsService(db, settingsService) {
       }
       if (!['Χρέωση', 'Πίστωση'].includes(transactionType)) {
         throw new Error('Το είδος δοσοληψίας πρέπει να είναι Χρέωση ή Πίστωση.');
+      }
+      const archivedYear = readTransactionArchive(repository, fiscalYear);
+      if (archivedYear) {
+        const movementKey = transactionType === 'Χρέωση' ? 'charge' : 'credit';
+        return archivedYear.financialMovements?.[normalizedSource]?.[movementKey] || [];
       }
 
       const rows = normalizedSource === 'addy'
@@ -555,6 +570,8 @@ function createTransactionsService(db, settingsService) {
 
     listExternalTransactionIndexRows(year = new Date().getFullYear()) {
       const fiscalYear = Number(year) || new Date().getFullYear();
+      const archivedYear = readTransactionArchive(repository, fiscalYear);
+      if (archivedYear) return archivedYear.externalIndexRows || [];
       const serialByDocument = new Map();
       let nextSerial = 1;
       return repository.listExternalTransactionIndexRows(fiscalYear).map((row) => {
@@ -726,6 +743,16 @@ function buildCompositionSnapshot(repository, shareId, quantity) {
     notIssuedQuantity: 0,
     notes: component.notes || ''
   }));
+}
+
+function readTransactionArchive(repository, year) {
+  const row = repository.getFiscalYearArchive(year);
+  if (!row) return null;
+  try {
+    return JSON.parse(row.archive_snapshot || '{}');
+  } catch (_error) {
+    return null;
+  }
 }
 
 function mapExhpDocumentSupport(row) {

@@ -7163,6 +7163,23 @@ th {
   color: var(--text);
 }
 
+.fiscal-year-close-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.fiscal-year-close-warning {
+  padding: 18px;
+  border: 1px solid #e06a54;
+  background: rgba(142, 48, 33, 0.28);
+  color: #ffd8d0;
+  font-weight: 800;
+}
+
+.fiscal-year-closures-table {
+  margin-top: 8px;
+}
+
 @media (max-width: 1050px) {
   .management-report-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

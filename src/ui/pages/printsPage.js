@@ -61,7 +61,7 @@ export async function renderPrintsPage(
     activeTab: visiblePrintTabGroups.find((group) => group.key === initialGroup).tabs[0].key,
     showTileMenu: Boolean(options.tileMenu),
     displayCount: getDefaultRegistryCount(shares),
-    fiscalYear: new Date().getFullYear(),
+    fiscalYear: Number(settings?.serviceInfo?.activeFiscalYear || new Date().getFullYear()),
     selectedShareId: shares[0] ? shares[0].id : '',
     selectedInventoryId: inventoryReference.sessions[0] ? inventoryReference.sessions[0].id : '',
     onlyMovedCards: true,

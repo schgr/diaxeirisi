@@ -139,7 +139,10 @@ function bindShareCardOpen(container, sharesApi, showToast, settings, options) {
     }
 
     try {
-      const card = await sharesApi.getCard(Number(row.dataset.shareId), new Date().getFullYear());
+      const card = await sharesApi.getCard(
+        Number(row.dataset.shareId),
+        Number(settings?.serviceInfo?.activeFiscalYear || new Date().getFullYear())
+      );
       openShareCard(card, sharesApi, showToast, settings, options);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατό το άνοιγμα της καρτέλας υλικού.', 'error');

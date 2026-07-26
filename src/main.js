@@ -469,11 +469,17 @@ function registerIpcHandlers() {
   ipcMain.handle('year-end:renumbering-data', async () =>
     safeInvoke(() => services.yearEnd.getRenumberingData())
   );
+  ipcMain.handle('year-end:status', async () =>
+    safeInvoke(() => services.yearEnd.getStatus())
+  );
   ipcMain.handle('year-end:validate-renumbering', async (_event, payload) =>
     safeInvoke(() => services.yearEnd.validateRenumbering(payload))
   );
   ipcMain.handle('year-end:apply-renumbering', async (_event, payload) =>
     safeInvoke(() => services.yearEnd.applyRenumbering(payload))
+  );
+  ipcMain.handle('year-end:close', async (_event, year) =>
+    safeInvoke(() => services.yearEnd.closeFiscalYear(year))
   );
   ipcMain.handle('movement-differences:reference-data', async () =>
     safeInvoke(() => services.movementDifferences.getReferenceData())

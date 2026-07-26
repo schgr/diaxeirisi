@@ -1964,6 +1964,23 @@ const migrations = [
       ALTER TABLE exhp_items
       ADD COLUMN composition_snapshot TEXT NOT NULL DEFAULT '';
     `
+  },
+  {
+    version: 60,
+    name: 'fiscal_year_closure_archive',
+    up: `
+      ALTER TABLE service_settings
+      ADD COLUMN active_fiscal_year INTEGER NOT NULL DEFAULT 0;
+
+      CREATE TABLE fiscal_year_closures (
+        fiscal_year INTEGER PRIMARY KEY,
+        next_fiscal_year INTEGER NOT NULL,
+        closed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        inventory_session_id INTEGER NOT NULL,
+        archive_snapshot TEXT NOT NULL,
+        FOREIGN KEY (inventory_session_id) REFERENCES inventory_sessions(id) ON DELETE RESTRICT
+      );
+    `
   }
 ];
 

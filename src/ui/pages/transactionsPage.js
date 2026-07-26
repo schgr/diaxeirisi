@@ -56,7 +56,7 @@ export async function renderTransactionsPage(
         || aitiologia.label
     ])
   );
-  const today = localDateValue();
+  const today = localDateValue(referenceData.fiscalYear);
 
   container.innerHTML = `
     <section class="page-header">
@@ -409,8 +409,11 @@ export async function renderTransactionsPage(
   );
 }
 
-function localDateValue() {
+function localDateValue(fiscalYear = new Date().getFullYear()) {
   const now = new Date();
+  if (Number(fiscalYear) !== now.getFullYear()) {
+    return `${Number(fiscalYear)}-01-01`;
+  }
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${now.getFullYear()}-${month}-${day}`;

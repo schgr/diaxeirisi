@@ -3,10 +3,10 @@ import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
 export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '', sharesApi = window.appApi.shares) {
-  const currentYear = new Date().getFullYear();
-  const [data, settings, serialRegistry, ammunitionBatchRegistry, managementReport] = await Promise.all([
+  const settings = await settingsApi.get();
+  const currentYear = Number(settings?.serviceInfo?.activeFiscalYear || new Date().getFullYear());
+  const [data, serialRegistry, ammunitionBatchRegistry, managementReport] = await Promise.all([
     api.getReferenceData(),
-    settingsApi.get(),
     sharesApi.listSerialRegistry(),
     sharesApi.listAmmunitionBatchRegistry(),
     api.getManagementReport(currentYear)

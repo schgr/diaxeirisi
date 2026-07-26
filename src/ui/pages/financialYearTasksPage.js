@@ -11,9 +11,10 @@ export async function renderFinancialYearTasksPage(
   settingsApi,
   showToast
 ) {
+  const yearStatus = await yearEndApi.getStatus();
   const state = {
     source: null,
-    fiscalYear: new Date().getFullYear(),
+    fiscalYear: Number(yearStatus.activeFiscalYear || new Date().getFullYear()),
     transactionType: 'Πίστωση',
     movedCards: []
   };
@@ -51,6 +52,11 @@ export async function renderFinancialYearTasksPage(
         <span class="home-tile-icon" aria-hidden="true">ΕΚ</span>
         <span class="home-tile-title">Εκτυπώσεις</span>
         <span class="home-tile-code">§ ΕΟΕ-5</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="close-year" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΚΕ</span>
+        <span class="home-tile-title">Κλείσιμο Οικονομικού Έτους</span>
+        <span class="home-tile-code">§ ΕΟΕ-6</span>
       </button>
     </section>
 
@@ -128,6 +134,37 @@ export async function renderFinancialYearTasksPage(
         </div>
       </section>
     </div>
+
+    <div data-close-year-detail hidden>
+      <div class="page-toolbar no-print">
+        <button class="secondary-button" data-close-year-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+      </div>
+      <section class="page-panel fiscal-year-close-panel">
+        <p class="eyebrow">ΕΟΕ-6</p>
+        <h3>Κλείσιμο Οικονομικού Έτους</h3>
+        <p class="muted">Το ενεργό οικονομικό έτος είναι το <strong>${escapeHtml(state.fiscalYear)}</strong>. Με το κλείσιμο δημιουργείται κλειδωμένο αρχείο και το επόμενο έτος γίνεται ενεργό.</p>
+        <div class="fiscal-year-close-warning">
+          Η ενέργεια αυτή είναι μη αναστρέψιμη και θα πρέπει να εκτελεστεί μετά την παράδοση του οικονομικού έτους στο Ε.Υ.Σ.
+        </div>
+        <label class="field compact-field">
+          <span>Οικονομικό Έτος προς Κλείσιμο</span>
+          <input data-close-year-value type="text" value="${escapeHtml(state.fiscalYear)}" readonly />
+        </label>
+        <div class="form-actions">
+          <button class="danger-button" data-close-year-accept type="button">Κλείσιμο Οικονομικού Έτους</button>
+        </div>
+        ${yearStatus.closures.length ? `
+          <div class="table-wrap fiscal-year-closures-table">
+            <table>
+              <thead><tr><th>Κλεισμένο Έτος</th><th>Επόμενο Έτος</th><th>Ημερομηνία Κλεισίματος</th></tr></thead>
+              <tbody>${yearStatus.closures.map((closure) => `
+                <tr><td>${closure.fiscalYear}</td><td>${closure.nextFiscalYear}</td><td>${escapeHtml(closure.closedAt)}</td></tr>
+              `).join('')}</tbody>
+            </table>
+          </div>
+        ` : ''}
+      </section>
+    </div>
   `;
 
   const menu = container.querySelector('[data-financial-menu]');
@@ -140,6 +177,7 @@ export async function renderFinancialYearTasksPage(
   const archiveContent = container.querySelector('[data-archive-content]');
   const yearPrintsDetail = container.querySelector('[data-year-prints-detail]');
   const yearPrintsResults = container.querySelector('[data-year-prints-results]');
+  const closeYearDetail = container.querySelector('[data-close-year-detail]');
 
   function showMenu() {
     state.source = null;
@@ -147,6 +185,7 @@ export async function renderFinancialYearTasksPage(
     renumberDetail.hidden = true;
     archiveDetail.hidden = true;
     yearPrintsDetail.hidden = true;
+    closeYearDetail.hidden = true;
     menu.classList.remove('is-hidden');
     menu.hidden = false;
   }
@@ -243,6 +282,8 @@ export async function renderFinancialYearTasksPage(
       } else if (state.source === 'prints') {
         yearPrintsDetail.hidden = false;
         void loadYearPrints();
+      } else if (state.source === 'close-year') {
+        closeYearDetail.hidden = false;
       } else {
         detail.hidden = false;
         void refresh();
@@ -256,6 +297,26 @@ export async function renderFinancialYearTasksPage(
   container.querySelector('[data-renumber-back]').addEventListener('click', showMenu);
   container.querySelector('[data-archive-back]').addEventListener('click', showMenu);
   container.querySelector('[data-year-prints-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-close-year-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-close-year-accept]').addEventListener('click', async () => {
+    const accepted = await confirmFiscalYearClosure(state.fiscalYear);
+    if (!accepted) return;
+    try {
+      const result = await yearEndApi.closeFiscalYear(state.fiscalYear);
+      showToast(result.message, 'success');
+      await renderFinancialYearTasksPage(
+        container,
+        transactionsApi,
+        yearEndApi,
+        administrationApi,
+        sharesApi,
+        settingsApi,
+        showToast
+      );
+    } catch (error) {
+      showToast(error.message || 'Το κλείσιμο του οικονομικού έτους απέτυχε.', 'error');
+    }
+  });
   container.querySelector('[data-year-prints-year]').addEventListener('change', (event) => {
     state.fiscalYear = Number(event.target.value) || new Date().getFullYear();
     void loadYearPrints();
@@ -358,6 +419,35 @@ export async function renderFinancialYearTasksPage(
   container.querySelector('[data-financial-type]').addEventListener('change', (event) => {
     state.transactionType = event.target.value;
     void refresh();
+  });
+}
+
+function confirmFiscalYearClosure(fiscalYear) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fiscal-year-close-backdrop';
+    backdrop.innerHTML = `
+      <section class="window-options-modal fiscal-year-close-modal" role="dialog" aria-modal="true">
+        <p class="eyebrow">ΚΛΕΙΣΙΜΟ ${escapeHtml(fiscalYear)}</p>
+        <h2>Μη αναστρέψιμη ενέργεια</h2>
+        <p>Η ενέργεια αυτή είναι μη αναστρέψιμη και θα πρέπει να εκτελεστεί μετά την παράδοση του οικονομικού Έτους στο Ε.Υ.Σ.</p>
+        <p><strong>Αποδοχή ή Ακύρωση;</strong></p>
+        <div class="row-actions">
+          <button class="secondary-button" data-cancel-year-close type="button">Ακύρωση</button>
+          <button class="danger-button" data-accept-year-close type="button">Αποδοχή</button>
+        </div>
+      </section>
+    `;
+    const finish = (result) => {
+      backdrop.remove();
+      resolve(result);
+    };
+    backdrop.addEventListener('click', (event) => {
+      if (event.target === backdrop || event.target.closest('[data-cancel-year-close]')) finish(false);
+      if (event.target.closest('[data-accept-year-close]')) finish(true);
+    });
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('[data-cancel-year-close]').focus();
   });
 }
 

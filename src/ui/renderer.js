@@ -153,7 +153,8 @@ document.addEventListener('keydown', (event) => {
     '[data-close-k2310]',
     '[data-close-renewals]',
     '[data-cancel-composition]',
-    '[data-cancel-internal-composition]'
+    '[data-cancel-internal-composition]',
+    '[data-cancel-year-close]'
   ].join(','));
 
   if (closeControl) {

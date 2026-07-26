@@ -19,6 +19,20 @@ function createTransactionsRepository(db) {
       }));
     },
 
+    getFiscalYearArchive(year) {
+      return db.prepare(`
+        SELECT archive_snapshot
+        FROM fiscal_year_closures
+        WHERE fiscal_year = ?
+      `).get(year);
+    },
+
+    isFiscalYearClosed(year) {
+      return Boolean(db.prepare(`
+        SELECT 1 FROM fiscal_year_closures WHERE fiscal_year = ?
+      `).get(year));
+    },
+
     findShareByNumber(shareNumber) {
       return db.prepare('SELECT * FROM shares WHERE share_number = ?').get(shareNumber);
     },

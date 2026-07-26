@@ -13,7 +13,8 @@ function normalizeSettings({
     serviceInfo: {
       serviceName: serviceSettings.service_name,
       serviceLocation: serviceSettings.service_location || '',
-      managementType: serviceSettings.management_type || ''
+      managementType: serviceSettings.management_type || '',
+      activeFiscalYear: Number(serviceSettings.active_fiscal_year || new Date().getFullYear())
     },
     financialOfficers: {
       commander: serviceSettings.commander,

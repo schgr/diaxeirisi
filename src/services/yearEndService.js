@@ -1,13 +1,28 @@
 const { AppError } = require('../core/errorHandler');
 const { createYearEndRepository } = require('../db/yearEndRepository');
+const { createSharesService } = require('./sharesService');
+const { createTransactionsService } = require('./transactionsService');
 
 function createYearEndService(db) {
   const repository = createYearEndRepository(db);
+  const sharesService = createSharesService(db);
+  const transactionsService = createTransactionsService(db);
 
   return {
+    getStatus() {
+      return {
+        activeFiscalYear: repository.getActiveFiscalYear(),
+        closures: repository.listClosures().map((row) => ({
+          fiscalYear: Number(row.fiscal_year),
+          nextFiscalYear: Number(row.next_fiscal_year),
+          closedAt: row.closed_at
+        }))
+      };
+    },
+
     getRenumberingData() {
       return {
-        fiscalYear: new Date().getFullYear(),
+        fiscalYear: repository.getActiveFiscalYear(),
         shares: repository.listActiveShares().map(mapShare)
       };
     },
@@ -39,12 +54,70 @@ function createYearEndService(db) {
         ...result,
         message: `Η αλλαγή αρίθμησης ολοκληρώθηκε. Δημιουργήθηκε η απογραφή ${result.inventorySerial}/${validated.fiscalYear} με την παλιά αρίθμηση.`
       };
+    },
+
+    closeFiscalYear(year) {
+      const fiscalYear = Number(year);
+      if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
+        throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
+      }
+      if (repository.getClosure(fiscalYear)) {
+        throw new AppError(`Το οικονομικό έτος ${fiscalYear} έχει ήδη κλείσει.`, 'VALIDATION_ERROR');
+      }
+      const activeFiscalYear = repository.getActiveFiscalYear();
+      if (fiscalYear !== activeFiscalYear) {
+        throw new AppError(
+          `Μπορεί να κλείσει μόνο το ενεργό οικονομικό έτος ${activeFiscalYear}.`,
+          'VALIDATION_ERROR'
+        );
+      }
+
+      const inventory = repository.ensureClosingInventory(fiscalYear);
+      const allCards = repository.listAllShareIds().map((shareId) =>
+        sharesService.getShareCard(shareId, fiscalYear)
+      );
+      const movedCards = sharesService.listMovedShareCards(fiscalYear);
+      const archiveSnapshot = {
+        fiscalYear,
+        inventorySessionId: inventory.sessionId,
+        cards: allCards,
+        movedCards,
+        externalIndexRows: transactionsService.listExternalTransactionIndexRows(fiscalYear),
+        exhpIndexRows: transactionsService.listExhpIndexRows(fiscalYear),
+        financialMovements: {
+          addy: {
+            charge: transactionsService.listFinancialYearMovementRows('addy', fiscalYear, 'Χρέωση'),
+            credit: transactionsService.listFinancialYearMovementRows('addy', fiscalYear, 'Πίστωση')
+          },
+          exhp: {
+            charge: transactionsService.listFinancialYearMovementRows('exhp', fiscalYear, 'Χρέωση'),
+            credit: transactionsService.listFinancialYearMovementRows('exhp', fiscalYear, 'Πίστωση')
+          }
+        }
+      };
+      const balances = repository.listClosingBalances(inventory.sessionId);
+      const balanceShareIds = new Set(balances.map((item) => Number(item.share_id)));
+      repository.listActiveShares().forEach((share) => {
+        if (balanceShareIds.has(Number(share.id))) return;
+        balances.push({ share_id: share.id, final_count: Number(share.accounting_balance || 0) });
+      });
+      const result = repository.closeFiscalYear(
+        fiscalYear,
+        inventory.sessionId,
+        balances,
+        archiveSnapshot
+      );
+      return {
+        ...result,
+        archivedCards: allCards.length,
+        message: `Το οικονομικό έτος ${fiscalYear} έκλεισε. Ενεργό οικονομικό έτος: ${result.nextFiscalYear}.`
+      };
     }
   };
 }
 
 function validatePayload(repository, payload) {
-  const fiscalYear = Number(payload?.fiscalYear || new Date().getFullYear());
+  const fiscalYear = Number(payload?.fiscalYear || repository.getActiveFiscalYear());
   if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
     throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
   }

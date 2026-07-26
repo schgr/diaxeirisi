@@ -35,6 +35,14 @@ function createSharesRepository(db) {
         .all();
     },
 
+    getFiscalYearArchive(year) {
+      return db.prepare(`
+        SELECT archive_snapshot
+        FROM fiscal_year_closures
+        WHERE fiscal_year = ?
+      `).get(year);
+    },
+
     listShareIdsWithTransactionsForYear(year) {
       return db.prepare(`
         SELECT DISTINCT share_id
