@@ -7029,6 +7029,74 @@ th {
   align-items: start;
 }
 
+.information-settings-layout {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
+}
+
+.app-information-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 22px;
+  padding: 26px;
+}
+
+.app-information-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid #8f7613;
+  border-radius: 10px;
+  background: #354326;
+  color: var(--primary-strong);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.app-information-content > h3 {
+  margin-top: 4px;
+}
+
+.app-information-list {
+  display: grid;
+  gap: 1px;
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.app-information-list > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--panel-strong);
+}
+
+.app-information-list dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.app-information-list dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.copyright-notice {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.copyright-notice p {
+  margin: 6px 0 0;
+}
+
 .backup-actions {
   display: flex;
   flex-wrap: wrap;

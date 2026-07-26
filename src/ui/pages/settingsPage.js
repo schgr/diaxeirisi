@@ -13,11 +13,12 @@ const materialCategorySection = {
 };
 
 export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '', sharesApi = window.appApi.shares) {
-  const [settings, shares, authStatus, backups] = await Promise.all([
+  const [settings, shares, authStatus, backups, appVersion] = await Promise.all([
     settingsApi.get(),
     sharesApi.list(),
     window.appApi.auth.status(),
-    window.appApi.backup.list()
+    window.appApi.backup.list(),
+    window.appApi.app.getVersion().catch(() => '')
   ]);
 
   container.innerHTML = `
@@ -33,6 +34,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
       <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΠΡ</span><span class="home-tile-title">Προσωπικό</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΠΑ</span><span class="home-tile-title">Παράμετροι</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="security" type="button"><span class="home-tile-icon">ΑΣ</span><span class="home-tile-title">Ασφάλεια και Backup</span><span class="home-tile-code">§ ΡΥ-Δ</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="information" type="button"><span class="home-tile-icon">ΠΛ</span><span class="home-tile-title">Πληροφορίες</span><span class="home-tile-code">§ ΡΥ-Ε</span></button>
     </nav>
     <div class="transaction-tab-panel" data-settings-panel="general" hidden>
       <div class="settings-layout">
@@ -141,11 +143,37 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
         </section>
       </div>
     </div>
+
+    <div class="transaction-tab-panel" data-settings-panel="information" hidden>
+      ${renderAppInformation(appVersion)}
+    </div>
   `;
 
   if (initialTab) container.querySelector('.page-header')?.remove();
   bindSettingsTabs(container, initialTab);
   bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, showToast);
+}
+
+export function renderAppInformation(version) {
+  return `
+    <div class="settings-layout information-settings-layout">
+      <section class="page-panel app-information-panel">
+        <div class="app-information-mark" aria-hidden="true">ΔΥ</div>
+        <div class="app-information-content">
+          <p class="eyebrow">ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</p>
+          <h3>Πληροφορίες εφαρμογής</h3>
+          <dl class="app-information-list">
+            <div><dt>Έκδοση</dt><dd>${escapeHtml(version ? `v${version}` : 'Μη διαθέσιμη')}</dd></div>
+            <div><dt>Δημιουργός</dt><dd>Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης</dd></div>
+          </dl>
+          <div class="copyright-notice">
+            <strong>© 2026 Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης.</strong>
+            <p>Με επιφύλαξη παντός δικαιώματος. Απαγορεύεται η μη εξουσιοδοτημένη αντιγραφή, τροποποίηση ή διανομή της εφαρμογής και του περιεχομένου της.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function renderMaterialCardFlags(shares) {
