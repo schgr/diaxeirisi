@@ -9,7 +9,8 @@ const PRINT_TILE_META = {
   registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
   'share-card': { icon: 'ΜΥ', code: '§ ΣΕ-Β' },
   external: { icon: 'ΕΔ', code: '§ ΕΥ-Α' },
-  orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' }
+  orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' },
+  'balance-differences': { icon: 'ΠΕ', code: '§ ΣΕ-Γ' }
 };
 const printTabGroups = [
   {
@@ -17,7 +18,8 @@ const printTabGroups = [
     label: 'Μερίδες',
     tabs: [
       { key: 'registry', label: 'Μητρώο Μερίδων' },
-      { key: 'share-card', label: 'Μερίδα Υλικού' }
+      { key: 'share-card', label: 'Μερίδα Υλικού' },
+      { key: 'balance-differences', label: 'Πλεονάσματα - Ελλείμματα' }
     ]
   },
   {
@@ -44,6 +46,7 @@ export async function renderPrintsPage(
   transactionsApi,
   inventoryApi,
   movementDifferencesApi,
+  administrationApi,
   showToast,
   options = {}
 ) {
@@ -66,7 +69,8 @@ export async function renderPrintsPage(
     selectedInventoryId: inventoryReference.sessions[0] ? inventoryReference.sessions[0].id : '',
     onlyMovedCards: true,
     selectedAddyIndexId: '',
-    selectedExhpIndexId: ''
+    selectedExhpIndexId: '',
+    balanceDifferenceFilter: 'all'
   };
 
   container.innerHTML = `
@@ -218,6 +222,17 @@ export async function renderPrintsPage(
       return;
     }
 
+    if (state.activeTab === 'balance-differences') {
+      const rows = await administrationApi.getBalanceDifferences();
+      title.textContent = 'Πλεονάσματα - Ελλείμματα';
+      controls.innerHTML = renderBalanceDifferenceControls(state, rows);
+      preview.innerHTML = renderBalanceDifferenceTable(
+        filterBalanceDifferences(rows, state.balanceDifferenceFilter)
+      );
+      bindBalanceDifferenceControls(container, state, rows, preview);
+      return;
+    }
+
     const rows = await transactionsApi.listExhpIndexRows(state.fiscalYear);
     title.textContent = 'Ευρετήριο Εντολών Χρεωπιστώσεως';
     controls.innerHTML = renderIndexTableControls(state, 'orders');
@@ -260,7 +275,7 @@ export async function renderPrintsPage(
     }
 
     if (event.target.closest('#print-current-document')) {
-      if (['external', 'orders', 'movement-differences'].includes(state.activeTab)) {
+      if (['external', 'orders', 'movement-differences', 'balance-differences'].includes(state.activeTab)) {
         void printIsolatedPreview(preview, true);
         return;
       }
@@ -338,6 +353,94 @@ function renderMovementDifferencesIndex(settings, protocols) {
       formatDate(item.escalationDate),
       item.settlementReference || item.settlementStatus
     ])
+  });
+}
+
+export function renderBalanceDifferenceControls(state, rows) {
+  const deficits = rows.filter((row) => row.status === 'Έλλειμμα').length;
+  const surpluses = rows.filter((row) => row.status === 'Πλεόνασμα').length;
+  return `
+    <div class="registry-controls balance-difference-controls">
+      <label class="field">
+        <span>Εμφάνιση</span>
+        <select id="balance-difference-filter">
+          <option value="all" ${state.balanceDifferenceFilter === 'all' ? 'selected' : ''}>Όλα (${rows.length})</option>
+          <option value="deficit" ${state.balanceDifferenceFilter === 'deficit' ? 'selected' : ''}>Ελλείμματα (${deficits})</option>
+          <option value="surplus" ${state.balanceDifferenceFilter === 'surplus' ? 'selected' : ''}>Πλεονάσματα (${surpluses})</option>
+        </select>
+      </label>
+      <div class="row-actions">
+        <button class="secondary-button" data-print-balance-differences="surplus" type="button" ${surpluses ? '' : 'disabled'}>Εκτύπωση Πλεονασμάτων</button>
+        <button class="secondary-button" data-print-balance-differences="deficit" type="button" ${deficits ? '' : 'disabled'}>Εκτύπωση Ελλειμμάτων</button>
+        <button id="print-current-document" class="primary-button compact-print-button" type="button" ${rows.length ? '' : 'disabled'}>Εκτύπωση Εμφανιζομένων</button>
+      </div>
+    </div>
+  `;
+}
+
+export function renderBalanceDifferenceTable(rows) {
+  return `
+    <article class="balance-differences-page print-document-area">
+      <h1>ΠΛΕΟΝΑΣΜΑΤΑ - ΕΛΛΕΙΜΜΑΤΑ</h1>
+      <table class="index-table balance-differences-table">
+        <thead>
+          <tr>
+            <th>Α/Α</th>
+            <th>Είδος</th>
+            <th>Μερίδα</th>
+            <th>Αριθμός Ονομαστικού</th>
+            <th>Περιγραφή</th>
+            <th>Μονάδα Μέτρησης</th>
+            <th>Υπάρχουσα Ποσότητα</th>
+            <th>Χρεωμένη Ποσότητα</th>
+            <th>Διαφορά</th>
+            <th>Κατάσταση</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length ? rows.map((row, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${escapeHtml(row.sourceType)}</td>
+              <td>${escapeHtml(row.shareNumber)}</td>
+              <td>${escapeHtml(row.nominalNumber)}</td>
+              <td class="material-description-cell">
+                ${escapeHtml(row.description)}
+                ${row.sourceType === 'Σύνθεση' ? `<small>Σύνθεση Μερίδας: ${escapeHtml(row.parentDescription)}</small>` : ''}
+              </td>
+              <td>${escapeHtml(row.measurementUnit)}</td>
+              <td>${formatNumber(row.existingQuantity)}</td>
+              <td>${formatNumber(row.chargedQuantity)}</td>
+              <td>${formatNumber(row.differenceQuantity)}</td>
+              <td><span class="status-pill ${row.status === 'Πλεόνασμα' ? 'surplus' : 'deficit'}">${escapeHtml(row.status)}</span></td>
+            </tr>
+          `).join('') : '<tr><td colspan="10" class="empty-table">Δεν υπάρχουν πλεονάσματα ή ελλείμματα για την επιλεγμένη κατηγορία.</td></tr>'}
+        </tbody>
+      </table>
+    </article>
+  `;
+}
+
+function filterBalanceDifferences(rows, filter) {
+  if (filter === 'deficit') return rows.filter((row) => row.status === 'Έλλειμμα');
+  if (filter === 'surplus') return rows.filter((row) => row.status === 'Πλεόνασμα');
+  return rows;
+}
+
+function bindBalanceDifferenceControls(container, state, rows, preview) {
+  container.querySelector('#balance-difference-filter')?.addEventListener('change', (event) => {
+    state.balanceDifferenceFilter = event.target.value;
+    preview.innerHTML = renderBalanceDifferenceTable(
+      filterBalanceDifferences(rows, state.balanceDifferenceFilter)
+    );
+  });
+  container.querySelectorAll('[data-print-balance-differences]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const filtered = filterBalanceDifferences(rows, button.dataset.printBalanceDifferences);
+      const printablePreview = document.createElement('div');
+      printablePreview.innerHTML = renderBalanceDifferenceTable(filtered);
+      void printIsolatedPreview(printablePreview, true);
+    });
   });
 }
 

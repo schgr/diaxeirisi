@@ -201,6 +201,55 @@ function createAdministrationRepository(db) {
       };
     },
 
+    listShareBalanceDifferences() {
+      return db.prepare(`
+        SELECT id, share_number, nominal_number, description, measurement_unit,
+               accounting_balance, charged_quantity
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+          AND ABS(charged_quantity - accounting_balance) > 0.000001
+        ORDER BY
+          CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+          CAST(share_number AS INTEGER),
+          share_number COLLATE NOCASE
+      `).all();
+    },
+
+    listCompositionBalanceSources() {
+      return db.prepare(`
+        SELECT share.id AS share_id, share.share_number,
+               share.nominal_number AS parent_nominal_number,
+               share.description AS parent_description,
+               share.accounting_balance,
+               component.line_number,
+               component.component_nominal_number,
+               component.component_description,
+               component.measurement_unit,
+               component.quantity,
+               component.not_issued_quantity
+        FROM shares share
+        JOIN share_composition_items component ON component.share_id = share.id
+        WHERE share.archive_status = 'Ενεργή'
+          AND share.requires_composition = 1
+        ORDER BY
+          CASE WHEN share.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+          CAST(share.share_number AS INTEGER),
+          share.share_number COLLATE NOCASE,
+          component.line_number,
+          component.id
+      `).all();
+    },
+
+    listInternalCompositionMovements() {
+      return db.prepare(`
+        SELECT item.share_id, document.movement_type, item.composition_snapshot
+        FROM internal_items item
+        JOIN internal_documents document ON document.id = item.internal_document_id
+        WHERE TRIM(item.composition_snapshot) <> ''
+        ORDER BY document.document_date, document.id, item.id
+      `).all();
+    },
+
     getShare(id) {
       return db.prepare('SELECT * FROM shares WHERE id = ?').get(id);
     },

@@ -190,6 +190,7 @@ contextBridge.exposeInMainWorld('appApi', {
   administration: {
     getReferenceData: () => invoke('administration:reference-data'),
     getManagementReport: (year) => invoke('administration:management-report', year),
+    getBalanceDifferences: () => invoke('administration:balance-differences'),
     addOfficer: (payload) => invoke('administration:add-officer', payload),
     closeOfficer: (id, endDate) => invoke('administration:close-officer', id, endDate),
     createHandover: (payload) => invoke('administration:create-handover', payload),

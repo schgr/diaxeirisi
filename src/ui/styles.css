@@ -7163,6 +7163,41 @@ th {
   color: var(--text);
 }
 
+.balance-difference-controls {
+  align-items: end;
+  justify-content: space-between;
+}
+
+.balance-differences-page {
+  background: #fff;
+  color: #000;
+  padding: 12mm;
+}
+
+.balance-differences-page h1 {
+  margin: 0 0 7mm;
+  text-align: center;
+  font-size: 18pt;
+}
+
+.balance-differences-table {
+  color: #000;
+  font-size: 9pt;
+}
+
+.balance-differences-table th,
+.balance-differences-table td {
+  border: 1px solid #555;
+  color: #000;
+}
+
+.balance-differences-table .material-description-cell small {
+  display: block;
+  margin-top: 2px;
+  color: #444;
+  font-size: 0.82em;
+}
+
 .fiscal-year-close-panel {
   display: grid;
   gap: 18px;

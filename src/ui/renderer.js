@@ -412,6 +412,7 @@ async function renderActivePage() {
         window.appApi.transactions,
         window.appApi.inventory,
         window.appApi.movementDifferences,
+        window.appApi.administration,
         showToast,
         section.printOptions
       );

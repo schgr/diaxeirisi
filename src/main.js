@@ -508,6 +508,9 @@ function registerIpcHandlers() {
   ipcMain.handle('administration:management-report', async (_event, year) =>
     safeInvoke(() => services.administration.getManagementReport(year))
   );
+  ipcMain.handle('administration:balance-differences', async () =>
+    safeInvoke(() => services.administration.getBalanceDifferences())
+  );
   ipcMain.handle('administration:add-officer', async (_event, payload) =>
     safeInvoke(() => services.administration.addOfficerTerm(payload))
   );
