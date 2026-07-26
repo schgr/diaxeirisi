@@ -7198,6 +7198,11 @@ th {
   font-size: 0.82em;
 }
 
+.document-export-button {
+  min-width: 64px;
+  padding-inline: 12px;
+}
+
 .fiscal-year-close-panel {
   display: grid;
   gap: 18px;

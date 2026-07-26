@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('appApi', {
   print: {
     currentDocument: (options) => invoke('print:current-document', options)
   },
+  export: {
+    document: (format, payload) => invoke('export:document', format, payload)
+  },
   shares: {
     list: () => invoke('shares:list'),
     getShareByNumber: (shareNumber) => invoke('shares:get-by-number', shareNumber),

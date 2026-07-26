@@ -18,6 +18,11 @@ const { createExhpDocumentsService } = require('./services/exhpDocumentsService'
 const { createClothingService } = require('./services/clothingService');
 const { createSecurityService } = require('./services/securityService');
 const { createBackupService, applyPendingRestore } = require('./services/backupService');
+const {
+  sanitizeExportFilename,
+  writeExcelExport,
+  writeWordExport
+} = require('./services/documentExportService');
 const { createLogger } = require('./utils/logger');
 const { AppError, toAppError } = require('./core/errorHandler');
 
@@ -118,6 +123,32 @@ function registerIpcHandlers() {
   );
   ipcMain.handle('print:current-document', async (event, options) =>
     safeInvoke(() => printCurrentDocument(event.sender, options))
+  );
+  ipcMain.handle('export:document', async (_event, format, payload) =>
+    safeInvoke(async () => {
+      const exportFormat = format === 'word' ? 'word' : 'excel';
+      const title = sanitizeExportFilename(payload && payload.title);
+      const extension = exportFormat === 'word' ? 'doc' : 'xlsx';
+      const result = await dialog.showSaveDialog({
+        title: exportFormat === 'word' ? 'Εξαγωγή σε Word' : 'Εξαγωγή σε Excel',
+        defaultPath: `${title}.${extension}`,
+        filters: [{
+          name: exportFormat === 'word' ? 'Αρχείο Word' : 'Αρχείο Excel',
+          extensions: [extension]
+        }]
+      });
+      if (result.canceled || !result.filePath) return { canceled: true };
+      if (exportFormat === 'word') {
+        writeWordExport(result.filePath, { ...payload, title });
+      } else {
+        await writeExcelExport(result.filePath, { ...payload, title });
+      }
+      return {
+        canceled: false,
+        filePath: result.filePath,
+        message: `Το αρχείο «${title}.${extension}» αποθηκεύτηκε.`
+      };
+    })
   );
   ipcMain.handle('shares:list', async () => safeInvoke(() => services.shares.listShares()));
   ipcMain.handle('shares:get-by-number', async (_event, shareNumber) =>

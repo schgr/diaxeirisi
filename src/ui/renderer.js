@@ -12,11 +12,13 @@ import { renderAdministrationPage } from './pages/administrationPage.js';
 import { renderFinancialYearTasksPage } from './pages/financialYearTasksPage.js';
 import { showToast } from './components/toast.js';
 import { escapeHtml } from './components/forms.js';
+import { initializeDocumentExports } from './documentExport.js';
 
 const THEME_STORAGE_KEY = 'diaxeirisi-theme';
 const DEFAULT_THEME = 'blueprint';
 
 applyStoredTheme();
+initializeDocumentExports(showToast);
 
 const sections = [
   { id: 'shares', title: 'ΜΕΡΙΔΕΣ', type: 'shares' },
