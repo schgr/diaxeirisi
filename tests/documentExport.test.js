@@ -21,6 +21,7 @@ async function run() {
     const excelPath = path.join(directory, 'Κατάσταση.xlsx');
     await writeExcelExport(excelPath, {
       title: 'Κατάσταση',
+      orientation: 'landscape',
       tables: [{
         name: 'Πλεονάσματα - Ελλείμματα',
         rows: [
@@ -35,15 +36,29 @@ async function run() {
     const sheet = workbook.worksheets[0];
     assert.strictEqual(sheet.getCell('A1').value, 'Μερίδα');
     assert.strictEqual(sheet.getCell('C2').value, 1);
+    assert.strictEqual(sheet.pageSetup.orientation, 'landscape');
 
     const wordPath = path.join(directory, 'Κατάσταση.doc');
     writeWordExport(wordPath, {
       title: 'Κατάσταση Πλεονασμάτων',
+      orientation: 'portrait',
       html: '<table><tr><th>Μερίδα</th></tr><tr><td>12</td></tr></table>'
     });
     const word = fs.readFileSync(wordPath, 'utf8');
     assert.match(word, /Κατάσταση Πλεονασμάτων/);
     assert.match(word, /<table>/);
+    assert.match(word, /size: 595\.3pt 841\.9pt/);
+    assert.match(word, /mso-page-orientation: portrait/);
+
+    const landscapeWordPath = path.join(directory, 'Κατάσταση landscape.doc');
+    writeWordExport(landscapeWordPath, {
+      title: 'Οριζόντια Κατάσταση',
+      orientation: 'landscape',
+      html: '<table><tr><td>1</td></tr></table>'
+    });
+    const landscapeWord = fs.readFileSync(landscapeWordPath, 'utf8');
+    assert.match(landscapeWord, /size: 841\.9pt 595\.3pt/);
+    assert.match(landscapeWord, /mso-page-orientation: landscape/);
 
     const { isExportablePrintLabel } = await import('../src/ui/documentExport.js');
     assert.strictEqual(isExportablePrintLabel('Εκτύπωση'), true);

@@ -5,6 +5,7 @@ async function writeExcelExport(filePath, payload = {}) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Διαχείριση Υλικού';
   workbook.created = new Date();
+  const orientation = normalizeOrientation(payload.orientation);
   const tables = Array.isArray(payload.tables) ? payload.tables : [];
   const sources = tables.length
     ? tables
@@ -15,6 +16,13 @@ async function writeExcelExport(filePath, payload = {}) {
       workbook,
       table.name || `${payload.title || 'Κατάσταση'} ${index + 1}`
     ));
+    worksheet.pageSetup = {
+      orientation,
+      paperSize: 9,
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0
+    };
     const rows = Array.isArray(table.rows) ? table.rows : [];
     rows.forEach((row) => worksheet.addRow((Array.isArray(row) ? row : [row]).map(cleanCell)));
     if (worksheet.rowCount) {
@@ -45,6 +53,10 @@ async function writeExcelExport(filePath, payload = {}) {
 
 function writeWordExport(filePath, payload = {}) {
   const title = escapeHtml(payload.title || 'Κατάσταση');
+  const orientation = normalizeOrientation(payload.orientation);
+  const pageSize = orientation === 'landscape'
+    ? '841.9pt 595.3pt'
+    : '595.3pt 841.9pt';
   const content = String(payload.html || '').trim() ||
     `<p>${(payload.textLines || []).map((line) => escapeHtml(line)).join('<br>')}</p>`;
   const documentHtml = `<!DOCTYPE html>
@@ -55,7 +67,12 @@ function writeWordExport(filePath, payload = {}) {
   <meta charset="UTF-8">
   <title>${title}</title>
   <style>
-    @page { size: A4 landscape; margin: 12mm; }
+    @page WordSection1 {
+      size: ${pageSize};
+      margin: 34pt;
+      mso-page-orientation: ${orientation};
+    }
+    div.WordSection1 { page: WordSection1; }
     body { font-family: Arial, sans-serif; color: #000; font-size: 10pt; }
     h1, h2, h3 { text-align: center; }
     table { width: 100%; border-collapse: collapse; margin: 0 0 8mm; }
@@ -67,7 +84,7 @@ function writeWordExport(filePath, payload = {}) {
     article:last-child { page-break-after: auto; }
   </style>
 </head>
-<body><h1>${title}</h1>${content}</body>
+<body><div class="WordSection1"><h1>${title}</h1>${content}</div></body>
 </html>`;
   fs.writeFileSync(filePath, `\uFEFF${documentHtml}`, 'utf8');
   return filePath;
@@ -98,6 +115,10 @@ function cleanCell(value) {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number') return value;
   return String(value).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeOrientation(value) {
+  return String(value || '').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
 }
 
 function escapeHtml(value) {

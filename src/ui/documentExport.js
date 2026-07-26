@@ -52,6 +52,7 @@ export function buildDocumentExportPayload(printButton) {
   const clone = prepareExportClone(source);
   return {
     title,
+    orientation: resolveExportOrientation(printButton, source),
     html: clone.innerHTML,
     tables: extractTables(clone, title),
     textLines: extractTextLines(clone)
@@ -171,6 +172,84 @@ function resolveExportSource(printButton) {
     if (table) return table;
   }
   return document.querySelector('.print-preview-shell:not([hidden]), .print-document-area:not([hidden])');
+}
+
+export function resolveExportOrientation(printButton, source) {
+  const explicitOrientation = normalizeOrientation(
+    printButton?.dataset?.exportOrientation || source?.dataset?.exportOrientation
+  );
+  if (explicitOrientation) return explicitOrientation;
+
+  const landscapeButtons = [
+    '[data-financial-print]',
+    '[data-print-ammunition-batches]',
+    '[data-print-archive-table]',
+    '[data-print-k2310]',
+    '[data-print-serial-preview]',
+    '[data-print-current-request]'
+  ].join(',');
+  if (printButton?.matches?.(landscapeButtons)) return 'landscape';
+
+  const landscapePages = [
+    '.faithful-form-page-landscape',
+    '.exhp-faithful-page',
+    '.request-document-page',
+    '.addy-document-page',
+    '.exhp-document-page',
+    '.index-page',
+    '.official-index-page',
+    '.change-sheet-document-page',
+    '.balance-differences-page',
+    '.financial-year-print-sheet',
+    '.serial-registry-preview',
+    '.archived-shares-print',
+    '.ammunition-batch-print'
+  ].join(',');
+  const portraitPages = [
+    '.official-a4-form',
+    '.share-document-page',
+    '.official-share-page',
+    '.official-inventory-page',
+    '.official-movement-protocol-page',
+    '.official-handover-page',
+    '.efed505-page',
+    '.official-overlay-page',
+    '.material-registry-page',
+    '.composition-document-page',
+    '.addy-composition-document'
+  ].join(',');
+
+  if (source?.matches?.(landscapePages) || source?.querySelector?.(landscapePages)) return 'landscape';
+  if (source?.matches?.(portraitPages) || source?.querySelector?.(portraitPages)) return 'portrait';
+
+  const printablePages = [
+    source,
+    ...(source?.querySelectorAll?.('.print-document-area, article, section') || [])
+  ].filter(Boolean);
+  for (const page of printablePages) {
+    const inlineOrientation = normalizeOrientation(
+      page.dataset?.exportOrientation ||
+      page.dataset?.printOrientation ||
+      page.style?.getPropertyValue?.('page') ||
+      page.getAttribute?.('style')
+    );
+    if (inlineOrientation) return inlineOrientation;
+    if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+      const computedOrientation = normalizeOrientation(
+        window.getComputedStyle(page).getPropertyValue('page')
+      );
+      if (computedOrientation) return computedOrientation;
+    }
+  }
+
+  return 'portrait';
+}
+
+function normalizeOrientation(value) {
+  const normalized = String(value || '').toLocaleLowerCase('en-US');
+  if (normalized.includes('landscape')) return 'landscape';
+  if (normalized.includes('portrait')) return 'portrait';
+  return '';
 }
 
 function prepareExportClone(source) {
