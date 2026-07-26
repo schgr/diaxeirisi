@@ -370,9 +370,7 @@ export function renderBalanceDifferenceControls(state, rows) {
         </select>
       </label>
       <div class="row-actions">
-        <button class="secondary-button" data-print-balance-differences="surplus" type="button" ${surpluses ? '' : 'disabled'}>Εκτύπωση Πλεονασμάτων</button>
-        <button class="secondary-button" data-print-balance-differences="deficit" type="button" ${deficits ? '' : 'disabled'}>Εκτύπωση Ελλειμμάτων</button>
-        <button id="print-current-document" class="primary-button compact-print-button" type="button" ${rows.length ? '' : 'disabled'}>Εκτύπωση Εμφανιζομένων</button>
+        <button id="print-current-document" class="primary-button compact-print-button" type="button" ${rows.length ? '' : 'disabled'}>Εκτύπωση</button>
       </div>
     </div>
   `;
@@ -433,14 +431,6 @@ function bindBalanceDifferenceControls(container, state, rows, preview) {
     preview.innerHTML = renderBalanceDifferenceTable(
       filterBalanceDifferences(rows, state.balanceDifferenceFilter)
     );
-  });
-  container.querySelectorAll('[data-print-balance-differences]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const filtered = filterBalanceDifferences(rows, button.dataset.printBalanceDifferences);
-      const printablePreview = document.createElement('div');
-      printablePreview.innerHTML = renderBalanceDifferenceTable(filtered);
-      void printIsolatedPreview(printablePreview, true);
-    });
   });
 }
 

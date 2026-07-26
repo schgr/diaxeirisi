@@ -44,6 +44,20 @@ async function run() {
     const word = fs.readFileSync(wordPath, 'utf8');
     assert.match(word, /Κατάσταση Πλεονασμάτων/);
     assert.match(word, /<table>/);
+
+    const { isExportablePrintLabel } = await import('../src/ui/documentExport.js');
+    assert.strictEqual(isExportablePrintLabel('Εκτύπωση'), true);
+    assert.strictEqual(isExportablePrintLabel('Εκτύπωση Κατάστασης'), true);
+    assert.strictEqual(isExportablePrintLabel('Πίσω στις Εκτυπώσεις'), false);
+    assert.strictEqual(isExportablePrintLabel('Συγκεντρωτικές Εκτυπώσεις'), false);
+
+    const { renderBalanceDifferenceControls } = await import('../src/ui/pages/printsPage.js');
+    const controls = renderBalanceDifferenceControls(
+      { balanceDifferenceFilter: 'all' },
+      [{ status: 'Έλλειμμα' }, { status: 'Πλεόνασμα' }]
+    );
+    assert.strictEqual((controls.match(/id="print-current-document"/g) || []).length, 1);
+    assert.doesNotMatch(controls, /data-print-balance-differences/);
     console.log('documentExport.test.js: OK');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

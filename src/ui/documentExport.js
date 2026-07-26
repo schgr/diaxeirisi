@@ -1,4 +1,4 @@
-const PRINT_LABEL = /ΕΚΤΥΠΩΣ/u;
+const PRINT_LABEL = /^ΕΚΤΥΠΩΣ/u;
 const PREVIEW_LABEL = /ΠΡΟΕΠΙΣΚΟΠ|ΠΡΟΒΟΛ/u;
 
 export function initializeDocumentExports(showToast) {
@@ -50,13 +50,17 @@ export function buildDocumentExportPayload(printButton) {
   const source = resolveExportSource(printButton);
   if (!source) throw new Error('Δεν βρέθηκε περιεχόμενο για εξαγωγή.');
   const clone = prepareExportClone(source);
-  filterSpecializedExportRows(clone, printButton);
   return {
     title,
     html: clone.innerHTML,
     tables: extractTables(clone, title),
     textLines: extractTextLines(clone)
   };
+}
+
+export function isExportablePrintLabel(value) {
+  const label = normalizedText(value);
+  return PRINT_LABEL.test(label) && !PREVIEW_LABEL.test(label);
 }
 
 function enhancePrintButtons(root) {
@@ -66,8 +70,7 @@ function enhancePrintButtons(root) {
   candidates.forEach((button) => {
     if (button.dataset.documentExportEnhanced === 'true') return;
     if (button.matches('[data-toggle-index-materials]')) return;
-    const label = normalizedText(button.textContent);
-    if (!PRINT_LABEL.test(label) || PREVIEW_LABEL.test(label)) return;
+    if (!isExportablePrintLabel(button.textContent)) return;
     if (button.closest('[data-document-export-actions]')) return;
     button.dataset.documentExportEnhanced = 'true';
     const excel = createExportButton('excel', 'Excel', button);
@@ -196,15 +199,6 @@ function extractTables(root, title) {
       )
     };
   }).filter((table) => table.rows.length);
-}
-
-function filterSpecializedExportRows(root, printButton) {
-  const differenceFilter = printButton.dataset.printBalanceDifferences;
-  if (!differenceFilter) return;
-  const expectedStatus = differenceFilter === 'surplus' ? 'ΠΛΕΟΝΑΣΜΑ' : 'ΕΛΛΕΙΜΜΑ';
-  root.querySelectorAll('tbody tr').forEach((row) => {
-    if (!normalizedText(row.textContent).includes(expectedStatus)) row.remove();
-  });
 }
 
 function extractTextLines(root) {
