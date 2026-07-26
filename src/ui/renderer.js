@@ -107,7 +107,8 @@ const homeGroups = [
       { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Γενικά' },
       { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Προσωπικό' },
       { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' },
-      { id: 'settings-security', sectionId: 'settings', tab: 'security', title: 'Ασφάλεια και Backup' }
+      { id: 'settings-security', sectionId: 'settings', tab: 'security', title: 'Ασφάλεια και Backup' },
+      { id: 'settings-information', sectionId: 'settings', tab: 'information', title: 'Πληροφορίες' }
     ]
   }
 ];

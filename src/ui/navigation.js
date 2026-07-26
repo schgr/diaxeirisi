@@ -29,7 +29,8 @@ const HOME_TILE_META = {
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
   'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
   'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' },
-  'settings-security': { code: '§ 04-Δ', icon: 'ΑΣ' }
+  'settings-security': { code: '§ 04-Δ', icon: 'ΑΣ' },
+  'settings-information': { code: '§ 04-Ε', icon: 'ΠΛ' }
 };
 
 export function renderHomeTiles({ container, groups, onNavigate }) {
