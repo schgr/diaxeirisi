@@ -105,15 +105,7 @@ function bindLiveFilters(container, shares, showToast) {
       inputs.map((input) => [input.dataset.filter, normalize(input.value)])
     );
 
-    const filtered = shares.filter((share) => {
-      const materialMatch = !filters.materialType || normalize(share.materialType) === filters.materialType;
-      return (
-        materialMatch &&
-        includes(share.shareNumber, filters.shareNumber) &&
-        includes(share.nominalNumber, filters.nominalNumber) &&
-        includes(share.description, filters.description)
-      );
-    });
+    const filtered = filterAndRankShares(shares, filters);
 
     body.innerHTML = renderRows(filtered);
     count.textContent = filtered.length;
@@ -1059,11 +1051,69 @@ function collectMaterialTypes(shares, materialCategories) {
 }
 
 function includes(value, filter) {
-  return !filter || normalize(value).includes(filter);
+  if (!filter) return true;
+  const normalizedValue = normalize(value);
+  const compactFilter = compactSearchText(filter);
+  return normalizedValue.includes(filter) ||
+    Boolean(compactFilter && compactSearchText(normalizedValue).includes(compactFilter));
 }
 
 function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLocaleLowerCase('el-GR')
+    .replace(/ς/g, 'σ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function compactSearchText(value) {
+  return value.replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+export function filterAndRankShares(shares, filters = {}) {
+  const normalizedFilters = Object.fromEntries(
+    Object.entries(filters).map(([key, value]) => [key, normalize(value)])
+  );
+  const descriptionFilter = normalizedFilters.description;
+
+  return shares
+    .map((share, originalIndex) => ({ share, originalIndex }))
+    .filter(({ share }) => {
+      const materialMatch = !normalizedFilters.materialType ||
+        normalize(share.materialType) === normalizedFilters.materialType;
+      return (
+        materialMatch &&
+        includes(share.shareNumber, normalizedFilters.shareNumber) &&
+        includes(share.nominalNumber, normalizedFilters.nominalNumber) &&
+        includes(share.description, descriptionFilter)
+      );
+    })
+    .sort((left, right) => {
+      if (!descriptionFilter) return left.originalIndex - right.originalIndex;
+
+      const rankDifference =
+        descriptionMatchRank(left.share.description, descriptionFilter) -
+        descriptionMatchRank(right.share.description, descriptionFilter);
+      if (rankDifference) return rankDifference;
+
+      const descriptionOrder = String(left.share.description || '')
+        .localeCompare(String(right.share.description || ''), 'el', { sensitivity: 'base' });
+      return descriptionOrder || left.originalIndex - right.originalIndex;
+    })
+    .map(({ share }) => share);
+}
+
+function descriptionMatchRank(description, filter) {
+  const normalizedDescription = normalize(description);
+  if (normalizedDescription === filter) return 0;
+  if (normalizedDescription.startsWith(filter)) return 1;
+
+  const words = normalizedDescription.match(/[\p{L}\p{N}]+/gu) || [];
+  if (words.some((word) => word.startsWith(filter))) return 2;
+  if (normalizedDescription.includes(filter)) return 3;
+  return 4;
 }
 
 export function renderRows(shares, compositionOnly = false) {

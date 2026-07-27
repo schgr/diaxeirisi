@@ -20,9 +20,9 @@ assert.match(compositionHtml, /data-download-composition-template/);
 assert.match(compositionHtml, /data-import-compositions/);
 assert.match(compositionHtml, /Προβλεπόμενη − Υπάρχουσα/);
 
-const informationHtml = renderAppInformation('0.13.169');
+const informationHtml = renderAppInformation('0.13.170');
 assert.match(informationHtml, /Έκδοση/);
-assert.match(informationHtml, /v0\.13\.169/);
+assert.match(informationHtml, /v0\.13\.170/);
 assert.match(informationHtml, /Λγος \(ΦΠΒ\) Αλεξανδρής Ιωάννης/);
 assert.match(informationHtml, /Με επιφύλαξη παντός δικαιώματος/);
 
