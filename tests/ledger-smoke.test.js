@@ -217,8 +217,9 @@ async function run() {
       printSettings,
       { displayCount: 100 }
     );
-    assert.strictEqual((registryHtml.match(/material-registry-page/g) || []).length, 3);
-    assert.match(registryHtml, /Σελίδα 3 από 3/);
+    assert.strictEqual((registryHtml.match(/material-registry-page/g) || []).length, 6);
+    assert.match(registryHtml, /Σελίδα 6 από 6/);
+    assert.match(registryHtml, /Το Παρόν αφού σελιδομετρήθηκε βρέθηκε να έχει 6 σελίδες/);
 
     const surplusBalance = calculateShareBalance(3, 2);
     assert.strictEqual(surplusBalance.differenceQuantity, -1);

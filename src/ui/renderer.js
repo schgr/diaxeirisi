@@ -215,9 +215,7 @@ function showWindowOptions() {
         <button class="secondary-button" data-window-action="exit-fullscreen" type="button">Έξοδος από πλήρη οθόνη</button>
         <button class="secondary-button" data-window-action="minimize" type="button">Ελαχιστοποίηση παραθύρου</button>
         <button class="secondary-button" data-window-action="lock" type="button">Κλείδωμα εφαρμογής</button>
-        <button class="primary-button" data-window-action="save" type="button">Αποθήκευση αλλαγών</button>
-        <button class="danger-button" data-window-action="save-exit" type="button">Αποθήκευση και έξοδος</button>
-        <button class="secondary-button" data-window-action="exit" type="button">Έξοδος χωρίς νέα αποθήκευση</button>
+        <button class="danger-button" data-window-action="exit" type="button">Έξοδος εφαρμογής</button>
         <button class="secondary-button" data-window-action="cancel" type="button">Άκυρο</button>
       </div>
     </div>
@@ -252,13 +250,7 @@ function showWindowOptions() {
         return;
       }
 
-      if (action === 'save') {
-        showToast('Οι αλλαγές αποθηκεύονται αυτόματα.');
-        modal.remove();
-        return;
-      }
-
-      if (action === 'save-exit' || action === 'exit') {
+      if (action === 'exit') {
         await window.appApi.windowControls.quit();
         return;
       }

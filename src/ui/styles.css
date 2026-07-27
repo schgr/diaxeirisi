@@ -2539,7 +2539,7 @@ table.administration-table td {
 
 .print-preview-shell {
   display: grid;
-  justify-content: start;
+  justify-content: center;
   gap: 18px;
   height: auto;
   max-height: calc(100vh - 320px);
@@ -2586,13 +2586,14 @@ table.administration-table td {
     min-width: 210mm;
     height: 297mm;
     min-height: 297mm;
-    margin: 0 0 18px;
+    margin: 0 auto 18px;
     clear: both;
     float: none;
   }
 }
 
 .latest-inventory-share-controls {
+  width: fit-content;
   grid-template-columns: minmax(260px, 1fr) auto;
 }
 
@@ -2620,7 +2621,7 @@ table.administration-table td {
   position: relative;
   width: 210mm;
   min-height: 297mm;
-  padding: 24mm 20mm 14mm;
+  padding: 16mm 14mm 12mm;
   background: #ffffff;
   color: #000000;
   font-family: Arial, "Segoe UI", sans-serif;
@@ -2672,11 +2673,15 @@ table.administration-table td {
 }
 
 .registry-table td {
-  height: 22px;
+  height: 9.5mm;
   font-size: 10px;
   line-height: 1.15;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.registry-table tbody tr {
+  height: 9.5mm;
 }
 
 .registry-footer {
@@ -2689,6 +2694,39 @@ table.administration-table td {
 
 .registry-description-cell {
   text-align: left !important;
+  height: 9.5mm;
+  max-height: 9.5mm;
+  overflow: hidden;
+}
+
+.registry-description-text {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.15;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.material-registry-certification-page {
+  padding: 42mm 24mm 18mm;
+}
+
+.registry-certification-text {
+  font-size: 14px;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.registry-certification-location {
+  margin-top: 24mm;
+  font-size: 13px;
+  text-align: right;
+}
+
+.material-registry-certification-page .official-index-annual-signatures {
+  bottom: 20mm;
+  min-height: 34mm;
+  font-size: 11px;
 }
 
 .index-page {
@@ -3026,6 +3064,11 @@ table.administration-table td {
   grid-template-columns: 170px minmax(220px, 1fr) auto auto;
   gap: 10px;
   align-items: end;
+}
+
+.registry-print-controls {
+  width: fit-content;
+  grid-template-columns: 170px auto auto auto;
 }
 
 .inventory-print-controls {

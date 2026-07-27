@@ -3,7 +3,7 @@ import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { renderSharePrintDocument } from './sharesPage.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 
-const ROWS_PER_REGISTRY_PAGE = 37;
+const ROWS_PER_REGISTRY_PAGE = 22;
 const ROWS_PER_INDEX_PAGE = 34;
 const PRINT_TILE_META = {
   registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
@@ -1041,7 +1041,7 @@ function bindFiscalYearControls(container, state, renderActiveTab) {
 
 function renderRegistryControls(shareCount, state) {
   return `
-    <div class="registry-controls">
+    <div class="registry-controls registry-print-controls">
       <label class="field">
         <span>Πλήθος μερίδων για εμφάνιση</span>
         <input id="registry-display-count" type="number" min="1" value="${state.displayCount || shareCount || 1}" />
@@ -1068,10 +1068,11 @@ export function renderMaterialRegistryPages(shares, settings, state) {
       .filter((share) => Number.isInteger(Number(share.shareNumber)) && Number(share.shareNumber) > 0)
       .map((share) => [Number(share.shareNumber), share])
   );
-  const pageCount = Math.max(1, Math.ceil(state.displayCount / ROWS_PER_REGISTRY_PAGE));
+  const registryPageCount = Math.max(1, Math.ceil(state.displayCount / ROWS_PER_REGISTRY_PAGE));
+  const pageCount = registryPageCount + 1;
   const pages = [];
 
-  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+  for (let pageIndex = 0; pageIndex < registryPageCount; pageIndex += 1) {
     const start = pageIndex * ROWS_PER_REGISTRY_PAGE;
     const pageRows = Array.from({ length: ROWS_PER_REGISTRY_PAGE }, (_unused, index) => {
       const rowNumber = start + index + 1;
@@ -1082,6 +1083,7 @@ export function renderMaterialRegistryPages(shares, settings, state) {
     });
     pages.push(renderMaterialRegistryPage(pageRows, settings, pageIndex + 1, pageCount));
   }
+  pages.push(renderMaterialRegistryCertificationPage(settings, pageCount));
 
   return pages.join('');
 }
@@ -1121,9 +1123,27 @@ function renderRegistryRow(row) {
     <tr>
       <td>${share ? escapeHtml(share.shareNumber) : rowNumber}</td>
       <td>${share ? escapeHtml(share.nominalNumber) : ''}</td>
-      <td class="registry-description-cell">${share ? escapeHtml(share.description) : ''}</td>
+      <td class="registry-description-cell"><div class="registry-description-text">${share ? escapeHtml(share.description) : ''}</div></td>
       <td></td><td></td><td></td>
     </tr>
+  `;
+}
+
+function renderMaterialRegistryCertificationPage(settings, pageCount) {
+  const managementType = String(settings?.serviceInfo?.managementType || '').trim();
+  const location = String(settings?.serviceInfo?.serviceLocation || '').trim();
+  return `
+    <article class="material-registry-page material-registry-certification-page print-document-area">
+      <div class="registry-certification-text">
+        Το Παρόν αφού σελιδομετρήθηκε βρέθηκε να έχει ${pageCount} σελίδες και θα χρησιμοποιηθεί ως
+        Μητρώο Μερίδων της ${escapeHtml(managementType)} Διαχείρισης Υλικού.
+      </div>
+      <div class="registry-certification-location">
+        Τόπος: ${escapeHtml(location)} .................................
+      </div>
+      ${renderIndexAnnualSignatures(settings?.financialOfficers || {})}
+      <div class="registry-footer">Σελίδα ${pageCount} από ${pageCount}</div>
+    </article>
   `;
 }
 

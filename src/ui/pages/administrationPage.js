@@ -1,4 +1,4 @@
-import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 
@@ -63,12 +63,8 @@ export function renderManagementReport(report) {
       <div class="requests-status-header">
         <div>
           <h3>Αναφορά Διαχείρισης</h3>
-          <p class="muted">Συνοπτική εικόνα των ενεργών Μερίδων της Διαχείρισης.</p>
+          <p class="muted">Συνοπτική εικόνα των ενεργών Μερίδων για το τρέχον οικονομικό έτος ${escapeHtml(report.fiscalYear)}.</p>
         </div>
-        <label class="field compact-year-field">
-          <span>Οικονομικό Έτος</span>
-          <select data-management-report-year>${renderFiscalYearOptions(report.fiscalYear)}</select>
-        </label>
       </div>
       <div class="management-report-grid">
         ${metrics.map(([label, value]) => `
@@ -484,13 +480,6 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     container.querySelector(`[data-administration-tab="${initialTab}"]`)?.click();
   }
 
-  container.querySelector('[data-management-report-year]')?.addEventListener('change', async (event) => run(async () => {
-    const report = await api.getManagementReport(Number(event.target.value));
-    const panel = container.querySelector('[data-administration-panel="management-report"]');
-    panel.innerHTML = renderManagementReport(report);
-    bindManagementReportYear(panel, api, showToast);
-  }, showToast));
-
   container.querySelector('[data-save-serial-registry]')?.addEventListener('click', async () => run(async () => {
     const grouped = new Map();
     container.querySelectorAll('[data-serial-position]').forEach((row) => {
@@ -651,14 +640,6 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     }, showToast));
   });
 
-}
-
-function bindManagementReportYear(container, api, showToast) {
-  container.querySelector('[data-management-report-year]')?.addEventListener('change', async (event) => run(async () => {
-    const report = await api.getManagementReport(Number(event.target.value));
-    container.innerHTML = renderManagementReport(report);
-    bindManagementReportYear(container, api, showToast);
-  }, showToast));
 }
 
 function openHandoverProtocolDocument(handover, settings, showToast) {
