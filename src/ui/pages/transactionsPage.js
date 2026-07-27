@@ -216,16 +216,28 @@ export async function renderTransactionsPage(
     <div class="page-toolbar no-print">
       <button class="secondary-button" data-transaction-flow-back type="button">Πίσω στις Δοσοληψίες</button>
     </div>
-    <nav class="transaction-tabs exhp-menu-tabs no-print" aria-label="Μενού ΕΧΠ">
-      <button class="transaction-tab active" data-exhp-menu="reasons" type="button">Αιτιολογίες</button>
-      <button class="transaction-tab" data-exhp-menu="settings" type="button">Ρυθμίσεις</button>
-    </nav>
-    <div data-exhp-menu-panel="reasons">
+    <section class="transaction-flow-home exhp-main-menu no-print" data-exhp-menu-home aria-label="Μενού ΕΧΠ">
+      <button class="home-tile transaction-flow-tile" data-exhp-menu="reasons" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΑΙ</span>
+        <span class="home-tile-title">ΑΙΤΙΟΛΟΓΙΕΣ</span>
+        <span class="home-tile-code">§ ΕΧΠ-1</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-exhp-menu="settings" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΡΥ</span>
+        <span class="home-tile-title">ΡΥΘΜΙΣΕΙΣ</span>
+        <span class="home-tile-code">§ ΕΧΠ-2</span>
+      </button>
+    </section>
+    <div data-exhp-menu-panel="reasons" hidden>
+    <div class="page-toolbar no-print">
+      <button class="secondary-button" data-exhp-menu-back type="button">Πίσω στο Μενού ΕΧΠ</button>
+    </div>
     <div class="exhp-step-indicator no-print" aria-label="Βήματα ΕΧΠ" hidden>
       <span class="active" data-exhp-step-dot="1">1</span>
       <span data-exhp-step-dot="2">2</span>
       <span data-exhp-step-dot="3">3</span>
     </div>
+    <div data-exhp-reason-list>
     <section class="page-panel no-print" data-exhp-wizard-step="1">
       <p class="eyebrow">ΒΗΜΑ 1 ΑΠΟ 3</p>
       <h3>Αιτιολογία</h3>
@@ -252,7 +264,12 @@ export async function renderTransactionsPage(
         <button id="exhp-wizard-next" class="primary-button" type="button">Επόμενο</button>
       </div>
     </section>
+    </div>
 
+    <div data-exhp-reason-detail hidden>
+    <div class="page-toolbar no-print">
+      <button class="secondary-button" data-exhp-reason-back type="button">Πίσω στις Αιτιολογίες</button>
+    </div>
     <section class="page-panel no-print" data-exhp-wizard-step="2">
       <p class="eyebrow">ΒΗΜΑ 2 ΑΠΟ 3</p>
       <h3>Δικαιολογητικά</h3>
@@ -347,7 +364,11 @@ export async function renderTransactionsPage(
     </section>
     </div>
     </div>
+    </div>
     <div data-exhp-menu-panel="settings" hidden>
+    <div class="page-toolbar no-print">
+      <button class="secondary-button" data-exhp-menu-back type="button">Πίσω στο Μενού ΕΧΠ</button>
+    </div>
     <section class="page-panel no-print">
       <h3>Καταχωρημένες ΕΧΠ</h3>
       <div class="table-wrap">
@@ -446,6 +467,9 @@ export async function renderTransactionsPage(
 function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, showToast) {
   const tabs = [...container.querySelectorAll('[data-exhp-menu]')];
   const panels = [...container.querySelectorAll('[data-exhp-menu-panel]')];
+  const menuHome = container.querySelector('[data-exhp-menu-home]');
+  const reasonList = container.querySelector('[data-exhp-reason-list]');
+  const reasonDetail = container.querySelector('[data-exhp-reason-detail]');
   const editor = container.querySelector('#exhp-documents-editor');
   const editorHome = container.querySelector('#exhp-documents-editor-home');
   const editMount = container.querySelector('#exhp-edit-documents-mount');
@@ -454,10 +478,14 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
   const editForm = container.querySelector('#exhp-metadata-edit-form');
 
   const activate = (menu) => {
-    tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.exhpMenu === menu));
+    menuHome.hidden = true;
     panels.forEach((panel) => {
       panel.hidden = panel.dataset.exhpMenuPanel !== menu;
     });
+    if (menu === 'reasons') {
+      reasonList.hidden = false;
+      reasonDetail.hidden = true;
+    }
     if (menu === 'reasons' && editor && editorHome && editor.parentElement !== editorHome.parentElement) {
       editorHome.after(editor);
       state.viewedExhp = null;
@@ -468,6 +496,33 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => activate(tab.dataset.exhpMenu));
+  });
+
+  container.querySelectorAll('[data-exhp-menu-back]').forEach((button) => {
+    button.addEventListener('click', () => {
+      panels.forEach((panel) => { panel.hidden = true; });
+      menuHome.hidden = false;
+      if (editor && editorHome && editor.parentElement !== editorHome.parentElement) {
+        editorHome.after(editor);
+      }
+      state.viewedExhp = null;
+      state.exhpDocumentsState.selectedExhp = null;
+      selector.value = '';
+    });
+  });
+
+  container.querySelectorAll('[data-exhp-reason-tile]').forEach((button) => {
+    button.addEventListener('click', () => {
+      reasonList.hidden = true;
+      reasonDetail.hidden = false;
+      reasonDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  container.querySelector('[data-exhp-reason-back]')?.addEventListener('click', () => {
+    reasonDetail.hidden = true;
+    reasonList.hidden = false;
+    reasonList.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   container.querySelectorAll('[data-edit-exhp-document]').forEach((button) => {

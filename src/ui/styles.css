@@ -3203,9 +3203,14 @@ table.administration-table td {
   display: none;
 }
 
-.exhp-flat-flow [data-exhp-menu-panel="reasons"] {
+.exhp-flat-flow [data-exhp-menu-panel="reasons"]:not([hidden]) {
   display: grid;
   gap: 14px;
+}
+
+.exhp-main-menu {
+  grid-template-columns: repeat(2, minmax(280px, 385px));
+  justify-content: start;
 }
 
 .exhp-metadata-edit-form {
