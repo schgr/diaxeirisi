@@ -40,7 +40,8 @@ const sections = [
       menuTitle: 'Μερίδες Υλικού',
       visibleGroups: ['shares'],
       initialGroup: 'shares',
-      tileMenu: true
+      tileMenu: true,
+      latestInventoryShareCards: true
     }
   },
   {

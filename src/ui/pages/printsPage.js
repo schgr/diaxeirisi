@@ -67,7 +67,7 @@ export async function renderPrintsPage(
     fiscalYear: Number(settings?.serviceInfo?.activeFiscalYear || new Date().getFullYear()),
     selectedShareId: shares[0] ? shares[0].id : '',
     selectedInventoryId: inventoryReference.sessions[0] ? inventoryReference.sessions[0].id : '',
-    onlyMovedCards: true,
+    onlyMovedCards: !options.latestInventoryShareCards,
     selectedAddyIndexId: '',
     selectedExhpIndexId: '',
     balanceDifferenceFilter: 'all'
@@ -176,9 +176,24 @@ export async function renderPrintsPage(
 
     if (state.activeTab === 'share-card') {
       title.textContent = 'Μερίδα Υλικού';
-      controls.innerHTML = renderShareCardControls(shares, state);
-      await renderShareCardPreview(sharesApi, shares, state, preview);
-      bindShareCardControls(container, sharesApi, shares, state, preview);
+      if (options.latestInventoryShareCards) {
+        const latestInventory = inventoryReference.sessions[0]
+          ? await inventoryApi.getSession(Number(inventoryReference.sessions[0].id))
+          : null;
+        controls.innerHTML = renderLatestInventoryShareCardControls(latestInventory);
+        await renderLatestInventoryShareCardPreview(
+          sharesApi,
+          shares,
+          latestInventory,
+          settings,
+          state,
+          preview
+        );
+      } else {
+        controls.innerHTML = renderShareCardControls(shares, state);
+        await renderShareCardPreview(sharesApi, shares, state, preview);
+        bindShareCardControls(container, sharesApi, shares, state, preview);
+      }
       return;
     }
 
@@ -588,6 +603,63 @@ function renderShareCardControls(shares, state) {
       <button id="print-current-document" class="primary-button" type="button">Εκτύπωση</button>
     </div>
   `;
+}
+
+function renderLatestInventoryShareCardControls(inventory) {
+  return `
+    <div class="registry-controls share-print-controls latest-inventory-share-controls">
+      <div class="latest-inventory-share-summary">
+        <span>Τελευταία Απογραφή</span>
+        <strong>${inventory
+          ? `${escapeHtml(inventory.serialNumber)}/${escapeHtml(inventory.fiscalYear)} · ${formatDate(inventory.inventoryDate)}`
+          : 'Δεν υπάρχει διαθέσιμη απογραφή'}</strong>
+      </div>
+      <button id="print-current-document" class="primary-button compact-print-button" type="button" ${inventory?.items?.length ? '' : 'disabled'}>Εκτύπωση</button>
+    </div>
+  `;
+}
+
+async function renderLatestInventoryShareCardPreview(
+  sharesApi,
+  shares,
+  inventory,
+  settings,
+  state,
+  preview
+) {
+  if (!inventory?.items?.length) {
+    preview.innerHTML = '<section class="page-panel empty-table">Δεν υπάρχουν μερίδες στην τελευταία απογραφή.</section>';
+    return;
+  }
+
+  const sharesById = new Map(shares.map((share) => [Number(share.id), share]));
+  const cards = await Promise.all(inventory.items.map(async (item) => {
+    const fiscalYearAfterInventory = Number(inventory.fiscalYear) + 1;
+    const card = await sharesApi.getCard(item.shareId, fiscalYearAfterInventory);
+    return {
+      ...card,
+      share: {
+        ...card.share,
+        ...(sharesById.get(Number(item.shareId)) || {})
+      },
+      year: Number(inventory.fiscalYear),
+      openingTransfer: {
+        balance: Number(item.accountingBalance || 0),
+        inventoryDate: inventory.inventoryDate,
+        reference: `${inventory.serialNumber}/${inventory.fiscalYear}`
+      },
+      transactions: []
+    };
+  }));
+  if (state.activeTab !== 'share-card') return;
+
+  const issuer = splitOfficerSignature(settings?.financialOfficers?.ped || '');
+  preview.innerHTML = cards
+    .map((card) => renderSharePrintDocument(card, {
+      issuerName: issuer.name,
+      issuerRank: issuer.rank
+    }))
+    .join('');
 }
 
 function bindShareCardControls(container, sharesApi, shares, state, preview) {

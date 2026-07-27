@@ -959,7 +959,7 @@ function openSharePrintDocument(card) {
   document.body.appendChild(backdrop);
 }
 
-export function renderSharePrintDocument(card) {
+export function renderSharePrintDocument(card, options = {}) {
   const rowsPerPage = 12;
   const pageCount = Math.max(1, Math.ceil(card.transactions.length / rowsPerPage));
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
@@ -970,6 +970,12 @@ export function renderSharePrintDocument(card) {
     return `
       <article class="official-share-page print-document-area">
         <img src="./assets/official-forms/share-card-expanded-23-24.png" alt="Μερίδα Υλικού - Δελτίο Υπολοίπων" />
+        ${options.issuerName
+          ? shareDocumentOverlay(options.issuerName, 4.1, 15.7, 28.2, 2.5, 'share-issuer-name-overlay')
+          : ''}
+        ${options.issuerRank
+          ? shareDocumentOverlay(options.issuerRank, 4.1, 18.2, 28.2, 2.5, 'share-issuer-rank-overlay')
+          : ''}
         ${shareDocumentOverlay(card.share.nominalNumber, 33.5, 14.2, 34.0, 2.6)}
         ${shareDocumentOverlay(card.share.shareNumber, 69.5, 14.2, 19.0, 2.6)}
         ${shareDocumentOverlay(card.share.description, 33.5, 18.6, 34.0, 2.8, 'material-description-overlay')}

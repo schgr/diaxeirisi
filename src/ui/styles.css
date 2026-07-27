@@ -793,16 +793,22 @@ select {
 }
 
 .print-index-tile-menu {
-  width: min(100%, 960px);
+  width: 100%;
 }
 
 .print-tile-group {
   gap: 12px;
-  padding: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.print-tile-group > .home-group-header {
+  display: none;
 }
 
 .print-tile-grid {
-  grid-template-columns: repeat(2, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 .print-index-tile-menu .corner {
@@ -816,6 +822,11 @@ select {
   height: 18px;
   content: "";
   pointer-events: none;
+}
+
+.print-index-tile-menu .print-tile-group.corner::before,
+.print-index-tile-menu .print-tile-group.corner::after {
+  display: none;
 }
 
 .print-index-tile-menu .corner::before {
@@ -2528,7 +2539,7 @@ table.administration-table td {
 
 .print-preview-shell {
   display: grid;
-  justify-content: center;
+  justify-content: start;
   gap: 18px;
   height: auto;
   max-height: calc(100vh - 320px);
@@ -2575,10 +2586,34 @@ table.administration-table td {
     min-width: 210mm;
     height: 297mm;
     min-height: 297mm;
-    margin: 0 auto 18px;
+    margin: 0 0 18px;
     clear: both;
     float: none;
   }
+}
+
+.latest-inventory-share-controls {
+  grid-template-columns: minmax(260px, 1fr) auto;
+}
+
+.latest-inventory-share-summary {
+  display: grid;
+  gap: 5px;
+}
+
+.latest-inventory-share-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.share-issuer-name-overlay,
+.share-issuer-rank-overlay {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 1mm;
+  text-align: left;
 }
 
 .material-registry-page {
