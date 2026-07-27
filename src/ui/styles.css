@@ -401,6 +401,10 @@ select {
   overflow: auto;
 }
 
+.content:has(.print-preview-shell) {
+  overflow: hidden;
+}
+
 .home-screen {
   --hs-bg: #0A1A2E;
   --hs-grid-line: rgba(133, 199, 224, 0.08);
@@ -2613,7 +2617,8 @@ table.administration-table td {
 .share-issuer-rank-overlay {
   align-items: flex-start;
   justify-content: flex-start;
-  padding: 1mm;
+  padding: 0 1mm;
+  line-height: 1;
   text-align: left;
 }
 
@@ -2673,15 +2678,15 @@ table.administration-table td {
 }
 
 .registry-table td {
-  height: 9.5mm;
-  font-size: 10px;
-  line-height: 1.15;
+  height: 8.4mm;
+  font-size: 8.5px;
+  line-height: 1.05;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
 .registry-table tbody tr {
-  height: 9.5mm;
+  height: 8.4mm;
 }
 
 .registry-footer {
@@ -2694,15 +2699,15 @@ table.administration-table td {
 
 .registry-description-cell {
   text-align: left !important;
-  height: 9.5mm;
-  max-height: 9.5mm;
+  height: 8.4mm;
+  max-height: 8.4mm;
   overflow: hidden;
 }
 
 .registry-description-text {
   display: -webkit-box;
   overflow: hidden;
-  line-height: 1.15;
+  line-height: 1.05;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
@@ -2724,7 +2729,8 @@ table.administration-table td {
 }
 
 .material-registry-certification-page .official-index-annual-signatures {
-  bottom: 20mm;
+  position: static;
+  margin-top: 12mm;
   min-height: 34mm;
   font-size: 11px;
 }
