@@ -249,7 +249,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     const share = findShareByNumber(referenceData.shares, controls.shareNumber.value);
     if (share) {
       applyShareDefaults(controls, share);
-    } else if (!controls.shareNumber.value.trim()) {
+    } else {
       clearShareDefaults(controls, { clearNominalNumber: true });
     }
     updateAddButton(controls, state);

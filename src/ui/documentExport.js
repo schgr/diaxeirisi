@@ -70,6 +70,8 @@ function enhancePrintButtons(root) {
   root.querySelectorAll?.('button').forEach((button) => candidates.push(button));
   candidates.forEach((button) => {
     if (button.dataset.documentExportEnhanced === 'true') return;
+    if (button.hasAttribute('data-no-document-export')) return;
+    if (button.closest('.addy-document-backdrop, .exhp-document-backdrop')) return;
     if (button.matches('[data-toggle-index-materials]')) return;
     if (!isExportablePrintLabel(button.textContent)) return;
     if (button.closest('[data-document-export-actions]')) return;

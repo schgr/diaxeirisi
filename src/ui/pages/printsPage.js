@@ -600,7 +600,7 @@ function renderShareCardControls(shares, state) {
         <span>Με διακίνηση στο έτος</span>
         <input id="print-moved-only" type="checkbox" ${state.onlyMovedCards ? 'checked' : ''} />
       </label>
-      <button id="print-current-document" class="primary-button" type="button">Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button" data-no-document-export type="button">Εκτύπωση</button>
     </div>
   `;
 }
@@ -614,7 +614,7 @@ function renderLatestInventoryShareCardControls(inventory) {
           ? `${escapeHtml(inventory.serialNumber)}/${escapeHtml(inventory.fiscalYear)} · ${formatDate(inventory.inventoryDate)}`
           : 'Δεν υπάρχει διαθέσιμη απογραφή'}</strong>
       </div>
-      <button id="print-current-document" class="primary-button compact-print-button" type="button" ${inventory?.items?.length ? '' : 'disabled'}>Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button" ${inventory?.items?.length ? '' : 'disabled'}>Εκτύπωση</button>
     </div>
   `;
 }
@@ -1046,7 +1046,7 @@ function renderRegistryControls(shareCount, state) {
         <span>Πλήθος μερίδων για εμφάνιση</span>
         <input id="registry-display-count" type="number" min="1" value="${state.displayCount || shareCount || 1}" />
       </label>
-      <button id="print-current-document" class="primary-button compact-print-button" type="button">Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button">Εκτύπωση</button>
     </div>
   `;
 }
