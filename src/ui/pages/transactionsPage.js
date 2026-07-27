@@ -212,11 +212,16 @@ export async function renderTransactionsPage(
 
     </div>
 
-    <div class="transaction-tab-panel ${activeTab === 'exhp' ? 'active' : ''}" data-transaction-panel="exhp" ${activeTab === 'exhp' ? '' : 'hidden'}>
+    <div class="transaction-tab-panel exhp-flat-flow ${activeTab === 'exhp' ? 'active' : ''}" data-transaction-panel="exhp" ${activeTab === 'exhp' ? '' : 'hidden'}>
     <div class="page-toolbar no-print">
       <button class="secondary-button" data-transaction-flow-back type="button">Πίσω στις Δοσοληψίες</button>
     </div>
-    <div class="exhp-step-indicator no-print" aria-label="Βήματα ΕΧΠ">
+    <nav class="transaction-tabs exhp-menu-tabs no-print" aria-label="Μενού ΕΧΠ">
+      <button class="transaction-tab active" data-exhp-menu="reasons" type="button">Αιτιολογίες</button>
+      <button class="transaction-tab" data-exhp-menu="settings" type="button">Ρυθμίσεις</button>
+    </nav>
+    <div data-exhp-menu-panel="reasons">
+    <div class="exhp-step-indicator no-print" aria-label="Βήματα ΕΧΠ" hidden>
       <span class="active" data-exhp-step-dot="1">1</span>
       <span data-exhp-step-dot="2">2</span>
       <span data-exhp-step-dot="3">3</span>
@@ -248,13 +253,14 @@ export async function renderTransactionsPage(
       </div>
     </section>
 
-    <section class="page-panel no-print" data-exhp-wizard-step="2" hidden>
+    <section class="page-panel no-print" data-exhp-wizard-step="2">
       <p class="eyebrow">ΒΗΜΑ 2 ΑΠΟ 3</p>
       <h3>Δικαιολογητικά</h3>
       <select id="exhp-documents-exhp" hidden>
         <option value=""></option>
         ${renderExhpDocumentOptions(state.exhpDocuments)}
       </select>
+      <div id="exhp-documents-editor-home"></div>
       <div id="exhp-documents-editor" class="exhp-support-checklist">
         <p class="muted">Επίλεξε Αιτιολογία Εκδόσεως για να εμφανιστούν τα διαθέσιμα δικαιολογητικά.</p>
       </div>
@@ -267,7 +273,7 @@ export async function renderTransactionsPage(
       </div>
     </section>
 
-    <div data-exhp-wizard-step="3" hidden>
+    <div data-exhp-wizard-step="3">
     <section class="page-panel addy-secondary-grid">
       <p class="eyebrow">ΒΗΜΑ 3 ΑΠΟ 3</p>
       <h3>Έντυπο ΕΧΠ</h3>
@@ -340,6 +346,8 @@ export async function renderTransactionsPage(
       </div>
     </section>
     </div>
+    </div>
+    <div data-exhp-menu-panel="settings" hidden>
     <section class="page-panel no-print">
       <h3>Καταχωρημένες ΕΧΠ</h3>
       <div class="table-wrap">
@@ -359,6 +367,25 @@ export async function renderTransactionsPage(
       </div>
     </section>
 
+    <section id="exhp-edit-panel" class="page-panel no-print" hidden>
+      <h3>Επεξεργασία ΕΧΠ</h3>
+      <form id="exhp-metadata-edit-form" class="inline-form exhp-metadata-edit-form">
+        <input id="exhp-edit-id" type="hidden" />
+        <label class="field">
+          <span>Αριθμός ΕΧΠ</span>
+          <input id="exhp-edit-registry-number" type="number" min="1" step="1" required />
+        </label>
+        <label class="field">
+          <span>Ημερομηνία</span>
+          <input id="exhp-edit-date" type="date" required />
+        </label>
+        <button class="primary-button" type="submit">Αποθήκευση αλλαγών</button>
+      </form>
+      <p class="muted">Η αλλαγή ενημερώνει το Ευρετήριο Εντολών Χρεωπιστώσεων και τις αναφορές στις κινήσεις των μερίδων, χωρίς αλλαγή ποσοτήτων.</p>
+      <h4>Δικαιολογητικά</h4>
+      <div id="exhp-edit-documents-mount"></div>
+    </section>
+
     <section class="page-panel no-print">
       <h3>Αιτιολογία Εκδόσεως ΕΧΠ</h3>
       ${renderExhpIssueReasonSettings(settings.exhpIssueReasons)}
@@ -368,8 +395,11 @@ export async function renderTransactionsPage(
       </form>
     </section>
     </div>
+    </div>
 
   `;
+
+  bindExhpMenu(container, transactionsApi, settingsApi, settings, state, showToast);
 
   container.querySelectorAll('[data-transaction-flow]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -385,7 +415,11 @@ export async function renderTransactionsPage(
 
   container.querySelectorAll('[data-transaction-flow-back]').forEach((button) => {
     button.addEventListener('click', () => {
-      if (container.querySelector('[data-transaction-panel="exhp"].active') && container.querySelector('#exhp-wizard-reason')?.value) {
+      if (
+        !container.querySelector('[data-transaction-panel="exhp"].exhp-flat-flow')
+        && container.querySelector('[data-transaction-panel="exhp"].active')
+        && container.querySelector('#exhp-wizard-reason')?.value
+      ) {
         container.querySelectorAll('[data-exhp-wizard-step]').forEach((panel) => {
           panel.hidden = panel.dataset.exhpWizardStep !== '1';
         });
@@ -409,6 +443,76 @@ export async function renderTransactionsPage(
   );
 }
 
+function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, showToast) {
+  const tabs = [...container.querySelectorAll('[data-exhp-menu]')];
+  const panels = [...container.querySelectorAll('[data-exhp-menu-panel]')];
+  const editor = container.querySelector('#exhp-documents-editor');
+  const editorHome = container.querySelector('#exhp-documents-editor-home');
+  const editMount = container.querySelector('#exhp-edit-documents-mount');
+  const selector = container.querySelector('#exhp-documents-exhp');
+  const editPanel = container.querySelector('#exhp-edit-panel');
+  const editForm = container.querySelector('#exhp-metadata-edit-form');
+
+  const activate = (menu) => {
+    tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.exhpMenu === menu));
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.exhpMenuPanel !== menu;
+    });
+    if (menu === 'reasons' && editor && editorHome && editor.parentElement !== editorHome.parentElement) {
+      editorHome.after(editor);
+      state.viewedExhp = null;
+      state.exhpDocumentsState.selectedExhp = null;
+      selector.value = '';
+    }
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => activate(tab.dataset.exhpMenu));
+  });
+
+  container.querySelectorAll('[data-edit-exhp-document]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        const documentData = await transactionsApi.getExhpDocument(
+          Number(button.dataset.editExhpDocument)
+        );
+        activate('settings');
+        state.viewedExhp = documentData;
+        editPanel.hidden = false;
+        container.querySelector('#exhp-edit-id').value = documentData.id;
+        container.querySelector('#exhp-edit-registry-number').value = documentData.registryNumber;
+        container.querySelector('#exhp-edit-date').value = documentData.date;
+        if (editor && editMount) editMount.appendChild(editor);
+        selector.value = String(documentData.id);
+        selector.dispatchEvent(new Event('change', { bubbles: true }));
+        editPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση της ΕΧΠ.', 'error');
+      }
+    });
+  });
+
+  editForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const id = Number(container.querySelector('#exhp-edit-id').value);
+      const result = await transactionsApi.updateExhpMetadata(id, {
+        registryNumber: Number(container.querySelector('#exhp-edit-registry-number').value),
+        documentDate: container.querySelector('#exhp-edit-date').value
+      });
+      state.viewedExhp = result.document;
+      const row = container.querySelector(`[data-edit-exhp-document="${id}"]`)?.closest('tr');
+      if (row) {
+        row.children[0].textContent = result.document.registryNumber;
+        row.children[1].textContent = formatLocalDate(result.document.date);
+      }
+      showToast(result.message);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της ΕΧΠ.', 'error');
+    }
+  });
+}
+
 function localDateValue(fiscalYear = new Date().getFullYear()) {
   const now = new Date();
   if (Number(fiscalYear) !== now.getFullYear()) {
@@ -417,6 +521,11 @@ function localDateValue(fiscalYear = new Date().getFullYear()) {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function formatLocalDate(value) {
+  const [year, month, day] = String(value || '').split('-');
+  return year && month && day ? `${day}/${month}/${year}` : String(value || '');
 }
 
 export function renderShareNumberOptions(shares) {

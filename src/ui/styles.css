@@ -3190,6 +3190,33 @@ table.administration-table td {
   background: #0b1322;
 }
 
+.exhp-menu-tabs {
+  width: fit-content;
+  margin: 12px 0 16px;
+}
+
+.exhp-flat-flow [data-exhp-wizard-step] > .eyebrow,
+.exhp-flat-flow #exhp-wizard-next,
+.exhp-flat-flow #exhp-reason-back,
+.exhp-flat-flow #exhp-support-next,
+.exhp-flat-flow #exhp-wizard-back {
+  display: none;
+}
+
+.exhp-flat-flow [data-exhp-menu-panel="reasons"] {
+  display: grid;
+  gap: 14px;
+}
+
+.exhp-metadata-edit-form {
+  align-items: end;
+  grid-template-columns: minmax(150px, 220px) minmax(180px, 240px) auto;
+}
+
+#exhp-edit-documents-mount:not(:empty) {
+  margin-top: 12px;
+}
+
 .transaction-tab {
   min-width: 120px;
   padding: 11px 18px 9px;

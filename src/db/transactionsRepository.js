@@ -454,6 +454,36 @@ function createTransactionsRepository(db) {
       return db.prepare('SELECT * FROM exhp_documents WHERE id = ?').get(id);
     },
 
+    updateExhpMetadata(documentId, payload) {
+      db.prepare(`
+        UPDATE exhp_documents
+        SET fiscal_year = ?,
+            registry_number = ?,
+            document_date = ?
+        WHERE id = ?
+      `).run(
+        payload.fiscalYear,
+        payload.registryNumber,
+        payload.documentDate,
+        documentId
+      );
+      db.prepare(`
+        UPDATE share_transactions
+        SET transaction_date = ?,
+            document_reference = ?
+        WHERE id IN (
+          SELECT share_transaction_id
+          FROM exhp_items
+          WHERE exhp_document_id = ?
+            AND share_transaction_id IS NOT NULL
+        )
+      `).run(
+        payload.documentDate,
+        `ΕΧΠ ${payload.registryNumber}/${payload.fiscalYear}`,
+        documentId
+      );
+    },
+
     listExhpDocumentItems(documentId) {
       return db
         .prepare(

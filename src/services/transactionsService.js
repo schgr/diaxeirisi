@@ -339,6 +339,32 @@ function createTransactionsService(db, settingsService) {
       };
     },
 
+    updateExhpMetadata(documentId, payload) {
+      const id = requirePositiveId(documentId);
+      const document = repository.getExhpDocument(id);
+      if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');
+      const registryNumber = Number(payload && payload.registryNumber);
+      if (!Number.isInteger(registryNumber) || registryNumber <= 0) {
+        throw new Error('Ο αριθμός ΕΧΠ πρέπει να είναι θετικός ακέραιος.');
+      }
+      const documentDate = String((payload && payload.documentDate) || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(documentDate)) {
+        throw new Error('Η ημερομηνία ΕΧΠ δεν είναι έγκυρη.');
+      }
+      const fiscalYear = Number(documentDate.slice(0, 4));
+      repository.transaction(() => {
+        repository.updateExhpMetadata(id, {
+          fiscalYear,
+          registryNumber,
+          documentDate
+        });
+      });
+      return {
+        message: `Η ΕΧΠ ${registryNumber}/${fiscalYear} και οι συνδεδεμένες κινήσεις ενημερώθηκαν.`,
+        document: this.getExhpDocument(id)
+      };
+    },
+
     updateExhpOtherSupportDocument(documentId, value) {
       const document = repository.getExhpDocument(documentId);
       if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');

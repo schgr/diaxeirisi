@@ -439,6 +439,19 @@ async function run() {
     const updatedExhpIndexRow = transactions.listExhpIndexRows(2026)[0];
     assert.strictEqual(updatedExhpIndexRow.indexField6, 'ΕΓΚΡΙΣΗ 15/2026');
     assert.strictEqual(updatedExhpIndexRow.indexField7, 'ΕΝΗΜΕΡΩΘΗΚΕ');
+    const metadataUpdate = transactions.updateExhpMetadata(exhp.documentId, {
+      registryNumber: 3,
+      documentDate: '2026-06-07'
+    });
+    assert.strictEqual(metadataUpdate.document.registryNumber, 3);
+    assert.strictEqual(metadataUpdate.document.date, '2026-06-07');
+    const renamedExhpIndexRow = transactions.listExhpIndexRows(2026)[0];
+    assert.strictEqual(renamedExhpIndexRow.serial, 3);
+    assert.strictEqual(renamedExhpIndexRow.date, '2026-06-07');
+    const cardAfterExhpRename = shares.getShareCard(share.id, 2026);
+    assert.strictEqual(cardAfterExhpRename.transactions[1].registryNumber, 'ΕΧΠ-3');
+    assert.strictEqual(cardAfterExhpRename.transactions[1].date, '2026-06-07');
+    assert.strictEqual(cardAfterExhpRename.share.accountingBalance, 6);
     const exhpDocument = transactions.getExhpDocument(exhp.documentId);
     assert.strictEqual(exhpDocument.supportStatus, 'Πλήρης για ΕΥΣ');
     assert.strictEqual(exhpDocument.materialAttachments.composition.length, 0);

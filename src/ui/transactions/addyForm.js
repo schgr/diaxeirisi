@@ -73,6 +73,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   const exhpWizardReason = container.querySelector('#exhp-wizard-reason');
   const exhpSelector = container.querySelector('#exhp-documents-exhp');
   const showExhpWizardStep = (step) => {
+    if (container.querySelector('[data-transaction-panel="exhp"].exhp-flat-flow')) return;
     container.querySelectorAll('[data-exhp-wizard-step]').forEach((panel) => {
       panel.hidden = panel.dataset.exhpWizardStep !== String(step);
     });

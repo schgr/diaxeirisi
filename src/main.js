@@ -359,6 +359,9 @@ function registerIpcHandlers() {
   ipcMain.handle('transactions:get-exhp-document', async (_event, id) =>
     safeInvoke(() => services.transactions.getExhpDocument(id))
   );
+  ipcMain.handle('transactions:update-exhp-metadata', async (_event, id, payload) =>
+    safeInvoke(() => services.transactions.updateExhpMetadata(id, payload))
+  );
   ipcMain.handle('transactions:update-exhp-support', async (_event, documentId, supportId, payload) =>
     safeInvoke(() => services.transactions.updateExhpSupport(documentId, supportId, payload))
   );

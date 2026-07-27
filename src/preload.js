@@ -106,6 +106,7 @@ contextBridge.exposeInMainWorld('appApi', {
     saveExhp: (payload) => invoke('transactions:save-exhp', payload),
     listExhpDocuments: () => invoke('transactions:exhp-documents'),
     getExhpDocument: (id) => invoke('transactions:get-exhp-document', id),
+    updateExhpMetadata: (id, payload) => invoke('transactions:update-exhp-metadata', id, payload),
     updateExhpSupport: (documentId, supportId, payload) =>
       invoke('transactions:update-exhp-support', documentId, supportId, payload),
     updateExhpOtherSupport: (documentId, value) =>
