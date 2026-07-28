@@ -123,6 +123,33 @@ async function run() {
     assert.match(sharePrintHtml, /left:9\.5%;top:66\.15%;width:8\.1%;/);
     assert.match(sharePrintHtml, /left:17\.8%;top:66\.15%;width:12\.9%;/);
 
+    const overflowingShareHtml = renderSharePrintDocument({
+      share: {
+        nominalNumber: 'TEST-002',
+        shareNumber: '2',
+        description: 'Μερίδα με πολλές κινήσεις',
+        materialCode: '',
+        measurementUnit: 'Τεμάχια',
+        unitPrice: 1
+      },
+      openingTransfer: { balance: 20, inventoryDate: '2025-12-31' },
+      transactions: Array.from({ length: 13 }, (_unused, index) => ({
+        serialNumber: index + 1,
+        date: '2026-06-13',
+        transactionUnit: 'ΜΟΝΑΔΑ',
+        registryNumber: `Χ-${index + 1}`,
+        imports: 0,
+        exports: 1,
+        balance: 19 - index
+      }))
+    });
+    assert.strictEqual((overflowingShareHtml.match(/class="official-share-page/g) || []).length, 2);
+    assert.match(overflowingShareHtml, /official-share-back-page/);
+    assert.match(overflowingShareHtml, /ΓΙΑ ΜΕΤΑΦΟΡΑ/);
+    assert.match(overflowingShareHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ/);
+    assert.match(overflowingShareHtml, />8<\/td><td><\/td>/);
+    assert.doesNotMatch(overflowingShareHtml, /Πίσω πλευρά|ΣΥΔΑ/);
+
     const k2310Html = (await import('../src/ui/pages/chargesPage.js')).renderK2310Pages(
       '108 Α/Κ ΜΜΠ/ΔΥ',
       { departmentName: '1ος ΛΟΧΟΣ' },

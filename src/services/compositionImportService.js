@@ -6,6 +6,7 @@ const COMPOSITION_HEADERS = [
   'Αριθμός Μερίδας',
   'Αριθμός Ονομαστικού',
   'Περιγραφή',
+  'Μονάδα Μέτρησης',
   'Προβλεπόμενη Ποσότητα',
   'Υπάρχουσα Ποσότητα'
 ];
@@ -23,9 +24,9 @@ function createCompositionImportService(db) {
       sheet.addRow(COMPOSITION_HEADERS);
 
       sheet.columns = [
-        { width: 20 }, { width: 26 }, { width: 48 }, { width: 24 }, { width: 22 }
+        { width: 20 }, { width: 26 }, { width: 48 }, { width: 20 }, { width: 24 }, { width: 22 }
       ];
-      sheet.autoFilter = 'A1:E1';
+      sheet.autoFilter = 'A1:F1';
       sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
       sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
       sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
@@ -75,7 +76,7 @@ function createCompositionImportService(db) {
           return {
             componentNominalNumber: row.nominalNumber,
             componentDescription: row.description,
-            measurementUnit: existing?.measurementUnit || componentShare?.measurementUnit || '',
+            measurementUnit: row.measurementUnit || existing?.measurementUnit || componentShare?.measurementUnit || '',
             projectedQuantity: row.projectedQuantity,
             notIssuedQuantity: Math.max(projectedTotal - row.existingQuantity, 0),
             notes: existing?.notes || ''
@@ -130,10 +131,11 @@ function parseCompositionRows(matrix) {
     const shareNumber = text(row[index['Αριθμός Μερίδας']]);
     const nominalNumber = text(row[index['Αριθμός Ονομαστικού']]);
     const description = text(row[index['Περιγραφή']]);
+    const measurementUnit = text(row[index['Μονάδα Μέτρησης']]);
     const projectedQuantity = number(row[index['Προβλεπόμενη Ποσότητα']]);
     const existingQuantity = number(row[index['Υπάρχουσα Ποσότητα']]);
-    if (!shareNumber || !nominalNumber || !description) {
-      errors.push(`Γραμμή ${excelRow}: τα τρία πρώτα πεδία είναι υποχρεωτικά.`);
+    if (!shareNumber || !nominalNumber || !description || !measurementUnit) {
+      errors.push(`Γραμμή ${excelRow}: η μερίδα, ο αριθμός ονομαστικού, η περιγραφή και η μονάδα μέτρησης είναι υποχρεωτικά.`);
       return;
     }
     if (!Number.isFinite(projectedQuantity) || projectedQuantity <= 0) {
@@ -147,7 +149,7 @@ function parseCompositionRows(matrix) {
     const key = `${normalizeKey(shareNumber)}|${normalizeKey(nominalNumber)}`;
     if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${nominalNumber}.`);
     seen.add(key);
-    rows.push({ shareNumber, nominalNumber, description, projectedQuantity, existingQuantity });
+    rows.push({ shareNumber, nominalNumber, description, measurementUnit, projectedQuantity, existingQuantity });
   });
   if (errors.length) {
     throw new AppError(`Το αρχείο συνθέσεων δεν μπορεί να εισαχθεί:\n${errors.slice(0, 12).join('\n')}`, 'VALIDATION_ERROR');

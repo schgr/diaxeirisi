@@ -31,7 +31,7 @@ async function run() {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Συνθέσεις');
     sheet.addRow(COMPOSITION_HEADERS);
-    sheet.addRow(['13', 'COMP-1', 'Εξάρτημα', 15, 100]);
+    sheet.addRow(['13', 'COMP-1', 'Εξάρτημα', 'Τεμάχια', 15, 100]);
     await workbook.xlsx.writeFile(input);
 
     const result = await importer.importWorkbook(input);
@@ -41,6 +41,7 @@ async function run() {
     assert.strictEqual(card.share.requiresComposition, true);
     assert.strictEqual(card.compositionItems[0].projectedQuantity, 150);
     assert.strictEqual(card.compositionItems[0].quantityPerMaterial, 15);
+    assert.strictEqual(card.compositionItems[0].measurementUnit, 'Τεμάχια');
     assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 50);
     assert.strictEqual(card.changeSheetEntries.length, 1);
     assert.strictEqual(card.changeSheetEntries[0].changeDate, `${new Date().getFullYear() - 1}-12-31`);

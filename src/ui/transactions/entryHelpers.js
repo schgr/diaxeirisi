@@ -102,10 +102,19 @@ export function isToolCollectionReason(value) {
 
 export function openToolCollectionCreditDialog(collectionShare, referenceShares) {
   return new Promise((resolve) => {
-    const components = collectionShare.composition.map((item) => ({
-      share: collectionShare,
-      item
-    }));
+    const components = collectionShare.composition.map((compositionItem) => {
+      const sourceShare = referenceShares.find((candidate) =>
+        String(candidate.nominalNumber || '').trim() === String(compositionItem.componentNominalNumber || '').trim()
+      );
+      return {
+        share: collectionShare,
+        sourceShare,
+        item: {
+          ...compositionItem,
+          measurementUnit: compositionItem.measurementUnit || sourceShare?.measurementUnit || ''
+        }
+      };
+    });
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
@@ -115,12 +124,13 @@ export function openToolCollectionCreditDialog(collectionShare, referenceShares)
         </header>
         <div class="card-table-wrap">
           <table>
-            <thead><tr><th>Μερίδα Συλλογής</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
+            <thead><tr><th>Μερίδα Συλλογής</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μονάδα Μέτρησης</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
             <tbody>${components.map(({ share, item }, index) => `
               <tr data-collection-component="${index}">
                 <td>${escapeHtml(share.shareNumber)}</td>
                 <td>${escapeHtml(item.componentNominalNumber)}</td>
                 <td>${escapeHtml(item.componentDescription)}</td>
+                <td>${escapeHtml(item.measurementUnit)}</td>
                 <td class="number-cell">${formatQuantity(item.chargedQuantity)}</td>
                 <td><input data-collection-quantity type="number" min="0" max="${Number(item.chargedQuantity || 0)}" step="0.001" /></td>
               </tr>
@@ -142,11 +152,8 @@ export function openToolCollectionCreditDialog(collectionShare, referenceShares)
       if (!event.target.closest('[data-save-collection-credit]')) return;
       const selected = [...modal.querySelectorAll('[data-collection-component]')].map((row) => {
         const component = components[Number(row.dataset.collectionComponent)];
-        const { share, item } = component;
+        const { share, item, sourceShare } = component;
         const quantity = Number(row.querySelector('[data-collection-quantity]').value || 0);
-        const sourceShare = referenceShares.find((candidate) =>
-          String(candidate.nominalNumber || '').trim() === String(item.componentNominalNumber || '').trim()
-        );
         return { share, item, quantity, sourceShare };
       }).filter(({ quantity }) => quantity > 0);
       const invalid = selected.some(({ item, quantity }) => quantity > Number(item.chargedQuantity || 0));

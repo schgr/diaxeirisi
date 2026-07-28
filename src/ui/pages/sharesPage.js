@@ -960,13 +960,27 @@ function openSharePrintDocument(card) {
 }
 
 export function renderSharePrintDocument(card, options = {}) {
-  const rowsPerPage = 12;
-  const pageCount = Math.max(1, Math.ceil(card.transactions.length / rowsPerPage));
-  return Array.from({ length: pageCount }, (_unused, pageIndex) => {
-    const rows = card.transactions.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage);
-    const openingBalance = pageIndex === 0
+  const frontRows = card.transactions.slice(0, 12);
+  const remainingRows = card.transactions.slice(12);
+  const pages = [{ side: 'front', rows: frontRows, startIndex: 0 }];
+  for (let startIndex = 0; startIndex < remainingRows.length; startIndex += 32) {
+    pages.push({
+      side: 'back',
+      rows: remainingRows.slice(startIndex, startIndex + 32),
+      startIndex: 12 + startIndex
+    });
+  }
+  return pages.map((page, pageIndex) => {
+    const openingBalance = page.startIndex === 0
       ? card.openingTransfer?.balance
-      : card.transactions[pageIndex * rowsPerPage - 1]?.balance;
+      : card.transactions[page.startIndex - 1]?.balance;
+    const hasFollowingPage = pageIndex < pages.length - 1;
+    const transferBalance = hasFollowingPage
+      ? page.rows[page.rows.length - 1]?.balance ?? openingBalance
+      : '';
+    if (page.side === 'back') {
+      return renderOfficialShareBackPage(page.rows, openingBalance, transferBalance);
+    }
     return `
       <article class="official-share-page print-document-area">
         <img src="./assets/official-forms/share-card-expanded-23-24.png" alt="Μερίδα Υλικού - Δελτίο Υπολοίπων" />
@@ -1007,10 +1021,76 @@ export function renderSharePrintDocument(card, options = {}) {
           1.75,
           'share-opening-balance-overlay'
         )}
-        ${renderOfficialShareRows(rows)}
+        ${renderOfficialShareRows(page.rows)}
+        ${hasFollowingPage
+          ? shareDocumentOverlay(
+            formatQuantity(transferBalance || 0),
+            68.1,
+            86.85,
+            11.6,
+            1.75,
+            'share-transfer-balance-overlay'
+          )
+          : ''}
       </article>
     `;
   }).join('');
+}
+
+function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
+  const blankRows = Array.from({ length: Math.max(0, 32 - rows.length) }, () => null);
+  return `
+    <article class="official-share-page official-share-back-page print-document-area">
+      <div class="official-share-back-sheet">
+        <div class="official-share-back-code">Κ 2309/ΔΥΠ</div>
+        <h2>ΜΕΡΙΔΑ ΥΛΙΚΟΥ - ΔΕΛΤΙΟ ΥΠΟΛΟΙΠΩΝ</h2>
+        <table class="official-share-back-table">
+          <thead>
+            <tr>
+              <th>Α/Α</th><th>ΗΜΕΡ</th><th>ΧΡΕΩΣΗ<br />Ή ΠΙΣΤΩΣΗ</th>
+              <th>ΑΡΙΘΜ<br />ΕΥΡΕΤΗΡΙΟΥ</th><th>ΕΙΣΑΓΩΓΕΣ</th><th>ΕΞΑΓΩΓΕΣ</th>
+              <th>ΥΠΟΛΟΙΠΟ</th><th>ΠΑΡΣΕΙΣ</th>
+            </tr>
+            <tr class="official-share-back-column-numbers">
+              <th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="official-share-back-transfer-row">
+              <td colspan="6">ΑΠΟ ΜΕΤΑΦΟΡΑ</td>
+              <td>${escapeHtml(formatQuantity(openingBalance || 0))}</td><td></td>
+            </tr>
+            ${[...rows, ...blankRows].map((item) => item
+              ? `<tr>
+                  <td>${escapeHtml(item.serialNumber)}</td>
+                  <td>${escapeHtml(formatDate(item.date))}</td>
+                  <td>${escapeHtml(item.transactionUnit)}</td>
+                  <td>${escapeHtml(item.registryNumber)}</td>
+                  <td>${escapeHtml(item.imports ? formatQuantity(item.imports) : '')}</td>
+                  <td>${escapeHtml(item.exports ? formatQuantity(item.exports) : '')}</td>
+                  <td>${escapeHtml(formatQuantity(item.balance))}</td>
+                  <td></td>
+                </tr>`
+              : '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>')
+              .join('')}
+            <tr class="official-share-back-transfer-row official-share-back-carry-row">
+              <td colspan="6">ΓΙΑ ΜΕΤΑΦΟΡΑ</td>
+              <td>${escapeHtml(transferBalance === '' ? '' : formatQuantity(transferBalance))}</td><td></td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="official-share-back-summary">
+          <tbody>
+            <tr><th>30. ΤΜΗΜΑΤΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><th>31. ΠΡΟΒΛΕΠΟΜΕΝΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><th>32. ΥΠΑΡΧΟΝΤΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><th>33. ΔΙΑΦΟΡΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+        <div class="official-share-back-footer">ΕΦΕΔ 202</div>
+      </div>
+    </article>
+  `;
 }
 
 function renderOfficialShareRows(rows) {
