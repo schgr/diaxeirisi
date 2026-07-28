@@ -1333,6 +1333,10 @@ h3 {
   max-width: 720px;
 }
 
+.internal-movement-context .field:nth-child(2) {
+  margin-left: 6px;
+}
+
 .internal-material-line {
   grid-template-columns:
     minmax(115px, 0.65fr)
@@ -5401,6 +5405,12 @@ th {
   page-break-after: always;
 }
 
+.k2310-document-modal [data-k2310-pages] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .k2310-page:last-child {
   break-after: auto;
   page-break-after: auto;
@@ -5504,31 +5514,13 @@ th {
   print-color-adjust: exact !important;
 }
 
-.k2310-table .k2310-signatures,
-.k2310-table .k2310-signature-grid-cell {
-  height: 56px;
-  text-align: left;
-  vertical-align: top;
-}
-
 .k2310-table .k2310-signatures {
+  position: relative;
+  height: 72px;
   padding: 5px;
-}
-
-.k2310-table .k2310-vertical-signature {
-  padding: 2px 0;
+  overflow: visible;
   text-align: center;
-  vertical-align: middle;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  white-space: nowrap;
-  line-height: 1.05;
-  font-size: 5.5px;
-}
-
-.k2310-table .k2310-manager-signature {
-  text-align: center;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .k2310-signature-label {
@@ -5537,11 +5529,28 @@ th {
   text-align: left;
 }
 
-.k2310-manager-signature strong,
-.k2310-manager-signature > span:not(.k2310-signature-label),
-.k2310-vertical-signature strong,
-.k2310-vertical-signature span {
+.k2310-horizontal-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+  margin: -8px 12% 0;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.k2310-horizontal-signatures strong,
+.k2310-horizontal-signatures span {
   display: block;
+}
+
+.k2310-horizontal-signatures strong {
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+.k2310-signature-title {
+  font-weight: 700;
 }
 
 .k2310-preview-actions {

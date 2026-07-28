@@ -25,13 +25,15 @@ const html = renderK2310Pages(
 
 assert.match(html, /<td>7<\/td>(?:<td><\/td>){10}<\/tr>/u);
 assert.doesNotMatch(html, /<td>10<\/td>/u);
+assert.doesNotMatch(html, /<td>20<\/td>/u);
 assert.doesNotMatch(html, /Αζίζογλου Πρόδρομος/u);
 
 const departmentSignatureHtml = renderK2310Pages(
   'Μονάδα Δοκιμής', department, balances, { signatureMode: 'department' }
 );
-assert.match(departmentSignatureHtml, /<td class="k2310-signature-grid-cell k2310-vertical-signature">/u);
-assert.doesNotMatch(departmentSignatureHtml, /colspan="5" class="k2310-signature-grid-cell/u);
+assert.match(departmentSignatureHtml, /colspan="17" class="k2310-signatures"/u);
+assert.match(departmentSignatureHtml, /k2310-horizontal-signatures/u);
+assert.doesNotMatch(departmentSignatureHtml, /k2310-vertical-signature/u);
 assert.match(departmentSignatureHtml, /Αζίζογλου Πρόδρομος/u);
 assert.match(departmentSignatureHtml, /Λγός \(ΠΒ\)/u);
 
@@ -41,7 +43,9 @@ const allSignaturesHtml = renderK2310Pages(
   balances,
   { signatureMode: 'all', financialManager: 'Ανθλγός (ΠΒ) Διαχειριστής Δήμος' }
 );
-assert.match(allSignaturesHtml, /k2310-signatures k2310-manager-signature/u);
+assert.match(allSignaturesHtml, /k2310-horizontal-signatures/u);
+assert.match(allSignaturesHtml, /Ο ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
+assert.match(allSignaturesHtml, /Ο ΜΕΡΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
 assert.match(allSignaturesHtml, /<strong>Διαχειριστής Δήμος<\/strong><span>Ανθλγός \(ΠΒ\)<\/span>/u);
 assert.match(allSignaturesHtml, /Αζίζογλου Πρόδρομος/u);
 

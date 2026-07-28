@@ -242,7 +242,7 @@ function openK2310Document(serviceName, department, balances, financialManager) 
   let signatureMode = 'none';
   modal.className = 'modal-backdrop';
   modal.innerHTML = `
-    <section class="request-document-modal">
+    <section class="request-document-modal k2310-document-modal">
       <header class="material-card-header no-print">
         <div><p class="eyebrow">Κ2310/ΔΥΠ</p><h2>ΔΕΛΤΙΟ ΔΟΣΟΛΗΨΙΩΝ</h2></div>
         <div class="row-actions k2310-preview-actions">
@@ -396,24 +396,24 @@ function renderK2310Row(row) {
     '', '', '', ''
   ];
   const returnCells = ['', '', '', '', ''];
-  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td>${formatQuantity(balance.projectedQuantity)}</td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
+  return `<tr><td>${serial}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td><td class="k2310-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td><td></td>${[...issueCells, ...returnCells].map((value) => `<td>${value}</td>`).join('')}<td></td></tr>`;
 }
 
 function renderK2310SignatureRow(mode, financialManager, departmentHead) {
-  const selectedIdentity = mode === 'manager' ? financialManager : departmentHead;
-  const managerInLabel = mode === 'all';
-  const showAdjacent = ['manager', 'department', 'all'].includes(mode);
-  const adjacentIdentity = mode === 'all' ? departmentHead : selectedIdentity;
-  const adjacentSignatureCell = showAdjacent
-    ? `<td class="k2310-signature-grid-cell k2310-vertical-signature">${renderK2310Identity(adjacentIdentity)}</td>`
-    : '<td class="k2310-signature-grid-cell"></td>';
+  const showManager = mode === 'manager' || mode === 'all';
+  const showDepartment = mode === 'department' || mode === 'all';
   return `
-    <td colspan="6" class="k2310-signatures${managerInLabel ? ' k2310-manager-signature' : ''}">
+    <td colspan="17" class="k2310-signatures">
       <span class="k2310-signature-label">(14) ΥΠΟΓΡΑΦΕΣ</span>
-      ${managerInLabel ? renderK2310Identity(financialManager) : ''}
+      <div class="k2310-horizontal-signatures">
+        <div>
+          ${showManager ? `<span class="k2310-signature-title">Ο ΔΙΑΧΕΙΡΙΣΤΗΣ</span>${renderK2310Identity(financialManager)}` : ''}
+        </div>
+        <div>
+          ${showDepartment ? `<span class="k2310-signature-title">Ο ΜΕΡΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ</span>${renderK2310Identity(departmentHead)}` : ''}
+        </div>
+      </div>
     </td>
-    ${adjacentSignatureCell}
-    ${'<td class="k2310-signature-grid-cell"></td>'.repeat(10)}
   `;
 }
 
