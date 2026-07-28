@@ -193,7 +193,7 @@ export async function renderFinancialYearTasksPage(
   async function loadYearPrints() {
     yearPrintsResults.innerHTML = '<p class="muted">Φόρτωση Μερίδων...</p>';
     try {
-      state.movedCards = await sharesApi.listMovedCards(state.fiscalYear);
+      state.movedCards = sortMovedShareCards(await sharesApi.listMovedCards(state.fiscalYear));
       yearPrintsResults.innerHTML = renderMovedShareCardsTable(state.movedCards);
       updateYearPrintButtons();
     } catch (error) {
@@ -518,8 +518,9 @@ function formatQuantity(value) {
 }
 
 export function renderMovedShareCardsTable(cards) {
-  const body = cards.length
-    ? cards.map((card, index) => {
+  const sortedCards = sortMovedShareCards(cards);
+  const body = sortedCards.length
+    ? sortedCards.map((card, index) => {
         const includesChangeSheet = card.compositionItems.length > 0;
         return `
           <tr>
@@ -544,8 +545,9 @@ export function renderMovedShareCardsTable(cards) {
 
 function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
   document.querySelector('.annual-share-print-backdrop')?.remove();
-  const cardsHtml = cards.map((card) => renderSharePrintDocument(card)).join('');
-  const changeSheetCards = cards.filter((card) => card.compositionItems.length > 0);
+  const sortedCards = sortMovedShareCards(cards);
+  const cardsHtml = sortedCards.map((card) => renderSharePrintDocument(card)).join('');
+  const changeSheetCards = sortedCards.filter((card) => card.compositionItems.length > 0);
   const changeSheetsHtml = changeSheetCards.map((card) => renderChangeSheetDocument({
     ...card,
     changeSheetEntries: card.changeSheetEntries.filter((entry) =>
@@ -602,6 +604,16 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
     }
   });
   document.body.appendChild(backdrop);
+}
+
+export function sortMovedShareCards(cards) {
+  return [...(cards || [])].sort((left, right) =>
+    String(left?.share?.shareNumber || '').localeCompare(
+      String(right?.share?.shareNumber || ''),
+      'el',
+      { numeric: true, sensitivity: 'base' }
+    )
+  );
 }
 
 async function printAnnualDocumentGroup(html, landscape) {

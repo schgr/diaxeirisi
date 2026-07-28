@@ -26,7 +26,7 @@ async function run() {
       renderExternalTransactionsIndex,
       renderMaterialRegistryPages
     } = await import('../src/ui/pages/printsPage.js');
-    const { renderSharePrintDocument } = await import('../src/ui/pages/sharesPage.js');
+    const { renderShareBackTemplate, renderSharePrintDocument } = await import('../src/ui/pages/sharesPage.js');
     const { renderProtocolDocument } = await import('../src/ui/pages/movementDifferencesPage.js');
     const { renderOfficialHandoverProtocol } = await import('../src/ui/handoverProtocol.js');
     assert.strictEqual(formatOfficerName('δΕΛΗΣ γΕΩΡΓΙΟΣ'), 'Δελης Γεωργιος');
@@ -149,6 +149,10 @@ async function run() {
     assert.match(overflowingShareHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ/);
     assert.match(overflowingShareHtml, />8<\/td><td><\/td>/);
     assert.doesNotMatch(overflowingShareHtml, /Πίσω πλευρά|ΣΥΔΑ/);
+    const blankShareBackHtml = renderShareBackTemplate();
+    assert.strictEqual((blankShareBackHtml.match(/official-share-back-page/g) || []).length, 1);
+    assert.doesNotMatch(blankShareBackHtml, /Πίσω πλευρά|ΣΥΔΑ/);
+    assert.doesNotMatch(blankShareBackHtml, /<td>0<\/td>/);
 
     const k2310Html = (await import('../src/ui/pages/chargesPage.js')).renderK2310Pages(
       '108 Α/Κ ΜΜΠ/ΔΥ',

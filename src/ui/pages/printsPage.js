@@ -1,6 +1,6 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 
-import { renderSharePrintDocument } from './sharesPage.js';
+import { renderShareBackTemplate, renderSharePrintDocument } from './sharesPage.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 
 const ROWS_PER_REGISTRY_PAGE = 25;
@@ -182,18 +182,15 @@ export async function renderPrintsPage(
     if (state.activeTab === 'share-card') {
       title.textContent = 'Μερίδα Υλικού';
       if (options.latestInventoryShareCards) {
-        const latestInventory = inventoryReference.sessions[0]
-          ? await inventoryApi.getSession(Number(inventoryReference.sessions[0].id))
-          : null;
-        controls.innerHTML = renderLatestInventoryShareCardControls(latestInventory);
-        await renderLatestInventoryShareCardPreview(
+        controls.innerHTML = renderAllShareCardControls(shares.length);
+        await renderAllShareCardPreview(
           sharesApi,
           shares,
-          latestInventory,
           settings,
           state,
           preview
         );
+        bindAllShareCardControls(container, preview);
       } else {
         controls.innerHTML = renderShareCardControls(shares, state);
         await renderShareCardPreview(sharesApi, shares, state, preview);
@@ -625,48 +622,43 @@ function renderShareCardControls(shares, state) {
   `;
 }
 
-function renderLatestInventoryShareCardControls(inventory) {
+function renderAllShareCardControls(shareCount) {
   return `
-    <div class="registry-controls share-print-controls latest-inventory-share-controls">
+    <div class="registry-controls share-print-controls all-share-controls">
       <div class="latest-inventory-share-summary">
-        <span>Τελευταία Απογραφή</span>
-        <strong>${inventory
-          ? `${escapeHtml(inventory.serialNumber)}/${escapeHtml(inventory.fiscalYear)} · ${formatDate(inventory.inventoryDate)}`
-          : 'Δεν υπάρχει διαθέσιμη απογραφή'}</strong>
+        <span>Σύνολο Μερίδων Υλικού</span>
+        <strong>${escapeHtml(shareCount)}</strong>
       </div>
-      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button" ${inventory?.items?.length ? '' : 'disabled'}>Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button" ${shareCount ? '' : 'disabled'}>Εκτύπωση Μερίδων</button>
+      <button id="print-share-back-side" class="secondary-button compact-print-button" data-no-document-export type="button">Εκτύπωση Πίσω Πλευράς</button>
     </div>
   `;
 }
 
-async function renderLatestInventoryShareCardPreview(
+async function renderAllShareCardPreview(
   sharesApi,
   shares,
-  inventory,
   settings,
   state,
   preview
 ) {
-  if (!inventory?.items?.length) {
-    preview.innerHTML = '<section class="page-panel empty-table">Δεν υπάρχουν μερίδες στην τελευταία απογραφή.</section>';
+  if (!shares.length) {
+    preview.innerHTML = '<section class="page-panel empty-table">Δεν υπάρχουν Μερίδες Υλικού.</section>';
     return;
   }
 
-  const sharesById = new Map(shares.map((share) => [Number(share.id), share]));
-  const cards = await Promise.all(inventory.items.map(async (item) => {
-    const fiscalYearAfterInventory = Number(inventory.fiscalYear) + 1;
-    const card = await sharesApi.getCard(item.shareId, fiscalYearAfterInventory);
+  const cards = await Promise.all(shares.map(async (share) => {
+    const card = await sharesApi.getCard(share.id, state.fiscalYear);
     return {
       ...card,
       share: {
         ...card.share,
-        ...(sharesById.get(Number(item.shareId)) || {})
+        ...share
       },
-      year: Number(inventory.fiscalYear),
       openingTransfer: {
-        balance: Number(item.accountingBalance || 0),
-        inventoryDate: inventory.inventoryDate,
-        reference: `${inventory.serialNumber}/${inventory.fiscalYear}`
+        balance: Number(card.share.accountingBalance || 0),
+        inventoryDate: '',
+        reference: ''
       },
       transactions: []
     };
@@ -680,6 +672,16 @@ async function renderLatestInventoryShareCardPreview(
       issuerRank: issuer.rank
     }))
     .join('');
+}
+
+function bindAllShareCardControls(container, preview) {
+  const button = container.querySelector('#print-share-back-side');
+  if (!button) return;
+  button.addEventListener('click', async () => {
+    const backPreview = document.createElement('div');
+    backPreview.innerHTML = renderShareBackTemplate();
+    await printIsolatedPreview(backPreview, false);
+  });
 }
 
 function bindShareCardControls(container, sharesApi, shares, state, preview) {

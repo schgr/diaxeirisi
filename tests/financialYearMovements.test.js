@@ -11,7 +11,8 @@ async function run() {
   try {
     const {
       renderFinancialYearMovementTable,
-      renderMovedShareCardsTable
+      renderMovedShareCardsTable,
+      sortMovedShareCards
     } = await import('../src/ui/pages/financialYearTasksPage.js');
     const db = await initializeDatabase(testDirectory);
     const transactions = createTransactionsService(db, createSettingsService(db));
@@ -83,6 +84,14 @@ async function run() {
     }]);
     assert.match(movedCardsHtml, /Καρτέλα και Φύλλο Μεταβολών/);
     assert.match(movedCardsHtml, /data-year-print-card="1"/);
+    assert.deepStrictEqual(
+      sortMovedShareCards([
+        { share: { shareNumber: '145' } },
+        { share: { shareNumber: '14' } },
+        { share: { shareNumber: '3' } }
+      ]).map((card) => card.share.shareNumber),
+      ['3', '14', '145']
+    );
     assert.deepStrictEqual(transactions.listFinancialYearMovementRows('addy', 2025, 'Χρέωση'), []);
     assert.throws(() => transactions.listFinancialYearMovementRows('invalid', 2026, 'Χρέωση'));
     assert.throws(() => transactions.listFinancialYearMovementRows('addy', 2026, 'Άλλο'));

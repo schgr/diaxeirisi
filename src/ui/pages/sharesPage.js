@@ -1058,7 +1058,9 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
           <tbody>
             <tr class="official-share-back-transfer-row">
               <td colspan="6">ΑΠΟ ΜΕΤΑΦΟΡΑ</td>
-              <td>${escapeHtml(formatQuantity(openingBalance || 0))}</td><td></td>
+              <td>${escapeHtml(openingBalance === '' || openingBalance === null || openingBalance === undefined
+                ? ''
+                : formatQuantity(openingBalance))}</td><td></td>
             </tr>
             ${[...rows, ...blankRows].map((item) => item
               ? `<tr>
@@ -1091,6 +1093,10 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
       </div>
     </article>
   `;
+}
+
+export function renderShareBackTemplate() {
+  return renderOfficialShareBackPage([], '', '');
 }
 
 function renderOfficialShareRows(rows) {

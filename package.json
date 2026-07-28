@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.190",
+  "version": "0.13.191",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης",
   "main": "src/main.js",
