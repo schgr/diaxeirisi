@@ -365,6 +365,62 @@ function createTransactionsService(db, settingsService) {
       };
     },
 
+    deleteExhpDocument(documentId) {
+      const id = requirePositiveId(documentId);
+      const document = repository.getExhpDocument(id);
+      if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');
+      const items = repository.listExhpDocumentItems(id);
+      const transactionIds = items
+        .map((item) => Number(item.share_transaction_id))
+        .filter(Number.isInteger);
+      const documentReference = `ΕΧΠ ${document.registry_number}/${document.fiscal_year}`;
+      const nominalTransfer = normalize(document.issue_reason).startsWith(
+        normalize('Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού')
+      );
+
+      repository.transaction(() => {
+        const credits = nominalTransfer
+          ? items.filter((item) => item.transaction_type === 'Πίστωση')
+          : [];
+        const charges = nominalTransfer
+          ? items.filter((item) => item.transaction_type === 'Χρέωση')
+          : [];
+        if (nominalTransfer && credits.length !== charges.length) {
+          throw new Error('Η ΕΧΠ μεταβολής αριθμού δεν μπορεί να επαναφερθεί με ασφάλεια.');
+        }
+        charges.forEach((charge) => {
+          if (repository.countShareTransactionsExcluding(charge.share_id, transactionIds) > 0) {
+            throw new Error(
+              `Η νέα μερίδα ${charge.share_number} έχει μεταγενέστερες κινήσεις και η ΕΧΠ δεν μπορεί να διαγραφεί.`
+            );
+          }
+        });
+
+        items.forEach((item) => {
+          const reverseDelta = item.transaction_type === 'Χρέωση'
+            ? -Number(item.quantity)
+            : Number(item.quantity);
+          repository.adjustAccountingBalance(item.share_id, reverseDelta);
+        });
+        repository.deleteExhpDocument(id);
+        repository.deleteShareTransactions(transactionIds);
+        if (nominalTransfer) {
+          credits.forEach((credit, index) => {
+            repository.rollbackTransferredShare(
+              credit.share_id,
+              charges[index].share_id,
+              Number(credit.quantity),
+              documentReference
+            );
+          });
+        }
+      });
+
+      return {
+        message: `Η ${documentReference} διαγράφηκε από το Ευρετήριο και τις κινήσεις των μερίδων.`
+      };
+    },
+
     updateExhpOtherSupportDocument(documentId, value) {
       const document = repository.getExhpDocument(documentId);
       if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');

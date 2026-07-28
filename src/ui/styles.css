@@ -3208,6 +3208,10 @@ table.administration-table td {
   gap: 14px;
 }
 
+.exhp-flat-flow [hidden] {
+  display: none !important;
+}
+
 .exhp-main-menu {
   grid-template-columns: repeat(2, minmax(280px, 385px));
   justify-content: start;

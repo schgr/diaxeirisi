@@ -266,7 +266,10 @@ export function renderSavedExhpRows(documents) {
           <td>${escapeHtml(documentItem.issueReason)}</td>
           <td>${escapeHtml(documentItem.approvalReference)}</td>
           <td><span class="status-pill ${documentItem.supportStatus === 'Πλήρης για ΕΥΣ' ? 'balanced' : 'pending'}">${escapeHtml(displaySupportStatus(documentItem.supportStatus))}</span></td>
-          <td class="row-actions"><button class="secondary-button" data-edit-exhp-document="${documentItem.id}" type="button">Επεξεργασία</button></td>
+          <td class="row-actions">
+            <button class="secondary-button" data-edit-exhp-document="${documentItem.id}" type="button">Επεξεργασία</button>
+            <button class="danger-button" data-delete-exhp-document="${documentItem.id}" type="button">Διαγραφή</button>
+          </td>
         </tr>
       `
     )

@@ -864,6 +864,21 @@ async function run() {
       transactions.getExhpDocument(sortedExhp.documentId).items.map((item) => item.shareNumber),
       ['5', '15', '20']
     );
+    const deletedExhpReference = `ΕΧΠ-${sortedExhp.registryNumber}`;
+    const deletionResult = transactions.deleteExhpDocument(sortedExhp.documentId);
+    assert.match(deletionResult.message, /διαγράφηκε/);
+    assert.strictEqual(
+      transactions.listExhpDocuments().some((item) => item.id === sortedExhp.documentId),
+      false
+    );
+    for (const shareNumber of ['5', '15', '20']) {
+      const share = shares.listShares().find((item) => item.shareNumber === shareNumber);
+      assert.strictEqual(
+        shares.getShareCard(share.id, 2026).transactions
+          .some((item) => String(item.registryNumber).includes(deletedExhpReference)),
+        false
+      );
+    }
 
     shares.updateShareDetails(importedShare.id, { requiresComposition: true });
     shares.saveComposition(importedShare.id, [{

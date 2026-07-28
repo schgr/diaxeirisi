@@ -454,6 +454,78 @@ function createTransactionsRepository(db) {
       return db.prepare('SELECT * FROM exhp_documents WHERE id = ?').get(id);
     },
 
+    getShareById(id) {
+      return db.prepare('SELECT * FROM shares WHERE id = ?').get(id);
+    },
+
+    countShareTransactionsExcluding(shareId, transactionIds = []) {
+      const ids = transactionIds.map(Number).filter(Number.isInteger);
+      const exclusion = ids.length
+        ? `AND id NOT IN (${ids.map(() => '?').join(', ')})`
+        : '';
+      return Number(db.prepare(`
+        SELECT COUNT(*) AS total
+        FROM share_transactions
+        WHERE share_id = ?
+        ${exclusion}
+      `).get(shareId, ...ids)?.total || 0);
+    },
+
+    deleteExhpDocument(documentId) {
+      db.prepare('DELETE FROM exhp_documents WHERE id = ?').run(documentId);
+    },
+
+    deleteShareTransactions(transactionIds = []) {
+      const ids = transactionIds.map(Number).filter(Number.isInteger);
+      if (!ids.length) return;
+      db.prepare(`DELETE FROM share_transactions WHERE id IN (${ids.map(() => '?').join(', ')})`)
+        .run(...ids);
+    },
+
+    rollbackTransferredShare(sourceShareId, targetShareId, balance, documentReference) {
+      const source = db.prepare('SELECT * FROM shares WHERE id = ?').get(sourceShareId);
+      const target = db.prepare('SELECT * FROM shares WHERE id = ?').get(targetShareId);
+      if (!source || !target) throw new Error('Δεν ήταν δυνατή η επαναφορά των μερίδων της ΕΧΠ.');
+      db.prepare(`
+        UPDATE internal_items
+        SET share_id = ?, share_number = ?, nominal_number = ?,
+            description = ?, measurement_unit = ?
+        WHERE share_id = ?
+      `).run(
+        source.id,
+        source.share_number,
+        source.nominal_number,
+        source.description,
+        source.measurement_unit,
+        target.id
+      );
+      for (const table of [
+        'share_assignments',
+        'share_composition_items',
+        'share_change_sheet_entries',
+        'share_serial_numbers',
+        'share_ammunition_batches'
+      ]) {
+        db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
+          .run(source.id, target.id);
+      }
+      db.prepare(`
+        UPDATE shares
+        SET accounting_balance = ?,
+            charged_quantity = ?,
+            archive_status = 'Ενεργή',
+            archived_at = NULL,
+            archive_reason = ''
+        WHERE id = ?
+      `).run(balance, target.charged_quantity, source.id);
+      db.prepare(`
+        DELETE FROM share_archive_events
+        WHERE share_id = ?
+          AND reason LIKE ?
+      `).run(source.id, `%${documentReference}%`);
+      db.prepare('DELETE FROM shares WHERE id = ?').run(target.id);
+    },
+
     updateExhpMetadata(documentId, payload) {
       db.prepare(`
         UPDATE exhp_documents

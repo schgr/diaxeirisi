@@ -369,7 +369,7 @@ export async function renderTransactionsPage(
     <div class="page-toolbar no-print">
       <button class="secondary-button" data-exhp-menu-back type="button">Πίσω στο Μενού ΕΧΠ</button>
     </div>
-    <section class="page-panel no-print">
+    <section class="page-panel no-print" data-exhp-settings-list>
       <h3>Καταχωρημένες ΕΧΠ</h3>
       <div class="table-wrap">
         <table>
@@ -389,6 +389,9 @@ export async function renderTransactionsPage(
     </section>
 
     <section id="exhp-edit-panel" class="page-panel no-print" hidden>
+      <div class="page-toolbar">
+        <button class="secondary-button" data-exhp-edit-back type="button">Πίσω στις Ρυθμίσεις</button>
+      </div>
       <h3>Επεξεργασία ΕΧΠ</h3>
       <form id="exhp-metadata-edit-form" class="inline-form exhp-metadata-edit-form">
         <input id="exhp-edit-id" type="hidden" />
@@ -403,11 +406,11 @@ export async function renderTransactionsPage(
         <button class="primary-button" type="submit">Αποθήκευση αλλαγών</button>
       </form>
       <p class="muted">Η αλλαγή ενημερώνει το Ευρετήριο Εντολών Χρεωπιστώσεων και τις αναφορές στις κινήσεις των μερίδων, χωρίς αλλαγή ποσοτήτων.</p>
-      <h4>Δικαιολογητικά</h4>
+      <h4>Δικαιολογητικά υποστήριξης</h4>
       <div id="exhp-edit-documents-mount"></div>
     </section>
 
-    <section class="page-panel no-print">
+    <section class="page-panel no-print" data-exhp-settings-reasons>
       <h3>Αιτιολογία Εκδόσεως ΕΧΠ</h3>
       ${renderExhpIssueReasonSettings(settings.exhpIssueReasons)}
       <form id="exhp-issue-reason-form" class="inline-form compact-form">
@@ -476,6 +479,20 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
   const selector = container.querySelector('#exhp-documents-exhp');
   const editPanel = container.querySelector('#exhp-edit-panel');
   const editForm = container.querySelector('#exhp-metadata-edit-form');
+  const settingsList = container.querySelector('[data-exhp-settings-list]');
+  const settingsReasons = container.querySelector('[data-exhp-settings-reasons]');
+
+  const closeEditor = () => {
+    editPanel.hidden = true;
+    settingsList.hidden = false;
+    settingsReasons.hidden = false;
+    if (editor && editorHome && editor.parentElement !== editorHome.parentElement) {
+      editorHome.after(editor);
+    }
+    state.viewedExhp = null;
+    state.exhpDocumentsState.selectedExhp = null;
+    selector.value = '';
+  };
 
   const activate = (menu) => {
     menuHome.hidden = true;
@@ -486,6 +503,7 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
       reasonList.hidden = false;
       reasonDetail.hidden = true;
     }
+    if (menu === 'settings') closeEditor();
     if (menu === 'reasons' && editor && editorHome && editor.parentElement !== editorHome.parentElement) {
       editorHome.after(editor);
       state.viewedExhp = null;
@@ -502,12 +520,7 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
     button.addEventListener('click', () => {
       panels.forEach((panel) => { panel.hidden = true; });
       menuHome.hidden = false;
-      if (editor && editorHome && editor.parentElement !== editorHome.parentElement) {
-        editorHome.after(editor);
-      }
-      state.viewedExhp = null;
-      state.exhpDocumentsState.selectedExhp = null;
-      selector.value = '';
+      closeEditor();
     });
   });
 
@@ -533,6 +546,8 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
         );
         activate('settings');
         state.viewedExhp = documentData;
+        settingsList.hidden = true;
+        settingsReasons.hidden = true;
         editPanel.hidden = false;
         container.querySelector('#exhp-edit-id').value = documentData.id;
         container.querySelector('#exhp-edit-registry-number').value = documentData.registryNumber;
@@ -543,6 +558,27 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
         editPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση της ΕΧΠ.', 'error');
+      }
+    });
+  });
+
+  container.querySelector('[data-exhp-edit-back]')?.addEventListener('click', closeEditor);
+
+  container.querySelectorAll('[data-delete-exhp-document]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const accepted = window.confirm(
+        'Αυτή η ενέργεια θα διαγράψει την ΕΧΠ από το Ευρετήριο Εντολών Χρεωπιστώσεως και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
+      );
+      if (!accepted) return;
+      try {
+        const id = Number(button.dataset.deleteExhpDocument);
+        const result = await transactionsApi.deleteExhp(id);
+        button.closest('tr')?.remove();
+        state.exhpDocuments = state.exhpDocuments.filter((item) => Number(item.id) !== id);
+        if (Number(state.viewedExhp?.id) === id) closeEditor();
+        showToast(result.message);
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή της ΕΧΠ.', 'error');
       }
     });
   });
