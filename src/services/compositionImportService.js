@@ -51,10 +51,11 @@ function createCompositionImportService(db) {
       const groups = new Map();
 
       rows.forEach((row) => {
-        const share = sharesByNumber.get(normalizeKey(row.shareNumber));
+        let share = sharesByNumber.get(normalizeKey(row.shareNumber));
         if (!share) throw new AppError(`Δεν βρέθηκε η μερίδα ${row.shareNumber}.`, 'VALIDATION_ERROR');
         if (!share.requiresComposition) {
-          throw new AppError(`Η μερίδα ${row.shareNumber} δεν έχει ενεργοποιημένη σύνθεση.`, 'VALIDATION_ERROR');
+          share = sharesService.updateShareDetails(share.id, { requiresComposition: true });
+          sharesByNumber.set(normalizeKey(row.shareNumber), share);
         }
         if (!groups.has(share.id)) groups.set(share.id, { share, rows: [] });
         groups.get(share.id).rows.push(row);
@@ -81,7 +82,7 @@ function createCompositionImportService(db) {
           };
         });
         sharesService.saveComposition(share.id, items);
-        const openingDate = card.openingTransfer.inventoryDate || `${Number(card.year) - 1}-12-31`;
+        const openingDate = `${Number(card.year) - 1}-12-31`;
         sharesService.saveChangeSheet(
           share.id,
           groupRows.flatMap((row, index) => Number(row.existingQuantity) > 0 ? [{

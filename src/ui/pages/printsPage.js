@@ -8,6 +8,7 @@ const ROWS_PER_INDEX_PAGE = 34;
 const PRINT_TILE_META = {
   registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
   'share-card': { icon: 'ΜΥ', code: '§ ΣΕ-Β' },
+  'shares-by-category': { icon: 'ΚΥ', code: '§ ΣΕ-Γ' },
   external: { icon: 'ΕΔ', code: '§ ΕΥ-Α' },
   orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' },
   'balance-differences': { icon: 'ΠΕ', code: '§ ΣΕ-Γ' }
@@ -19,6 +20,7 @@ const printTabGroups = [
     tabs: [
       { key: 'registry', label: 'Μητρώο Μερίδων' },
       { key: 'share-card', label: 'Μερίδα Υλικού' },
+      { key: 'shares-by-category', label: 'Μερίδες ανά Κατηγορία Υλικού' },
       { key: 'balance-differences', label: 'Πλεονάσματα - Ελλείμματα' }
     ]
   },
@@ -59,6 +61,7 @@ export async function renderPrintsPage(
   const initialGroup = visiblePrintTabGroups.some((group) => group.key === options.initialGroup)
     ? options.initialGroup
     : visiblePrintTabGroups[0].key;
+  const materialCategories = getMaterialCategoryNames(shares, settings);
   const state = {
     activeGroup: initialGroup,
     activeTab: visiblePrintTabGroups.find((group) => group.key === initialGroup).tabs[0].key,
@@ -70,7 +73,8 @@ export async function renderPrintsPage(
     onlyMovedCards: !options.latestInventoryShareCards,
     selectedAddyIndexId: '',
     selectedExhpIndexId: '',
-    balanceDifferenceFilter: 'all'
+    balanceDifferenceFilter: 'all',
+    selectedMaterialCategories: [...materialCategories]
   };
 
   container.innerHTML = `
@@ -194,6 +198,14 @@ export async function renderPrintsPage(
         await renderShareCardPreview(sharesApi, shares, state, preview);
         bindShareCardControls(container, sharesApi, shares, state, preview);
       }
+      return;
+    }
+
+    if (state.activeTab === 'shares-by-category') {
+      title.textContent = 'Μερίδες ανά Κατηγορία Υλικού';
+      controls.innerHTML = renderCategoryShareControls(materialCategories, state);
+      preview.innerHTML = renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories);
+      bindCategoryShareControls(container, shares, settings, state, preview);
       return;
     }
 
@@ -1060,6 +1072,111 @@ function bindRegistryControls(container, shares, settings, state, preview) {
   }
 
   countInput.addEventListener('input', updatePreview);
+}
+
+function getMaterialCategoryNames(shares, settings) {
+  const names = new Set(
+    (settings?.materialCategories || [])
+      .map((category) => String(category.name || '').trim())
+      .filter(Boolean)
+  );
+  shares.forEach((share) => {
+    const category = String(share.materialType || '').trim();
+    if (category) names.add(category);
+  });
+  return [...names].sort((left, right) => left.localeCompare(right, 'el'));
+}
+
+function renderCategoryShareControls(categories, state) {
+  return `
+    <div class="category-share-controls">
+      <div class="category-share-selection">
+        <strong>Κατηγορίες Υλικού</strong>
+        <div class="category-share-options">
+          ${categories.map((category) => `
+            <label class="checkbox-label">
+              <input type="checkbox" data-material-category="${escapeHtml(category)}"
+                ${state.selectedMaterialCategories.includes(category) ? 'checked' : ''} />
+              <span>${escapeHtml(category)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <button id="print-current-document" class="primary-button compact-print-button"
+        data-no-document-export type="button" ${state.selectedMaterialCategories.length ? '' : 'disabled'}>
+        Εκτύπωση
+      </button>
+    </div>
+  `;
+}
+
+function bindCategoryShareControls(container, shares, settings, state, preview) {
+  container.querySelectorAll('[data-material-category]').forEach((input) => {
+    input.addEventListener('change', () => {
+      state.selectedMaterialCategories = [...container.querySelectorAll('[data-material-category]:checked')]
+        .map((item) => item.dataset.materialCategory);
+      preview.innerHTML = renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories);
+      const printButton = container.querySelector('#print-current-document');
+      if (printButton) printButton.disabled = !state.selectedMaterialCategories.length;
+    });
+  });
+}
+
+export function renderSharesByCategoryPages(shares, settings, selectedCategories) {
+  const selected = new Set(selectedCategories || []);
+  const filtered = shares
+    .filter((share) => selected.has(String(share.materialType || '').trim()))
+    .sort((left, right) =>
+      String(left.materialType || '').localeCompare(String(right.materialType || ''), 'el') ||
+      Number(left.shareNumber) - Number(right.shareNumber) ||
+      String(left.shareNumber).localeCompare(String(right.shareNumber), 'el')
+    );
+  if (!filtered.length) {
+    return '<section class="page-panel empty-table">Δεν υπάρχουν μερίδες στις επιλεγμένες κατηγορίες.</section>';
+  }
+
+  const pages = [];
+  const pageCount = Math.ceil(filtered.length / ROWS_PER_REGISTRY_PAGE);
+  for (let index = 0; index < pageCount; index += 1) {
+    const rows = filtered.slice(index * ROWS_PER_REGISTRY_PAGE, (index + 1) * ROWS_PER_REGISTRY_PAGE);
+    pages.push(`
+      <article class="material-registry-page category-share-page print-document-area">
+        <div class="registry-topline">
+          <span>ΜΟΝΑΔΑ: ${escapeHtml(settings?.serviceInfo?.serviceName || '')}</span>
+          <span>ΣΕΛΙΔΑ ${index + 1} ΑΠΟ ${pageCount}</span>
+        </div>
+        <h1>ΜΕΡΙΔΕΣ ΑΝΑ ΚΑΤΗΓΟΡΙΑ ΥΛΙΚΟΥ</h1>
+        <table class="registry-table category-share-table">
+          <thead>
+            <tr>
+              <th>Α/Α</th>
+              <th>ΚΑΤΗΓΟΡΙΑ ΥΛΙΚΟΥ</th>
+              <th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th>
+              <th>ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</th>
+              <th>ΠΕΡΙΓΡΑΦΗ ΥΛΙΚΟΥ</th>
+              <th>ΜΟΝΑΔΑ ΜΕΤΡΗΣΗΣ</th>
+              <th>ΥΠΟΛΟΙΠΟ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((share, rowIndex) => `
+              <tr>
+                <td>${index * ROWS_PER_REGISTRY_PAGE + rowIndex + 1}</td>
+                <td>${escapeHtml(share.materialType || '')}</td>
+                <td>${escapeHtml(share.shareNumber || '')}</td>
+                <td>${escapeHtml(share.nominalNumber || '')}</td>
+                <td class="registry-description-cell">${escapeHtml(share.description || '')}</td>
+                <td>${escapeHtml(share.measurementUnit || '')}</td>
+                <td class="number-cell">${formatNumber(share.accountingBalance)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="registry-footer">Σελίδα ${index + 1} από ${pageCount}</div>
+      </article>
+    `);
+  }
+  return pages.join('');
 }
 
 export function renderMaterialRegistryPages(shares, settings, state) {

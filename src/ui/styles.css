@@ -3115,6 +3115,32 @@ table.administration-table td {
   grid-template-columns: 170px auto auto auto;
 }
 
+.category-share-controls {
+  display: flex;
+  gap: 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.category-share-selection {
+  display: grid;
+  gap: 10px;
+}
+
+.category-share-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.category-share-table th:nth-child(1) { width: 6%; }
+.category-share-table th:nth-child(2) { width: 17%; }
+.category-share-table th:nth-child(3) { width: 10%; }
+.category-share-table th:nth-child(4) { width: 16%; }
+.category-share-table th:nth-child(5) { width: 31%; }
+.category-share-table th:nth-child(6) { width: 11%; }
+.category-share-table th:nth-child(7) { width: 9%; }
+
 .inventory-print-controls {
   grid-template-columns: minmax(260px, 1fr) auto;
 }
