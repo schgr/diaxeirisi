@@ -74,7 +74,7 @@ export async function renderPrintsPage(
     selectedAddyIndexId: '',
     selectedExhpIndexId: '',
     balanceDifferenceFilter: 'all',
-    selectedMaterialCategories: [...materialCategories]
+    selectedMaterialCategories: []
   };
 
   container.innerHTML = `
@@ -163,6 +163,7 @@ export async function renderPrintsPage(
       }
     }
     renderPrintNavigation(container, state, visiblePrintTabGroups);
+    preview.style.display = '';
     preview.classList.toggle('share-card-preview', state.activeTab === 'share-card');
     preview.classList.toggle('index-table-preview', ['external', 'orders'].includes(state.activeTab));
 
@@ -204,8 +205,9 @@ export async function renderPrintsPage(
     if (state.activeTab === 'shares-by-category') {
       title.textContent = 'Μερίδες ανά Κατηγορία Υλικού';
       controls.innerHTML = renderCategoryShareControls(materialCategories, state);
-      preview.innerHTML = renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories);
-      bindCategoryShareControls(container, shares, settings, state, preview);
+      preview.innerHTML = '';
+      preview.style.display = 'none';
+      bindCategoryShareControls(container, shares, settings, state);
       return;
     }
 
@@ -307,6 +309,12 @@ export async function renderPrintsPage(
         return;
       }
       void printIsolatedPreview(preview, false);
+    }
+
+    if (event.target.closest('#preview-category-shares')) {
+      openCategorySharePreview(
+        renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories)
+      );
     }
   });
 
@@ -1102,23 +1110,48 @@ function renderCategoryShareControls(categories, state) {
           `).join('')}
         </div>
       </div>
-      <button id="print-current-document" class="primary-button compact-print-button"
+      <button id="preview-category-shares" class="primary-button compact-print-button"
         data-no-document-export type="button" ${state.selectedMaterialCategories.length ? '' : 'disabled'}>
-        Εκτύπωση
+        Προβολή
       </button>
     </div>
   `;
 }
 
-function bindCategoryShareControls(container, shares, settings, state, preview) {
+function bindCategoryShareControls(container, shares, settings, state) {
   container.querySelectorAll('[data-material-category]').forEach((input) => {
     input.addEventListener('change', () => {
       state.selectedMaterialCategories = [...container.querySelectorAll('[data-material-category]:checked')]
         .map((item) => item.dataset.materialCategory);
-      preview.innerHTML = renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories);
-      const printButton = container.querySelector('#print-current-document');
-      if (printButton) printButton.disabled = !state.selectedMaterialCategories.length;
+      const previewButton = container.querySelector('#preview-category-shares');
+      if (previewButton) previewButton.disabled = !state.selectedMaterialCategories.length;
     });
+  });
+}
+
+function openCategorySharePreview(documentHtml) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop category-share-preview-backdrop';
+  backdrop.innerHTML = `
+    <section class="category-share-preview-modal" role="dialog" aria-modal="true"
+      aria-label="Προβολή μερίδων ανά κατηγορία υλικού">
+      <header class="category-share-preview-header no-print">
+        <h2>Μερίδες ανά Κατηγορία Υλικού</h2>
+        <div class="row-actions">
+          <button class="primary-button" data-print-category-shares type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-category-shares type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="category-share-preview-content" data-category-share-preview>${documentHtml}</div>
+    </section>
+  `;
+  document.body.appendChild(backdrop);
+  const close = () => backdrop.remove();
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-category-shares]')) close();
+    if (event.target.closest('[data-print-category-shares]')) {
+      void printIsolatedPreview(backdrop.querySelector('[data-category-share-preview]'), false);
+    }
   });
 }
 

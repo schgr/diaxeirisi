@@ -46,9 +46,9 @@ export function initializeDocumentExports(showToast) {
 }
 
 export function buildDocumentExportPayload(printButton) {
-  const title = resolveExportTitle(printButton);
   const source = resolveExportSource(printButton);
   if (!source) throw new Error('Δεν βρέθηκε περιεχόμενο για εξαγωγή.');
+  const title = resolveExportTitle(printButton, source);
   const clone = prepareExportClone(source);
   return {
     title,
@@ -105,8 +105,11 @@ function syncExportButtons(printButton) {
   }
 }
 
-function resolveExportTitle(printButton) {
+function resolveExportTitle(printButton, source) {
   if (printButton.dataset.exportTitle) return cleanTitle(printButton.dataset.exportTitle);
+  const documentHeading = [...(source?.querySelectorAll?.('h1, h2, h3') || [])]
+    .find((item) => isVisible(item) && !isGenericPrintTitle(item.textContent));
+  if (documentHeading?.textContent.trim()) return cleanTitle(documentHeading.textContent);
   const label = String(printButton.textContent || '').trim();
   const suffix = label.replace(/^\s*ΕΚΤΥΠΩΣΗ(?:\s+ΤΩΝ|\s+ΤΗΣ)?\s*/iu, '').trim();
   if (suffix && !/^(ΟΛΩΝ|ΕΜΦΑΝΙΖΟΜΕΝΩΝ|ΚΑΤΑΣΤΑΣΗΣ)$/iu.test(suffix)) {
@@ -114,10 +117,14 @@ function resolveExportTitle(printButton) {
   }
   const scope = printButton.closest('.modal-backdrop, .request-document-modal, [data-financial-detail], .page-panel');
   const heading = [...(scope?.querySelectorAll('h1, h2, h3') || [])]
-    .find((item) => isVisible(item) && !/ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ/iu.test(item.textContent));
+    .find((item) => isVisible(item) && !isGenericPrintTitle(item.textContent));
   if (heading?.textContent.trim()) return cleanTitle(heading.textContent);
   const pageTitle = document.querySelector('#prints-title, .page-header h2');
   return cleanTitle(pageTitle?.textContent || 'Κατάσταση');
+}
+
+function isGenericPrintTitle(value) {
+  return /^(?:ΕΚΤΥΠΩΣΗ|ΕΛΕΓΧΟΣ ΕΚΤΥΠΩΣΗΣ|ΠΡΟΒΟΛΗ)$/iu.test(cleanTitle(value));
 }
 
 function resolveExportSource(printButton) {

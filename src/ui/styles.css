@@ -3116,10 +3116,10 @@ table.administration-table td {
 }
 
 .category-share-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(320px, 720px) auto;
   gap: 18px;
   align-items: flex-end;
-  justify-content: space-between;
 }
 
 .category-share-selection {
@@ -3128,9 +3128,52 @@ table.administration-table td {
 }
 
 .category-share-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.category-share-options .checkbox-label {
+  justify-content: flex-start;
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+.category-share-preview-modal {
+  width: min(1500px, 96vw);
+  max-height: 96vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.category-share-preview-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.category-share-preview-header h2 {
+  margin: 0;
+}
+
+.category-share-preview-content {
+  display: grid;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px;
+  background: var(--preview-bg, #020812);
 }
 
 .category-share-table th:nth-child(1) { width: 6%; }
