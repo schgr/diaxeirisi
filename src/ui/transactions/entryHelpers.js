@@ -245,6 +245,8 @@ export function renderSavedAddyRows(documents) {
           <td class="number-cell">${formatQuantity(documentItem.quantity)}</td>
           <td class="row-actions">
             <button class="secondary-button" data-view-addy-document="${documentItem.id}" type="button" ${documentItem.canPrint ? '' : 'disabled'}>Προβολή</button>
+            <button class="secondary-button" data-edit-addy-document="${documentItem.id}" type="button">Επεξεργασία</button>
+            <button class="danger-button" data-delete-addy-document="${documentItem.id}" type="button">Διαγραφή</button>
           </td>
         </tr>
       `

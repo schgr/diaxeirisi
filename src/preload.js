@@ -103,6 +103,8 @@ contextBridge.exposeInMainWorld('appApi', {
       invoke('transactions:update-addy-index-fields', documentId, payload),
     listAddyDocuments: () => invoke('transactions:addy-documents'),
     getAddyDocument: (id) => invoke('transactions:get-addy-document', id),
+    updateAddy: (id, payload) => invoke('transactions:update-addy', id, payload),
+    deleteAddy: (id) => invoke('transactions:delete-addy', id),
     saveExhp: (payload) => invoke('transactions:save-exhp', payload),
     listExhpDocuments: () => invoke('transactions:exhp-documents'),
     getExhpDocument: (id) => invoke('transactions:get-exhp-document', id),

@@ -350,6 +350,12 @@ function registerIpcHandlers() {
   ipcMain.handle('transactions:get-addy-document', async (_event, id) =>
     safeInvoke(() => services.transactions.getAddyDocument(id))
   );
+  ipcMain.handle('transactions:update-addy', async (_event, id, payload) =>
+    safeInvoke(() => services.transactions.updateAddyDocument(id, payload))
+  );
+  ipcMain.handle('transactions:delete-addy', async (_event, id) =>
+    safeInvoke(() => services.transactions.deleteAddyDocument(id))
+  );
   ipcMain.handle('transactions:save-exhp', async (_event, payload) =>
     safeInvoke(() => services.transactions.saveExhp(payload))
   );

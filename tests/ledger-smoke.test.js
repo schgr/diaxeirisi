@@ -931,6 +931,20 @@ async function run() {
     assert.strictEqual(creditedAddyDocument.items[0].column25, 1);
     assert.strictEqual(creditedAddyDocument.items[0].composition[0].projectedQuantity, 45);
     assert.strictEqual(creditedAddyDocument.items[0].composition[0].notIssuedQuantity, 4);
+    const updatedAddy = transactions.updateAddyDocument(creditedAddy.documentId, {
+      notes: 'Ενημερωμένες πληροφορίες ΑΔΔΥ',
+      items: [{ id: creditedAddyDocument.items[0].id, quantity: 2 }]
+    });
+    assert.strictEqual(updatedAddy.document.notes, 'Ενημερωμένες πληροφορίες ΑΔΔΥ');
+    assert.strictEqual(updatedAddy.document.items[0].quantity, 2);
+    assert.strictEqual(shares.getShareCard(importedShare.id, 2026).share.accountingBalance, 8);
+    transactions.deleteAddyDocument(creditedAddy.documentId);
+    assert.strictEqual(
+      transactions.listAddyDocuments().some((item) => item.id === creditedAddy.documentId),
+      false
+    );
+    assert.strictEqual(shares.getShareCard(importedShare.id, 2026).share.accountingBalance, 10);
+    assert.strictEqual(shares.getShareCard(importedShare.id, 2026).transactions.length, 0);
 
     console.log('Ledger smoke test passed.');
   } finally {

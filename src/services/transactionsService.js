@@ -581,6 +581,81 @@ function createTransactionsService(db, settingsService) {
       }));
     },
 
+    updateAddyDocument(idValue, payload = {}) {
+      const id = requirePositiveId(idValue);
+      const document = repository.getAddyDocument(id);
+      if (!document) throw new Error('Το ΑΔΔΥ δεν βρέθηκε.');
+      const items = repository.listAddyDocumentItems(id);
+      const quantities = Array.isArray(payload.items) ? payload.items : [];
+      const quantityById = new Map(
+        quantities.map((item) => [Number(item.id), Number(item.quantity)])
+      );
+      const notes = String(payload.notes || '').trim();
+
+      repository.transaction(() => {
+        for (const item of items) {
+          if (!quantityById.has(Number(item.id))) continue;
+          const nextQuantity = quantityById.get(Number(item.id));
+          if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+            throw new Error('Η ποσότητα κάθε υλικού πρέπει να είναι μεγαλύτερη από μηδέν.');
+          }
+          const difference = nextQuantity - Number(item.quantity);
+          if (!difference) continue;
+          if (item.share_id) {
+            const balanceDelta = item.transaction_type === 'Χρέωση'
+              ? difference
+              : -difference;
+            const share = repository.getShareById(item.share_id);
+            if (!share || Number(share.accounting_balance) + balanceDelta < 0) {
+              throw new Error(
+                `Το διαθέσιμο υπόλοιπο της μερίδας ${item.share_number} δεν επαρκεί για την αλλαγή.`
+              );
+            }
+            repository.adjustAccountingBalance(item.share_id, balanceDelta);
+          }
+          repository.updateAddyItemQuantity(item.id, item.share_transaction_id, nextQuantity);
+        }
+        repository.updateAddyDocumentNotes(id, notes);
+      });
+
+      return {
+        document: this.getAddyDocument(id),
+        message: `Το ΑΔΔΥ ${id} ενημερώθηκε.`
+      };
+    },
+
+    deleteAddyDocument(idValue) {
+      const id = requirePositiveId(idValue);
+      const document = repository.getAddyDocument(id);
+      if (!document) throw new Error('Το ΑΔΔΥ δεν βρέθηκε.');
+      const items = repository.listAddyDocumentItems(id);
+      const transactionIds = items
+        .map((item) => Number(item.share_transaction_id))
+        .filter(Number.isInteger);
+
+      repository.transaction(() => {
+        for (const item of items) {
+          if (!item.share_id) continue;
+          const balanceDelta = item.transaction_type === 'Χρέωση'
+            ? -Number(item.quantity)
+            : Number(item.quantity);
+          const share = repository.getShareById(item.share_id);
+          if (!share || Number(share.accounting_balance) + balanceDelta < 0) {
+            throw new Error(
+              `Η μερίδα ${item.share_number} έχει μεταγενέστερες κινήσεις και το ΑΔΔΥ δεν μπορεί να διαγραφεί.`
+            );
+          }
+          repository.adjustAccountingBalance(item.share_id, balanceDelta);
+        }
+        repository.deleteAddyDocument(id);
+        repository.deleteShareTransactions(transactionIds);
+      });
+
+      return {
+        message: `Το ΑΔΔΥ ${id} διαγράφηκε από το Ευρετήριο και τις κινήσεις των μερίδων.`
+      };
+    },
+
     getAddyDocument(id) {
       const row = repository.getAddyDocument(id);
       if (!row) {
@@ -616,6 +691,7 @@ function createTransactionsService(db, settingsService) {
             )
           : '';
         return {
+          id: item.id,
           shareNumber: item.share_number,
           nominalNumber: item.nominal_number,
           description: item.description,
@@ -638,6 +714,8 @@ function createTransactionsService(db, settingsService) {
         financialOfficers,
         notes: row.notes,
         items: items.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
           ...mapAddyDocumentItem({
             item,
             share: { share_number: item.shareNumber, description: item.description },

@@ -99,7 +99,7 @@ export async function renderTransactionsPage(
           </select>
         </label>
         <label class="field addy-notes-field">
-          <span>Παρατηρήσεις</span>
+          <span>Πληροφορίες</span>
           <input id="addy-notes" autocomplete="off" />
         </label>
         <label class="field">

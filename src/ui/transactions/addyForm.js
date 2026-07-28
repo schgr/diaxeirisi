@@ -347,6 +347,39 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       }
     }
 
+    const editAddy = event.target.closest('[data-edit-addy-document]');
+    if (editAddy) {
+      try {
+        const documentData = await transactionsApi.getAddyDocument(
+          Number(editAddy.dataset.editAddyDocument)
+        );
+        openAddyEditDialog(documentData, transactionsApi, showToast, async () => {
+          await rerender(container, transactionsApi, settingsApi, showToast);
+        });
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση του ΑΔΔΥ.', 'error');
+      }
+      return;
+    }
+
+    const deleteAddy = event.target.closest('[data-delete-addy-document]');
+    if (deleteAddy) {
+      const accepted = window.confirm(
+        'Αυτή η ενέργεια θα διαγράψει το ΑΔΔΥ από το Ευρετήριο Εξωτερικών Δοσοληψιών και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
+      );
+      if (!accepted) return;
+      try {
+        const result = await transactionsApi.deleteAddy(
+          Number(deleteAddy.dataset.deleteAddyDocument)
+        );
+        showToast(result.message);
+        await rerender(container, transactionsApi, settingsApi, showToast);
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή του ΑΔΔΥ.', 'error');
+      }
+      return;
+    }
+
     if (event.target.closest('#exhp-save')) {
       if (state.viewedExhp) return;
 
@@ -534,6 +567,113 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση ΑΔΔΥ.', 'error');
     }
   });
+}
+
+function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
+  const modal = window.document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <section class="request-document-modal addy-edit-modal">
+      <header class="material-card-header">
+        <div>
+          <p class="eyebrow">ΚΑΤΑΧΩΡΗΜΕΝΟ ΑΔΔΥ</p>
+          <h2>Επεξεργασία ΑΔΔΥ ${Number(documentData.id)}</h2>
+        </div>
+        <button class="secondary-button" data-close-addy-edit type="button">Κλείσιμο</button>
+      </header>
+      <form data-addy-edit-form class="stacked-form">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Μερίδα</th>
+                <th>Αριθμός Ονομαστικού</th>
+                <th>Περιγραφή</th>
+                <th>Είδος</th>
+                <th>Ποσότητα</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${documentData.items.map((item) => `
+                <tr>
+                  <td>${escapeAddyEditHtml(item.shareNumber)}</td>
+                  <td>${escapeAddyEditHtml(item.nominalNumber)}</td>
+                  <td>${escapeAddyEditHtml(item.description)}</td>
+                  <td>${escapeAddyEditHtml(item.transactionType)}</td>
+                  <td>
+                    <input
+                      data-addy-edit-quantity="${Number(item.id)}"
+                      data-original-quantity="${Number(item.quantity)}"
+                      type="number"
+                      min="0.000001"
+                      step="any"
+                      value="${Number(item.quantity)}"
+                      required
+                    />
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <label class="field">
+          <span>Πληροφορίες</span>
+          <textarea data-addy-edit-notes rows="4">${escapeAddyEditHtml(documentData.notes || '')}</textarea>
+        </label>
+        <div class="row-actions">
+          <button class="secondary-button" data-close-addy-edit type="button">Ακύρωση</button>
+          <button class="primary-button" type="submit">Αποθήκευση αλλαγών</button>
+        </div>
+      </form>
+    </section>
+  `;
+
+  const close = () => modal.remove();
+  modal.querySelectorAll('[data-close-addy-edit]').forEach((button) => {
+    button.addEventListener('click', close);
+  });
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) close();
+  });
+  modal.querySelector('[data-addy-edit-form]').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const quantityInputs = [...modal.querySelectorAll('[data-addy-edit-quantity]')];
+    const quantityChanged = quantityInputs.some(
+      (input) => Number(input.value) !== Number(input.dataset.originalQuantity)
+    );
+    if (
+      quantityChanged &&
+      !window.confirm(
+        'Αυτή η ενέργεια θα αλλάξει την Ποσότητα από το ΑΔΔΥ και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
+      )
+    ) {
+      return;
+    }
+    try {
+      const result = await transactionsApi.updateAddy(documentData.id, {
+        notes: modal.querySelector('[data-addy-edit-notes]').value,
+        items: quantityInputs.map((input) => ({
+          id: Number(input.dataset.addyEditQuantity),
+          quantity: Number(input.value)
+        }))
+      });
+      close();
+      showToast(result.message);
+      await onSaved();
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση του ΑΔΔΥ.', 'error');
+    }
+  });
+  window.document.body.appendChild(modal);
+}
+
+function escapeAddyEditHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function clearIssuedExhpDraftState(state) {

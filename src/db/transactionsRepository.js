@@ -884,6 +884,34 @@ function createTransactionsRepository(db) {
         .all(documentId);
     },
 
+    updateAddyDocumentNotes(documentId, notes) {
+      db.prepare('UPDATE addy_documents SET notes = ? WHERE id = ?')
+        .run(notes, documentId);
+      db.prepare(`
+        UPDATE share_transactions
+        SET notes = ?
+        WHERE id IN (
+          SELECT share_transaction_id
+          FROM addy_items
+          WHERE addy_document_id = ?
+            AND share_transaction_id IS NOT NULL
+        )
+      `).run(notes, documentId);
+    },
+
+    updateAddyItemQuantity(itemId, shareTransactionId, quantity) {
+      db.prepare('UPDATE addy_items SET quantity = ? WHERE id = ?')
+        .run(quantity, itemId);
+      if (shareTransactionId) {
+        db.prepare('UPDATE share_transactions SET quantity = ? WHERE id = ?')
+          .run(quantity, shareTransactionId);
+      }
+    },
+
+    deleteAddyDocument(documentId) {
+      db.prepare('DELETE FROM addy_documents WHERE id = ?').run(documentId);
+    },
+
     transaction(operation) {
       return db.transaction(operation)();
     }
