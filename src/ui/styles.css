@@ -5571,11 +5571,32 @@ th {
 }
 
 .k2310-signature-mode-all .k2310-signature-manager {
-  left: 43%;
+  left: 16.5%;
 }
 
 .k2310-signature-mode-all .k2310-signature-department {
   left: 60.5%;
+}
+
+/* In every document-preview toolbar, closing is always the final action. */
+.row-actions > [data-close-k2310],
+.row-actions > [data-close-addy-document],
+.row-actions > [data-close-exhp-doc-preview],
+.row-actions > [data-close-exhp-document],
+.row-actions > [data-close-exhp-official-document],
+.row-actions > [data-close-new-support-preview],
+.row-actions > [data-close-useless-form],
+.row-actions > [data-close-card],
+.row-actions > [data-close-material-form],
+.row-actions > [data-close-share-print],
+.row-actions > [data-close-index-preview],
+.row-actions > [data-close-serial-preview],
+.row-actions > [data-close-handover-document],
+.row-actions > [data-close-annual-share-print],
+.row-actions > [data-close-md-document],
+.row-actions > [data-close-template],
+.row-actions > [data-close-support-folder] {
+  order: 999;
 }
 
 .k2310-horizontal-signatures strong,

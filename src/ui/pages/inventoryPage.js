@@ -13,7 +13,7 @@ export async function renderInventoryPage(
     inventoryApi.getReferenceData(),
     settingsApi.get()
   ]);
-  const selectedId = selectedSessionId || referenceData.sessions[0]?.id || null;
+  const selectedId = selectedSessionId || null;
   const selectedSession = selectedId ? await inventoryApi.getSession(selectedId) : null;
   const statementSession = selectedId ? selectedSession : null;
   if (selectedSession) {
@@ -38,10 +38,6 @@ export async function renderInventoryPage(
             <label class="field">
               <span>Ημερομηνία</span>
               <input id="inventory-date" type="date" value="${referenceData.today}" />
-            </label>
-            <label class="field">
-              <span>Τίτλος</span>
-              <input id="inventory-title" value="Ετήσια Απογραφή Γενικής Διαχείρισης" />
             </label>
             <label class="field">
               <span>Αιτιολογία</span>
@@ -70,7 +66,7 @@ export async function renderInventoryPage(
             <table>
               <thead>
                 <tr>
-                  <th>Α/Α</th><th>Ημερομηνία</th><th>Τίτλος</th><th>Κατάσταση</th>
+                  <th>Α/Α</th><th>Ημερομηνία</th><th>Αιτιολογία</th><th>Κατάσταση</th>
                   <th>Μερίδες</th><th>Διαφορές</th><th></th>
                 </tr>
               </thead>
@@ -188,10 +184,11 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
 
   container.querySelector('#inventory-create').addEventListener('click', async () => {
     try {
+      const inventoryReason = container.querySelector('#inventory-reason').value;
       const result = await inventoryApi.createSession({
         inventoryDate: container.querySelector('#inventory-date').value,
-        inventoryReason: container.querySelector('#inventory-reason').value,
-        title: container.querySelector('#inventory-title').value,
+        inventoryReason,
+        title: inventoryReason,
         notes: container.querySelector('#inventory-session-notes').value,
         committeePresidentRank: container.querySelector('#inventory-president-rank').value,
         committeePresidentName: container.querySelector('#inventory-president-name').value,
@@ -321,7 +318,7 @@ function renderSessionRows(sessions, selectedId) {
     <tr class="${session.id === selectedId ? 'selected-row' : ''}">
       <td>${session.serialNumber}</td>
       <td>${formatDate(session.inventoryDate)}</td>
-      <td>${escapeHtml(session.title)}</td>
+      <td>${escapeHtml(session.inventoryReason || session.title)}</td>
       <td>${escapeHtml(session.status)}</td>
       <td>${session.itemCount}</td>
       <td>${session.differenceCount}</td>
