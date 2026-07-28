@@ -22,23 +22,6 @@ function createCompositionImportService(db) {
       });
       sheet.addRow(COMPOSITION_HEADERS);
 
-      for (const share of sharesService.listShares().filter((item) => item.requiresComposition)) {
-        const card = sharesService.getShareCard(share.id, new Date().getFullYear());
-        if (!card.compositionItems.length) {
-          sheet.addRow([share.shareNumber, '', '', '', '']);
-          continue;
-        }
-        card.compositionItems.forEach((item) => {
-          sheet.addRow([
-            share.shareNumber,
-            item.componentNominalNumber,
-            item.componentDescription,
-            item.quantityPerMaterial,
-            Math.max(0, Number(item.projectedQuantity) - Number(item.notIssuedQuantity))
-          ]);
-        });
-      }
-
       sheet.columns = [
         { width: 20 }, { width: 26 }, { width: 48 }, { width: 24 }, { width: 22 }
       ];

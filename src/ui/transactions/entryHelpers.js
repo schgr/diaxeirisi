@@ -100,14 +100,12 @@ export function isToolCollectionReason(value) {
   return String(value || '').toLocaleLowerCase('el-GR').includes('συλλογές εργαλείων');
 }
 
-export function openToolCollectionCreditDialog(referenceShares) {
+export function openToolCollectionCreditDialog(collectionShare, referenceShares) {
   return new Promise((resolve) => {
-    const collections = referenceShares.filter((share) =>
-      share.requiresComposition && Array.isArray(share.composition) && share.composition.length
-    );
-    const components = collections.flatMap((share) =>
-      share.composition.map((item) => ({ share, item }))
-    );
+    const components = collectionShare.composition.map((item) => ({
+      share: collectionShare,
+      item
+    }));
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `

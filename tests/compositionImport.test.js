@@ -53,8 +53,7 @@ async function run() {
     const exported = new ExcelJS.Workbook();
     await exported.xlsx.readFile(output);
     assert.deepStrictEqual(exported.worksheets[0].getRow(1).values.slice(1), COMPOSITION_HEADERS);
-    assert.strictEqual(exported.worksheets[0].getRow(2).getCell(4).value, 20);
-    assert.strictEqual(exported.worksheets[0].getRow(2).getCell(5).value, 15);
+    assert.strictEqual(exported.worksheets[0].actualRowCount, 1);
     console.log('compositionImport.test.js: OK');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

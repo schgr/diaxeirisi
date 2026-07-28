@@ -191,7 +191,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     const collectionTransfer = isToolCollectionReason(exhpReason.value);
 
     if (collectionTransfer) {
-      const selected = await openToolCollectionCreditDialog(referenceData.shares);
+      if (!share?.requiresComposition || !Array.isArray(share.composition) || !share.composition.length) {
+        showToast('Επίλεξε μερίδα συλλογής με καταχωρημένη σύνθεση.', 'error');
+        return;
+      }
+      const selected = await openToolCollectionCreditDialog(share, referenceData.shares);
       if (!selected) return;
       selected.forEach(({ share: collectionShare, item, quantity: selectedQuantity, sourceShare }, index) => {
         const transferGroup = `collection-transfer-${Date.now()}-${index}`;

@@ -25,7 +25,6 @@ function createInitialInventoryService(db) {
         views: [{ state: 'frozen', ySplit: 1 }]
       });
       sheet.addRow(TEMPLATE_HEADERS);
-      sheet.addRow([1, '', '', '', '', '', '', 'Αναλώσιμα']);
       sheet.columns = [
         { width: 8 }, { width: 18 }, { width: 24 }, { width: 42 },
         { width: 20 }, { width: 14 }, { width: 24 }, { width: 24 }
@@ -35,13 +34,6 @@ function createInitialInventoryService(db) {
       sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
       sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       sheet.getRow(1).height = 32;
-      for (let column = 1; column <= 6; column += 1) {
-        sheet.getCell(2, column).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFFF2CC' }
-        };
-      }
       await workbook.xlsx.writeFile(filePath);
       return { filePath, message: 'Το πρότυπο Excel δημιουργήθηκε.' };
     },
