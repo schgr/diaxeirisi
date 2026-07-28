@@ -292,7 +292,6 @@ export async function renderTransactionsPage(
 
     <div data-exhp-wizard-step="3">
     <section class="page-panel addy-secondary-grid">
-      <p class="eyebrow">ΒΗΜΑ 3 ΑΠΟ 3</p>
       <h3>Έντυπο ΕΧΠ</h3>
       <div class="exhp-controls">
         <label class="field">

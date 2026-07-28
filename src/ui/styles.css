@@ -2071,6 +2071,20 @@ h3 {
   align-items: end;
 }
 
+.administration-form-grid.handover-create-grid {
+  grid-template-columns:
+    minmax(145px, 0.8fr)
+    minmax(145px, 0.8fr)
+    minmax(240px, 1.6fr)
+    minmax(240px, 1.6fr)
+    minmax(190px, 1fr)
+    minmax(145px, 0.8fr);
+}
+
+.handover-create-grid .administration-wide-field {
+  grid-column: auto;
+}
+
 .administration-wide-field {
   grid-column: span 2;
 }
@@ -6281,6 +6295,10 @@ th {
   }
 
   .administration-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .administration-form-grid.handover-create-grid {
     grid-template-columns: 1fr 1fr;
   }
 

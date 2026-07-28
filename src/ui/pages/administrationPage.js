@@ -172,7 +172,7 @@ function renderHandoverPanel(data, selected, settings) {
   return `
     <section class="page-panel">
       <h3>Νέο Πρωτόκολλο Παράδοσης Γενικής Διαχείρισης</h3>
-      <div class="administration-form-grid">
+      <div class="administration-form-grid handover-create-grid">
         <label class="field"><span>ΗΜΕΡΟΜΗΝΙΑ ΠΑΡΑΔΟΣΗΣ</span><input id="handover-start" type="date" value="${data.today}" /></label>
         <label class="field"><span>Διαταγή Παράδοσης</span><input id="handover-order" /></label>
         <label class="field administration-wide-field"><span>Παραδίδων (ΔΧΣΤΗΣ)</span><input id="handover-outgoing" data-preserve-case="true" value="${escapeHtml(manager)}" readonly /></label>
