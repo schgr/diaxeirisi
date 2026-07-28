@@ -24,10 +24,11 @@ const HOME_TILE_META = {
   'financial-year-tasks': { code: '§ 03-Γ', icon: 'ΕΕ' },
   'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
+  'administration-report': { code: '§ 00-Α', icon: 'ΑΔ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
   'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
-  'settings-personnel': { code: '§ 04-Β', icon: 'ΠΡ' },
+  'settings-personnel': { code: '§ 04-Β', icon: 'ΤΜ' },
   'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' },
   'settings-security': { code: '§ 04-Δ', icon: 'ΑΣ' },
   'settings-information': { code: '§ 04-Ε', icon: 'ΠΛ' }

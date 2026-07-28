@@ -106,7 +106,7 @@ const homeGroups = [
     label: 'Ρυθμίσεις',
     items: [
       { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Γενικά' },
-      { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Προσωπικό' },
+      { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Τμήματα Μονάδος' },
       { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' },
       { id: 'settings-security', sectionId: 'settings', tab: 'security', title: 'Ασφάλεια και Backup' },
       { id: 'settings-information', sectionId: 'settings', tab: 'information', title: 'Πληροφορίες' }

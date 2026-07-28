@@ -23,7 +23,7 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
 
     <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
       <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="management-report" type="button"><span class="home-tile-icon">ΑΝ</span><span class="home-tile-title">Αναφορά Διαχείρισης</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="management-report" type="button"><span class="home-tile-icon">ΑΔ</span><span class="home-tile-title">Αναφορά Διαχείρισης</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="ammunition-batches" type="button"><span class="home-tile-icon">ΒΦ</span><span class="home-tile-title">Βιβλίο Μερίδων Β.Φ.</span><span class="home-tile-code">§ ΔΧ-Ε</span></button>

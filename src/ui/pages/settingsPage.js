@@ -31,7 +31,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
     <nav class="transaction-flow-home contextual-tile-menu settings-tile-menu" data-settings-menu aria-label="Ενότητες ρυθμίσεων">
       <button class="home-tile transaction-flow-tile" data-settings-tab="general" type="button"><span class="home-tile-icon">ΓΕ</span><span class="home-tile-title">Γενικά</span><span class="home-tile-code">§ ΡΥ-Α</span></button>
-      <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΠΡ</span><span class="home-tile-title">Προσωπικό</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΤΜ</span><span class="home-tile-title">Τμήματα Μονάδος</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΠΑ</span><span class="home-tile-title">Παράμετροι</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="security" type="button"><span class="home-tile-icon">ΑΣ</span><span class="home-tile-title">Ασφάλεια και Backup</span><span class="home-tile-code">§ ΡΥ-Δ</span></button>
       <button class="home-tile transaction-flow-tile" data-settings-tab="information" type="button"><span class="home-tile-icon">ΠΛ</span><span class="home-tile-title">Πληροφορίες</span><span class="home-tile-code">§ ΡΥ-Ε</span></button>
