@@ -57,6 +57,22 @@ function createTransactionsRepository(db) {
       `).all();
     },
 
+    listCompositionChangeSheetEntries() {
+      return db.prepare(`
+        SELECT entry.share_id,
+               entry.movement_type,
+               entry.quantity,
+               component.component_nominal_number,
+               component.component_description
+        FROM share_change_sheet_entries entry
+        JOIN share_composition_items component
+          ON component.share_id = entry.share_id
+         AND component.line_number = entry.component_line_number
+        WHERE COALESCE(entry.quantity, 0) <> 0
+        ORDER BY entry.change_date, entry.id
+      `).all();
+    },
+
     getNextShareNumber() {
       const row = db
         .prepare(

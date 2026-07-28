@@ -3117,7 +3117,7 @@ table.administration-table td {
 
 .category-share-controls {
   display: grid;
-  grid-template-columns: minmax(320px, 720px) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: flex-end;
 }
@@ -3128,18 +3128,28 @@ table.administration-table td {
 }
 
 .category-share-options {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  width: 100%;
 }
 
-.category-share-options .checkbox-label {
-  justify-content: flex-start;
-  min-height: 34px;
-  padding: 5px 8px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
+.category-share-selection-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.category-share-selection-table th:first-child,
+.category-share-selection-table td:first-child {
+  width: 70px;
+  text-align: center;
+}
+
+.category-share-selection-table th:last-child,
+.category-share-selection-table td:last-child {
+  width: 110px;
+  text-align: center;
+}
+
+.category-share-selection-table input[type="checkbox"] {
+  margin: 0;
 }
 
 .category-share-preview-modal {

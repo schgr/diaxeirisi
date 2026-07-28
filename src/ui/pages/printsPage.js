@@ -1100,14 +1100,25 @@ function renderCategoryShareControls(categories, state) {
     <div class="category-share-controls">
       <div class="category-share-selection">
         <strong>Κατηγορίες Υλικού</strong>
-        <div class="category-share-options">
-          ${categories.map((category) => `
-            <label class="checkbox-label">
-              <input type="checkbox" data-material-category="${escapeHtml(category)}"
-                ${state.selectedMaterialCategories.includes(category) ? 'checked' : ''} />
-              <span>${escapeHtml(category)}</span>
-            </label>
-          `).join('')}
+        <div class="card-table-wrap category-share-options">
+          <table class="category-share-selection-table">
+            <thead>
+              <tr><th>Α/Α</th><th>Κατηγορία Υλικού</th><th>Επιλογή</th></tr>
+            </thead>
+            <tbody>
+              ${categories.map((category, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${escapeHtml(category)}</td>
+                  <td>
+                    <input type="checkbox" data-material-category="${escapeHtml(category)}"
+                      aria-label="Επιλογή ${escapeHtml(category)}"
+                      ${state.selectedMaterialCategories.includes(category) ? 'checked' : ''} />
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
       <button id="preview-category-shares" class="primary-button compact-print-button"

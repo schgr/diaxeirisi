@@ -17,6 +17,10 @@ function createTransactionsService(db, settingsService) {
       const compositionCharges = aggregateCompositionCharges(
         repository.listInternalCompositionMovements()
       );
+      addChangeSheetCompositionCharges(
+        compositionCharges,
+        repository.listCompositionChangeSheetEntries()
+      );
       const measurementUnits = repository.listMeasurementUnits();
       const transactionUnits = repository.listTransactionUnits();
       const materialCategories = repository.listMaterialCategories();
@@ -901,6 +905,20 @@ function aggregateCompositionCharges(rows) {
       const direction = row.movement_type === 'Επιστροφή' ? -1 : 1;
       totals.set(key, (totals.get(key) || 0) + direction * Number(item.quantity || 0));
     });
+  });
+  return totals;
+}
+
+function addChangeSheetCompositionCharges(totals, rows) {
+  rows.forEach((row) => {
+    const key = compositionChargeKey(
+      row.share_id,
+      row.component_nominal_number,
+      row.component_description
+    );
+    const movement = String(row.movement_type || '').toLocaleUpperCase('el-GR');
+    const direction = movement === 'ΠΙΣΤΩΣΗ' || movement === 'ΕΠΙΣΤΡΟΦΗ' ? -1 : 1;
+    totals.set(key, (totals.get(key) || 0) + direction * Number(row.quantity || 0));
   });
   return totals;
 }

@@ -366,6 +366,10 @@ async function run() {
       quantity: 2,
       notes: ''
     }]);
+    const exhpReferenceAfterChangeSheet = transactions.getAddyReferenceData();
+    const collectionShareAfterChangeSheet = exhpReferenceAfterChangeSheet.shares
+      .find((item) => Number(item.id) === Number(share.id));
+    assert.strictEqual(collectionShareAfterChangeSheet.composition[0].chargedQuantity, 2);
     const materialCard = shares.getShareCard(share.id, 2026);
     assert.strictEqual(materialCard.transactions[0].transactionUnit, 'ΕΜΠΟΡΙΟ');
     assert.strictEqual(materialCard.transactions[0].registryNumber, 'Χ-1');
@@ -601,7 +605,7 @@ async function run() {
 
     const collectionReference = transactions.getAddyReferenceData().shares
       .find((item) => item.shareNumber === '1');
-    assert.strictEqual(collectionReference.composition[0].chargedQuantity, 1.5);
+    assert.strictEqual(collectionReference.composition[0].chargedQuantity, 3.5);
     const collectionExtraction = transactions.saveExhp({
       documentDate: '2026-06-08',
       serviceUnit: 'ΔΟΚΙΜΑΣΤΙΚΗ ΜΟΝΑΔΑ',

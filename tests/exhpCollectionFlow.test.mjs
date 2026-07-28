@@ -15,6 +15,8 @@ assert.match(form, /share\?\.requiresComposition/u);
 assert.match(form, /const collectionTransfer = isToolCollectionReason\(exhpReason\.value\);/u);
 assert.match(form, /collectionVirtualCredit/u);
 assert.match(service, /saveToolCollectionTransfers/u);
+assert.match(service, /listCompositionChangeSheetEntries/u);
+assert.match(service, /addChangeSheetCompositionCharges/u);
 assert.match(service, /creditSerial = 'Φ\.Μ\.'/u);
 
 console.log('EXHP tool-collection flow and registered preview test passed.');
