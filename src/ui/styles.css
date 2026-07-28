@@ -4566,6 +4566,16 @@ th {
   padding: 0 12px;
 }
 
+.all-share-print-button {
+  max-width: 210px;
+  flex: 0 1 210px;
+}
+
+.share-back-preview-content {
+  display: flex;
+  justify-content: center;
+}
+
 .internal-save-list-actions {
   margin-top: 12px;
   margin-bottom: 20px;

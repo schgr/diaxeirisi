@@ -629,8 +629,8 @@ function renderAllShareCardControls(shareCount) {
         <span>Σύνολο Μερίδων Υλικού</span>
         <strong>${escapeHtml(shareCount)}</strong>
       </div>
-      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button" ${shareCount ? '' : 'disabled'}>Εκτύπωση Μερίδων</button>
-      <button id="print-share-back-side" class="secondary-button compact-print-button" data-no-document-export type="button">Εκτύπωση Πίσω Πλευράς</button>
+      <button id="print-current-document" class="primary-button compact-print-button all-share-print-button" data-no-document-export type="button" ${shareCount ? '' : 'disabled'}>Εκτύπωση Μερίδων</button>
+      <button id="print-share-back-side" class="secondary-button compact-print-button" data-no-document-export type="button">Προβολή Πίσω Πλευράς</button>
     </div>
   `;
 }
@@ -677,11 +677,37 @@ async function renderAllShareCardPreview(
 function bindAllShareCardControls(container, preview) {
   const button = container.querySelector('#print-share-back-side');
   if (!button) return;
-  button.addEventListener('click', async () => {
-    const backPreview = document.createElement('div');
-    backPreview.innerHTML = renderShareBackTemplate();
-    await printIsolatedPreview(backPreview, false);
+  button.addEventListener('click', () => openShareBackPreview(renderShareBackTemplate()));
+}
+
+function openShareBackPreview(documentHtml) {
+  document.querySelector('.share-back-preview-backdrop')?.remove();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop share-back-preview-backdrop';
+  backdrop.innerHTML = `
+    <div class="request-document-modal index-document-preview-modal">
+      <header class="material-card-header no-print">
+        <div>
+          <p class="eyebrow">Κ 2309/ΑΥΠ</p>
+          <h2>Πίσω Πλευρά Μερίδας Υλικού</h2>
+        </div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-share-back type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-share-back type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="print-preview-shell index-document-preview-content share-back-preview-content">${documentHtml}</div>
+    </div>
+  `;
+  const content = backdrop.querySelector('.share-back-preview-content');
+  backdrop.querySelector('[data-print-share-back]').addEventListener('click', () => {
+    void printIsolatedPreview(content, false);
   });
+  backdrop.querySelector('[data-close-share-back]').addEventListener('click', () => backdrop.remove());
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop) backdrop.remove();
+  });
+  document.body.appendChild(backdrop);
 }
 
 function bindShareCardControls(container, sharesApi, shares, state, preview) {

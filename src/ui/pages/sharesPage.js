@@ -9,7 +9,7 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
     ? allShares.filter((share) => share.requiresComposition)
     : allShares;
   const materialTypes = collectMaterialTypes(shares, settings.materialCategories);
-  const heading = options.compositionOnly ? 'Συνθέσεις μερίδων' : 'Κατάσταση μερίδων';
+  const heading = options.compositionOnly ? 'Συνθέσεις μερίδων' : 'Κατάσταση Μερίδων';
   const eyebrow = options.compositionOnly ? 'ΣΥΝΘΕΣΕΙΣ ΜΕΡΙΔΩΝ' : 'ΜΕΡΙΔΕΣ';
 
   container.innerHTML = `
