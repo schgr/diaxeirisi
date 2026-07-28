@@ -208,7 +208,8 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
     const openButton = event.target.closest('[data-open-inventory]');
     if (openButton) {
       const session = await inventoryApi.getSession(Number(openButton.dataset.openInventory));
-      openInventoryStatementModal(settings, session);
+      const previewSettings = await settingsApi.get();
+      openInventoryStatementModal(previewSettings, session);
       return;
     }
 

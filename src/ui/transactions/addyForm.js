@@ -188,12 +188,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     const quantity = Number(exhpControls.quantity.value);
     const nominalTransfer = container.dataset.exhpNominalTransfer === 'true';
     const transactionType = nominalTransfer ? 'Πίστωση' : exhpControls.transactionType.value;
-    const collectionTransfer = isToolCollectionReason(exhpReason.value) && transactionType === 'Πίστωση';
+    const collectionTransfer = isToolCollectionReason(exhpReason.value);
 
-    if (collectionTransfer && share?.requiresComposition) {
-      const selected = await openToolCollectionCreditDialog(share, referenceData.shares);
+    if (collectionTransfer) {
+      const selected = await openToolCollectionCreditDialog(referenceData.shares);
       if (!selected) return;
-      selected.forEach(({ item, quantity: selectedQuantity, sourceShare }, index) => {
+      selected.forEach(({ share: collectionShare, item, quantity: selectedQuantity, sourceShare }, index) => {
         const transferGroup = `collection-transfer-${Date.now()}-${index}`;
         const virtualCredit = Number(item.quantityPerMaterial || 0) <= 0 || !sourceShare;
         const shared = {
@@ -206,7 +206,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           supportingDocuments: '',
           collectionTransfer: true,
           collectionVirtualCredit: virtualCredit,
-          collectionParentShareNumber: share.shareNumber,
+          collectionParentShareNumber: collectionShare.shareNumber,
           transferGroup
         };
         state.exhpItems.push({

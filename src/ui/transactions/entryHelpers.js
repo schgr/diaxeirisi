@@ -100,20 +100,27 @@ export function isToolCollectionReason(value) {
   return String(value || '').toLocaleLowerCase('el-GR').includes('συλλογές εργαλείων');
 }
 
-export function openToolCollectionCreditDialog(share, referenceShares) {
+export function openToolCollectionCreditDialog(referenceShares) {
   return new Promise((resolve) => {
+    const collections = referenceShares.filter((share) =>
+      share.requiresComposition && Array.isArray(share.composition) && share.composition.length
+    );
+    const components = collections.flatMap((share) =>
+      share.composition.map((item) => ({ share, item }))
+    );
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
       <section class="material-card-modal collection-credit-modal" role="dialog" aria-modal="true">
         <header class="material-card-header">
-          <div><p class="eyebrow">ΠΙΣΤΩΣΗ ΕΧΠ</p><h2>${escapeHtml(share.description)}</h2></div>
+          <div><p class="eyebrow">ΠΙΣΤΩΣΗ ΕΧΠ</p><h2>Υλικά Συλλογών Εργαλείων</h2></div>
         </header>
         <div class="card-table-wrap">
           <table>
-            <thead><tr><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
-            <tbody>${(share.composition || []).map((item, index) => `
+            <thead><tr><th>Μερίδα Συλλογής</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
+            <tbody>${components.map(({ share, item }, index) => `
               <tr data-collection-component="${index}">
+                <td>${escapeHtml(share.shareNumber)}</td>
                 <td>${escapeHtml(item.componentNominalNumber)}</td>
                 <td>${escapeHtml(item.componentDescription)}</td>
                 <td class="number-cell">${formatQuantity(item.chargedQuantity)}</td>
@@ -136,12 +143,13 @@ export function openToolCollectionCreditDialog(share, referenceShares) {
       if (event.target === modal || event.target.closest('[data-close-collection-credit]')) return close(null);
       if (!event.target.closest('[data-save-collection-credit]')) return;
       const selected = [...modal.querySelectorAll('[data-collection-component]')].map((row) => {
-        const item = share.composition[Number(row.dataset.collectionComponent)];
+        const component = components[Number(row.dataset.collectionComponent)];
+        const { share, item } = component;
         const quantity = Number(row.querySelector('[data-collection-quantity]').value || 0);
         const sourceShare = referenceShares.find((candidate) =>
           String(candidate.nominalNumber || '').trim() === String(item.componentNominalNumber || '').trim()
         );
-        return { item, quantity, sourceShare };
+        return { share, item, quantity, sourceShare };
       }).filter(({ quantity }) => quantity > 0);
       const invalid = selected.some(({ item, quantity }) => quantity > Number(item.chargedQuantity || 0));
       if (invalid || !selected.length) return;
