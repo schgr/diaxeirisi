@@ -44,8 +44,8 @@ const allSignaturesHtml = renderK2310Pages(
   { signatureMode: 'all', financialManager: 'Ανθλγός (ΠΒ) Διαχειριστής Δήμος' }
 );
 assert.match(allSignaturesHtml, /k2310-horizontal-signatures/u);
-assert.match(allSignaturesHtml, /Ο ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
-assert.match(allSignaturesHtml, /Ο ΜΕΡΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
+assert.doesNotMatch(allSignaturesHtml, /Ο ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
+assert.doesNotMatch(allSignaturesHtml, /Ο ΜΕΡΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ/u);
 assert.match(allSignaturesHtml, /<strong>Διαχειριστής Δήμος<\/strong><span>Ανθλγός \(ΠΒ\)<\/span>/u);
 assert.match(allSignaturesHtml, /Αζίζογλου Πρόδρομος/u);
 

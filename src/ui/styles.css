@@ -1337,6 +1337,26 @@ h3 {
   margin-left: 6px;
 }
 
+.internal-movement-entry-row {
+  grid-template-columns:
+    minmax(115px, 0.7fr)
+    minmax(240px, 1.35fr)
+    minmax(120px, 0.75fr)
+    minmax(135px, 0.8fr)
+    minmax(170px, 1fr)
+    minmax(260px, 1.65fr)
+    minmax(120px, 0.75fr)
+    85px
+    minmax(116px, auto);
+  gap: 12px;
+}
+
+.internal-movement-entry-row .primary-button {
+  min-width: 116px;
+  width: 100%;
+  white-space: nowrap;
+}
+
 .internal-material-line {
   grid-template-columns:
     minmax(115px, 0.65fr)
@@ -5530,13 +5550,32 @@ th {
 }
 
 .k2310-horizontal-signatures {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  align-items: start;
-  margin: -8px 12% 0;
+  position: relative;
+  min-height: 50px;
+  margin-top: -8px;
   font-size: 9px;
   line-height: 1.2;
+}
+
+.k2310-horizontal-signatures > div {
+  position: absolute;
+  top: 0;
+  width: 190px;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.k2310-signature-mode-manager .k2310-signature-manager,
+.k2310-signature-mode-department .k2310-signature-department {
+  left: 60.5%;
+}
+
+.k2310-signature-mode-all .k2310-signature-manager {
+  left: 43%;
+}
+
+.k2310-signature-mode-all .k2310-signature-department {
+  left: 60.5%;
 }
 
 .k2310-horizontal-signatures strong,
@@ -5547,10 +5586,6 @@ th {
 .k2310-horizontal-signatures strong {
   margin-top: 8px;
   font-size: 10px;
-}
-
-.k2310-signature-title {
-  font-weight: 700;
 }
 
 .k2310-preview-actions {
@@ -6089,7 +6124,8 @@ th {
   }
 
   .internal-movement-context,
-  .internal-material-line {
+  .internal-material-line,
+  .internal-movement-entry-row {
     grid-template-columns: repeat(3, minmax(170px, 1fr));
   }
 
@@ -6159,6 +6195,7 @@ th {
 
   .internal-movement-context,
   .internal-material-line,
+  .internal-movement-entry-row,
   .internal-movement-line {
     grid-template-columns: 1fr;
   }

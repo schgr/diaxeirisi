@@ -70,7 +70,7 @@ export async function renderChargesPage(container, internalApi, showToast) {
 function renderMovementForm(referenceData) {
   return `
     <div class="internal-movement-line addy-panel">
-      <div class="addy-header-grid internal-movement-row internal-movement-context">
+      <div class="internal-movement-row internal-movement-entry-row">
         <label class="field"><span>ΗΜΕΡΟΜΗΝΙΑ</span><input id="internal-date" type="date" value="${referenceData.today}" /></label>
         <label class="field">
           <span>ΜΕΡΙΚΗ ΔΙΑΧΕΙΡΙΣΗ</span>
@@ -83,8 +83,6 @@ function renderMovementForm(referenceData) {
           <span>ΕΙΔΟΣ ΚΙΝΗΣΗΣ</span>
           <select id="internal-type"><option value="">ΕΠΙΛΟΓΗ</option><option value="Χορήγηση">ΧΟΡΗΓΗΣΗ</option><option value="Επιστροφή">ΕΠΙΣΤΡΟΦΗ</option></select>
         </label>
-      </div>
-      <div class="addy-line-grid internal-movement-row internal-material-line">
         <label class="field">
           <span>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</span>
           <input id="internal-share" list="internal-share-list" autocomplete="off" />
@@ -405,12 +403,12 @@ function renderK2310SignatureRow(mode, financialManager, departmentHead) {
   return `
     <td colspan="17" class="k2310-signatures">
       <span class="k2310-signature-label">(14) ΥΠΟΓΡΑΦΕΣ</span>
-      <div class="k2310-horizontal-signatures">
-        <div>
-          ${showManager ? `<span class="k2310-signature-title">Ο ΔΙΑΧΕΙΡΙΣΤΗΣ</span>${renderK2310Identity(financialManager)}` : ''}
+      <div class="k2310-horizontal-signatures k2310-signature-mode-${escapeHtml(mode)}">
+        <div class="k2310-signature-manager">
+          ${showManager ? renderK2310Identity(financialManager) : ''}
         </div>
-        <div>
-          ${showDepartment ? `<span class="k2310-signature-title">Ο ΜΕΡΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ</span>${renderK2310Identity(departmentHead)}` : ''}
+        <div class="k2310-signature-department">
+          ${showDepartment ? renderK2310Identity(departmentHead) : ''}
         </div>
       </div>
     </td>

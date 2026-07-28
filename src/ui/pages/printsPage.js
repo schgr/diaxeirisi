@@ -953,7 +953,7 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}, o
           ${options.singleMaterialHtml ? '<button class="secondary-button" data-toggle-index-materials type="button">Εκτύπωση με ένα υλικό ανά ΑΔΔΥ</button>' : ''}
           <button class="secondary-button" data-toggle-index-signatures type="button">Υπογραφές Έτους</button>
           <button class="secondary-button" data-close-index-preview type="button">Κλείσιμο</button>
-          <button class="primary-button" data-print-index-preview type="button">Εκτύπωση</button>
+          <button class="primary-button" data-print-index-preview data-no-document-export type="button">Εκτύπωση</button>
         </div>
       </header>
       <div class="print-preview-shell index-document-preview-content">${documentHtml}</div>

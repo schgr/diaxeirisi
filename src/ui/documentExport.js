@@ -53,6 +53,7 @@ export function buildDocumentExportPayload(printButton) {
   return {
     title,
     orientation: resolveExportOrientation(printButton, source),
+    singleWorksheet: printButton.matches('[data-print-k2310]'),
     html: clone.innerHTML,
     tables: extractTables(clone, title),
     textLines: extractTextLines(clone)

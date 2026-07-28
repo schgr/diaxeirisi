@@ -38,6 +38,22 @@ async function run() {
     assert.strictEqual(sheet.getCell('C2').value, 1);
     assert.strictEqual(sheet.pageSetup.orientation, 'landscape');
 
+    const continuousExcelPath = path.join(directory, 'Κ2310.xlsx');
+    await writeExcelExport(continuousExcelPath, {
+      title: 'Κ2310',
+      orientation: 'landscape',
+      singleWorksheet: true,
+      tables: [
+        { name: 'Σελίδα 1', rows: [['Α'], ['1']] },
+        { name: 'Σελίδα 2', rows: [['Β'], ['2']] }
+      ]
+    });
+    const continuousWorkbook = new ExcelJS.Workbook();
+    await continuousWorkbook.xlsx.readFile(continuousExcelPath);
+    assert.strictEqual(continuousWorkbook.worksheets.length, 1);
+    assert.strictEqual(continuousWorkbook.worksheets[0].getCell('A1').value, 'Α');
+    assert.strictEqual(continuousWorkbook.worksheets[0].getCell('A3').value, 'Β');
+
     const wordPath = path.join(directory, 'Κατάσταση.doc');
     writeWordExport(wordPath, {
       title: 'Κατάσταση Πλεονασμάτων',

@@ -7,9 +7,22 @@ async function writeExcelExport(filePath, payload = {}) {
   workbook.created = new Date();
   const orientation = normalizeOrientation(payload.orientation);
   const tables = Array.isArray(payload.tables) ? payload.tables : [];
-  const sources = tables.length
+  let sources = tables.length
     ? tables
     : [{ name: payload.title || 'Κατάσταση', rows: (payload.textLines || []).map((line) => [line]) }];
+  if (payload.singleWorksheet && sources.length > 1) {
+    const rows = [];
+    const pageBreakRows = [];
+    sources.forEach((table, index) => {
+      rows.push(...(Array.isArray(table.rows) ? table.rows : []));
+      if (index < sources.length - 1 && rows.length) pageBreakRows.push(rows.length);
+    });
+    sources = [{
+      name: payload.title || 'Κατάσταση',
+      rows,
+      pageBreakRows
+    }];
+  }
 
   sources.forEach((table, index) => {
     const worksheet = workbook.addWorksheet(uniqueWorksheetName(
@@ -25,6 +38,9 @@ async function writeExcelExport(filePath, payload = {}) {
     };
     const rows = Array.isArray(table.rows) ? table.rows : [];
     rows.forEach((row) => worksheet.addRow((Array.isArray(row) ? row : [row]).map(cleanCell)));
+    (table.pageBreakRows || []).forEach((rowNumber) => {
+      worksheet.getRow(rowNumber).addPageBreak();
+    });
     if (worksheet.rowCount) {
       worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
       worksheet.getRow(1).fill = {
