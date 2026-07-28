@@ -25,8 +25,10 @@ import {
   findCurrentShare,
   getControls,
   getExhpControls,
+  isToolCollectionReason,
   maybeSuggestShareNumber,
   openAddyCompositionDialog,
+  openToolCollectionCreditDialog,
   renderExhpEntryState,
   renderState,
   updateAddButton
@@ -181,11 +183,48 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     );
   });
 
-  exhpControls.addItem.addEventListener('click', () => {
+  exhpControls.addItem.addEventListener('click', async () => {
     const share = findShareByNumber(referenceData.shares, exhpControls.shareNumber.value);
     const quantity = Number(exhpControls.quantity.value);
     const nominalTransfer = container.dataset.exhpNominalTransfer === 'true';
     const transactionType = nominalTransfer ? 'Πίστωση' : exhpControls.transactionType.value;
+    const collectionTransfer = isToolCollectionReason(exhpReason.value) && transactionType === 'Πίστωση';
+
+    if (collectionTransfer && share?.requiresComposition) {
+      const selected = await openToolCollectionCreditDialog(share, referenceData.shares);
+      if (!selected) return;
+      selected.forEach(({ item, quantity: selectedQuantity, sourceShare }, index) => {
+        const transferGroup = `collection-transfer-${Date.now()}-${index}`;
+        const virtualCredit = Number(item.quantityPerMaterial || 0) <= 0 || !sourceShare;
+        const shared = {
+          nominalNumber: item.componentNominalNumber,
+          description: item.componentDescription,
+          measurementUnit: item.measurementUnit || sourceShare?.measurementUnit || '',
+          materialType: sourceShare?.materialType || '',
+          materialCode: sourceShare?.materialCode || '',
+          quantity: selectedQuantity,
+          supportingDocuments: '',
+          collectionTransfer: true,
+          collectionVirtualCredit: virtualCredit,
+          collectionParentShareNumber: share.shareNumber,
+          transferGroup
+        };
+        state.exhpItems.push({
+          ...shared,
+          shareNumber: sourceShare?.shareNumber || 'Φ.Μ.',
+          transactionType: 'Πίστωση'
+        }, {
+          ...shared,
+          shareNumber: '',
+          sourceShareNumber: sourceShare?.shareNumber || 'Φ.Μ.',
+          transactionType: 'Χρέωση'
+        });
+      });
+      state.exhpItems.sort(compareShareNumbers);
+      clearExhpLine(exhpControls);
+      renderExhpEntryState(container, state);
+      return;
+    }
 
     if (!share || !quantity || quantity <= 0 || !transactionType) {
       showToast('Συμπλήρωσε μερίδα, ποσότητα και είδος δοσοληψίας.', 'error');

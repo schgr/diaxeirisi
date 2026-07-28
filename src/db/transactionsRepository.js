@@ -47,6 +47,16 @@ function createTransactionsRepository(db) {
       `).all(shareId);
     },
 
+    listInternalCompositionMovements() {
+      return db.prepare(`
+        SELECT item.share_id, document.movement_type, item.composition_snapshot
+        FROM internal_items item
+        JOIN internal_documents document ON document.id = item.internal_document_id
+        WHERE TRIM(COALESCE(item.composition_snapshot, '')) <> ''
+        ORDER BY document.document_date, document.id, item.id
+      `).all();
+    },
+
     getNextShareNumber() {
       const row = db
         .prepare(

@@ -8,5 +8,7 @@ assert.doesNotMatch(source, /id="inventory-title"/u);
 assert.match(source, /<th>Α\/Α<\/th><th>Ημερομηνία<\/th><th>Αιτιολογία<\/th>/u);
 assert.match(source, /title: inventoryReason/u);
 assert.match(source, /session\.inventoryReason \|\| session\.title/u);
+assert.match(source, /openInventoryStatementModal\(settings, session\)/u);
+assert.match(source, /class="request-document-modal inventory-statement-modal"/u);
 
 console.log('Inventory page reason-only and on-demand preview layout test passed.');

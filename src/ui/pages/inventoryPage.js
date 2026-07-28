@@ -207,14 +207,8 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
   container.addEventListener('click', async (event) => {
     const openButton = event.target.closest('[data-open-inventory]');
     if (openButton) {
-      await renderInventoryPage(
-        container,
-        inventoryApi,
-        settingsApi,
-        showToast,
-        Number(openButton.dataset.openInventory),
-        'statement'
-      );
+      const session = await inventoryApi.getSession(Number(openButton.dataset.openInventory));
+      openInventoryStatementModal(settings, session);
       return;
     }
 
@@ -272,6 +266,35 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
       showToast(error.message || 'Δεν ήταν δυνατή η ολοκλήρωση.', 'error');
     }
   });
+}
+
+function openInventoryStatementModal(settings, session) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <section class="request-document-modal inventory-statement-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">Κ2320/ΔΥΠ</p><h2>Κατάσταση Απογραφής</h2></div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-inventory-modal type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-inventory-modal type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="inventory-modal-preview" data-inventory-modal-preview>
+        ${renderInventoryStatement(settings, session)}
+      </div>
+    </section>
+  `;
+  modal.addEventListener('click', async (event) => {
+    if (event.target === modal || event.target.closest('[data-close-inventory-modal]')) {
+      modal.remove();
+      return;
+    }
+    if (event.target.closest('[data-print-inventory-modal]')) {
+      await printInventoryStatementPreview(modal.querySelector('[data-inventory-modal-preview]'));
+    }
+  });
+  document.body.appendChild(modal);
 }
 
 async function printInventoryStatementPreview(preview) {

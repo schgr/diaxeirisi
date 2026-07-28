@@ -70,6 +70,9 @@ function validateItem(item) {
     materialCode: optionalText(item && item.materialCode),
     sourceShareNumber: optionalText(item && item.sourceShareNumber),
     transferGroup: optionalText(item && item.transferGroup),
+    collectionTransfer: Boolean(item && item.collectionTransfer),
+    collectionVirtualCredit: Boolean(item && item.collectionVirtualCredit),
+    collectionParentShareNumber: optionalText(item && item.collectionParentShareNumber),
     transactionType,
     quantity,
     supportingDocuments: optionalText(item && item.supportingDocuments)

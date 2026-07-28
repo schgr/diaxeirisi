@@ -96,6 +96,61 @@ export function clearExhpLine(controls) {
   controls.transactionType.value = '';
 }
 
+export function isToolCollectionReason(value) {
+  return String(value || '').toLocaleLowerCase('el-GR').includes('συλλογές εργαλείων');
+}
+
+export function openToolCollectionCreditDialog(share, referenceShares) {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <section class="material-card-modal collection-credit-modal" role="dialog" aria-modal="true">
+        <header class="material-card-header">
+          <div><p class="eyebrow">ΠΙΣΤΩΣΗ ΕΧΠ</p><h2>${escapeHtml(share.description)}</h2></div>
+        </header>
+        <div class="card-table-wrap">
+          <table>
+            <thead><tr><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
+            <tbody>${(share.composition || []).map((item, index) => `
+              <tr data-collection-component="${index}">
+                <td>${escapeHtml(item.componentNominalNumber)}</td>
+                <td>${escapeHtml(item.componentDescription)}</td>
+                <td class="number-cell">${formatQuantity(item.chargedQuantity)}</td>
+                <td><input data-collection-quantity type="number" min="0" max="${Number(item.chargedQuantity || 0)}" step="0.001" /></td>
+              </tr>
+            `).join('')}</tbody>
+          </table>
+        </div>
+        <div class="addy-save-row">
+          <button class="primary-button" data-save-collection-credit type="button">Αποθήκευση</button>
+          <button class="secondary-button" data-close-collection-credit type="button">Κλείσιμο</button>
+        </div>
+      </section>
+    `;
+    const close = (value) => {
+      modal.remove();
+      resolve(value);
+    };
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-close-collection-credit]')) return close(null);
+      if (!event.target.closest('[data-save-collection-credit]')) return;
+      const selected = [...modal.querySelectorAll('[data-collection-component]')].map((row) => {
+        const item = share.composition[Number(row.dataset.collectionComponent)];
+        const quantity = Number(row.querySelector('[data-collection-quantity]').value || 0);
+        const sourceShare = referenceShares.find((candidate) =>
+          String(candidate.nominalNumber || '').trim() === String(item.componentNominalNumber || '').trim()
+        );
+        return { item, quantity, sourceShare };
+      }).filter(({ quantity }) => quantity > 0);
+      const invalid = selected.some(({ item, quantity }) => quantity > Number(item.chargedQuantity || 0));
+      if (invalid || !selected.length) return;
+      close(selected);
+    });
+    document.body.appendChild(modal);
+  });
+}
+
 export function renderExhpEntryState(container, state) {
   container.querySelector('#exhp-items-view').innerHTML = renderExhpEntryTables(state.exhpItems);
   container.querySelector('#exhp-limit-text').textContent = `${state.exhpItems.length} καταχωρήσεις`;
@@ -269,6 +324,7 @@ export function renderSavedExhpRows(documents) {
           <td>${escapeHtml(documentItem.approvalReference)}</td>
           <td><span class="status-pill ${documentItem.supportStatus === 'Πλήρης για ΕΥΣ' ? 'balanced' : 'pending'}">${escapeHtml(displaySupportStatus(documentItem.supportStatus))}</span></td>
           <td class="row-actions">
+            <button class="secondary-button" data-view-exhp-document="${documentItem.id}" type="button">Προβολή</button>
             <button class="secondary-button" data-edit-exhp-document="${documentItem.id}" type="button">Επεξεργασία</button>
             <button class="danger-button" data-delete-exhp-document="${documentItem.id}" type="button">Διαγραφή</button>
           </td>

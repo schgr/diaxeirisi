@@ -599,6 +599,59 @@ async function run() {
     assert.strictEqual(departmentBalances[0].composition[0].returnedQuantity, 0.5);
     assert.strictEqual(departmentBalances[0].composition[0].finalQuantity, 1.5);
 
+    const collectionReference = transactions.getAddyReferenceData().shares
+      .find((item) => item.shareNumber === '1');
+    assert.strictEqual(collectionReference.composition[0].chargedQuantity, 1.5);
+    const collectionExtraction = transactions.saveExhp({
+      documentDate: '2026-06-08',
+      serviceUnit: 'ΔΟΚΙΜΑΣΤΙΚΗ ΜΟΝΑΔΑ',
+      issueReason: toolCollectionReason,
+      approvalReference: '',
+      supports: toolCollectionTemplates.map((template) => ({
+        templateId: template.id,
+        completed: true,
+        documentReference: `${template.documentCode || 'ΔΙΚ'}-2/2026`
+      })),
+      items: [{
+        shareNumber: 'Φ.Μ.',
+        nominalNumber: 'COMP-001',
+        description: 'Εξάρτημα δοκιμής',
+        measurementUnit: 'Τεμάχια',
+        transactionType: 'Πίστωση',
+        quantity: 1,
+        collectionTransfer: true,
+        collectionVirtualCredit: true,
+        collectionParentShareNumber: '1',
+        transferGroup: 'collection-test-1'
+      }, {
+        shareNumber: '77',
+        sourceShareNumber: 'Φ.Μ.',
+        nominalNumber: 'COMP-001',
+        description: 'Εξάρτημα δοκιμής',
+        measurementUnit: 'Τεμάχια',
+        transactionType: 'Χρέωση',
+        quantity: 1,
+        collectionTransfer: true,
+        collectionVirtualCredit: true,
+        collectionParentShareNumber: '1',
+        transferGroup: 'collection-test-1'
+      }]
+    });
+    const collectionExtractionDocument = transactions.getExhpDocument(collectionExtraction.documentId);
+    assert.strictEqual(
+      collectionExtractionDocument.items.find((item) => item.transactionType === 'Πίστωση').ledgerSerial,
+      'Φ.Μ.'
+    );
+    assert.strictEqual(
+      shares.listShares().find((item) => item.shareNumber === '77').accountingBalance,
+      1
+    );
+    assert.strictEqual(
+      shares.getShareCard(shares.listShares().find((item) => item.shareNumber === '1').id, 2026)
+        .transactions.some((item) => item.registryNumber === `ΕΧΠ-${collectionExtraction.registryNumber}`),
+      false
+    );
+
     const multiPageItems = Array.from({ length: 15 }, () => ({
       shareNumber: '1',
       nominalNumber: 'TEST-001',
@@ -796,7 +849,7 @@ async function run() {
 
     const annualPackage = annualAccounts.getPackage(2026);
     assert.strictEqual(annualPackage.fiscalYear, 2026);
-    assert.strictEqual(annualPackage.metrics.exhpDocuments, 2);
+    assert.strictEqual(annualPackage.metrics.exhpDocuments, 3);
     assert.strictEqual(annualPackage.metrics.incompleteExhp, 0);
     assert.strictEqual(annualPackage.checks.some((check) => check.key === 'exhp-folder' && check.completed), true);
 

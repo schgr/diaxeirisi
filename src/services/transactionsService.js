@@ -14,6 +14,9 @@ function createTransactionsService(db, settingsService) {
 
     getAddyReferenceData() {
       const shares = repository.listShares();
+      const compositionCharges = aggregateCompositionCharges(
+        repository.listInternalCompositionMovements()
+      );
       const measurementUnits = repository.listMeasurementUnits();
       const transactionUnits = repository.listTransactionUnits();
       const materialCategories = repository.listMaterialCategories();
@@ -39,6 +42,9 @@ function createTransactionsService(db, settingsService) {
                 componentDescription: item.component_description,
                 measurementUnit: item.measurement_unit,
                 quantityPerMaterial: Number(item.quantity),
+                chargedQuantity: Number(compositionCharges.get(
+                  compositionChargeKey(share.id, item.component_nominal_number, item.component_description)
+                ) || 0),
                 notIssuedQuantity: Number(item.not_issued_quantity || 0),
                 notes: item.notes || ''
               }))
@@ -194,6 +200,8 @@ function createTransactionsService(db, settingsService) {
 
         if (isNominalNumberTransferReason(exhp.issueReason)) {
           saveNominalNumberTransfer(repository, exhp, documentId, registryNumber, documentItems);
+        } else if (isToolCollectionReason(exhp.issueReason)) {
+          saveToolCollectionTransfers(repository, exhp, documentId, registryNumber, documentItems);
         } else {
           for (const item of exhp.items) {
             saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems);
@@ -322,7 +330,7 @@ function createTransactionsService(db, settingsService) {
                 item.share_transaction_id,
                 row.document_date
               )
-            : '';
+            : (isToolCollectionReason(row.issue_reason) && item.transaction_type === 'Πίστωση' ? 'Φ.Μ.' : '');
           return {
             shareNumber: item.share_number,
             nominalNumber: item.nominal_number,
@@ -396,7 +404,7 @@ function createTransactionsService(db, settingsService) {
           }
         });
 
-        items.forEach((item) => {
+        items.filter((item) => item.share_transaction_id).forEach((item) => {
           const reverseDelta = item.transaction_type === 'Χρέωση'
             ? -Number(item.quantity)
             : Number(item.quantity);
@@ -803,6 +811,106 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
   };
   repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
   documentItems.push({ ...savedItem, ledgerSerial });
+}
+
+function saveToolCollectionTransfers(repository, exhp, documentId, registryNumber, documentItems) {
+  const collectionItems = exhp.items.filter((item) => item.collectionTransfer);
+  const regularItems = exhp.items.filter((item) => !item.collectionTransfer);
+  regularItems.forEach((item) =>
+    saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems)
+  );
+  const credits = collectionItems.filter((item) => item.transactionType === 'Πίστωση');
+  for (const credit of credits) {
+    const charge = collectionItems.find((item) =>
+      item.transactionType === 'Χρέωση' && item.transferGroup === credit.transferGroup
+    );
+    if (!charge) throw new Error(`Δεν βρέθηκε νέα μερίδα για το υλικό ${credit.nominalNumber}.`);
+    if (repository.findShareByNumber(charge.shareNumber)) {
+      throw new Error(`Ο Αριθμός Μερίδας ${charge.shareNumber} χρησιμοποιείται ήδη.`);
+    }
+
+    let sourceShare = null;
+    let creditTransactionId = null;
+    let creditSerial = 'Φ.Μ.';
+    if (!credit.collectionVirtualCredit) {
+      sourceShare = repository.findShareByNumber(credit.shareNumber);
+      if (!sourceShare || Number(credit.quantity) > Number(sourceShare.accounting_balance || 0)) {
+        throw new Error(`Η χρεωμένη ποσότητα δεν επαρκεί για το υλικό ${credit.nominalNumber}.`);
+      }
+      repository.adjustAccountingBalance(sourceShare.id, -credit.quantity);
+      creditTransactionId = repository.createShareTransaction({
+        shareId: sourceShare.id,
+        transactionDate: exhp.documentDate,
+        transactionUnit: exhp.serviceUnit,
+        transactionType: 'Πίστωση',
+        documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+        quantity: credit.quantity,
+        notes: exhp.issueReason
+      });
+      creditSerial = repository.getShareTransactionSerialForYear(
+        sourceShare.id, creditTransactionId, exhp.documentDate
+      );
+    } else {
+      sourceShare = repository.findShareByNumber(credit.collectionParentShareNumber);
+      if (!sourceShare) throw new Error('Δεν βρέθηκε η μερίδα της συλλογής.');
+    }
+    repository.createExhpItem(documentId, credit, sourceShare.id, creditTransactionId);
+    documentItems.push({ ...credit, ledgerSerial: creditSerial });
+
+    const targetShare = repository.createShare({
+      shareNumber: charge.shareNumber,
+      nominalNumber: charge.nominalNumber,
+      description: charge.description,
+      materialType: charge.materialType,
+      materialCode: charge.materialCode,
+      measurementUnit: charge.measurementUnit,
+      accountingBalance: 0,
+      chargedQuantity: 0
+    });
+    repository.adjustAccountingBalance(targetShare.id, charge.quantity);
+    const chargeTransactionId = repository.createShareTransaction({
+      shareId: targetShare.id,
+      transactionDate: exhp.documentDate,
+      transactionUnit: exhp.serviceUnit,
+      transactionType: 'Χρέωση',
+      documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+      quantity: charge.quantity,
+      notes: exhp.issueReason
+    });
+    const chargeSerial = repository.getShareTransactionSerialForYear(
+      targetShare.id, chargeTransactionId, exhp.documentDate
+    );
+    repository.createExhpItem(documentId, charge, targetShare.id, chargeTransactionId);
+    documentItems.push({ ...charge, ledgerSerial: chargeSerial });
+  }
+}
+
+function isToolCollectionReason(value) {
+  return String(value || '').toLocaleLowerCase('el-GR').includes('συλλογές εργαλείων');
+}
+
+function aggregateCompositionCharges(rows) {
+  const totals = new Map();
+  rows.forEach((row) => {
+    let snapshot = [];
+    try { snapshot = JSON.parse(row.composition_snapshot || '[]'); } catch (_error) {}
+    snapshot.forEach((item) => {
+      const key = compositionChargeKey(
+        row.share_id, item.componentNominalNumber, item.componentDescription
+      );
+      const direction = row.movement_type === 'Επιστροφή' ? -1 : 1;
+      totals.set(key, (totals.get(key) || 0) + direction * Number(item.quantity || 0));
+    });
+  });
+  return totals;
+}
+
+function compositionChargeKey(shareId, nominalNumber, description) {
+  return [
+    Number(shareId),
+    String(nominalNumber || '').trim().toLocaleUpperCase('el-GR'),
+    String(description || '').trim().toLocaleUpperCase('el-GR')
+  ].join('\u0000');
 }
 
 function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber, documentItems) {

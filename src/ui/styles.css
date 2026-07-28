@@ -5599,6 +5599,25 @@ th {
   order: 999;
 }
 
+.inventory-statement-modal {
+  width: min(1120px, 94vw);
+  max-height: 92vh;
+}
+
+.inventory-modal-preview {
+  overflow: auto;
+  padding: 18px;
+  background: #050b14;
+}
+
+.inventory-modal-preview .official-inventory-page {
+  margin-inline: auto;
+}
+
+.collection-credit-modal {
+  width: min(1050px, 94vw);
+}
+
 .k2310-horizontal-signatures strong,
 .k2310-horizontal-signatures span {
   display: block;
