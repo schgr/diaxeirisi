@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { shouldShowApplicationMenu } = require('./applicationMenu');
 const { initializeDatabase } = require('./db/database');
 const { createSettingsService } = require('./services/settingsService');
 const { createSharesService } = require('./services/sharesService');
@@ -667,6 +668,9 @@ async function safeInvoke(operation, allowLocked = false) {
 }
 
 app.whenReady().then(async () => {
+  if (!shouldShowApplicationMenu(app.getVersion())) {
+    Menu.setApplicationMenu(null);
+  }
   const userDataPath = app.getPath('userData');
   applyPendingRestore(userDataPath);
   securityService = createSecurityService(userDataPath);
