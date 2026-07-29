@@ -1215,7 +1215,6 @@ export function renderSharesByCategoryPages(shares, settings, selectedCategories
       <article class="material-registry-page category-share-page print-document-area">
         <div class="registry-topline">
           <span>ΜΟΝΑΔΑ: ${escapeHtml(settings?.serviceInfo?.serviceName || '')}</span>
-          <span>ΣΕΛΙΔΑ ${index + 1} ΑΠΟ ${pageCount}</span>
         </div>
         <h1>ΜΕΡΙΔΕΣ ΑΝΑ ΚΑΤΗΓΟΡΙΑ ΥΛΙΚΟΥ</h1>
         <table class="registry-table category-share-table">

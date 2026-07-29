@@ -3186,13 +3186,13 @@ table.administration-table td {
   background: var(--preview-bg, #020812);
 }
 
-.category-share-table th:nth-child(1) { width: 6%; }
-.category-share-table th:nth-child(2) { width: 17%; }
-.category-share-table th:nth-child(3) { width: 10%; }
-.category-share-table th:nth-child(4) { width: 16%; }
-.category-share-table th:nth-child(5) { width: 31%; }
-.category-share-table th:nth-child(6) { width: 11%; }
-.category-share-table th:nth-child(7) { width: 9%; }
+.category-share-table th:nth-child(1) { width: 5%; }
+.category-share-table th:nth-child(2) { width: 16%; }
+.category-share-table th:nth-child(3) { width: 7%; }
+.category-share-table th:nth-child(4) { width: 15%; }
+.category-share-table th:nth-child(5) { width: 36%; }
+.category-share-table th:nth-child(6) { width: 7%; }
+.category-share-table th:nth-child(7) { width: 14%; }
 
 .inventory-print-controls {
   grid-template-columns: minmax(260px, 1fr) auto;
