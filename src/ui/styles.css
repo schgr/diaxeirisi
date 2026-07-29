@@ -950,7 +950,7 @@ select {
 
 .exhp-reason-tile-grid {
   margin-top: 14px;
-  max-width: 620px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .exhp-reason-tile {
@@ -1292,6 +1292,7 @@ h3 {
 .addy-header-grid > *,
 .addy-line-grid > *,
 .exhp-controls > *,
+.exhp-entry-grid > *,
 .exhp-line-grid > *,
 .exhp-support-row > * {
   min-width: 0;
@@ -3187,13 +3188,20 @@ table.administration-table td {
   background: var(--preview-bg, #020812);
 }
 
-.category-share-table th:nth-child(1) { width: 5%; }
-.category-share-table th:nth-child(2) { width: 16%; }
-.category-share-table th:nth-child(3) { width: 7%; }
-.category-share-table th:nth-child(4) { width: 15%; }
-.category-share-table th:nth-child(5) { width: 36%; }
+.category-share-table th:nth-child(1) { width: 4%; }
+.category-share-table th:nth-child(2) { width: 13%; }
+.category-share-table th:nth-child(3) { width: 8%; }
+.category-share-table th:nth-child(4) { width: 12%; }
+.category-share-table th:nth-child(5) { width: 43%; }
 .category-share-table th:nth-child(6) { width: 7%; }
-.category-share-table th:nth-child(7) { width: 14%; }
+.category-share-table th:nth-child(7) { width: 13%; }
+
+.category-share-table th:nth-child(3),
+.category-share-table td:nth-child(3) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .inventory-print-controls {
   grid-template-columns: minmax(260px, 1fr) auto;
@@ -3681,6 +3689,23 @@ table.administration-table td {
 .exhp-controls {
   display: grid;
   grid-template-columns: minmax(145px, 0.55fr) minmax(170px, 0.7fr) minmax(240px, 1fr) minmax(260px, 1.25fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.exhp-entry-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(125px, 0.65fr)
+    minmax(155px, 0.8fr)
+    minmax(220px, 1.2fr)
+    minmax(105px, 0.55fr)
+    minmax(150px, 0.8fr)
+    minmax(220px, 1.35fr)
+    minmax(110px, 0.6fr)
+    minmax(90px, 0.5fr)
+    minmax(135px, 0.75fr)
+    auto;
   gap: 10px;
   align-items: end;
 }
@@ -6364,8 +6389,13 @@ th {
 
   .addy-line-grid,
   .request-line-row,
+  .exhp-entry-grid,
   .exhp-line-grid {
     grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
+
+  .exhp-reason-tile-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .internal-movement-context,
@@ -6424,6 +6454,7 @@ th {
   .request-header-grid,
   .request-line-row,
   .exhp-controls,
+  .exhp-entry-grid,
   .exhp-line-grid,
   .exhp-entry-split,
   .settings-request-grid,

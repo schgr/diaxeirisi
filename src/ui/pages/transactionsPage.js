@@ -64,7 +64,7 @@ export async function renderTransactionsPage(
     <section class="page-header">
       <div>
         <p class="eyebrow">ΔΟΣΟΛΗΨΙΕΣ</p>
-        <h2>${activeTab === 'exhp' ? 'Εντολή Χρεωπιστώσεως' : 'Δοσοληψίες Υλικού'}</h2>
+        <h2>${activeTab === 'exhp' ? 'Αιτιολογίες ΕΧΠ' : 'Δοσοληψίες Υλικού'}</h2>
       </div>
     </section>
 
@@ -297,7 +297,7 @@ export async function renderTransactionsPage(
     <div data-exhp-wizard-step="3">
     <section class="page-panel addy-secondary-grid">
       <h3>Έντυπο ΕΧΠ</h3>
-      <div class="exhp-controls">
+      <div class="exhp-entry-grid">
         <label class="field">
           <span>Ημερομηνία</span>
           <input id="exhp-date" type="date" value="${today}" />
@@ -316,13 +316,6 @@ export async function renderTransactionsPage(
             .map((aitiologia) => `<option value="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-issue-reason-code="${escapeHtml(aitiologia.code)}">${escapeHtml(aitiologia.label)}</option>`)
             .join('')}
         </select>
-        <label class="field">
-          <span>Αριθμός - Ημερομηνία Εγκρίσεως</span>
-          <input id="exhp-approval-reference" autocomplete="off" />
-        </label>
-      </div>
-
-      <div class="exhp-line-grid">
         <label class="field">
           <span>Αριθμός Μερίδας</span>
           <input id="exhp-share-number" autocomplete="off" />

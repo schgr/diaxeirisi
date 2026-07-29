@@ -470,7 +470,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           documentDate: exhpDate,
           serviceUnit: container.querySelector('#exhp-unit').value,
           issueReason: container.querySelector('#exhp-reason').value,
-          approvalReference: container.querySelector('#exhp-approval-reference').value,
+          approvalReference: '',
           otherSupportDocument: collectManualExhpSupportDocuments(container).join('\n'),
           supports,
           items: saveExhpItems
