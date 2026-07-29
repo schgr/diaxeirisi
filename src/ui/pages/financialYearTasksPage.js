@@ -629,7 +629,18 @@ export function sortMovedShareCards(cards) {
 async function printAnnualDocumentGroup(html, landscape, title) {
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
-  printRoot.innerHTML = html;
+  printRoot.innerHTML = `
+    <style>
+      @page {
+        size: ${landscape ? '297mm 210mm' : '210mm 297mm'} !important;
+        margin: 0 !important;
+      }
+      .isolated-print-root > .print-document-area {
+        page: auto !important;
+      }
+    </style>
+    ${html}
+  `;
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {

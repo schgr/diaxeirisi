@@ -4693,6 +4693,31 @@ th {
   justify-content: center;
 }
 
+.share-back-preview-backdrop .index-document-preview-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1500px, calc(100vw - 32px));
+  height: calc(100vh - 32px);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+}
+
+.share-back-preview-backdrop .share-back-preview-content {
+  flex: 1;
+  max-height: none;
+  margin-top: 0;
+  padding: 8px;
+}
+
+.share-back-preview-backdrop .official-share-page {
+  flex: 0 0 auto;
+  width: min(210mm, calc((100vh - 145px) * 0.7070707));
+  height: auto;
+  min-height: 0;
+  margin: 0 auto;
+  aspect-ratio: 210 / 297;
+}
+
 .internal-save-list-actions {
   margin-top: 12px;
   margin-bottom: 20px;
@@ -6079,7 +6104,7 @@ th {
 }
 
 .official-share-back-table tr {
-  height: 16px;
+  height: 21px;
 }
 
 .official-share-back-column-numbers {
@@ -6087,7 +6112,7 @@ th {
 }
 
 .official-share-back-transfer-row {
-  height: 17px !important;
+  height: 21px !important;
   font-weight: 700;
 }
 
