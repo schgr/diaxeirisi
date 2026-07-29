@@ -5198,11 +5198,30 @@ th {
     width: 18% !important;
     overflow: visible;
     white-space: nowrap;
+    transform: translateX(-12px);
+  }
+
+  .exhp-document-backdrop .exhp-date-overlay {
+    transform: translateY(-4px);
   }
 
   .exhp-document-backdrop .exhp-field-15-signature {
     height: 4.3% !important;
     overflow: visible;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature {
+    transform: translateX(-8px);
+    width: 9.2% !important;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature .exhp-officer-signature strong {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature .exhp-officer-signature em {
+    font-size: 7px;
   }
 }
 

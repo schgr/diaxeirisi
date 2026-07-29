@@ -64,7 +64,7 @@ export async function renderTransactionsPage(
     <section class="page-header">
       <div>
         <p class="eyebrow">ΔΟΣΟΛΗΨΙΕΣ</p>
-        <h2>${activeTab === 'exhp' ? 'Αιτιολογίες ΕΧΠ' : activeTab === 'addy' ? 'Α.Δ.Δ.Υ.' : 'Δοσοληψίες Υλικού'}</h2>
+        <h2>${activeTab === 'exhp' ? 'Εντολές Χρεωπιστώσεως' : activeTab === 'addy' ? 'Α.Δ.Δ.Υ.' : 'Δοσοληψίες Υλικού'}</h2>
       </div>
     </section>
 

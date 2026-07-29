@@ -64,7 +64,7 @@ async function run() {
     });
     const word = fs.readFileSync(wordPath, 'utf8');
     assert.match(word, /Κατάσταση Πλεονασμάτων/);
-    assert.match(word, /<table>/);
+    assert.match(word, /<table\b/);
     assert.match(word, /size: 595\.3pt 841\.9pt/);
     assert.match(word, /mso-page-orientation: portrait/);
     assert.match(word, /font-family: Arial/);
@@ -73,10 +73,12 @@ async function run() {
     const titledWordPath = path.join(directory, 'Κατάσταση με τίτλο.doc');
     writeWordExport(titledWordPath, {
       title: 'Μοναδικός Τίτλος',
-      html: '<h1>Μοναδικός Τίτλος</h1><p>Περιεχόμενο</p>'
+      html: '<h1 style="font-family: Times New Roman; font-size: 24pt">Μοναδικός Τίτλος</h1><h1>Μοναδικός Τίτλος</h1><p>Περιεχόμενο</p>'
     });
     const titledWord = fs.readFileSync(titledWordPath, 'utf8');
     assert.strictEqual((titledWord.match(/Μοναδικός Τίτλος/g) || []).length, 2);
+    assert.doesNotMatch(titledWord, /Times New Roman|font-size:\s*24pt/i);
+    assert.match(titledWord, /<h1[^>]*font-family:Arial[^>]*font-size:12pt/i);
 
     const landscapeWordPath = path.join(directory, 'Κατάσταση landscape.doc');
     writeWordExport(landscapeWordPath, {

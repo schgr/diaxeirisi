@@ -76,8 +76,9 @@ function writeWordExport(filePath, payload = {}) {
   const pageSize = orientation === 'landscape'
     ? '841.9pt 595.3pt'
     : '595.3pt 841.9pt';
-  const content = String(payload.html || '').trim() ||
+  const rawContent = String(payload.html || '').trim() ||
     `<p>${(payload.textLines || []).map((line) => escapeHtml(line)).join('<br>')}</p>`;
+  const content = forceWordTypography(deduplicateTitleHeadings(rawContent, payload.title));
   const contentText = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const titleHeading = contentText.includes(String(payload.title || '').trim())
     ? ''
@@ -111,6 +112,49 @@ function writeWordExport(filePath, payload = {}) {
 </html>`;
   fs.writeFileSync(filePath, `\uFEFF${documentHtml}`, 'utf8');
   return filePath;
+}
+
+function deduplicateTitleHeadings(content, title) {
+  const normalizedTitle = normalizePlainText(title);
+  if (!normalizedTitle) return content;
+  let titleSeen = false;
+  return content.replace(/<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/gi, (heading, _level, _attributes, body) => {
+    if (normalizePlainText(body.replace(/<[^>]+>/g, ' ')) !== normalizedTitle) return heading;
+    if (titleSeen) return '';
+    titleSeen = true;
+    return heading;
+  });
+}
+
+function forceWordTypography(content) {
+  return content.replace(/<([a-z][\w:-]*)([^>]*)>/gi, (tag, name, attributes) => {
+    if (/^(?:html|head|meta|title|style|link|img|br|hr)$/i.test(name)) return tag;
+    const typography = 'font-family:Arial,sans-serif !important;font-size:12pt !important;';
+    if (/\sstyle\s*=/i.test(attributes)) {
+      return `<${name}${attributes.replace(
+        /(\sstyle\s*=\s*)(["'])([\s\S]*?)\2/i,
+        (_style, prefix, quote, value) => {
+          const withoutTypography = value
+            .replace(/(?:^|;)\s*font-family\s*:[^;]*/gi, '')
+            .replace(/(?:^|;)\s*font-size\s*:[^;]*/gi, '');
+          return `${prefix}${quote}${withoutTypography};${typography}${quote}`;
+        }
+      )}>`;
+    }
+    return `<${name}${attributes} style="${typography}">`;
+  });
+}
+
+function normalizePlainText(value) {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function sanitizeExportFilename(value) {

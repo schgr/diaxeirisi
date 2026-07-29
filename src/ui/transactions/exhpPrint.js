@@ -101,14 +101,14 @@ export function renderExhpDocument(documentData) {
           <img src="./assets/official-forms/exhp-front-clean.png" alt="Εντολή Χρεωπιστώσεως - εμπρός πλευρά" />
           ${exhpStaticOverlay(documentData.unit, 14.2, 16.4, 10.8, 2.2, 'exhp-unit-overlay')}
           ${exhpStaticOverlay(documentData.registryNumber, 83.2, 14.2, 9.2, 2.2)}
-          ${exhpStaticOverlay(formatDate(documentData.date), 81.6, 17.0, 10.5, 2.2)}
+          ${exhpStaticOverlay(formatDate(documentData.date), 81.6, 17.0, 10.5, 2.2, 'exhp-date-overlay')}
           ${chargeItems.length ? exhpStaticOverlay(documentData.managementType || '', 20.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 76.1, 11.5, 2.7)}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature')}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(supportingDocuments.join(' · '), 50.8, 81.0, 46.0, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
