@@ -41,7 +41,6 @@ function resolveGitHubRepository() {
 const repository = resolveGitHubRepository();
 const installerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.212.exe';
 const downloadLinks = document.querySelectorAll('[data-download-link]');
-const sourceLink = document.querySelector('[data-source-link]');
 const downloadNote = document.querySelector('[data-download-note]');
 
 if (repository) {
@@ -51,10 +50,6 @@ if (repository) {
     link.href = installerUrl;
     link.setAttribute('download', installerFileName);
   });
-  if (sourceLink) {
-    sourceLink.href = repositoryUrl;
-    sourceLink.hidden = false;
-  }
 } else {
   downloadLinks.forEach((link) => {
     link.addEventListener('click', (event) => {
@@ -64,6 +59,6 @@ if (repository) {
     });
   });
   if (downloadNote) {
-    downloadNote.textContent = 'Μετά τη δημοσίευση στο GitHub Pages, το κουμπί θα συνδεθεί αυτόματα με την τελευταία έκδοση στα Releases.';
+    downloadNote.textContent = 'Η απευθείας λήψη θα ενεργοποιηθεί μόλις δημοσιευτεί η ιστοσελίδα.';
   }
 }
