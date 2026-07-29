@@ -15,6 +15,7 @@ assert.match(html, /id="download"/);
 assert.match(css, /@media \(max-width: 780px\)/);
 assert.match(css, /\[data-reveal\]\.visible/);
 assert.match(script, /\.github\.io/);
-assert.match(script, /releases\/latest/);
+assert.match(script, /releases\/latest\/download/);
+assert.match(script, /diaxeirisi-Ylikoy-Setup-0\.13\.212\.exe/);
 
 console.log('website.test.js: OK');

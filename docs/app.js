@@ -39,16 +39,17 @@ function resolveGitHubRepository() {
 }
 
 const repository = resolveGitHubRepository();
+const installerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.212.exe';
 const downloadLinks = document.querySelectorAll('[data-download-link]');
 const sourceLink = document.querySelector('[data-source-link]');
 const downloadNote = document.querySelector('[data-download-note]');
 
 if (repository) {
   const repositoryUrl = `https://github.com/${repository}`;
+  const installerUrl = `${repositoryUrl}/releases/latest/download/${installerFileName}`;
   downloadLinks.forEach((link) => {
-    link.href = `${repositoryUrl}/releases/latest`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
+    link.href = installerUrl;
+    link.setAttribute('download', installerFileName);
   });
   if (sourceLink) {
     sourceLink.href = repositoryUrl;
