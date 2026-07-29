@@ -15,6 +15,25 @@ import {
 } from '../transactions/entryHelpers.js';
 import { isSameIssueReason } from '../transactions/shared.js';
 
+const transactionDraftState = {
+  items: [],
+  exhpItems: [],
+  exhpDraftSupports: new Map(),
+  viewedExhp: null,
+  exhpDocumentsState: {
+    selectedExhp: null,
+    supportDocuments: [],
+    uselessA: null,
+    uselessB: null,
+    ammo: null,
+    draftUselessA: null,
+    draftUselessB: null,
+    draftAmmo: null,
+    newModuleDrafts: {},
+    uselessStatements: {}
+  }
+};
+
 export async function renderTransactionsPage(
   container,
   transactionsApi,
@@ -28,26 +47,9 @@ export async function renderTransactionsPage(
     transactionsApi.listExhpDocuments(),
     settingsApi.get()
   ]);
-  const state = {
-    items: [],
-    documents,
-    exhpDocuments,
-    exhpItems: [],
-    exhpDraftSupports: new Map(),
-    viewedExhp: null,
-    exhpDocumentsState: {
-      selectedExhp: null,
-      supportDocuments: [],
-      uselessA: null,
-      uselessB: null,
-      ammo: null,
-      draftUselessA: null,
-      draftUselessB: null,
-      draftAmmo: null,
-      newModuleDrafts: {},
-      uselessStatements: {}
-    }
-  };
+  const state = transactionDraftState;
+  state.documents = documents;
+  state.exhpDocuments = exhpDocuments;
   const issueReasonByCode = Object.fromEntries(
     EXP_AITIOLOGIES.map((aitiologia, index) => [
       aitiologia.code,

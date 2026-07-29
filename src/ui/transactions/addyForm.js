@@ -602,10 +602,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         items: state.items
       });
       showToast(result.message || 'Το ΑΔΔΥ αποθηκεύτηκε.');
-      if (result.document && shouldOpenAddyDocument(result.document)) {
-        openAddyDocument(result.document);
-      }
-      await rerender(container, transactionsApi, settingsApi, showToast);
+        if (result.document && shouldOpenAddyDocument(result.document)) {
+          openAddyDocument(result.document);
+        }
+        state.items.length = 0;
+        await rerender(container, transactionsApi, settingsApi, showToast);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση ΑΔΔΥ.', 'error');
     }
@@ -729,4 +730,6 @@ function clearIssuedExhpDraftState(state) {
   documentsState.draftAmmo = null;
   documentsState.transformation = null;
   if (state.exhpDraftSupports?.clear) state.exhpDraftSupports.clear();
+  state.exhpItems = [];
+  documentsState.currentItems = state.exhpItems;
 }

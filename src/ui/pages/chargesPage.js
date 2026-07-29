@@ -1,9 +1,15 @@
 import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 
+const internalMovementDraftState = {
+  drafts: [],
+  pendingComposition: null,
+  pendingCompositionShareId: null
+};
+
 export async function renderChargesPage(container, internalApi, showToast) {
   const referenceData = await internalApi.getReferenceData();
-  const state = { drafts: [], pendingComposition: null, pendingCompositionShareId: null };
+  const state = internalMovementDraftState;
 
   container.innerHTML = `
     <section class="page-header">
@@ -171,6 +177,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
       for (const draft of state.drafts) {
         await internalApi.save(draft);
       }
+      state.drafts.length = 0;
       showToast('Η ΛΙΣΤΑ ΚΙΝΗΣΕΩΝ ΑΠΟΘΗΚΕΥΤΗΚΕ.');
       await renderChargesPage(container, internalApi, showToast);
     } catch (error) {
