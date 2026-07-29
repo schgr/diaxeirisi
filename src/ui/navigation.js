@@ -27,6 +27,7 @@ const HOME_TILE_META = {
   'administration-report': { code: '§ 00-Α', icon: 'ΑΔ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
   'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
+  'administration-ammunition-batches': { code: '§ 00-Α', icon: 'ΒΜ' },
   'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
   'settings-personnel': { code: '§ 04-Β', icon: 'ΤΜ' },
   'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' },

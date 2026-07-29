@@ -1289,8 +1289,28 @@ h3 {
   align-items: end;
 }
 
+.addy-entry-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 0.65fr)
+    minmax(145px, 0.8fr)
+    minmax(150px, 0.9fr)
+    minmax(95px, 0.55fr)
+    minmax(135px, 0.75fr)
+    minmax(190px, 1.25fr)
+    minmax(80px, 0.45fr)
+    minmax(75px, 0.4fr)
+    minmax(115px, 0.65fr)
+    minmax(125px, 0.7fr)
+    minmax(130px, 0.75fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+}
+
 .addy-header-grid > *,
 .addy-line-grid > *,
+.addy-entry-grid > *,
 .exhp-controls > *,
 .exhp-entry-grid > *,
 .exhp-line-grid > *,
@@ -6388,6 +6408,7 @@ th {
   }
 
   .addy-line-grid,
+  .addy-entry-grid,
   .request-line-row,
   .exhp-entry-grid,
   .exhp-line-grid {
@@ -6450,6 +6471,7 @@ th {
   .shares-filter-grid,
   .addy-header-grid,
   .addy-line-grid,
+  .addy-entry-grid,
   .registry-controls,
   .request-header-grid,
   .request-line-row,
@@ -7487,6 +7509,44 @@ th {
 
 .security-settings-layout {
   align-items: start;
+}
+
+.credential-recovery-settings {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.credential-recovery-settings h4,
+.credential-recovery-settings p {
+  margin: 0;
+}
+
+.recovery-code-result {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--primary);
+  background: var(--panel-strong);
+}
+
+.recovery-code-result[hidden] {
+  display: none;
+}
+
+.recovery-code-result strong {
+  color: var(--primary);
+  font-family: Consolas, monospace;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.auth-recovery-form h2 {
+  margin: 0;
 }
 
 .information-settings-layout {

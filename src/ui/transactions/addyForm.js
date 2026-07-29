@@ -317,7 +317,6 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     controls.unitPrice,
     controls.measurementUnit,
     controls.transactionType,
-    controls.justificationReference,
     controls.materialType
   ]) {
     control.addEventListener('input', () => updateAddButton(controls, state));
@@ -359,7 +358,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       transactionType: controls.transactionType.value,
       transactionUnit: controls.unit.value.trim(),
       materialType: controls.materialType.value,
-      justificationReference: controls.justificationReference.value.trim(),
+      justificationReference: '',
       composition
     });
     state.items.sort(compareShareNumbers);
@@ -597,7 +596,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       const result = await transactionsApi.saveAddy({
         documentDate: controls.date.value,
         transactionUnit: controls.unit.value.trim(),
-        justificationReference: controls.justificationReference.value.trim(),
+        justificationReference: '',
         notes: controls.notes.value.trim(),
         items: state.items
       });

@@ -31,13 +31,25 @@ function runSecurityTests(root) {
   currentTime += 31_000;
   security.login('διαχειριστής', 'ασφαλής-κωδικός');
   security.changeCredentials('ασφαλής-κωδικός', 'υπεύθυνος', 'νέος-κωδικός', 'νέος-κωδικός');
+  const recovery = security.createRecoveryCode();
+  assert.match(recovery.recoveryCode, /^[A-F0-9]{4}(?:-[A-F0-9]{4}){5}$/);
+  assert.strictEqual(security.status().recoveryConfigured, true);
   security.lock();
   expectCode(() => security.login('διαχειριστής', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
-  security.login('υπεύθυνος', 'νέος-κωδικός');
+  expectCode(
+    () => security.recover('WRONG-CODE', 'ανακτημένος', 'κωδικός-ανάκτησης', 'κωδικός-ανάκτησης'),
+    'RECOVERY_CODE_INVALID'
+  );
+  security.recover(recovery.recoveryCode, 'ανακτημένος', 'κωδικός-ανάκτησης', 'κωδικός-ανάκτησης');
+  assert.strictEqual(security.status().recoveryConfigured, false);
+  security.lock();
+  expectCode(() => security.login('υπεύθυνος', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
+  security.login('ανακτημένος', 'κωδικός-ανάκτησης');
 
   const stored = fs.readFileSync(path.join(root, 'security', 'security.json'), 'utf8');
-  assert.ok(!stored.includes('νέος-κωδικός'));
-  assert.ok(stored.includes('υπεύθυνος'));
+  assert.ok(!stored.includes('κωδικός-ανάκτησης'));
+  assert.ok(!stored.includes(recovery.recoveryCode));
+  assert.ok(stored.includes('ανακτημένος'));
 
   const legacyPath = path.join(root, 'legacy-security');
   const legacyWriter = createSecurityService(legacyPath, () => currentTime);

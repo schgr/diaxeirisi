@@ -489,13 +489,56 @@ function renderAuthGate(status) {
           `}
           <p class="auth-message" data-auth-message role="alert">${lockedSeconds ? `Η είσοδος είναι προσωρινά κλειδωμένη για ${lockedSeconds} δευτερόλεπτα.` : ''}</p>
           <button class="primary-button" type="submit" ${lockedSeconds ? 'disabled' : ''}>${isSetup ? 'Ενεργοποίηση προστασίας' : 'Είσοδος'}</button>
+          ${!isSetup && status.recoveryConfigured ? '<button class="secondary-button" data-show-auth-recovery type="button">Ξέχασα τα στοιχεία εισόδου</button>' : ''}
           <button class="secondary-button" data-auth-quit type="button">Έξοδος</button>
         </form>
+        ${!isSetup && status.recoveryConfigured ? `
+          <form class="auth-form auth-recovery-form" data-auth-recovery-form hidden>
+            <h2>Επαναφορά στοιχείων εισόδου</h2>
+            <p class="muted">Χρησιμοποιήστε τον κωδικό ανάκτησης που δημιουργήσατε από τις Ρυθμίσεις Ασφαλείας.</p>
+            <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" required /></label>
+            <label class="field"><span>Νέο όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required /></label>
+            <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <p class="auth-message" data-recovery-message role="alert"></p>
+            <button class="primary-button" type="submit">Επαναφορά και είσοδος</button>
+            <button class="secondary-button" data-hide-auth-recovery type="button">Πίσω στην είσοδο</button>
+          </form>
+        ` : ''}
       </section>
     </main>
   `;
 
   app.querySelector('[data-auth-quit]')?.addEventListener('click', () => window.appApi.windowControls.quit());
+  app.querySelector('[data-show-auth-recovery]')?.addEventListener('click', () => {
+    app.querySelector('[data-auth-form]').hidden = true;
+    app.querySelector('[data-auth-recovery-form]').hidden = false;
+  });
+  app.querySelector('[data-hide-auth-recovery]')?.addEventListener('click', () => {
+    app.querySelector('[data-auth-recovery-form]').hidden = true;
+    app.querySelector('[data-auth-form]').hidden = false;
+  });
+  app.querySelector('[data-auth-recovery-form]')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = form.querySelector('[data-recovery-message]');
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    message.textContent = '';
+    try {
+      const data = new FormData(form);
+      await window.appApi.auth.recover(
+        data.get('recoveryCode'),
+        data.get('username'),
+        data.get('newPassword'),
+        data.get('confirmation')
+      );
+      startUnlockedApplication();
+    } catch (error) {
+      message.textContent = error.message || 'Δεν ήταν δυνατή η ανάκτηση.';
+      submit.disabled = false;
+    }
+  });
   app.querySelector('[data-auth-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget;

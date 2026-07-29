@@ -59,10 +59,24 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
     return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
   }
 
+  function normalizedRecoveryCode(value) {
+    return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  function recoveryDigest(value) {
+    return crypto.createHash('sha256').update(normalizedRecoveryCode(value), 'utf8').digest('hex');
+  }
+
+  function createRecoveryCodeValue() {
+    const raw = crypto.randomBytes(12).toString('hex').toUpperCase();
+    return raw.match(/.{1,4}/g).join('-');
+  }
+
   function publicStatus(config = readConfig()) {
     const lockedUntil = Number(config?.lockedUntil || 0);
     return {
       configured: Boolean(config?.passwordHash && config?.salt),
+      recoveryConfigured: Boolean(config?.recoveryHash),
       username: config?.passwordHash ? String(config.username || 'admin') : '',
       unlocked,
       failedAttempts: Number(config?.failedAttempts || 0),
@@ -182,6 +196,50 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       config.lockedUntil = 0;
       config.updatedAt = new Date(now()).toISOString();
       writeConfig(config);
+      return publicStatus(config);
+    },
+
+    createRecoveryCode() {
+      const config = readConfig();
+      if (!config || !unlocked) {
+        throw new AppError('Απαιτείται σύνδεση.', 'AUTH_REQUIRED');
+      }
+      const recoveryCode = createRecoveryCodeValue();
+      config.recoveryHash = recoveryDigest(recoveryCode);
+      config.recoveryCreatedAt = new Date(now()).toISOString();
+      config.updatedAt = new Date(now()).toISOString();
+      writeConfig(config);
+      return { recoveryCode, status: publicStatus(config) };
+    },
+
+    recover(recoveryCode, username, newPassword, confirmation) {
+      const config = readConfig();
+      if (!config?.recoveryHash) {
+        throw new AppError('Δεν έχει δημιουργηθεί κωδικός ανάκτησης.', 'RECOVERY_NOT_CONFIGURED');
+      }
+      const suppliedHash = recoveryDigest(recoveryCode);
+      const expected = Buffer.from(config.recoveryHash, 'hex');
+      const actual = Buffer.from(suppliedHash, 'hex');
+      if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+        throw new AppError('Ο κωδικός ανάκτησης δεν είναι σωστός.', 'RECOVERY_CODE_INVALID');
+      }
+      const cleanUsername = validateUsername(username);
+      validatePassword(newPassword);
+      if (newPassword !== confirmation) {
+        throw new AppError('Οι δύο νέοι κωδικοί δεν είναι ίδιοι.', 'PASSWORD_CONFIRMATION_MISMATCH');
+      }
+      const salt = crypto.randomBytes(16).toString('hex');
+      config.version = 3;
+      config.username = cleanUsername;
+      config.salt = salt;
+      config.passwordHash = passwordDigest(newPassword, salt);
+      config.failedAttempts = 0;
+      config.lockedUntil = 0;
+      delete config.recoveryHash;
+      delete config.recoveryCreatedAt;
+      config.updatedAt = new Date(now()).toISOString();
+      writeConfig(config);
+      unlocked = true;
       return publicStatus(config);
     },
 

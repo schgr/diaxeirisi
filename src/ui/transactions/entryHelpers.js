@@ -50,10 +50,9 @@ export function confirmFutureTransactionDate(documentDate) {
 
 export function getControls(container) {
   return {
-    date: container.querySelector('#addy-date'),
-    unit: container.querySelector('#addy-unit'),
-    notes: container.querySelector('#addy-notes'),
-    justificationReference: container.querySelector('#addy-justification-reference'),
+      date: container.querySelector('#addy-date'),
+      unit: container.querySelector('#addy-unit'),
+      notes: container.querySelector('#addy-notes'),
     shareNumber: container.querySelector('#addy-share-number'),
     nominalNumber: container.querySelector('#addy-nominal-number'),
     description: container.querySelector('#addy-description'),
@@ -247,10 +246,6 @@ export function updateAddButton(controls, state) {
   const isCharge = controls.transactionType.value === 'Χρέωση';
   const isCredit = controls.transactionType.value === 'Πίστωση';
   const isCommerceTransactionUnit = isCommerceUnit(controls.unit.value);
-  controls.justificationReference.disabled = !isCharge;
-  if (!isCharge) {
-    controls.justificationReference.value = '';
-  }
   controls.measurementUnit.disabled = isCredit && Boolean(findCurrentShare(controls)?.measurementUnit);
   controls.materialType.disabled = !isCharge;
   if (isCharge && !controls.materialType.value) {

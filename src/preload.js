@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('appApi', {
       invoke('auth:change-password', currentPassword, newPassword, confirmation),
     changeCredentials: (currentPassword, username, newPassword, confirmation) =>
       invoke('auth:change-credentials', currentPassword, username, newPassword, confirmation),
+    createRecoveryCode: () => invoke('auth:create-recovery-code'),
+    recover: (recoveryCode, username, newPassword, confirmation) =>
+      invoke('auth:recover', recoveryCode, username, newPassword, confirmation),
     lock: () => invoke('auth:lock')
   },
   backup: {

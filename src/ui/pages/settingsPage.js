@@ -125,6 +125,16 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <label class="field"><span>Επιβεβαίωση νέου κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
             <button class="primary-button" type="submit">Αλλαγή κωδικού</button>
           </form>
+          <div class="credential-recovery-settings">
+            <h4>Ανάκτηση πρόσβασης</h4>
+            <p class="muted">Δημιουργήστε έναν κωδικό ανάκτησης και φυλάξτε τον εκτός του υπολογιστή. Επιτρέπει τον ορισμό νέου ονόματος χρήστη και κωδικού από την οθόνη εισόδου.</p>
+            <button class="secondary-button" data-create-recovery-code type="button">${authStatus.recoveryConfigured ? 'Αντικατάσταση κωδικού ανάκτησης' : 'Δημιουργία κωδικού ανάκτησης'}</button>
+            <div class="recovery-code-result" data-recovery-code-result hidden>
+              <span>Κωδικός ανάκτησης</span>
+              <strong data-recovery-code></strong>
+              <p>Ο κωδικός εμφανίζεται μόνο τώρα. Αντιγράψτε τον και φυλάξτε τον με ασφάλεια.</p>
+            </div>
+          </div>
         </section>
 
         <section class="page-panel">
@@ -564,6 +574,23 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     await window.appApi.auth.changeCredentials(data.currentPassword, data.username, data.newPassword, data.confirmation);
     form.reset();
     showToast('Το όνομα χρήστη και ο κωδικός εισόδου ενημερώθηκαν.');
+  });
+
+  container.querySelector('[data-create-recovery-code]')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await window.appApi.auth.createRecoveryCode();
+      const resultPanel = container.querySelector('[data-recovery-code-result]');
+      resultPanel.querySelector('[data-recovery-code]').textContent = result.recoveryCode;
+      resultPanel.hidden = false;
+      button.textContent = 'Αντικατάσταση κωδικού ανάκτησης';
+      showToast('Ο νέος κωδικός ανάκτησης δημιουργήθηκε.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η δημιουργία κωδικού ανάκτησης.', 'error');
+    } finally {
+      button.disabled = false;
+    }
   });
 
   container.querySelector('[data-backup-now]')?.addEventListener('click', async () => {

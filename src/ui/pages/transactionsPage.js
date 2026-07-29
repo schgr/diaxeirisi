@@ -64,7 +64,7 @@ export async function renderTransactionsPage(
     <section class="page-header">
       <div>
         <p class="eyebrow">ΔΟΣΟΛΗΨΙΕΣ</p>
-        <h2>${activeTab === 'exhp' ? 'Αιτιολογίες ΕΧΠ' : 'Δοσοληψίες Υλικού'}</h2>
+        <h2>${activeTab === 'exhp' ? 'Αιτιολογίες ΕΧΠ' : activeTab === 'addy' ? 'Α.Δ.Δ.Υ.' : 'Δοσοληψίες Υλικού'}</h2>
       </div>
     </section>
 
@@ -86,7 +86,7 @@ export async function renderTransactionsPage(
       <button class="secondary-button" data-transaction-flow-back type="button">Πίσω στις Δοσοληψίες</button>
     </div>
     <section class="page-panel addy-panel">
-      <div class="addy-header-grid">
+      <div class="addy-entry-grid">
         <label class="field">
           <span>Ημερομηνία</span>
           <input id="addy-date" type="date" value="${new Date().toISOString().slice(0, 10)}" />
@@ -104,13 +104,6 @@ export async function renderTransactionsPage(
           <span>Πληροφορίες</span>
           <input id="addy-notes" autocomplete="off" />
         </label>
-        <label class="field">
-          <span>Αριθμός και Ημερομηνία Δικαιολογητικού</span>
-          <input id="addy-justification-reference" autocomplete="off" disabled />
-        </label>
-      </div>
-
-      <div class="addy-line-grid">
         <label class="field">
           <span>Αριθμός Μερίδας</span>
           <input id="addy-share-number" autocomplete="off" />
@@ -240,9 +233,7 @@ export async function renderTransactionsPage(
       <span data-exhp-step-dot="3">3</span>
     </div>
     <div data-exhp-reason-list>
-    <section class="page-panel no-print" data-exhp-wizard-step="1">
-      <p class="eyebrow">ΒΗΜΑ 1 ΑΠΟ 3</p>
-      <h3>Αιτιολογία</h3>
+    <section class="exhp-reasons-surface no-print" data-exhp-wizard-step="1">
       <label class="field visually-hidden">
         <span>Αιτιολογία Εκδόσεως</span>
         <select id="exhp-wizard-reason">

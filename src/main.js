@@ -67,6 +67,12 @@ function registerIpcHandlers() {
   ipcMain.handle('auth:change-credentials', async (_event, currentPassword, username, newPassword, confirmation) =>
     safeInvoke(() => securityService.changeCredentials(currentPassword, username, newPassword, confirmation))
   );
+  ipcMain.handle('auth:create-recovery-code', async () =>
+    safeInvoke(() => securityService.createRecoveryCode())
+  );
+  ipcMain.handle('auth:recover', async (_event, recoveryCode, username, newPassword, confirmation) =>
+    safeInvoke(() => securityService.recover(recoveryCode, username, newPassword, confirmation), true)
+  );
   ipcMain.handle('auth:lock', async () => safeInvoke(() => securityService.lock()));
   ipcMain.handle('backup:list', async () => safeInvoke(() => backupService.list()));
   ipcMain.handle('backup:create-automatic', async () =>
