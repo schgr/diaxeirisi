@@ -6270,9 +6270,15 @@ th {
 
 .change-sheet-document-page {
   width: 297mm;
+  height: 210mm;
   min-height: 210mm;
   padding: 12mm 18mm 10mm;
   font-size: 9px;
+  overflow: hidden;
+}
+
+.change-sheet-document-page + .change-sheet-document-page {
+  margin-top: 18px;
 }
 
 .material-form-code {
@@ -6435,7 +6441,7 @@ th {
 }
 
 .change-sheet-document-table td {
-  height: 9mm;
+  height: 5.5mm;
   font-size: 6px;
   line-height: 1.05;
   overflow-wrap: anywhere;
@@ -6460,22 +6466,15 @@ th {
 }
 
 .change-sheet-document-table .vertical-table-heading > span {
-  display: inline-block;
+  display: block;
+  height: 100%;
+  margin: 0 auto;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   white-space: nowrap;
   font-size: 6px;
   line-height: 1;
   vertical-align: middle;
-}
-
-.change-sheet-document-table .change-reference-heading {
-  margin-right: 1px;
-  font-weight: 700;
-}
-
-.change-sheet-document-table .change-date-heading {
-  margin-left: 1px;
 }
 
 @media (max-width: 1280px) {
@@ -7697,17 +7696,11 @@ th {
 }
 
 .app-information-mark {
-  display: grid;
-  place-items: center;
   width: 72px;
   height: 72px;
-  border: 1px solid #8f7613;
-  border-radius: 10px;
-  background: #354326;
-  color: var(--primary-strong);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  border: 0;
+  border-radius: 16px;
+  object-fit: contain;
 }
 
 .app-information-content > h3 {

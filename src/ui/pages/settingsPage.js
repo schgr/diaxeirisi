@@ -170,7 +170,7 @@ export function renderAppInformation(version) {
   return `
     <div class="settings-layout information-settings-layout">
       <section class="page-panel app-information-panel">
-        <div class="app-information-mark" aria-hidden="true">ΔΥ</div>
+        <img class="app-information-mark" src="../../build/icon.ico" alt="" aria-hidden="true" />
         <div class="app-information-content">
           <p class="eyebrow">ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</p>
           <h3>Πληροφορίες εφαρμογής</h3>

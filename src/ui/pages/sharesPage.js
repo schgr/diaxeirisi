@@ -793,12 +793,19 @@ function integerToGreekWords(value) {
 }
 
 export function renderChangeSheetDocument(card) {
-  const rowCount = Math.max(10, card.compositionItems.length);
-  const items = Array.from({ length: rowCount }, (_unused, index) => card.compositionItems[index] || null);
-  const changeEntries = card.changeSheetEntries || [];
+  const rowsPerPage = 14;
+  const compositionItems = card.compositionItems || [];
+  const pageCount = Math.max(1, Math.ceil(compositionItems.length / rowsPerPage));
+  const changeEntries = collectRenderableChangeEntries(card);
   const chargeColumns = collectChangeColumns(changeEntries, 'ΧΡΕΩΣΗ');
   const creditColumns = collectChangeColumns(changeEntries, 'ΠΙΣΤΩΣΗ');
-  return `
+  return Array.from({ length: pageCount }, (_unused, pageIndex) => {
+    const startIndex = pageIndex * rowsPerPage;
+    const items = Array.from(
+      { length: rowsPerPage },
+      (_row, rowIndex) => compositionItems[startIndex + rowIndex] || null
+    );
+    return `
     <article class="change-sheet-document-page print-document-area">
       <div class="material-form-code">ΔΥΠ/191</div>
       <h1>ΦΥΛΛΟ ΜΕΤΑΒΟΛΩΝ ΕΙΔΩΝ ΣΥΝΘΕΣΕΩΣ<br />ΣΥΛΛΟΓΗΣ ΕΡΓΑΛΕΙΩΝ Η (ΔΙΑΣ) ΠΑΡΑΚΟΛΟΥΘΗΜΑΤΩΝ ΚΥΡΙΩΝ ΥΛΙΚΩΝ</h1>
@@ -832,10 +839,12 @@ export function renderChangeSheetDocument(card) {
         </thead>
         <tbody>
           ${items
-            .map((item, index) =>
+            .map((item, rowIndex) =>
               renderChangeSheetDocumentRow(
                 item,
-                changeEntries.filter((entry) => Number(entry.componentLineNumber || 1) === index + 1),
+                changeEntries.filter(
+                  (entry) => Number(entry.componentLineNumber || 1) === startIndex + rowIndex + 1
+                ),
                 chargeColumns.map((column) => column.key),
                 creditColumns.map((column) => column.key)
               )
@@ -845,6 +854,30 @@ export function renderChangeSheetDocument(card) {
       </table>
     </article>
   `;
+  }).join('');
+}
+
+function collectRenderableChangeEntries(card) {
+  const entries = [...(card.changeSheetEntries || [])];
+  const openingDate = card.openingTransfer?.inventoryDate;
+  const hasOpeningInventory = entries.some(
+    (entry) => normalizeInventoryReference(entry.orderReference) === 'ΑΠΟΓΡΑΦΗ'
+  );
+  if (!openingDate || hasOpeningInventory) return entries;
+  const reference = card.openingTransfer?.reference || 'ΑΠΟΓΡΑΦΗ';
+  (card.compositionItems || []).forEach((item, index) => {
+    const quantity = Number(item.quantityPerMaterial || item.quantity || 0) *
+      Number(card.openingTransfer?.balance || 0);
+    if (quantity <= 0) return;
+    entries.push({
+      changeDate: openingDate,
+      orderReference: reference,
+      componentLineNumber: index + 1,
+      movementType: 'ΧΡΕΩΣΗ',
+      quantity
+    });
+  });
+  return entries;
 }
 
 function collectChangeColumns(entries, movementType) {
@@ -876,12 +909,7 @@ function renderChangeDateHeaders(columns, count) {
         ? `${reference} ${date}`
         : `${reference}/${date}`
       : date;
-    return `
-      <th class="vertical-table-heading" aria-label="${escapeHtml(fullLabel)}">
-        ${reference ? `<span class="change-reference-heading">${escapeHtml(reference)}</span>` : ''}
-        <span class="change-date-heading">${escapeHtml(date)}</span>
-      </th>
-    `;
+    return `<th class="vertical-table-heading"><span>${escapeHtml(fullLabel)}</span></th>`;
   }).join('');
 }
 

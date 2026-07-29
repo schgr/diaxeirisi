@@ -118,10 +118,38 @@ const documentChangeSheet = renderChangeSheetDocument({
 });
 assert.match(documentChangeSheet, /Χ-37\/31-05-2026/);
 assert.match(documentChangeSheet, /ΕΧΠ-1\/15-02-2026/);
-assert.match(documentChangeSheet, /class="change-reference-heading">Χ-37<\/span>/);
-assert.match(documentChangeSheet, /class="change-date-heading">31-05-2026<\/span>/);
-assert.match(documentChangeSheet, /class="change-reference-heading">ΕΧΠ-1<\/span>/);
-assert.match(documentChangeSheet, /class="change-date-heading">15-02-2026<\/span>/);
+assert.strictEqual(
+  (documentChangeSheet.match(/change-sheet-document-page print-document-area/g) || []).length,
+  1
+);
+
+const paginatedChangeSheet = renderChangeSheetDocument({
+  share: { ...card.share, projectedQuantity: 20, accountingBalance: 20 },
+  compositionItems: Array.from({ length: 15 }, (_unused, index) => compositionItem(index)),
+  changeSheetEntries: []
+});
+assert.strictEqual(
+  (paginatedChangeSheet.match(/change-sheet-document-page print-document-area/g) || []).length,
+  2
+);
+assert.match(paginatedChangeSheet, /1005-14/);
+assert.match(paginatedChangeSheet, /1005-15/);
+
+const openingInventoryChangeSheet = renderChangeSheetDocument({
+  share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },
+  compositionItems: [{ ...compositionItem(0), quantityPerMaterial: 2 }],
+  openingTransfer: { balance: 3, inventoryDate: '2025-12-31', reference: 'ΑΠΟΓΡΑΦΗ' },
+  changeSheetEntries: [{
+    changeDate: '2026-05-31',
+    orderReference: 'Π-4',
+    componentLineNumber: 1,
+    movementType: 'ΠΙΣΤΩΣΗ',
+    quantity: 1
+  }]
+});
+assert.match(openingInventoryChangeSheet, /Απογραφή 31-12-2025/);
+assert.match(openingInventoryChangeSheet, /Π-4\/31-05-2026/);
+assert.match(openingInventoryChangeSheet, />6<\/td>/);
 
 const yearOptions = renderFiscalYearOptions(2025);
 assert.match(yearOptions, /value="2025" selected/);

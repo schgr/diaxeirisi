@@ -551,9 +551,11 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
     if (!card.compositionItems.length) return cardHtml;
     return cardHtml + renderChangeSheetDocument({
       ...card,
-      changeSheetEntries: card.changeSheetEntries.filter((entry) =>
-        String(entry.changeDate || '').startsWith(`${fiscalYear}-`)
-      )
+      changeSheetEntries: card.changeSheetEntries.filter((entry) => {
+        const reference = String(entry.orderReference || '').trim().toLocaleUpperCase('el-GR');
+        return reference === 'ΑΠΟΓΡΑΦΗ' ||
+          String(entry.changeDate || '').startsWith(`${fiscalYear}-`);
+      })
     });
   }).join('');
   const backdrop = document.createElement('div');
