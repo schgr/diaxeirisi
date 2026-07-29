@@ -3609,6 +3609,13 @@ table.administration-table td {
   font-size: 8px;
 }
 
+.addy-doc-field-3 .addy-doc-cell-content > div:first-child,
+.addy-doc-field-4 .addy-doc-cell-content > div:first-child {
+  font-size: 7px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .addy-doc-cell-content {
   display: grid;
   min-height: 100%;
@@ -6502,6 +6509,16 @@ th {
   vertical-align: middle;
 }
 
+.change-sheet-document-table .change-sheet-movement-heading > span {
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.change-sheet-document-table .change-sheet-movement-value {
+  font-size: 8px;
+  font-weight: 700;
+}
+
 @media (max-width: 1280px) {
   .content {
     padding: 20px;
@@ -7302,6 +7319,11 @@ th {
 
   .addy-document-page .addy-document-table span:not(.addy-doc-number) {
     font-size: 10.5px;
+  }
+
+  .addy-document-page .addy-doc-field-3 .addy-doc-cell-content > div:first-child,
+  .addy-document-page .addy-doc-field-4 .addy-doc-cell-content > div:first-child {
+    font-size: 8px;
   }
 
   .addy-document-page .addy-doc-number {

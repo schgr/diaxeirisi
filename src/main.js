@@ -611,11 +611,14 @@ async function printCurrentDocument(webContents, options) {
   const landscape = Boolean(options && options.landscape);
   const requestedTitle = sanitizeExportFilename(options && options.title);
   const previousTitle = await webContents.executeJavaScript('document.title', true).catch(() => '');
+  const ownerWindow = BrowserWindow.fromWebContents(webContents);
+  const previousWindowTitle = ownerWindow?.getTitle() || '';
   if (requestedTitle) {
     await webContents.executeJavaScript(
       `document.title = ${JSON.stringify(requestedTitle)}`,
       true
     ).catch(() => {});
+    ownerWindow?.setTitle(requestedTitle);
   }
   const result = await new Promise((resolve) => {
     webContents.print(
@@ -624,12 +627,10 @@ async function printCurrentDocument(webContents, options) {
         printBackground: true,
         color: true,
         margins: { marginType: 'none' },
-        landscape: false,
+        landscape,
         scaleFactor: 100,
         pagesPerSheet: 1,
-        pageSize: landscape
-          ? { width: 297000, height: 210000 }
-          : { width: 210000, height: 297000 }
+        pageSize: 'A4'
       },
       (success, failureReason) => {
         if (!success) {
@@ -645,6 +646,9 @@ async function printCurrentDocument(webContents, options) {
       `document.title = ${JSON.stringify(previousTitle)}`,
       true
     ).catch(() => {});
+  }
+  if (ownerWindow && previousWindowTitle) {
+    ownerWindow.setTitle(previousWindowTitle);
   }
   return result;
 }

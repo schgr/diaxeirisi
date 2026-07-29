@@ -909,7 +909,7 @@ function renderChangeDateHeaders(columns, count) {
         ? `${reference} ${date}`
         : `${reference}/${date}`
       : date;
-    return `<th class="vertical-table-heading"><span>${escapeHtml(fullLabel)}</span></th>`;
+    return `<th class="vertical-table-heading change-sheet-movement-heading"><span>${escapeHtml(fullLabel)}</span></th>`;
   }).join('');
 }
 
@@ -927,11 +927,11 @@ function renderChangeSheetDocumentRow(item, entries, chargeKeys, creditKeys) {
   const creditByDate = sumChangesByColumn(entries, 'ΠΙΣΤΩΣΗ');
   const chargeCells = Array.from({ length: 10 }, (_unused, index) => {
     const quantity = chargeByDate.get(chargeKeys[index]);
-    return `<td>${quantity ? formatQuantity(quantity) : ''}</td>`;
+    return `<td class="change-sheet-movement-value">${quantity ? formatQuantity(quantity) : ''}</td>`;
   }).join('');
   const creditCells = Array.from({ length: 10 }, (_unused, index) => {
     const quantity = creditByDate.get(creditKeys[index]);
-    return `<td>${quantity ? formatQuantity(quantity) : ''}</td>`;
+    return `<td class="change-sheet-movement-value">${quantity ? formatQuantity(quantity) : ''}</td>`;
   }).join('');
   return `
     <tr>

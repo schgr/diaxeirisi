@@ -167,8 +167,8 @@ export function renderAddyDocument(documentData) {
           <tr>
             <td colspan="2">${addyTopCell('ΜΟΝΑΔΑ', firstValue(rows, 'column1'), '1')}</td>
             <td colspan="2">${addyTopCell('ΑΡΙΘΜΟΣ -<br />ΗΜΕΡΟΜΗΝΙΑ', hasOnlyCredit || hasCommerceCharge ? '' : leftDocumentReference, '2')}</td>
-            <td colspan="1" class="addy-doc-reason-cell">${addyTopCell('ΔΙΚΑΙΟΛΟΓΙΑ', '', '3')}</td>
-            <td colspan="1">${addyTopCell('ΠΡΟΤΕΡΑΙΟΤΗΤΑ', '', '4')}</td>
+            <td colspan="1" class="addy-doc-reason-cell addy-doc-field-3">${addyTopCell('ΔΙΚΑΙΟΛΟΓΙΑ', '', '3')}</td>
+            <td colspan="1" class="addy-doc-field-4">${addyTopCell('ΠΡΟΤΕΡΑΙΟΤΗΤΑ', '', '4')}</td>
             <td colspan="2" rowspan="2">${addyTopCell('ΥΠΟΓΡΑΦΗ<br />ΑΙΤΟΥΝΤΟΣ', '', '5')}</td>
             <td colspan="3" class="addy-doc-right-block">${addyTopCell('ΜΟΝΑΔΑ<br />ΕΦΟΔ.', firstValue(rows, 'column18'), '18')}</td>
             <td colspan="4">${addyTopCell('ΑΡΙΘ. - ΗΜΕΡΟΜΗΝΙΑ<br />ΔΙΚ/ΚΟΥ', field19Reference, '19')}</td>
@@ -281,7 +281,12 @@ export async function printAddyDocument(target) {
   const body = window.document.body;
   body.dataset.addyPrintTarget = target;
   try {
-    await window.appApi.print.currentDocument({ landscape: target === 'addy' });
+    await window.appApi.print.currentDocument({
+      landscape: target === 'addy',
+      title: target === 'addy'
+        ? 'Αίτηση - Δικαιολογητικό Δοσοληψιών Υλικού'
+        : 'Κατάσταση Συνθέσεως'
+    });
   } finally {
     delete body.dataset.addyPrintTarget;
   }
