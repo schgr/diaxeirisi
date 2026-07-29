@@ -866,12 +866,22 @@ function renderChangeDateHeaders(columns, count) {
     const column = columns[index];
     if (!column) return '<th class="vertical-table-heading"></th>';
     const date = formatChangeSheetDate(column.date);
-    const label = column.reference
+    const reference = column.reference
       ? normalizeInventoryReference(column.reference) === 'ΑΠΟΓΡΑΦΗ'
-        ? `Απογραφή ${date}`
-        : `${column.reference}/${date}`
+        ? 'Απογραφή'
+        : column.reference
+      : '';
+    const fullLabel = reference
+      ? normalizeInventoryReference(reference) === 'ΑΠΟΓΡΑΦΗ'
+        ? `${reference} ${date}`
+        : `${reference}/${date}`
       : date;
-    return `<th class="vertical-table-heading"><span>${escapeHtml(label)}</span></th>`;
+    return `
+      <th class="vertical-table-heading" aria-label="${escapeHtml(fullLabel)}">
+        ${reference ? `<span class="change-reference-heading">${escapeHtml(reference)}</span>` : ''}
+        <span class="change-date-heading">${escapeHtml(date)}</span>
+      </th>
+    `;
   }).join('');
 }
 
@@ -985,11 +995,14 @@ export function renderSharePrintDocument(card, options = {}) {
     return `
       <article class="official-share-page print-document-area">
         <img src="./assets/official-forms/share-card-expanded-23-24.png" alt="Μερίδα Υλικού - Δελτίο Υπολοίπων" />
+        ${options.exactCopy
+          ? shareDocumentOverlay(options.exactCopy, 4.1, 18.1, 28.2, 1.5, 'share-exact-copy-overlay')
+          : ''}
         ${options.issuerName
-          ? shareDocumentOverlay(options.issuerName, 4.1, 19.1, 28.2, 1.6, 'share-issuer-name-overlay')
+          ? shareDocumentOverlay(options.issuerName, 4.1, 21.8, 28.2, 1.5, 'share-issuer-name-overlay')
           : ''}
         ${options.issuerRank
-          ? shareDocumentOverlay(options.issuerRank, 4.1, 20.7, 28.2, 1.6, 'share-issuer-rank-overlay')
+          ? shareDocumentOverlay(options.issuerRank, 4.1, 23.3, 28.2, 1.5, 'share-issuer-rank-overlay')
           : ''}
         ${shareDocumentOverlay(card.share.nominalNumber, 33.5, 14.2, 34.0, 2.6)}
         ${shareDocumentOverlay(card.share.shareNumber, 69.5, 14.2, 19.0, 2.6)}

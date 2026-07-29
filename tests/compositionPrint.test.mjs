@@ -118,8 +118,10 @@ const documentChangeSheet = renderChangeSheetDocument({
 });
 assert.match(documentChangeSheet, /Χ-37\/31-05-2026/);
 assert.match(documentChangeSheet, /ΕΧΠ-1\/15-02-2026/);
-assert.match(documentChangeSheet, /<span>Χ-37\/31-05-2026<\/span>/);
-assert.match(documentChangeSheet, /<span>ΕΧΠ-1\/15-02-2026<\/span>/);
+assert.match(documentChangeSheet, /class="change-reference-heading">Χ-37<\/span>/);
+assert.match(documentChangeSheet, /class="change-date-heading">31-05-2026<\/span>/);
+assert.match(documentChangeSheet, /class="change-reference-heading">ΕΧΠ-1<\/span>/);
+assert.match(documentChangeSheet, /class="change-date-heading">15-02-2026<\/span>/);
 
 const yearOptions = renderFiscalYearOptions(2025);
 assert.match(yearOptions, /value="2025" selected/);

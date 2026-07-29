@@ -2674,6 +2674,7 @@ table.administration-table td {
   text-transform: uppercase;
 }
 
+.share-exact-copy-overlay,
 .share-issuer-name-overlay,
 .share-issuer-rank-overlay {
   align-items: center;
@@ -2681,6 +2682,10 @@ table.administration-table td {
   padding: 0 1mm;
   line-height: 1;
   text-align: center;
+}
+
+.share-exact-copy-overlay {
+  font-weight: 700;
 }
 
 .material-registry-page {
@@ -6450,18 +6455,27 @@ th {
   position: relative;
   height: 32mm;
   padding: 1px;
-  overflow: visible;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .change-sheet-document-table .vertical-table-heading > span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  transform: translate(-50%, -50%) rotate(-90deg);
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
   white-space: nowrap;
   font-size: 6px;
   line-height: 1;
+  vertical-align: middle;
+}
+
+.change-sheet-document-table .change-reference-heading {
+  margin-right: 1px;
+  font-weight: 700;
+}
+
+.change-sheet-document-table .change-date-heading {
+  margin-left: 1px;
 }
 
 @media (max-width: 1280px) {

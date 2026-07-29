@@ -113,6 +113,10 @@ async function run() {
         exports: 0,
         balance: 1
       }]
+    }, {
+      exactCopy: 'Ακριβές Αντίγραφο',
+      issuerName: 'ΔΟΚΙΜΑΣΤΙΚΟΣ ΔΙΑΧΕΙΡΙΣΤΗΣ',
+      issuerRank: 'ΛΓΟΣ'
     });
     assert.match(sharePrintHtml, /share-card-expanded-23-24\.png/);
     assert.doesNotMatch(sharePrintHtml, /official-share-column-adjustment/);
@@ -122,6 +126,9 @@ async function run() {
     assert.match(sharePrintHtml, /left:4%;top:30\.6%;width:28\.4%;/);
     assert.match(sharePrintHtml, /left:9\.5%;top:66\.15%;width:8\.1%;/);
     assert.match(sharePrintHtml, /left:17\.8%;top:66\.15%;width:12\.9%;/);
+    assert.match(sharePrintHtml, /share-exact-copy-overlay/);
+    assert.match(sharePrintHtml, /left:4\.1%;top:21\.8%;width:28\.2%;height:1\.5%/);
+    assert.match(sharePrintHtml, /left:4\.1%;top:23\.3%;width:28\.2%;height:1\.5%/);
 
     const overflowingShareHtml = renderSharePrintDocument({
       share: {

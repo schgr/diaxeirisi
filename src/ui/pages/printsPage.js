@@ -193,8 +193,8 @@ export async function renderPrintsPage(
         bindAllShareCardControls(container, preview);
       } else {
         controls.innerHTML = renderShareCardControls(shares, state);
-        await renderShareCardPreview(sharesApi, shares, state, preview);
-        bindShareCardControls(container, sharesApi, shares, state, preview);
+        await renderShareCardPreview(sharesApi, shares, settings, state, preview);
+        bindShareCardControls(container, sharesApi, shares, settings, state, preview);
       }
       return;
     }
@@ -710,7 +710,7 @@ function openShareBackPreview(documentHtml) {
   document.body.appendChild(backdrop);
 }
 
-function bindShareCardControls(container, sharesApi, shares, state, preview) {
+function bindShareCardControls(container, sharesApi, shares, settings, state, preview) {
   const yearInput = container.querySelector('#prints-fiscal-year');
   const shareSelect = container.querySelector('#print-share-id');
   const movedOnly = container.querySelector('#print-moved-only');
@@ -721,7 +721,7 @@ function bindShareCardControls(container, sharesApi, shares, state, preview) {
     state.selectedShareId = shareSelect.value;
     state.onlyMovedCards = movedOnly.checked;
     shareSelect.disabled = state.onlyMovedCards;
-    await renderShareCardPreview(sharesApi, shares, state, preview);
+    await renderShareCardPreview(sharesApi, shares, settings, state, preview);
   }
 
   yearInput.addEventListener('change', updatePreview);
@@ -729,7 +729,7 @@ function bindShareCardControls(container, sharesApi, shares, state, preview) {
   movedOnly.addEventListener('change', updatePreview);
 }
 
-async function renderShareCardPreview(sharesApi, shares, state, preview) {
+async function renderShareCardPreview(sharesApi, shares, settings, state, preview) {
   if (!shares.length) {
     preview.innerHTML = '<section class="page-panel empty-table">Δεν υπάρχουν καρτέλες υλικού.</section>';
     return;
@@ -739,8 +739,13 @@ async function renderShareCardPreview(sharesApi, shares, state, preview) {
     const cards = await Promise.all(shares.map((share) => sharesApi.getCard(share.id, state.fiscalYear)));
     if (state.activeTab !== 'share-card') return;
     const movedCards = cards.filter((card) => card.transactions.length);
+    const manager = splitOfficerSignature(settings?.financialOfficers?.manager || '');
     preview.innerHTML = movedCards.length
-      ? movedCards.map(renderSharePrintDocument).join('')
+      ? movedCards.map((card) => renderSharePrintDocument(card, {
+        exactCopy: 'Ακριβές Αντίγραφο',
+        issuerName: manager.name,
+        issuerRank: manager.rank
+      })).join('')
       : '<section class="page-panel empty-table">Δεν υπάρχουν καρτέλες με διακίνηση για το έτος.</section>';
     return;
   }

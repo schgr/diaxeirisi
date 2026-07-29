@@ -123,20 +123,6 @@ const state = {
 
 const app = document.querySelector('#app');
 let applicationUnlocked = false;
-const INACTIVITY_LOCK_MS = 60_000;
-let inactivityTimer = null;
-
-function resetInactivityLock() {
-  if (!applicationUnlocked) return;
-  window.clearTimeout(inactivityTimer);
-  inactivityTimer = window.setTimeout(() => {
-    if (applicationUnlocked) void lockApplication();
-  }, INACTIVITY_LOCK_MS);
-}
-
-['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((eventName) => {
-  document.addEventListener(eventName, resetInactivityLock, { passive: true });
-});
 
 document.addEventListener('diaxeirisi:navigate', (event) => {
   const detail = event.detail || {};
@@ -469,13 +455,10 @@ function startUnlockedApplication() {
   applicationUnlocked = true;
   state.activeSection = 'home';
   renderShell();
-  resetInactivityLock();
   void showRequestRenewalNotice();
 }
 
 async function lockApplication() {
-  window.clearTimeout(inactivityTimer);
-  inactivityTimer = null;
   await window.appApi.auth.lock();
   applicationUnlocked = false;
   renderAuthGate(await window.appApi.auth.status());
