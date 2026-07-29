@@ -49,6 +49,18 @@ async function run() {
     assert.strictEqual(exhp.changeDate, '2026-02-15');
     assert.strictEqual(exhp.movementType, 'ΠΙΣΤΩΣΗ');
     assert.strictEqual(exhp.quantity, 2);
+
+    db.prepare('UPDATE addy_items SET share_transaction_id = NULL').run();
+    db.prepare('UPDATE exhp_items SET share_transaction_id = NULL').run();
+    const legacyEntries = shares.getShareCard(share.id, 2026).changeSheetEntries;
+    assert.ok(
+      legacyEntries.some((entry) => entry.orderReference === 'Χ-1'),
+      'Legacy ADDY movements without a direct transaction link must remain visible.'
+    );
+    assert.ok(
+      legacyEntries.some((entry) => entry.orderReference === 'ΕΧΠ-1'),
+      'Legacy EXHP movements without a direct transaction link must remain visible.'
+    );
     console.log('documentChangeSheet.test.js: OK');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

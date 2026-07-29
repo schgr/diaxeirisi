@@ -63,9 +63,16 @@ function createSharesRepository(db) {
                'ΑΔΔΥ' AS source_type,
                document.id AS document_number,
                item.composition_snapshot
-        FROM share_transactions movement
-        JOIN addy_items item ON item.share_transaction_id = movement.id
+        FROM addy_items item
         JOIN addy_documents document ON document.id = item.addy_document_id
+        JOIN share_transactions movement ON
+          movement.id = item.share_transaction_id
+          OR (
+            item.share_transaction_id IS NULL
+            AND movement.share_id = item.share_id
+            AND movement.transaction_date = document.document_date
+            AND movement.document_reference LIKE 'ΑΔΔΥ ' || document.id || ' /%'
+          )
         WHERE movement.share_id = ?
           AND movement.transaction_date >= ?
           AND movement.transaction_date <= ?
@@ -77,9 +84,16 @@ function createSharesRepository(db) {
                'ΕΧΠ' AS source_type,
                document.registry_number AS document_number,
                item.composition_snapshot
-        FROM share_transactions movement
-        JOIN exhp_items item ON item.share_transaction_id = movement.id
+        FROM exhp_items item
         JOIN exhp_documents document ON document.id = item.exhp_document_id
+        JOIN share_transactions movement ON
+          movement.id = item.share_transaction_id
+          OR (
+            item.share_transaction_id IS NULL
+            AND movement.share_id = item.share_id
+            AND movement.transaction_date = document.document_date
+            AND movement.document_reference = 'ΕΧΠ ' || document.registry_number || '/' || document.fiscal_year
+          )
         WHERE movement.share_id = ?
           AND movement.transaction_date >= ?
           AND movement.transaction_date <= ?

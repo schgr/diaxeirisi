@@ -7580,11 +7580,29 @@ th {
   }
 
   .addy-document-backdrop .request-document-preview {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
     padding: 12px;
   }
 
   .addy-document-backdrop .addy-document-page {
+    position: relative;
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
     width: min(100%, calc((100vh - 130px) * 1.4142857));
+  }
+
+  .addy-document-backdrop .addy-composition-document {
+    position: relative;
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+    width: min(210mm, 100%);
+    height: auto;
+    min-height: min(297mm, calc(100vh - 130px));
+    margin: 0;
   }
 
   .addy-document-backdrop .addy-document-table {
