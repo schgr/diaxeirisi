@@ -126,14 +126,16 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <button class="primary-button" type="submit">Αλλαγή κωδικού</button>
           </form>
           <div class="credential-recovery-settings">
-            <h4>Ανάκτηση πρόσβασης</h4>
-            <p class="muted">Δημιουργήστε έναν κωδικό ανάκτησης και φυλάξτε τον εκτός του υπολογιστή. Επιτρέπει τον ορισμό νέου ονόματος χρήστη και κωδικού από την οθόνη εισόδου.</p>
-            <button class="secondary-button" data-create-recovery-code type="button">${authStatus.recoveryConfigured ? 'Αντικατάσταση κωδικού ανάκτησης' : 'Δημιουργία κωδικού ανάκτησης'}</button>
-            <div class="recovery-code-result" data-recovery-code-result hidden>
-              <span>Κωδικός ανάκτησης</span>
-              <strong data-recovery-code></strong>
-              <p>Ο κωδικός εμφανίζεται μόνο τώρα. Αντιγράψτε τον και φυλάξτε τον με ασφάλεια.</p>
-            </div>
+            <h4>Ερωτήσεις Ασφαλείας</h4>
+            <p class="muted">Αλλάξτε τις όταν αλλάζει ο Διαχειριστής. Για επιβεβαίωση απαιτείται ο τρέχων κωδικός.</p>
+            <form data-security-questions-form class="stacked-form">
+              <label class="field"><span>Τρέχων κωδικός</span><input name="currentPassword" type="password" autocomplete="current-password" required /></label>
+              ${[1, 2, 3].map((number) => `
+                <label class="field"><span>Ερώτηση ${number}</span><input name="question${number}" minlength="5" required /></label>
+                <label class="field"><span>Απάντηση ${number}</span><input name="answer${number}" minlength="2" autocomplete="off" required /></label>
+              `).join('')}
+              <button class="secondary-button" type="submit">Αποθήκευση Ερωτήσεων Ασφαλείας</button>
+            </form>
           </div>
         </section>
 
@@ -576,21 +578,17 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     showToast('Το όνομα χρήστη και ο κωδικός εισόδου ενημερώθηκαν.');
   });
 
-  container.querySelector('[data-create-recovery-code]')?.addEventListener('click', async (event) => {
-    const button = event.currentTarget;
-    button.disabled = true;
-    try {
-      const result = await window.appApi.auth.createRecoveryCode();
-      const resultPanel = container.querySelector('[data-recovery-code-result]');
-      resultPanel.querySelector('[data-recovery-code]').textContent = result.recoveryCode;
-      resultPanel.hidden = false;
-      button.textContent = 'Αντικατάσταση κωδικού ανάκτησης';
-      showToast('Ο νέος κωδικός ανάκτησης δημιουργήθηκε.');
-    } catch (error) {
-      showToast(error.message || 'Δεν ήταν δυνατή η δημιουργία κωδικού ανάκτησης.', 'error');
-    } finally {
-      button.disabled = false;
-    }
+  bindForm(container, '[data-security-questions-form]', showToast, async (form) => {
+    const data = getFormData(form);
+    await window.appApi.auth.changeSecurityQuestions(
+      data.currentPassword,
+      [1, 2, 3].map((number) => ({
+        question: data[`question${number}`],
+        answer: data[`answer${number}`]
+      }))
+    );
+    form.reset();
+    showToast('Οι ερωτήσεις ασφαλείας ενημερώθηκαν.');
   });
 
   container.querySelector('[data-backup-now]')?.addEventListener('click', async () => {

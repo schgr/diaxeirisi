@@ -16,12 +16,18 @@ function sqliteFixture(marker) {
 function runSecurityTests(root) {
   let currentTime = Date.now();
   const security = createSecurityService(path.join(root, 'security'), () => currentTime);
+  const securityQuestions = [
+    { question: 'Ποια είναι η πρώτη μονάδα σας;', answer: 'Αλφα' },
+    { question: 'Ποιο είναι το αγαπημένο σας χρώμα;', answer: 'Μπλε' },
+    { question: 'Ποια είναι η πόλη γέννησής σας;', answer: 'Αθήνα' }
+  ];
 
   assert.deepStrictEqual(security.status().configured, false);
   expectCode(() => security.setup('ab', '123456', '123456'), 'USERNAME_INVALID');
   expectCode(() => security.setup('admin', '123', '123'), 'PASSWORD_TOO_SHORT');
-  security.setup('διαχειριστής', 'ασφαλής-κωδικός', 'ασφαλής-κωδικός');
+  security.setup('διαχειριστής', 'ασφαλής-κωδικός', 'ασφαλής-κωδικός', securityQuestions);
   assert.strictEqual(security.isUnlocked(), true);
+  assert.strictEqual(security.status().securityQuestionsConfigured, true);
 
   security.lock();
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -31,8 +37,11 @@ function runSecurityTests(root) {
   currentTime += 31_000;
   security.login('διαχειριστής', 'ασφαλής-κωδικός');
   security.changeCredentials('ασφαλής-κωδικός', 'υπεύθυνος', 'νέος-κωδικός', 'νέος-κωδικός');
-  const recovery = security.createRecoveryCode();
+  const recovery = security.answerSecurityQuestions(['αλφα', ' ΜΠΛΕ ', 'αθήνα']);
   assert.match(recovery.recoveryCode, /^[A-F0-9]{4}(?:-[A-F0-9]{4}){5}$/);
+  const secondRecovery = security.answerSecurityQuestions(['αλφα', 'μπλε', 'αθήνα']);
+  assert.notStrictEqual(secondRecovery.recoveryCode, recovery.recoveryCode);
+  recovery.recoveryCode = secondRecovery.recoveryCode;
   assert.strictEqual(security.status().recoveryConfigured, true);
   security.lock();
   expectCode(() => security.login('διαχειριστής', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
@@ -41,7 +50,7 @@ function runSecurityTests(root) {
     'RECOVERY_CODE_INVALID'
   );
   security.recover(recovery.recoveryCode, 'ανακτημένος', 'κωδικός-ανάκτησης', 'κωδικός-ανάκτησης');
-  assert.strictEqual(security.status().recoveryConfigured, false);
+  assert.strictEqual(security.status().recoveryConfigured, true);
   security.lock();
   expectCode(() => security.login('υπεύθυνος', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
   security.login('ανακτημένος', 'κωδικός-ανάκτησης');
@@ -53,7 +62,7 @@ function runSecurityTests(root) {
 
   const legacyPath = path.join(root, 'legacy-security');
   const legacyWriter = createSecurityService(legacyPath, () => currentTime);
-  legacyWriter.setup('admin', 'παλιός-κωδικός', 'παλιός-κωδικός');
+  legacyWriter.setup('admin', 'παλιός-κωδικός', 'παλιός-κωδικός', securityQuestions);
   legacyWriter.lock();
   const legacyConfigPath = path.join(legacyPath, 'security.json');
   const legacyConfig = JSON.parse(fs.readFileSync(legacyConfigPath, 'utf8'));

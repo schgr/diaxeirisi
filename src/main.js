@@ -55,8 +55,8 @@ function createWindow() {
 function registerIpcHandlers() {
   ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion(), true));
   ipcMain.handle('auth:status', async () => safeInvoke(() => securityService.status(), true));
-  ipcMain.handle('auth:setup', async (_event, username, password, confirmation) =>
-    safeInvoke(() => securityService.setup(username, password, confirmation), true)
+  ipcMain.handle('auth:setup', async (_event, username, password, confirmation, securityQuestions) =>
+    safeInvoke(() => securityService.setup(username, password, confirmation, securityQuestions), true)
   );
   ipcMain.handle('auth:login', async (_event, username, password) =>
     safeInvoke(() => securityService.login(username, password), true)
@@ -69,6 +69,12 @@ function registerIpcHandlers() {
   );
   ipcMain.handle('auth:create-recovery-code', async () =>
     safeInvoke(() => securityService.createRecoveryCode())
+  );
+  ipcMain.handle('auth:change-security-questions', async (_event, currentPassword, questions) =>
+    safeInvoke(() => securityService.changeSecurityQuestions(currentPassword, questions))
+  );
+  ipcMain.handle('auth:answer-security-questions', async (_event, answers) =>
+    safeInvoke(() => securityService.answerSecurityQuestions(answers), true)
   );
   ipcMain.handle('auth:recover', async (_event, recoveryCode, username, newPassword, confirmation) =>
     safeInvoke(() => securityService.recover(recoveryCode, username, newPassword, confirmation), true)

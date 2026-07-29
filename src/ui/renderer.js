@@ -85,7 +85,7 @@ const homeGroups = [
     ]
   },
   {
-    label: 'Έλεγχος και συμφωνία',
+    label: 'Έλεγχος Υλικών',
     items: [
       { id: 'as', title: 'Απογραφές' },
       { id: 'movement-differences', title: 'Διαφορές' },
@@ -123,6 +123,20 @@ const state = {
 
 const app = document.querySelector('#app');
 let applicationUnlocked = false;
+const INACTIVITY_LOCK_MS = 60_000;
+let inactivityTimer = null;
+
+function resetInactivityLock() {
+  if (!applicationUnlocked) return;
+  window.clearTimeout(inactivityTimer);
+  inactivityTimer = window.setTimeout(() => {
+    if (applicationUnlocked) void lockApplication();
+  }, INACTIVITY_LOCK_MS);
+}
+
+['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((eventName) => {
+  document.addEventListener(eventName, resetInactivityLock, { passive: true });
+});
 
 document.addEventListener('diaxeirisi:navigate', (event) => {
   const detail = event.detail || {};
@@ -455,10 +469,13 @@ function startUnlockedApplication() {
   applicationUnlocked = true;
   state.activeSection = 'home';
   renderShell();
+  resetInactivityLock();
   void showRequestRenewalNotice();
 }
 
 async function lockApplication() {
+  window.clearTimeout(inactivityTimer);
+  inactivityTimer = null;
   await window.appApi.auth.lock();
   applicationUnlocked = false;
   renderAuthGate(await window.appApi.auth.status());
@@ -483,6 +500,12 @@ function renderAuthGate(status) {
             <label class="field"><span>Όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required autofocus /></label>
             <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
             <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <h2>Ερωτήσεις Ασφαλείας</h2>
+            <p class="muted">Ορίστε τρεις ερωτήσεις και απαντήσεις για ασφαλή ανάκτηση πρόσβασης.</p>
+            ${[1, 2, 3].map((number) => `
+              <label class="field"><span>Ερώτηση ${number}</span><input name="securityQuestion${number}" minlength="5" required /></label>
+              <label class="field"><span>Απάντηση ${number}</span><input name="securityAnswer${number}" minlength="2" autocomplete="off" required /></label>
+            `).join('')}
           ` : `
             <label class="field"><span>Όνομα χρήστη</span><input name="username" value="${escapeHtml(status.username || 'admin')}" autocomplete="username" required autofocus ${lockedSeconds ? 'disabled' : ''} /></label>
             <label class="field"><span>Κωδικός εισόδου</span><input name="password" type="password" autocomplete="current-password" required ${lockedSeconds ? 'disabled' : ''} /></label>
@@ -494,9 +517,20 @@ function renderAuthGate(status) {
         </form>
         ${!isSetup && status.recoveryConfigured ? `
           <form class="auth-form auth-recovery-form" data-auth-recovery-form hidden>
+            ${status.securityQuestionsConfigured ? `
+              <p class="muted">Απαντήστε σωστά και στις τρεις ερωτήσεις για να δημιουργηθεί νέος, διαφορετικός κωδικός ανάκτησης.</p>
+              ${status.securityQuestions.map((question, index) => `
+                <label class="field"><span>${escapeHtml(question)}</span><input name="securityAnswer${index + 1}" autocomplete="off" required /></label>
+              `).join('')}
+              <button class="secondary-button" data-generate-recovery-code type="button">Δημιουργία κωδικού ανάκτησης</button>
+              <div class="recovery-code-result" data-auth-recovery-code-result hidden>
+                <span>Νέος κωδικός ανάκτησης</span>
+                <strong data-auth-recovery-code></strong>
+              </div>
+            ` : ''}
             <h2>Επαναφορά στοιχείων εισόδου</h2>
             <p class="muted">Χρησιμοποιήστε τον κωδικό ανάκτησης που δημιουργήσατε από τις Ρυθμίσεις Ασφαλείας.</p>
-            <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" required /></label>
+            <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" ${status.securityQuestionsConfigured ? 'readonly' : ''} required /></label>
             <label class="field"><span>Νέο όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required /></label>
             <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="6" autocomplete="new-password" required /></label>
             <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
@@ -517,6 +551,24 @@ function renderAuthGate(status) {
   app.querySelector('[data-hide-auth-recovery]')?.addEventListener('click', () => {
     app.querySelector('[data-auth-recovery-form]').hidden = true;
     app.querySelector('[data-auth-form]').hidden = false;
+  });
+  app.querySelector('[data-generate-recovery-code]')?.addEventListener('click', async (event) => {
+    const form = event.currentTarget.closest('form');
+    const message = form.querySelector('[data-recovery-message]');
+    event.currentTarget.disabled = true;
+    message.textContent = '';
+    try {
+      const data = new FormData(form);
+      const result = await window.appApi.auth.answerSecurityQuestions(
+        [1, 2, 3].map((number) => data.get(`securityAnswer${number}`))
+      );
+      form.elements.recoveryCode.value = result.recoveryCode;
+      form.querySelector('[data-auth-recovery-code]').textContent = result.recoveryCode;
+      form.querySelector('[data-auth-recovery-code-result]').hidden = false;
+    } catch (error) {
+      message.textContent = error.message || 'Οι απαντήσεις δεν επαληθεύτηκαν.';
+      event.currentTarget.disabled = false;
+    }
   });
   app.querySelector('[data-auth-recovery-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -549,7 +601,15 @@ function renderAuthGate(status) {
     try {
       const data = new FormData(form);
       if (isSetup) {
-        await window.appApi.auth.setup(data.get('username'), data.get('password'), data.get('confirmation'));
+        await window.appApi.auth.setup(
+          data.get('username'),
+          data.get('password'),
+          data.get('confirmation'),
+          [1, 2, 3].map((number) => ({
+            question: data.get(`securityQuestion${number}`),
+            answer: data.get(`securityAnswer${number}`)
+          }))
+        );
       } else {
         await window.appApi.auth.login(data.get('username'), data.get('password'));
       }

@@ -22,7 +22,7 @@ export async function renderFinancialYearTasksPage(
   container.innerHTML = `
     <section class="page-header">
       <div>
-        <p class="eyebrow">ΕΛΕΓΧΟΣ ΚΑΙ ΣΥΜΦΩΝΙΑ</p>
+        <p class="eyebrow">ΕΛΕΓΧΟΣ ΥΛΙΚΩΝ</p>
         <h2>Εργασίες Οικονομικού Έτους</h2>
       </div>
     </section>
@@ -546,14 +546,16 @@ export function renderMovedShareCardsTable(cards) {
 function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
   document.querySelector('.annual-share-print-backdrop')?.remove();
   const sortedCards = sortMovedShareCards(cards);
-  const cardsHtml = sortedCards.map((card) => renderSharePrintDocument(card)).join('');
-  const changeSheetCards = sortedCards.filter((card) => card.compositionItems.length > 0);
-  const changeSheetsHtml = changeSheetCards.map((card) => renderChangeSheetDocument({
-    ...card,
-    changeSheetEntries: card.changeSheetEntries.filter((entry) =>
-      String(entry.changeDate || '').startsWith(`${fiscalYear}-`)
-    )
-  })).join('');
+  const documentsHtml = sortedCards.map((card) => {
+    const cardHtml = renderSharePrintDocument(card);
+    if (!card.compositionItems.length) return cardHtml;
+    return cardHtml + renderChangeSheetDocument({
+      ...card,
+      changeSheetEntries: card.changeSheetEntries.filter((entry) =>
+        String(entry.changeDate || '').startsWith(`${fiscalYear}-`)
+      )
+    });
+  }).join('');
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop annual-share-print-backdrop';
   backdrop.innerHTML = `
@@ -569,8 +571,7 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
         </div>
       </header>
       <div class="request-document-preview annual-share-print-preview">
-        <div data-annual-card-pages>${cardsHtml}</div>
-        ${changeSheetsHtml ? `<div data-annual-change-sheet-pages>${changeSheetsHtml}</div>` : ''}
+        <div data-annual-card-pages>${documentsHtml}</div>
       </div>
     </div>`;
 

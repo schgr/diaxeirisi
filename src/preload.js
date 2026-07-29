@@ -14,13 +14,17 @@ contextBridge.exposeInMainWorld('appApi', {
   },
   auth: {
     status: () => invoke('auth:status'),
-    setup: (username, password, confirmation) => invoke('auth:setup', username, password, confirmation),
+    setup: (username, password, confirmation, securityQuestions) =>
+      invoke('auth:setup', username, password, confirmation, securityQuestions),
     login: (username, password) => invoke('auth:login', username, password),
     changePassword: (currentPassword, newPassword, confirmation) =>
       invoke('auth:change-password', currentPassword, newPassword, confirmation),
     changeCredentials: (currentPassword, username, newPassword, confirmation) =>
       invoke('auth:change-credentials', currentPassword, username, newPassword, confirmation),
     createRecoveryCode: () => invoke('auth:create-recovery-code'),
+    changeSecurityQuestions: (currentPassword, questions) =>
+      invoke('auth:change-security-questions', currentPassword, questions),
+    answerSecurityQuestions: (answers) => invoke('auth:answer-security-questions', answers),
     recover: (recoveryCode, username, newPassword, confirmation) =>
       invoke('auth:recover', recoveryCode, username, newPassword, confirmation),
     lock: () => invoke('auth:lock')

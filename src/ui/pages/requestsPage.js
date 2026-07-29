@@ -23,7 +23,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     <section class="page-header">
       <div>
         <p class="eyebrow">ΑΙΤΗΣΕΙΣ</p>
-        <h2>Αίτηση μηχανογραφικώς αιτουμένων υλικών</h2>
+        <h2>Αίτηση Μηχανογραφικώς Χορηγουμένων Υλικών</h2>
       </div>
     </section>
 
@@ -54,7 +54,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
           </select>
         </label>
       </div>
-      <div class="request-line-grid">
+      <div class="request-line-grid request-entry-single-row">
         <div class="request-line-row">
           ${input('Αριθμός Ονομαστικού', 'request-nominal')}
           ${input('Περιγραφή', 'request-description')}
