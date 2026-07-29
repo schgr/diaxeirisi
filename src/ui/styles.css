@@ -7560,6 +7560,38 @@ th {
   margin-top: 24px;
 }
 
+.auth-form[hidden],
+[data-show-auth-recovery][hidden] {
+  display: none !important;
+}
+
+@media screen {
+  .addy-document-backdrop {
+    align-items: center;
+    padding: 16px;
+  }
+
+  .addy-document-backdrop .request-document-modal {
+    width: min(1500px, calc(100vw - 32px));
+    min-height: 0;
+    max-height: calc(100vh - 32px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .addy-document-backdrop .request-document-preview {
+    padding: 12px;
+  }
+
+  .addy-document-backdrop .addy-document-page {
+    width: min(100%, calc((100vh - 130px) * 1.4142857));
+  }
+
+  .addy-document-backdrop .addy-document-table {
+    height: calc(100% - 42px);
+  }
+}
+
 .auth-message {
   min-height: 20px;
   margin: 0;

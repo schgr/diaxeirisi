@@ -512,7 +512,7 @@ function renderAuthGate(status) {
           `}
           <p class="auth-message" data-auth-message role="alert">${lockedSeconds ? `Η είσοδος είναι προσωρινά κλειδωμένη για ${lockedSeconds} δευτερόλεπτα.` : ''}</p>
           <button class="primary-button" type="submit" ${lockedSeconds ? 'disabled' : ''}>${isSetup ? 'Ενεργοποίηση προστασίας' : 'Είσοδος'}</button>
-          ${!isSetup && status.recoveryConfigured ? '<button class="secondary-button" data-show-auth-recovery type="button">Ξέχασα τα στοιχεία εισόδου</button>' : ''}
+          ${!isSetup && status.recoveryConfigured ? '<button class="secondary-button" data-show-auth-recovery type="button" hidden>Ξέχασα τα στοιχεία εισόδου</button>' : ''}
           <button class="secondary-button" data-auth-quit type="button">Έξοδος</button>
         </form>
         ${!isSetup && status.recoveryConfigured ? `
@@ -616,6 +616,10 @@ function renderAuthGate(status) {
       startUnlockedApplication();
     } catch (error) {
       message.textContent = error.message || 'Δεν ήταν δυνατή η είσοδος.';
+      if (!isSetup && error.code === 'AUTH_INVALID_CREDENTIALS') {
+        const recoveryButton = app.querySelector('[data-show-auth-recovery]');
+        if (recoveryButton) recoveryButton.hidden = false;
+      }
       submit.disabled = false;
       form.querySelector('input:not([disabled])')?.focus();
     }
