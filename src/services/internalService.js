@@ -141,6 +141,10 @@ function createInternalService(db) {
         finalQuantity: Number(row.final_quantity || 0),
         lastIssueDate: row.last_issue_date || '',
         lastReturnDate: row.last_return_date || '',
+        materialSerialNumbers: repository
+          .listShareSerialNumbers(row.share_id)
+          .map((entry) => String(entry.serial_number || '').trim())
+          .filter(Boolean),
         composition: compositionByShare.get(Number(row.share_id)) || []
       }));
     }

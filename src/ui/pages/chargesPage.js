@@ -310,6 +310,10 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
   const pageSize = 17;
   const printableRows = balances.flatMap((balance, index) => [
     { type: 'share', balance, serial: index + 1 },
+    ...((balance.materialSerialNumbers || []).length ? [{
+      type: 'serial-numbers',
+      serialNumbers: balance.materialSerialNumbers
+    }] : []),
     ...(balance.composition || []).map((component) => ({
       type: 'component',
       component
@@ -386,6 +390,9 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
 
 function renderK2310Row(row) {
   if (!row) return `<tr>${'<td></td>'.repeat(17)}</tr>`;
+  if (row.type === 'serial-numbers') {
+    return `<tr class="k2310-serial-numbers-row"><td></td><td></td><td></td><td class="k2310-description-cell">${escapeHtml(row.serialNumbers.join(', '))}</td><td></td><td></td>${'<td></td>'.repeat(11)}</tr>`;
+  }
   if (row.type === 'component') {
     const component = row.component;
     const issueCells = [

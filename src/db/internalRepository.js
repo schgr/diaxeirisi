@@ -221,6 +221,16 @@ function createInternalRepository(db) {
       `).all(departmentManagerId);
     },
 
+    listShareSerialNumbers(shareId) {
+      return db.prepare(`
+        SELECT serial_number
+        FROM share_serial_numbers
+        WHERE share_id = ?
+          AND TRIM(serial_number) <> ''
+        ORDER BY position, id
+      `).all(shareId);
+    },
+
     transaction(operation) {
       return db.transaction(operation)();
     }

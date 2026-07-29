@@ -871,7 +871,7 @@ function renderChangeDateHeaders(columns, count) {
         ? `Απογραφή ${date}`
         : `${column.reference}/${date}`
       : date;
-    return `<th class="vertical-table-heading">${escapeHtml(label)}</th>`;
+    return `<th class="vertical-table-heading"><span>${escapeHtml(label)}</span></th>`;
   }).join('');
 }
 
