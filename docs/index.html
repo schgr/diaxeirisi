@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="el" data-github-repository="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071827">
+  <meta name="description" content="Διαχείριση Υλικού — ολοκληρωμένη εφαρμογή Windows για μερίδες, δοσοληψίες, απογραφές, συνθέσεις και εργασίες οικονομικού έτους.">
+  <title>Διαχείριση Υλικού — Εφαρμογή για Windows</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Μετάβαση στο περιεχόμενο</a>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header" data-header>
+    <a class="brand" href="#top" aria-label="Διαχείριση Υλικού — Αρχική">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M10 12h28v24H10z"></path>
+          <path d="M16 18h16M16 24h10M16 30h13"></path>
+          <circle cx="36" cy="35" r="7"></circle>
+          <path d="m33 35 2 2 4-5"></path>
+        </svg>
+      </span>
+      <span><strong>Διαχείριση Υλικού</strong><small>Offline-first για Windows</small></span>
+    </a>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" data-menu-toggle>
+      <span></span><span></span><span></span>
+      <span class="sr-only">Άνοιγμα μενού</span>
+    </button>
+
+    <nav id="main-nav" class="main-nav" aria-label="Κύρια πλοήγηση" data-nav>
+      <a href="#features">Δυνατότητες</a>
+      <a href="#workflow">Ροή εργασίας</a>
+      <a href="#security">Ασφάλεια</a>
+      <a href="#faq">Συχνές ερωτήσεις</a>
+      <a class="nav-download" data-download-link href="#download">Λήψη</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="top" class="hero section-shell">
+      <div class="hero-copy" data-reveal>
+        <div class="eyebrow"><span></span> Έλεγχος. Ακρίβεια. Συνέχεια.</div>
+        <h1>Η διαχείριση υλικού,<br><em>σε μία εφαρμογή.</em></h1>
+        <p class="hero-lead">
+          Μερίδες, κινήσεις, απογραφές, συνθέσεις και επίσημα έντυπα σε ένα ενιαίο
+          περιβάλλον που λειτουργεί τοπικά στον υπολογιστή σας.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" data-download-link href="#download">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"></path></svg>
+            Λήψη για Windows
+          </a>
+          <a class="button button-ghost" href="#features">Δείτε τις δυνατότητες</a>
+        </div>
+        <div class="hero-meta" aria-label="Πληροφορίες έκδοσης">
+          <span><i class="status-dot"></i> Έκδοση 0.13.212</span>
+          <span>Windows 10 / 11</span>
+          <span>Τοπική λειτουργία</span>
+        </div>
+      </div>
+
+      <div class="product-stage" data-reveal>
+        <div class="stage-glow" aria-hidden="true"></div>
+        <div class="app-window">
+          <div class="window-bar">
+            <div class="window-title"><span class="mini-logo">ΔΥ</span> Διαχείριση Υλικού</div>
+            <div class="window-controls"><i></i><i></i><i></i></div>
+          </div>
+          <div class="app-body">
+            <aside class="app-rail">
+              <div class="rail-logo">ΔΥ</div>
+              <span class="rail-item active"></span>
+              <span class="rail-item"></span>
+              <span class="rail-item"></span>
+              <span class="rail-item"></span>
+            </aside>
+            <div class="dashboard">
+              <div class="dash-top">
+                <div><small>ΚΕΝΤΡΙΚΗ ΕΙΚΟΝΑ</small><h2>Διαχείριση Υλικού</h2></div>
+                <span class="year-pill">ΟΕ 2026</span>
+              </div>
+              <div class="metric-grid">
+                <article><span>Σύνολο μερίδων</span><strong>1.480</strong><small>Ενεργές καρτέλες</small></article>
+                <article><span>Κίνηση στο έτος</span><strong>326</strong><small class="up">+ 18 σήμερα</small></article>
+                <article><span>Κατάσταση</span><strong class="ready">Έτοιμο</strong><small>Τοπική βάση</small></article>
+              </div>
+              <div class="dash-grid">
+                <div class="dash-panel">
+                  <div class="panel-title"><span>Πρόσφατες κινήσεις</span><b>Προβολή όλων</b></div>
+                  <div class="table-head"><span>Μερίδα</span><span>Περιγραφή</span><span>Κίνηση</span></div>
+                  <div class="table-row"><b>112</b><span>Υλικό διαχείρισης</span><i class="credit">Πίστωση</i></div>
+                  <div class="table-row"><b>248</b><span>Είδος εξοπλισμού</span><i class="charge">Χρέωση</i></div>
+                  <div class="table-row"><b>361</b><span>Αναλώσιμο υλικό</span><i class="credit">Πίστωση</i></div>
+                </div>
+                <div class="dash-panel chart-panel">
+                  <div class="panel-title"><span>Κίνηση ανά μήνα</span><b>2026</b></div>
+                  <div class="chart" aria-hidden="true">
+                    <span style="--bar:42%"></span><span style="--bar:58%"></span>
+                    <span style="--bar:48%"></span><span style="--bar:76%"></span>
+                    <span style="--bar:64%"></span><span style="--bar:88%"></span>
+                    <span style="--bar:70%"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-card floating-card-top">
+          <span class="floating-icon">✓</span>
+          <div><strong>Αυτόματος έλεγχος</strong><small>Οι κινήσεις συμφωνούν</small></div>
+        </div>
+        <div class="floating-card floating-card-bottom">
+          <span class="floating-icon alt">↗</span>
+          <div><strong>Έτοιμο για εκτύπωση</strong><small>Excel · Word · Έντυπο</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Βασικά χαρακτηριστικά">
+      <div class="section-shell trust-grid">
+        <span><b>01</b> Χωρίς σύνδεση Internet</span>
+        <span><b>02</b> Ενιαία τοπική βάση</span>
+        <span><b>03</b> Επίσημα έντυπα</span>
+        <span><b>04</b> Backup και επαναφορά</span>
+      </div>
+    </section>
+
+    <section id="features" class="features section-shell section-block">
+      <div class="section-heading" data-reveal>
+        <div>
+          <p class="eyebrow"><span></span> Πλήρης λειτουργικότητα</p>
+          <h2>Όσα χρειάζεται η Διαχείριση.<br><em>Τίποτα περιττό.</em></h2>
+        </div>
+        <p>Από την πρώτη καταχώριση μέχρι το κλείσιμο του οικονομικού έτους, κάθε εργασία παραμένει συνδεδεμένη με τη σωστή μερίδα και το αντίστοιχο έντυπο.</p>
+      </div>
+
+      <div class="feature-bento">
+        <article class="feature-card feature-card-large" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h5"></path></svg>
+          </div>
+          <div>
+            <span class="feature-number">01</span>
+            <h3>Μερίδες και καρτέλες υλικού</h3>
+            <p>Πλήρης εικόνα υπολοίπου, κινήσεων, χρεώσεων σε τμήματα, συνθέσεων και ιστορικού ανά οικονομικό έτος.</p>
+          </div>
+          <div class="mini-ledger">
+            <div><span>31-12-2025</span><b>Απογραφή</b><strong>120</strong></div>
+            <div><span>15-02-2026</span><b>ΕΧΠ-1</b><strong class="minus">−20</strong></div>
+            <div><span>31-05-2026</span><b>Χ-37</b><strong class="plus">+8</strong></div>
+          </div>
+        </article>
+
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 7h14v14H5zM8 12h8M8 16h5"></path></svg>
+          </div>
+          <span class="feature-number">02</span>
+          <h3>ΑΔΔΥ και ΕΧΠ</h3>
+          <p>Καταχώριση χρεώσεων και πιστώσεων με ενημέρωση των καρτελών, των ευρετηρίων και του φύλλου μεταβολών.</p>
+        </article>
+
+        <article class="feature-card accent-card" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"></path></svg>
+          </div>
+          <span class="feature-number">03</span>
+          <h3>Απογραφές και διαφορές</h3>
+          <p>Ολοκληρωμένες απογραφές, αυτόματος υπολογισμός πλεονασμάτων και ελλειμμάτων και συγκεντρωτικές καταστάσεις.</p>
+        </article>
+
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4-8 4-8-4 8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4"></path></svg>
+          </div>
+          <span class="feature-number">04</span>
+          <h3>Συνθέσεις υλικών</h3>
+          <p>Εισαγωγή από Excel, προβλεπόμενες και υπάρχουσες ποσότητες, φύλλα συνθέσεως και αυτόματη ενημέρωση.</p>
+        </article>
+
+        <article class="feature-card feature-card-wide" data-reveal>
+          <div class="feature-copy">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"></path></svg>
+            </div>
+            <span class="feature-number">05</span>
+            <h3>Μητρώα, ευρετήρια και εκτυπώσεις</h3>
+            <p>Έτοιμα έντυπα με σωστό portrait ή landscape προσανατολισμό, καθώς και εξαγωγή δεδομένων σε Excel και Word.</p>
+          </div>
+          <div class="document-stack" aria-hidden="true">
+            <div class="document back"></div>
+            <div class="document middle"></div>
+            <div class="document front">
+              <span>ΚΑΤΑΣΤΑΣΗ ΑΠΟΓΡΑΦΗΣ</span>
+              <i></i><i></i><i></i><i></i>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M6 6l12 12M18 6 6 18"></path></svg>
+          </div>
+          <span class="feature-number">06</span>
+          <h3>Εργασίες οικονομικού έτους</h3>
+          <p>Έλεγχοι κινήσεων, αλλαγή αρίθμησης, αρχείο μερίδων, ετήσιες εκτυπώσεις και ασφαλές κλείσιμο έτους.</p>
+        </article>
+
+        <article class="feature-card" data-reveal>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"></path></svg>
+          </div>
+          <span class="feature-number">07</span>
+          <h3>Ειδικά βιβλία</h3>
+          <p>Μητρώο σειριακών αριθμών, Βιβλίο Μερίδων Β.Φ., μητρώο οπλισμού και παρακολούθηση ανά καρτέλα.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="workflow" class="workflow section-block">
+      <div class="section-shell">
+        <div class="section-heading centered" data-reveal>
+          <p class="eyebrow"><span></span> Μία καθαρή ροή</p>
+          <h2>Από την κίνηση<br><em>στην πλήρη εικόνα.</em></h2>
+          <p>Κάθε καταχώριση ενημερώνει αυτόματα όλα τα σημεία όπου χρησιμοποιείται η αντίστοιχη μερίδα.</p>
+        </div>
+        <div class="workflow-grid">
+          <article data-reveal><span>1</span><h3>Καταχώριση</h3><p>Επιλέγετε μερίδα και δημιουργείτε την κίνηση ή την απογραφή.</p></article>
+          <div class="flow-line" aria-hidden="true"><i></i></div>
+          <article data-reveal><span>2</span><h3>Αυτόματη ενημέρωση</h3><p>Υπόλοιπα, τμήματα, συνθέσεις και ευρετήρια ενημερώνονται μαζί.</p></article>
+          <div class="flow-line" aria-hidden="true"><i></i></div>
+          <article data-reveal><span>3</span><h3>Έλεγχος και έντυπο</h3><p>Ελέγχετε τη συνολική εικόνα και εκτυπώνετε το κατάλληλο έντυπο.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="security" class="security section-shell section-block">
+      <div class="security-panel" data-reveal>
+        <div class="security-visual" aria-hidden="true">
+          <div class="shield">
+            <svg viewBox="0 0 64 72"><path d="M32 4 58 14v20c0 17-10 28-26 34C16 62 6 51 6 34V14L32 4Z"></path><path d="m21 35 7 7 15-17"></path></svg>
+          </div>
+          <span class="orbit orbit-one"></span>
+          <span class="orbit orbit-two"></span>
+          <span class="orbit orbit-three"></span>
+        </div>
+        <div class="security-copy">
+          <p class="eyebrow"><span></span> Offline-first</p>
+          <h2>Τα δεδομένα σας<br><em>μένουν σε εσάς.</em></h2>
+          <p>Η εφαρμογή λειτουργεί τοπικά χωρίς να απαιτεί μόνιμη σύνδεση στο Internet ή εξωτερική υπηρεσία αποθήκευσης.</p>
+          <ul>
+            <li><span>✓</span> Τοπική βάση δεδομένων</li>
+            <li><span>✓</span> Δημιουργία και επαναφορά backup</li>
+            <li><span>✓</span> Έλεγχοι ακεραιότητας και επικύρωση στοιχείων</li>
+            <li><span>✓</span> Εγκατάσταση σε Windows 10 και Windows 11</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="download" class="download section-shell section-block">
+      <div class="download-card" data-reveal>
+        <div class="download-copy">
+          <p class="eyebrow light"><span></span> Έτοιμο για εγκατάσταση</p>
+          <h2>Ξεκινήστε με τη<br>Διαχείριση Υλικού.</h2>
+          <p>Κατεβάστε την τελευταία έκδοση για Windows από τη σελίδα Releases του έργου.</p>
+          <div class="download-actions">
+            <a class="button button-light" data-download-link href="#download">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"></path></svg>
+              Λήψη έκδοσης 0.13.212
+            </a>
+            <span>64-bit · Windows 10/11</span>
+          </div>
+        </div>
+        <div class="download-art" aria-hidden="true">
+          <div class="windows-mark"><i></i><i></i><i></i><i></i></div>
+          <span class="download-ring one"></span>
+          <span class="download-ring two"></span>
+          <span class="download-ring three"></span>
+        </div>
+      </div>
+      <p class="download-note" data-download-note>Η λήψη παρέχεται μέσω GitHub Releases.</p>
+    </section>
+
+    <section id="faq" class="faq section-shell section-block">
+      <div class="section-heading" data-reveal>
+        <div>
+          <p class="eyebrow"><span></span> Συχνές ερωτήσεις</p>
+          <h2>Χρήσιμες<br><em>πληροφορίες.</em></h2>
+        </div>
+      </div>
+      <div class="faq-list">
+        <details data-reveal>
+          <summary>Χρειάζεται σύνδεση στο Internet;<span>+</span></summary>
+          <p>Όχι. Η καθημερινή λειτουργία και η αποθήκευση των δεδομένων γίνονται τοπικά στον υπολογιστή.</p>
+        </details>
+        <details data-reveal>
+          <summary>Σε ποια λειτουργικά συστήματα εγκαθίσταται;<span>+</span></summary>
+          <p>Η διαθέσιμη έκδοση προορίζεται για υπολογιστές 64-bit με Windows 10 ή Windows 11.</p>
+        </details>
+        <details data-reveal>
+          <summary>Μπορώ να κρατήσω αντίγραφο ασφαλείας;<span>+</span></summary>
+          <p>Ναι. Η εφαρμογή διαθέτει λειτουργίες δημιουργίας και επαναφοράς backup της τοπικής βάσης.</p>
+        </details>
+        <details data-reveal>
+          <summary>Υποστηρίζονται εκτυπώσεις και εξαγωγές;<span>+</span></summary>
+          <p>Ναι. Τα μητρώα και οι καταστάσεις εκτυπώνονται στον σωστό προσανατολισμό και μπορούν να εξαχθούν σε Excel ή Word όπου διατίθεται η αντίστοιχη ενέργεια.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="section-shell footer-inner">
+      <a class="brand footer-brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><path d="M10 12h28v24H10z"></path><path d="M16 18h16M16 24h10M16 30h13"></path><circle cx="36" cy="35" r="7"></circle><path d="m33 35 2 2 4-5"></path></svg>
+        </span>
+        <span><strong>Διαχείριση Υλικού</strong><small>Έκδοση 0.13.212</small></span>
+      </a>
+      <p>Εφαρμογή διαχείρισης υλικού για Windows.</p>
+      <a data-source-link href="#" hidden>Πηγαίος κώδικας στο GitHub ↗</a>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
