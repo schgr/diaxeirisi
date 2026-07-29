@@ -339,7 +339,7 @@ function createSharesRepository(db) {
 
     listAmmunitionBatches(shareId) {
       return db.prepare(`
-        SELECT position, batch_number, quantity, notes
+        SELECT position, batch_number, quantity, department, notes
         FROM share_ammunition_batches
         WHERE share_id = ?
         ORDER BY position
@@ -350,14 +350,17 @@ function createSharesRepository(db) {
       db.transaction(() => {
         db.prepare('DELETE FROM share_ammunition_batches WHERE share_id = ?').run(shareId);
         const insert = db.prepare(`
-          INSERT INTO share_ammunition_batches (share_id, position, batch_number, quantity, notes)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO share_ammunition_batches (
+            share_id, position, batch_number, quantity, department, notes
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
         `);
         entries.forEach((entry, index) => insert.run(
           shareId,
           index + 1,
           entry.batchNumber,
           entry.quantity,
+          entry.department,
           entry.notes
         ));
       })();

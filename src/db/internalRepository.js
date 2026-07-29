@@ -188,6 +188,7 @@ function createInternalRepository(db) {
           item.nominal_number,
           item.description,
           item.measurement_unit,
+          document.department_name,
           share.projected_quantity,
           SUM(CASE WHEN document.movement_type = 'Χορήγηση' THEN item.quantity ELSE 0 END) AS issued_quantity,
           SUM(CASE WHEN document.movement_type = 'Επιστροφή' THEN item.quantity ELSE 0 END) AS returned_quantity,
@@ -200,7 +201,8 @@ function createInternalRepository(db) {
         WHERE document.department_manager_id = ?
         GROUP BY
           item.share_id, item.share_number, item.nominal_number,
-          item.description, item.measurement_unit, share.projected_quantity
+          item.description, item.measurement_unit, document.department_name,
+          share.projected_quantity
         HAVING final_quantity > 0
         ORDER BY
           CASE WHEN item.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
@@ -229,6 +231,17 @@ function createInternalRepository(db) {
           AND TRIM(serial_number) <> ''
         ORDER BY position, id
       `).all(shareId);
+    },
+
+    listShareAmmunitionBatches(shareId, departmentName) {
+      return db.prepare(`
+        SELECT batch_number
+        FROM share_ammunition_batches
+        WHERE share_id = ?
+          AND department = ?
+          AND TRIM(batch_number) <> ''
+        ORDER BY position, id
+      `).all(shareId, departmentName);
     },
 
     transaction(operation) {

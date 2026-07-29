@@ -145,6 +145,10 @@ function createInternalService(db) {
           .listShareSerialNumbers(row.share_id)
           .map((entry) => String(entry.serial_number || '').trim())
           .filter(Boolean),
+        ammunitionBatchNumbers: repository
+          .listShareAmmunitionBatches(row.share_id, row.department_name)
+          .map((entry) => String(entry.batch_number || '').trim())
+          .filter(Boolean),
         composition: compositionByShare.get(Number(row.share_id)) || []
       }));
     }

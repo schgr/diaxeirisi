@@ -15,6 +15,7 @@ const balances = [{
   returnedQuantity: 3,
   finalQuantity: 7,
   materialSerialNumbers: ['SN-001', 'SN-002', 'SN-003'],
+  ammunitionBatchNumbers: ['ΠΥΡ-001', 'ΠΥΡ-002'],
   composition: []
 }];
 
@@ -31,6 +32,10 @@ assert.doesNotMatch(html, /Αζίζογλου Πρόδρομος/u);
 assert.match(
   html,
   /class="k2310-serial-numbers-row"><td><\/td><td><\/td><td><\/td><td class="k2310-description-cell">SN-001, SN-002, SN-003<\/td>/u
+);
+assert.match(
+  html,
+  /class="k2310-ammunition-batches-row"><td><\/td><td><\/td><td><\/td><td class="k2310-description-cell">ΠΥΡ-001, ΠΥΡ-002<\/td>/u
 );
 
 const departmentSignatureHtml = renderK2310Pages(

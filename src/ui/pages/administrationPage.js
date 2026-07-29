@@ -128,7 +128,9 @@ function renderSerialNumberRegistry(registry) {
 function renderAmmunitionBatchRegistry(registry) {
   const rows = registry.flatMap((item, shareIndex) => {
     const entries = item.entries.length ? item.entries : [{}];
-    return entries.map((entry, entryIndex) => renderAmmunitionBatchRow(item.share, entry, shareIndex, entryIndex));
+    return entries.map((entry, entryIndex) =>
+      renderAmmunitionBatchRow(item.share, item.departments, entry, shareIndex, entryIndex)
+    );
   }).join('');
   return `
     <section class="page-panel wide-panel ammunition-batch-registry-panel">
@@ -144,15 +146,25 @@ function renderAmmunitionBatchRegistry(registry) {
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">
         <table class="index-table ammunition-batch-registry-table" data-ammunition-batch-table>
-          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Β.Φ.».</td></tr>'}</tbody>
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Β.Φ.».</td></tr>'}</tbody>
         </table>
       </div>
     </section>
   `;
 }
 
-function renderAmmunitionBatchRow(share, entry = {}, shareIndex = 0, entryIndex = 0) {
+function renderAmmunitionBatchRow(share, departments = [], entry = {}, shareIndex = 0, entryIndex = 0) {
+  const selectedDepartment = entry.department ||
+    (departments.length === 1 ? departments[0].department : '');
+  const departmentOptions = [
+    '<option value="">Επιλογή</option>',
+    ...departments.map((item) => `
+      <option value="${escapeHtml(item.department)}" ${item.department === selectedDepartment ? 'selected' : ''}>
+        ${escapeHtml(item.department)} (${escapeHtml(item.quantity)})
+      </option>
+    `)
+  ].join('');
   return `
     <tr data-ammunition-batch-row data-ammunition-share="${share.id}" data-share-index="${shareIndex}">
       <td>${shareIndex + 1}</td>
@@ -161,6 +173,7 @@ function renderAmmunitionBatchRow(share, entry = {}, shareIndex = 0, entryIndex 
       <td class="material-description-cell">${escapeHtml(share.description)}</td>
       <td><input data-ammunition-batch-number value="${escapeHtml(entry.batchNumber || '')}" aria-label="Μερίδα Πυρκού ${entryIndex + 1}" /></td>
       <td><input data-ammunition-batch-quantity type="number" min="0.001" step="0.001" value="${escapeHtml(entry.quantity || '')}" aria-label="Ποσότητα Μερίδας Πυρκού ${entryIndex + 1}" /></td>
+      <td><select data-ammunition-batch-department aria-label="Τμήμα Μερίδας Πυρκού ${entryIndex + 1}">${departmentOptions}</select></td>
       <td><input data-ammunition-batch-notes value="${escapeHtml(entry.notes || '')}" aria-label="Παρατηρήσεις Μερίδας Πυρκού ${entryIndex + 1}" /></td>
       <td class="no-print"><div class="row-actions"><button class="secondary-button" data-add-ammunition-batch="${share.id}" type="button">+ Νέα</button><button class="danger-button" data-remove-ammunition-batch type="button">Διαγραφή</button></div></td>
     </tr>
@@ -513,8 +526,11 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
       if (!grouped.has(shareId)) grouped.set(shareId, []);
       const batchNumber = row.querySelector('[data-ammunition-batch-number]').value.trim();
       const quantity = row.querySelector('[data-ammunition-batch-quantity]').value;
+      const department = row.querySelector('[data-ammunition-batch-department]').value;
       const notes = row.querySelector('[data-ammunition-batch-notes]').value.trim();
-      if (batchNumber || quantity || notes) grouped.get(shareId).push({ batchNumber, quantity, notes });
+      if (batchNumber || quantity || notes) {
+        grouped.get(shareId).push({ batchNumber, quantity, department, notes });
+      }
     });
     for (const [shareId, entries] of grouped) {
       await sharesApi.saveAmmunitionBatches(shareId, entries);

@@ -549,14 +549,7 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
   const documentsHtml = sortedCards.map((card) => {
     const cardHtml = renderSharePrintDocument(card);
     if (!card.compositionItems.length) return cardHtml;
-    return cardHtml + renderChangeSheetDocument({
-      ...card,
-      changeSheetEntries: card.changeSheetEntries.filter((entry) => {
-        const reference = String(entry.orderReference || '').trim().toLocaleUpperCase('el-GR');
-        return reference === 'ΑΠΟΓΡΑΦΗ' ||
-          String(entry.changeDate || '').startsWith(`${fiscalYear}-`);
-      })
-    });
+    return cardHtml + renderChangeSheetDocument(card);
   }).join('');
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop annual-share-print-backdrop';

@@ -331,15 +331,23 @@ function createSharesService(db) {
     },
 
     listAmmunitionBatchRegistry() {
-      return repository.listAmmunitionBatchShares().map((row) => ({
-        share: mapShare(row),
-        entries: repository.listAmmunitionBatches(row.id).map((entry) => ({
-          position: Number(entry.position),
-          batchNumber: entry.batch_number,
-          quantity: Number(entry.quantity || 0),
-          notes: entry.notes || ''
-        }))
-      }));
+      return repository.listAmmunitionBatchShares().map((row) => {
+        const departments = aggregateAssignmentQuantities(
+          repository.listShareAssignments(row.id)
+        );
+        const defaultDepartment = departments.length === 1 ? departments[0].department : '';
+        return {
+          share: mapShare(row),
+          departments,
+          entries: repository.listAmmunitionBatches(row.id).map((entry) => ({
+            position: Number(entry.position),
+            batchNumber: entry.batch_number,
+            quantity: Number(entry.quantity || 0),
+            department: entry.department || defaultDepartment,
+            notes: entry.notes || ''
+          }))
+        };
+      });
     },
 
     saveAmmunitionBatches(id, entries) {
@@ -348,25 +356,72 @@ function createSharesService(db) {
       if (!share || !share.requires_ammunition_batch_book) {
         throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο το Βιβλίο Μερίδων Β.Φ.', 'VALIDATION_ERROR');
       }
+      const expectedDepartments = aggregateAssignmentQuantities(
+        repository.listShareAssignments(shareId)
+      );
       const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
         const batchNumber = String(entry && entry.batchNumber || '').trim();
         const quantity = Number(entry && entry.quantity);
+        const department = String(entry && entry.department || '').trim();
         if (!batchNumber) {
           throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
         }
         if (!Number.isFinite(quantity) || quantity <= 0) {
           throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
         }
+        if (expectedDepartments.length && !department) {
+          throw new AppError('Το Τμήμα της Μερίδας Πυρκού είναι υποχρεωτικό.', 'VALIDATION_ERROR');
+        }
         return {
           batchNumber,
           quantity,
+          department,
           notes: String(entry && entry.notes || '').trim()
         };
       });
+      if (expectedDepartments.length) {
+        validateAmmunitionBatchAllocations(cleanEntries, expectedDepartments);
+      }
       repository.replaceAmmunitionBatches(shareId, cleanEntries);
       return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
     }
   };
+}
+
+function aggregateAssignmentQuantities(assignments) {
+  const totals = new Map();
+  (Array.isArray(assignments) ? assignments : []).forEach((assignment) => {
+    const department = String(assignment.department || '').trim();
+    const quantity = Number(assignment.quantity || 0);
+    if (!department || !Number.isFinite(quantity) || quantity <= 0) return;
+    totals.set(department, (totals.get(department) || 0) + quantity);
+  });
+  return [...totals].map(([department, quantity]) => ({ department, quantity }));
+}
+
+function validateAmmunitionBatchAllocations(entries, expectedDepartments) {
+  const expected = new Map(
+    expectedDepartments.map((item) => [item.department, Number(item.quantity || 0)])
+  );
+  const actual = new Map();
+  entries.forEach((entry) => {
+    if (!expected.has(entry.department)) {
+      throw new AppError(
+        `Το Τμήμα «${entry.department}» δεν έχει χρεωμένη ποσότητα σε αυτή τη μερίδα.`,
+        'VALIDATION_ERROR'
+      );
+    }
+    actual.set(entry.department, (actual.get(entry.department) || 0) + entry.quantity);
+  });
+  expected.forEach((quantity, department) => {
+    const assigned = actual.get(department) || 0;
+    if (Math.abs(assigned - quantity) > 0.000001) {
+      throw new AppError(
+        `Οι Μερίδες Πυρκού για το Τμήμα «${department}» πρέπει να έχουν συνολική ποσότητα ${quantity}.`,
+        'VALIDATION_ERROR'
+      );
+    }
+  });
 }
 
 function buildDocumentChangeEntries(movements, compositionItems) {

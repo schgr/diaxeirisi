@@ -1981,6 +1981,14 @@ const migrations = [
         FOREIGN KEY (inventory_session_id) REFERENCES inventory_sessions(id) ON DELETE RESTRICT
       );
     `
+  },
+  {
+    version: 61,
+    name: 'ammunition_batch_departments',
+    up: `
+      ALTER TABLE share_ammunition_batches
+      ADD COLUMN department TEXT NOT NULL DEFAULT '';
+    `
   }
 ];
 
