@@ -548,15 +548,17 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
   document.querySelector('.annual-share-print-backdrop')?.remove();
   const sortedCards = sortMovedShareCards(cards);
   const manager = splitOfficerSignature(settings?.financialOfficers?.manager || '');
-  const cardDocumentsHtml = sortedCards.map((card) => renderSharePrintDocument(card, {
-    exactCopy: 'Ακριβές Αντίγραφο',
-    issuerName: manager.name,
-    issuerRank: manager.rank
-  })).join('');
-  const changeSheetDocumentsHtml = sortedCards
-    .filter((card) => card.compositionItems.length)
-    .map((card) => renderChangeSheetDocument(card))
-    .join('');
+  const annualDocumentsHtml = sortedCards.map((card) => {
+    const shareCard = renderSharePrintDocument(card, {
+      exactCopy: 'Ακριβές Αντίγραφο',
+      issuerName: manager.name,
+      issuerRank: manager.rank
+    });
+    const changeSheet = card.compositionItems.length
+      ? renderChangeSheetDocument(card)
+      : '';
+    return `${shareCard}${changeSheet}`;
+  }).join('');
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop annual-share-print-backdrop';
   backdrop.innerHTML = `
@@ -572,10 +574,7 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
         </div>
       </header>
       <div class="request-document-preview annual-share-print-preview">
-        <div data-annual-card-pages>${cardDocumentsHtml}</div>
-        ${changeSheetDocumentsHtml
-          ? `<div data-annual-change-sheet-pages>${changeSheetDocumentsHtml}</div>`
-          : ''}
+        <div data-annual-document-pages>${annualDocumentsHtml}</div>
       </div>
     </div>`;
 
@@ -588,24 +587,14 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
     const printButton = backdrop.querySelector('[data-print-annual-share-documents]');
     printButton.disabled = true;
     try {
-      const cardsResult = await printAnnualDocumentGroup(
-        backdrop.querySelector('[data-annual-card-pages]').innerHTML,
+      const printResult = await printAnnualDocumentGroup(
+        backdrop.querySelector('[data-annual-document-pages]').innerHTML,
         false,
-        `Μερίδες με Κίνηση ${fiscalYear}`
+        `Μερίδες με Κίνηση ${fiscalYear}`,
+        true
       );
-      if (cardsResult?.printed === false) {
-        throw new Error(cardsResult.failureReason || 'Η εκτύπωση των καρτελών ακυρώθηκε.');
-      }
-      const changeSheetPages = backdrop.querySelector('[data-annual-change-sheet-pages]');
-      if (changeSheetPages) {
-        const sheetsResult = await printAnnualDocumentGroup(
-          changeSheetPages.innerHTML,
-          true,
-          `Φύλλα Μεταβολών ${fiscalYear}`
-        );
-        if (sheetsResult?.printed === false) {
-          throw new Error(sheetsResult.failureReason || 'Η εκτύπωση των Φύλλων Μεταβολών ακυρώθηκε.');
-        }
+      if (printResult?.printed === false) {
+        throw new Error(printResult.failureReason || 'Η εκτύπωση των μερίδων ακυρώθηκε.');
       }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση.', 'error');
@@ -626,7 +615,7 @@ export function sortMovedShareCards(cards) {
   );
 }
 
-async function printAnnualDocumentGroup(html, landscape, title) {
+async function printAnnualDocumentGroup(html, landscape, title, mixedOrientation = false) {
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
   printRoot.innerHTML = `
@@ -635,9 +624,11 @@ async function printAnnualDocumentGroup(html, landscape, title) {
         size: ${landscape ? '297mm 210mm' : '210mm 297mm'} !important;
         margin: 0 !important;
       }
-      .isolated-print-root > .print-document-area {
-        page: auto !important;
-      }
+      ${mixedOrientation ? '' : `
+        .isolated-print-root > .print-document-area {
+          page: auto !important;
+        }
+      `}
     </style>
     ${html}
   `;

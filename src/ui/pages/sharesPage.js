@@ -219,25 +219,14 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
 
       <section class="material-card-section material-records-section">
         <div class="material-card-section-title">
-          <div><h3>Φύλλο Μεταβολών</h3><p class="muted">ΔΥΠ/191 · ιστορικό μεταβολών των ειδών συνθέσεως.</p></div>
+          <div>
+            <h3>Φύλλο Μεταβολών</h3>
+            <p class="muted">Το ίδιο αυτόματο φύλλο που συνοδεύει τη μερίδα στις «Μερίδες με Κίνηση».</p>
+          </div>
           <div class="row-actions">
             <button class="secondary-button" data-view-change-sheet type="button">Προβολή</button>
-            ${compositionEditor ? `
-              <button class="secondary-button" data-edit-change-sheet type="button" ${changeSheetLocked ? '' : 'hidden'}>Επεξεργασία</button>
-              <button class="secondary-button" data-add-change-row type="button" ${changeSheetLocked ? 'disabled' : ''}>Προσθήκη μεταβολής</button>
-            ` : ''}
           </div>
         </div>
-        <div class="card-table-wrap">
-          <table class="editable-records-table">
-            <thead><tr><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Ημερομηνία</th><th>Κίνηση</th><th>Ποσότητα</th><th>Παρατηρήσεις</th><th></th></tr></thead>
-            <tbody data-change-sheet-body>${renderChangeSheetRows(card.changeSheetEntries, card.compositionItems, changeSheetLocked)}</tbody>
-          </table>
-        </div>
-        ${compositionEditor ? `<div class="addy-save-row">
-          <span class="muted" data-change-sheet-lock-state>${changeSheetLocked ? 'Το φύλλο μεταβολών είναι κλειδωμένο.' : 'Το φύλλο μεταβολών είναι σε επεξεργασία.'}</span>
-          <button class="primary-button" data-save-change-sheet type="button" ${changeSheetLocked ? 'disabled' : ''}>Αποθήκευση Φύλλου</button>
-        </div>` : ''}
       </section>
       ` : ''}
 
@@ -372,11 +361,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
     if (event.target.closest('[data-view-change-sheet]')) {
       openMaterialFormPreview(
         'Φύλλο Μεταβολών',
-        renderChangeSheetDocument({
-          ...card,
-          compositionItems: collectCompositionRows(modal),
-          changeSheetEntries: collectChangeSheetRows(modal)
-        }),
+        renderChangeSheetDocument(card),
         true
       );
       return;

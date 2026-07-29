@@ -4711,15 +4711,20 @@ th {
 
 .share-back-preview-backdrop .share-back-preview-content {
   flex: 1;
+  min-height: 0;
   max-height: none;
   margin-top: 0;
   padding: 8px;
+  overflow: hidden;
+  align-items: center;
 }
 
 .share-back-preview-backdrop .official-share-page {
   flex: 0 0 auto;
-  width: min(210mm, calc((100vh - 145px) * 0.7070707));
-  height: auto;
+  width: auto;
+  max-width: 100%;
+  height: min(297mm, calc(100vh - 145px));
+  max-height: 100%;
   min-height: 0;
   margin: 0 auto;
   aspect-ratio: 210 / 297;
