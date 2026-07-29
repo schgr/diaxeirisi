@@ -274,5 +274,5 @@ function formatQuantity(value) {
   if (value === null || value === undefined || String(value).trim() === '') return '';
   const number = Number(value);
   if (!Number.isFinite(number)) return value;
-  return number.toLocaleString('el-GR', { maximumFractionDigits: 3 });
+  return number.toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
 }

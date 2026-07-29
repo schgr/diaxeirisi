@@ -1487,7 +1487,7 @@ function formatDate(value) {
 }
 
 function formatNumber(value) {
-  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3 });
+  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
 }
 
 function formatSignedNumber(value) {

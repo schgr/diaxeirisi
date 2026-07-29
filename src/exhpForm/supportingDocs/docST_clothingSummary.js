@@ -79,7 +79,7 @@ function normalize(data = {}) { return { aitiologiaCode: 'st', formCode: DOC_ST_
 function quantityFor(entries, item, unit, movement) { return entries.filter((e) => e.item === item && e.subunit === unit && e.movement === movement).reduce((sum, e) => sum + number(e.quantity), 0); }
 function movementTotal(entries, movement) { return entries.filter((e) => e.movement === movement).reduce((sum, e) => sum + number(e.quantity), 0); }
 function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
-function format(value) { return value ? value.toLocaleString('el-GR', { maximumFractionDigits: 3 }) : ''; }
+function format(value) { return value ? value.toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false }) : ''; }
 function displayMonth(value) { const [year, month] = String(value || '').split('-'); return year && month ? `${month}/${year}` : value || ''; }
 function signature(value) { const parsed = splitOfficerSignature(value); return `<span class="doc-st-signature"><span class="doc-st-signature-name">${escapeHtml(parsed.name || '')}</span><span class="doc-st-signature-rank">${escapeHtml(parsed.rank || '')}</span></span>`; }
 function clone(value) { return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }

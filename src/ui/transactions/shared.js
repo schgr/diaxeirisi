@@ -14,7 +14,7 @@ export function readRowField(row, name) {
 
 export function readOptionalNumber(value) {
   const text = String(value || '').trim();
-  return text ? Number(text) : null;
+  return text ? Number(text.replace(',', '.')) : null;
 }
 
 export function setReadonlyRowField(row, name, value) {
@@ -96,6 +96,7 @@ export function displaySupportStatus(value) {
 
 export function formatQuantity(value) {
   return Number(value).toLocaleString('el-GR', {
-    maximumFractionDigits: 3
+    maximumFractionDigits: 3,
+    useGrouping: false
   });
 }

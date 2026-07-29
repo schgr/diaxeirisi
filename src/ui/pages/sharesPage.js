@@ -1272,7 +1272,8 @@ export function renderRows(shares, compositionOnly = false) {
 
 function formatQuantity(value) {
   return Number(value).toLocaleString('el-GR', {
-    maximumFractionDigits: 3
+    maximumFractionDigits: 3,
+    useGrouping: false
   });
 }
 

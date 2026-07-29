@@ -91,7 +91,7 @@ function renderMovementForm(referenceData) {
         </label>
         <label class="field">
           <span>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</span>
-          <input id="internal-share" list="internal-share-list" autocomplete="off" />
+          <input id="internal-share" autocomplete="off" />
         </label>
         <label class="field"><span>ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</span><input id="internal-nominal" readonly /></label>
         <label class="field"><span>ΠΕΡΙΓΡΑΦΗ</span><input id="internal-description" readonly /></label>
@@ -100,9 +100,6 @@ function renderMovementForm(referenceData) {
         <button id="internal-add" class="primary-button" type="button">ΠΡΟΣΘΗΚΗ</button>
       </div>
     </div>
-    <datalist id="internal-share-list">
-      ${referenceData.shares.map((share) => `<option value="${escapeHtml(share.shareNumber)}"></option>`).join('')}
-    </datalist>
   `;
 }
 
@@ -539,7 +536,7 @@ function findShareByNumber(shares, value) {
 }
 
 function formatQuantity(value) {
-  return Number(value || 0).toLocaleString('el-GR', { maximumFractionDigits: 3 });
+  return Number(value || 0).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
 }
 
 function formatDate(value) {

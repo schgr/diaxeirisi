@@ -411,7 +411,7 @@ function updateClothingSummaryTotals(root) {
   });
   Object.entries(totals).forEach(([movement, total]) => {
     const target = root.querySelector(`[data-doc-st-total="${movement}"]`);
-    if (target) target.textContent = total.toLocaleString('el-GR', { maximumFractionDigits: 3 });
+    if (target) target.textContent = total.toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
   });
 }
 

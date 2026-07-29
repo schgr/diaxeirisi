@@ -838,5 +838,5 @@ function formatDate(value) {
 }
 
 function formatQuantity(value) {
-  return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3 }).format(Number(value || 0));
+  return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3, useGrouping: false }).format(Number(value || 0));
 }

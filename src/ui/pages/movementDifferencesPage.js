@@ -375,7 +375,7 @@ async function printProtocolDocument(backdrop) {
 }
 
 function formatQuantity(value) {
-  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3 });
+  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
 }
 
 function formatDate(value) {
