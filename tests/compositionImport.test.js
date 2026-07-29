@@ -45,7 +45,7 @@ async function run() {
     assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 50);
     assert.strictEqual(card.changeSheetEntries.length, 1);
     assert.strictEqual(card.changeSheetEntries[0].changeDate, `${new Date().getFullYear() - 1}-12-31`);
-    assert.strictEqual(card.changeSheetEntries[0].orderReference, 'ΑΠΟΓΡΑΦΗ');
+    assert.strictEqual(card.changeSheetEntries[0].orderReference, 'Απογραφή');
     assert.strictEqual(card.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
     assert.strictEqual(card.changeSheetEntries[0].quantity, 100);
 

@@ -867,12 +867,16 @@ function renderChangeDateHeaders(columns, count) {
     if (!column) return '<th class="vertical-table-heading"></th>';
     const date = formatChangeSheetDate(column.date);
     const label = column.reference
-      ? column.reference === 'ΑΠΟΓΡΑΦΗ'
-        ? `${column.reference} ${date}`
+      ? normalizeInventoryReference(column.reference) === 'ΑΠΟΓΡΑΦΗ'
+        ? `Απογραφή ${date}`
         : `${column.reference}/${date}`
       : date;
     return `<th class="vertical-table-heading">${escapeHtml(label)}</th>`;
   }).join('');
+}
+
+function normalizeInventoryReference(value) {
+  return String(value || '').trim().toLocaleUpperCase('el-GR');
 }
 
 function formatChangeSheetDate(value) {
@@ -883,9 +887,6 @@ function formatChangeSheetDate(value) {
 function renderChangeSheetDocumentRow(item, entries, chargeKeys, creditKeys) {
   const chargeByDate = sumChangesByColumn(entries, 'ΧΡΕΩΣΗ');
   const creditByDate = sumChangesByColumn(entries, 'ΠΙΣΤΩΣΗ');
-  const totalCharge = [...chargeByDate.values()].reduce((sum, value) => sum + value, 0);
-  const totalCredit = [...creditByDate.values()].reduce((sum, value) => sum + value, 0);
-  const numericDifference = totalCharge - totalCredit;
   const chargeCells = Array.from({ length: 10 }, (_unused, index) => {
     const quantity = chargeByDate.get(chargeKeys[index]);
     return `<td>${quantity ? formatQuantity(quantity) : ''}</td>`;
@@ -900,8 +901,8 @@ function renderChangeSheetDocumentRow(item, entries, chargeKeys, creditKeys) {
       <td>${item ? escapeHtml(item.componentDescription) : ''}</td>
       ${chargeCells}
       ${creditCells}
-      <td>${numericDifference > 0 ? formatQuantity(numericDifference) : ''}</td>
-      <td>${numericDifference < 0 ? formatQuantity(Math.abs(numericDifference)) : ''}</td>
+      <td></td>
+      <td></td>
     </tr>
   `;
 }

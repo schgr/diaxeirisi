@@ -88,7 +88,7 @@ function createCompositionImportService(db) {
           share.id,
           groupRows.flatMap((row, index) => Number(row.existingQuantity) > 0 ? [{
             changeDate: openingDate,
-            orderReference: 'ΑΠΟΓΡΑΦΗ',
+            orderReference: 'Απογραφή',
             previousValue: '',
             newValue: String(row.existingQuantity),
             changeReason: 'Αρχική ενημέρωση σύνθεσης από Excel',

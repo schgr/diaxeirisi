@@ -91,8 +91,13 @@ const changeSheet = renderChangeSheetDocument({
     quantity: 15
   }]
 });
-assert.match(changeSheet, /ΑΠΟΓΡΑΦΗ 31-12-2025/);
+assert.match(changeSheet, /Απογραφή 31-12-2025/);
 assert.match(changeSheet, />15</);
+assert.match(
+  changeSheet,
+  /<td><\/td>\s*<td><\/td>\s*<\/tr>/,
+  'The surplus and deficit columns must remain empty.'
+);
 
 const documentChangeSheet = renderChangeSheetDocument({
   share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },
