@@ -116,10 +116,9 @@ function renderAxristoMaterialPickerRow(item, seq) {
     <tr data-materials-row data-material-picker-row>
       <td><input data-materials-field="seq" value="${escapeHtml(seq)}" /></td>
       <td>
-        <input data-material-picker-select list="exhp-material-picker-catalog" value="${escapeHtml(item.shareNumber)}" placeholder="Αριθμός μερίδας" autocomplete="off" />
-        <input data-materials-field="shareNumber" type="hidden" value="${escapeHtml(item.shareNumber)}" />
-        <input data-materials-field="nomenclature" type="hidden" value="${escapeHtml(item.nomenclature)}" />
+        <input data-material-picker-select data-materials-field="shareNumber" value="${escapeHtml(item.shareNumber)}" placeholder="Αριθμός μερίδας" autocomplete="off" />
       </td>
+      <td><input data-materials-field="nomenclature" value="${escapeHtml(item.nomenclature)}" readonly /></td>
       <td><input data-materials-field="description" value="${escapeHtml(item.description)}" readonly /></td>
       <td><input data-materials-field="unit" value="${escapeHtml(item.unit)}" readonly /></td>
       <td><input data-materials-field="quantity" value="${escapeHtml(item.quantity)}" inputmode="decimal" /></td>
@@ -136,7 +135,7 @@ function renderTableHead(variant = 'default') {
   if (variant === 'axristo') {
     return `
       <thead><tr>
-        <th>Α/Α</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>ΜΜ</th>
+        <th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>ΜΜ</th>
         <th>Ποσότητα (αριθ.)</th><th>Ποσότητα (ολογράφως)</th><th>Τιμή Κτήσης</th>
         <th>Ημ/νία Κτήσης</th><th>Παρατηρήσεις</th><th class="exhp-materials-actions-cell">Ενέργειες</th>
       </tr></thead>
@@ -176,7 +175,8 @@ function renderTableHead(variant = 'default') {
 function renderColgroup(variant = 'default') {
   if (variant === 'axristo') {
     return `<colgroup>
-      <col class="exhp-materials-col-seq" /><col class="exhp-materials-col-nomenclature" />
+      <col class="exhp-materials-col-seq" /><col class="exhp-materials-col-picker" />
+      <col class="exhp-materials-col-nomenclature" />
       <col class="exhp-materials-col-description" /><col class="exhp-materials-col-unit" />
       <col class="exhp-materials-col-quantity" /><col class="exhp-materials-col-quantity" />
       <col class="exhp-materials-col-quantity" /><col class="exhp-materials-col-quantity" />

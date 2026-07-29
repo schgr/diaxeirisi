@@ -60,6 +60,9 @@ async function writeExcelExport(filePath, payload = {}) {
     });
     worksheet.eachRow((row) => {
       row.alignment = { vertical: 'top', wrapText: true };
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.font = { ...cell.font, name: 'Arial', size: 12 };
+      });
     });
   });
 
@@ -75,6 +78,10 @@ function writeWordExport(filePath, payload = {}) {
     : '595.3pt 841.9pt';
   const content = String(payload.html || '').trim() ||
     `<p>${(payload.textLines || []).map((line) => escapeHtml(line)).join('<br>')}</p>`;
+  const contentText = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const titleHeading = contentText.includes(String(payload.title || '').trim())
+    ? ''
+    : `<h1>${title}</h1>`;
   const documentHtml = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -89,7 +96,7 @@ function writeWordExport(filePath, payload = {}) {
       mso-page-orientation: ${orientation};
     }
     div.WordSection1 { page: WordSection1; }
-    body { font-family: Arial, sans-serif; color: #000; font-size: 10pt; }
+    body, body * { font-family: Arial, sans-serif !important; color: #000; font-size: 12pt; }
     h1, h2, h3 { text-align: center; }
     table { width: 100%; border-collapse: collapse; margin: 0 0 8mm; }
     th, td { border: 1px solid #555; padding: 4px; vertical-align: top; }
@@ -100,7 +107,7 @@ function writeWordExport(filePath, payload = {}) {
     article:last-child { page-break-after: auto; }
   </style>
 </head>
-<body><div class="WordSection1"><h1>${title}</h1>${content}</div></body>
+<body><div class="WordSection1">${titleHeading}${content}</div></body>
 </html>`;
   fs.writeFileSync(filePath, `\uFEFF${documentHtml}`, 'utf8');
   return filePath;

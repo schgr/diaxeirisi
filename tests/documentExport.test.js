@@ -37,6 +37,8 @@ async function run() {
     assert.strictEqual(sheet.getCell('A1').value, 'Μερίδα');
     assert.strictEqual(sheet.getCell('C2').value, 1);
     assert.strictEqual(sheet.pageSetup.orientation, 'landscape');
+    assert.strictEqual(sheet.getCell('A1').font.name, 'Arial');
+    assert.strictEqual(sheet.getCell('A1').font.size, 12);
 
     const continuousExcelPath = path.join(directory, 'Κ2310.xlsx');
     await writeExcelExport(continuousExcelPath, {
@@ -65,6 +67,16 @@ async function run() {
     assert.match(word, /<table>/);
     assert.match(word, /size: 595\.3pt 841\.9pt/);
     assert.match(word, /mso-page-orientation: portrait/);
+    assert.match(word, /font-family: Arial/);
+    assert.match(word, /font-size: 12pt/);
+
+    const titledWordPath = path.join(directory, 'Κατάσταση με τίτλο.doc');
+    writeWordExport(titledWordPath, {
+      title: 'Μοναδικός Τίτλος',
+      html: '<h1>Μοναδικός Τίτλος</h1><p>Περιεχόμενο</p>'
+    });
+    const titledWord = fs.readFileSync(titledWordPath, 'utf8');
+    assert.strictEqual((titledWord.match(/Μοναδικός Τίτλος/g) || []).length, 2);
 
     const landscapeWordPath = path.join(directory, 'Κατάσταση landscape.doc');
     writeWordExport(landscapeWordPath, {

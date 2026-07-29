@@ -58,6 +58,9 @@ async function run() {
   assert.match(docAHtml, /Πρωτοβάθμια Επιτροπή/);
   assert.match(docAHtml, /Δευτεροβάθμια Επιτροπή/);
   assert.match(docAHtml, /data-doc-a-form="b" data-committee-tier="secondary" hidden/);
+  assert.match(docAHtml, /data-material-picker-select data-materials-field="shareNumber"/);
+  assert.match(docAHtml, /data-materials-field="nomenclature"[^>]*readonly/);
+  assert.doesNotMatch(docAHtml, /data-material-picker-select[^>]*\slist=/);
 
   const docAPrint = renderNewSupportDocumentPrint({
     aitiologiaCode: 'a', formKey: 'a', committeeTier: 'secondary',
@@ -70,7 +73,7 @@ async function run() {
   assert.ok(docAPrint.indexOf('Παπαδόπουλος Νικόλαος') < docAPrint.indexOf('Τχης'));
   assert.doesNotMatch(docAPrint, /exhp-axristo-signature-label/);
   assert.doesNotMatch(docAPrint, /Υπόδειγμα/);
-  assert.match(docAPrint, /ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/);
+  assert.doesNotMatch(docAPrint, /ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/);
 
   const primaryDocA = {
     aitiologiaCode: 'a', formKey: 'd2', committeeTier: 'primary',
@@ -108,10 +111,11 @@ async function run() {
   });
   assert.strictEqual((pagedPrint.match(/class="exhp-print-page print-document-area exhp-axristo-page"/g) || []).length, 2);
   assert.strictEqual((pagedPrint.match(/ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ/g) || []).length, 2);
+  assert.doesNotMatch(pagedPrint, /ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ/);
   assert.match(pagedPrint, /Σελίδα 1 από 2/);
   assert.match(pagedPrint, /Σελίδα 2 από 2/);
   assert.strictEqual((pagedPrint.match(/ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ/g) || []).length, 1);
-  assert.strictEqual((pagedPrint.match(/ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/g) || []).length, 1);
+  assert.strictEqual((pagedPrint.match(/ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ/g) || []).length, 0);
   assert.match(pagedPrint, /text-align:right/);
   assert.match(pagedPrint, /position:relative!important/);
 

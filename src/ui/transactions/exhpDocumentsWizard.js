@@ -600,12 +600,24 @@ function openNewSupportPreview(html) {
       <div class="handover-document-preview">${html}</div>
     </section>
   `;
-  modal.addEventListener('click', (event) => {
+  modal.addEventListener('click', async (event) => {
     if (event.target === modal || event.target.closest('[data-close-new-support-preview]')) {
       modal.remove();
       return;
     }
-    if (event.target.closest('[data-print-new-support-preview]')) window.print();
+    if (event.target.closest('[data-print-new-support-preview]')) {
+      const printRoot = document.createElement('div');
+      printRoot.className = 'isolated-print-root';
+      printRoot.innerHTML = modal.querySelector('.handover-document-preview')?.innerHTML || '';
+      document.body.dataset.isolatedDocumentPrint = 'true';
+      document.body.appendChild(printRoot);
+      try {
+        await window.appApi.print.currentDocument({ landscape: false });
+      } finally {
+        printRoot.remove();
+        delete document.body.dataset.isolatedDocumentPrint;
+      }
+    }
   });
   document.body.appendChild(modal);
 }

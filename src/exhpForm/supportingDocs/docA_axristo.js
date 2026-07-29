@@ -89,7 +89,7 @@ function renderPrint(data) {
   </style>${pages.map((rows, pageIndex) => {
     const isLastPage = pageIndex === totalPages - 1;
     return `<article class="exhp-print-page print-document-area exhp-axristo-page">
-      ${pageIndex === 0 ? `<h1 class="exhp-form-title"><span>${data.committeeTier === 'secondary' ? 'ΔΕΥΤΕΡΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ' : 'ΠΡΩΤΟΒΑΘΜΙΑ ΕΠΙΤΡΟΠΗ'}</span><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span></h1>` : ''}
+      ${pageIndex === 0 ? `<h1 class="exhp-form-title"><span>ΚΑΤΑΣΤΑΣΗ «${form.code}»</span><span>${form.title}</span></h1>` : ''}
       ${printTable(rows)}
       ${isLastPage ? `<div class="exhp-axristo-signatures">
       <div class="exhp-axristo-manager"><span>Ο</span><strong>ΔΙΑΧΕΙΡΙΣΤΗΣ ΑΧΡΗΣΤΟΥ ΥΛΙΚΟΥ</strong>${signatureName(officers.manager)}</div>
