@@ -253,8 +253,10 @@ export async function renderTransactionsPage(
       <div class="exhp-reason-tile-grid">
         ${EXP_AITIOLOGIES
           .map((aitiologia) => `
-            <button class="home-tile exhp-reason-tile" data-exhp-reason-tile="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-exhp-reason-code="${escapeHtml(aitiologia.code)}" type="button">
-              <span>${escapeHtml(aitiologia.label)}</span>
+            <button class="home-tile transaction-flow-tile exhp-reason-tile" data-exhp-reason-tile="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-exhp-reason-code="${escapeHtml(aitiologia.code)}" type="button">
+              <span class="home-tile-icon" aria-hidden="true">${escapeHtml(aitiologia.code.toUpperCase())}</span>
+              <span class="home-tile-title">${escapeHtml(aitiologia.label)}</span>
+              <span class="home-tile-code">§ ΕΧΠ-${escapeHtml(aitiologia.code.toUpperCase())}</span>
             </button>
           `)
           .join('')}

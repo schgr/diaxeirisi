@@ -950,6 +950,7 @@ select {
 
 .exhp-reason-tile-grid {
   margin-top: 14px;
+  max-width: 620px;
 }
 
 .exhp-reason-tile {
