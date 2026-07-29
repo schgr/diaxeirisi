@@ -6834,6 +6834,16 @@ th {
     padding: 0;
   }
 
+  body[data-isolated-document-print='true'] .isolated-print-root > .print-document-area:not(:last-child) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  body[data-isolated-document-print='true'] .isolated-print-root > .print-document-area:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
   body[data-addy-print-target='addy'] .addy-composition-document,
   body[data-addy-print-target='composition'] .addy-document-page {
     display: none;

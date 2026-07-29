@@ -41,7 +41,10 @@ contextBridge.exposeInMainWorld('appApi', {
     quit: () => invoke('window:quit')
   },
   print: {
-    currentDocument: (options) => invoke('print:current-document', options)
+    currentDocument: (options = {}) => invoke('print:current-document', {
+      ...options,
+      title: options.title || resolveCurrentPrintTitle()
+    })
   },
   export: {
     document: (format, payload) => invoke('export:document', format, payload)
@@ -225,3 +228,16 @@ contextBridge.exposeInMainWorld('appApi', {
     submit: (id, date) => invoke('annual-accounts:submit', id, date)
   }
 });
+
+function resolveCurrentPrintTitle() {
+  const isolatedRoot = document.querySelector('.isolated-print-root');
+  const source = isolatedRoot ||
+    document.querySelector('.modal-backdrop:not([hidden])') ||
+    document.querySelector('main') ||
+    document.body;
+  const heading = source.querySelector('h1, h2, h3');
+  const value = String(heading?.textContent || document.title || 'Κατάσταση')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return value || 'Κατάσταση';
+}
