@@ -42,6 +42,10 @@ function checkCanceled() {
 }
 
 async function executeTask(task, payload, progress) {
+  if (task.startsWith('backup-')) {
+    const { executeBackupTask } = require('./backupWorkerTasks');
+    return executeBackupTask(task, payload, progress, checkCanceled);
+  }
   if (task === 'export-document') {
     progress(0, 1, 'Δημιουργία αρχείου…');
     const { writeExcelExport, writeWordExport } = require('../services/documentExportService');

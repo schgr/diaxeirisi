@@ -126,33 +126,48 @@ function registerIpcHandlers() {
   );
   ipcMain.handle('auth:lock', async () => safeInvoke(() => securityService.lock()));
   ipcMain.handle('backup:list', async () => safeInvoke(() => backupService.list()));
-  ipcMain.handle('backup:create-automatic', async () =>
-    safeInvoke(() => backupService.createAutomatic(true))
+  ipcMain.handle('backup:create-automatic', async (event, taskId) =>
+    safeInvoke(() => backupService.createAutomatic(true, {
+      taskId,
+      timeoutMs: 10 * 60 * 1000,
+      onProgress: (progress) => event.sender.send('backup:progress', progress)
+    }))
   );
-  ipcMain.handle('backup:create-manual', async () =>
+  ipcMain.handle('backup:create-manual', async (event, taskId) =>
     safeInvoke(async () => {
       const result = await dialog.showOpenDialog({
         title: 'Επιλογή φακέλου αποθήκευσης αντιγράφου',
         properties: ['openDirectory', 'createDirectory']
       });
       if (result.canceled || !result.filePaths.length) return null;
-      return backupService.createManual(result.filePaths[0]);
+      return backupService.createManual(result.filePaths[0], {
+        taskId,
+        timeoutMs: 10 * 60 * 1000,
+        onProgress: (progress) => event.sender.send('backup:progress', progress)
+      });
     })
   );
-  ipcMain.handle('backup:restore', async () =>
+  ipcMain.handle('backup:restore', async (event, taskId) =>
     safeInvoke(async () => {
       const result = await dialog.showOpenDialog({
         title: 'Επιλογή αντιγράφου για επαναφορά',
         properties: ['openDirectory']
       });
       if (result.canceled || !result.filePaths.length) return null;
-      const prepared = backupService.prepareRestore(result.filePaths[0]);
+      const prepared = await backupService.prepareRestore(result.filePaths[0], {
+        taskId,
+        timeoutMs: 10 * 60 * 1000,
+        onProgress: (progress) => event.sender.send('backup:progress', progress)
+      });
       setTimeout(() => {
         app.relaunch();
         app.exit(0);
       }, 250);
       return prepared;
     })
+  );
+  ipcMain.handle('backup:cancel', async (_event, taskId) =>
+    safeInvoke(() => backupService.cancel(taskId))
   );
   ipcMain.handle('window:set-fullscreen', async (event, value) =>
     safeInvoke(() => {
@@ -328,7 +343,7 @@ function registerIpcHandlers() {
         filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
       });
       if (result.canceled || !result.filePaths.length) return null;
-      backupService.createAutomatic(true);
+      await backupService.createAutomatic(true, { timeoutMs: 10 * 60 * 1000 });
       const matrix = await runHeavyTask(event, 'read-excel-matrix', {
         filePath: result.filePaths[0]
       }, { taskId, timeoutMs: 180000 });
@@ -741,7 +756,8 @@ app.whenReady().then(async () => {
     Menu.setApplicationMenu(null);
   }
   const userDataPath = app.getPath('userData');
-  applyPendingRestore(userDataPath);
+  heavyTaskRunner = createHeavyTaskRunner({ defaultTimeout: 10 * 60 * 1000 });
+  await applyPendingRestore(userDataPath, heavyTaskRunner);
   securityService = createSecurityService(userDataPath);
   const database = await initializeDatabase(userDataPath, {
     offerBackupRecovery: async ({ mainExists }) => {
@@ -761,13 +777,10 @@ app.whenReady().then(async () => {
     }
   });
   persistentDatabase = database;
-  heavyTaskRunner = createHeavyTaskRunner();
-  backupService = createBackupService(userDataPath);
-  try {
-    backupService.createAutomatic();
-  } catch (error) {
-    logger.error('Δεν ήταν δυνατή η δημιουργία αυτόματου αντιγράφου.', error);
-  }
+  backupService = createBackupService(userDataPath, {
+    runner: heavyTaskRunner,
+    exportSnapshot: () => database.exportSnapshot()
+  });
   const settingsService = createSettingsService(database);
   services = {
     shares: createSharesService(database),
@@ -787,13 +800,16 @@ app.whenReady().then(async () => {
   };
   registerIpcHandlers();
   createWindow();
+  setImmediate(() => {
+    backupService.createAutomatic().catch((error) => {
+      logger.error('Δεν ήταν δυνατή η δημιουργία αυτόματου αντιγράφου.', error);
+    });
+  });
 
   const backupInterval = setInterval(() => {
-    try {
-      backupService.createAutomatic();
-    } catch (error) {
+    backupService.createAutomatic().catch((error) => {
       logger.error('Δεν ήταν δυνατή η δημιουργία προγραμματισμένου αντιγράφου.', error);
-    }
+    });
   }, 6 * 60 * 60 * 1000);
   backupInterval.unref();
 

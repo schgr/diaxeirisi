@@ -41,9 +41,15 @@ contextBridge.exposeInMainWorld('appApi', {
   },
   backup: {
     list: () => invoke('backup:list'),
-    createAutomatic: () => invoke('backup:create-automatic'),
-    createManual: () => invoke('backup:create-manual'),
-    restore: () => invoke('backup:restore')
+      createAutomatic: (taskId) => invoke('backup:create-automatic', taskId),
+      createManual: (taskId) => invoke('backup:create-manual', taskId),
+      restore: (taskId) => invoke('backup:restore', taskId),
+      cancel: (taskId) => invoke('backup:cancel', taskId),
+      onProgress: (listener) => {
+        const handler = (_event, progress) => listener(progress);
+        ipcRenderer.on('backup:progress', handler);
+        return () => ipcRenderer.removeListener('backup:progress', handler);
+      }
   },
   windowControls: {
     setFullscreen: (value) => invoke('window:set-fullscreen', value),

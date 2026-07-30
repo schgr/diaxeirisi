@@ -146,7 +146,9 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <button class="primary-button" data-backup-now type="button">Αυτόματο αντίγραφο τώρα</button>
             <button class="secondary-button" data-backup-export type="button">Αποθήκευση σε φάκελο</button>
             <button class="danger-button" data-backup-restore type="button">Επαναφορά αντιγράφου</button>
+            <button class="secondary-button" data-backup-cancel type="button" hidden>Ακύρωση</button>
           </div>
+          <p class="muted" data-backup-status aria-live="polite"></p>
           <div class="backup-list">
             ${backups.length ? backups.map((backup) => `
               <article><strong>${escapeHtml(formatBackupDate(backup.createdAt))}</strong><span>${backup.kind === 'automatic' ? 'Αυτόματο' : 'Χειροκίνητο'} · ${backup.includesPhotos ? 'με φωτογραφίες' : 'χωρίς φωτογραφίες'}</span></article>
@@ -591,9 +593,35 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     showToast('Οι ερωτήσεις ασφαλείας ενημερώθηκαν.');
   });
 
+  const backupButtons = [...container.querySelectorAll('[data-backup-now], [data-backup-export], [data-backup-restore]')];
+  const cancelBackupButton = container.querySelector('[data-backup-cancel]');
+  const backupStatus = container.querySelector('[data-backup-status]');
+  let activeBackupTask = '';
+  const stopProgress = window.appApi.backup.onProgress((progress) => {
+    if (!activeBackupTask || progress.id !== activeBackupTask || !backupStatus) return;
+    const percentage = progress.total ? Math.round(progress.current * 100 / progress.total) : 0;
+    backupStatus.textContent = `${progress.message || 'Προετοιμασία…'} ${percentage}%`;
+  });
+  const runBackupAction = async (operation) => {
+    activeBackupTask = `backup-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    backupButtons.forEach((button) => { button.disabled = true; });
+    if (cancelBackupButton) cancelBackupButton.hidden = false;
+    if (backupStatus) backupStatus.textContent = 'Προετοιμασία…';
+    try {
+      return await operation(activeBackupTask);
+    } finally {
+      activeBackupTask = '';
+      backupButtons.forEach((button) => { button.disabled = false; });
+      if (cancelBackupButton) cancelBackupButton.hidden = true;
+    }
+  };
+  cancelBackupButton?.addEventListener('click', async () => {
+    if (activeBackupTask) await window.appApi.backup.cancel(activeBackupTask);
+  });
+
   container.querySelector('[data-backup-now]')?.addEventListener('click', async () => {
     try {
-      await window.appApi.backup.createAutomatic();
+      await runBackupAction((taskId) => window.appApi.backup.createAutomatic(taskId));
       showToast('Δημιουργήθηκε νέο αυτόματο αντίγραφο.');
       await renderSettingsPage(container, settingsApi, clothingApi, showToast, 'security', sharesApi);
     } catch (error) {
@@ -603,7 +631,7 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
 
   container.querySelector('[data-backup-export]')?.addEventListener('click', async () => {
     try {
-      const backup = await window.appApi.backup.createManual();
+      const backup = await runBackupAction((taskId) => window.appApi.backup.createManual(taskId));
       if (backup) showToast('Το αντίγραφο ασφαλείας αποθηκεύτηκε στον επιλεγμένο φάκελο.');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση του αντιγράφου.', 'error');
@@ -613,7 +641,7 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
   container.querySelector('[data-backup-restore]')?.addEventListener('click', async () => {
     if (!window.confirm('Η εφαρμογή θα επανεκκινηθεί και τα τρέχοντα δεδομένα θα αντικατασταθούν. Θα δημιουργηθεί πρώτα αντίγραφο ασφαλείας. Συνέχεια;')) return;
     try {
-      const result = await window.appApi.backup.restore();
+      const result = await runBackupAction((taskId) => window.appApi.backup.restore(taskId));
       if (result) showToast('Το αντίγραφο ετοιμάστηκε. Η εφαρμογή επανεκκινείται.');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η επαναφορά του αντιγράφου.', 'error');
