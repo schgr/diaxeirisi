@@ -26,6 +26,13 @@ const {
 const { createLogger } = require('./utils/logger');
 const { AppError, toAppError } = require('./core/errorHandler');
 const { createHeavyTaskRunner } = require('./workers/heavyTaskRunner');
+const {
+  applyOfflineSessionPolicy,
+  applyOfflineCommandLine,
+  isAllowedLocalResource
+} = require('./offlinePolicy');
+
+applyOfflineCommandLine(app.commandLine);
 
 const logger = createLogger('main');
 const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
@@ -65,38 +72,23 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      spellcheck: false
     }
   });
 
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, targetUrl) => {
-    if (!targetUrl.startsWith('file:')) {
+    if (!isAllowedLocalResource(targetUrl)) {
       event.preventDefault();
     }
   });
   window.loadFile(path.join(__dirname, 'ui', 'index.html'));
 }
 
-function configureLegacyOfflineMode() {
-  if (!isWindows7Legacy) return;
-
-  const legacySession = session.defaultSession;
-  legacySession.setPermissionRequestHandler((_webContents, _permission, callback) => {
-    callback(false);
-  });
-  legacySession.webRequest.onBeforeRequest(
-    {
-      urls: [
-        'http://*/*',
-        'https://*/*',
-        'ws://*/*',
-        'wss://*/*'
-      ]
-    },
-    (_details, callback) => callback({ cancel: true })
-  );
-  logger.info('Windows 7 Legacy offline mode is active; network requests are blocked.');
+function configureOfflineMode() {
+  applyOfflineSessionPolicy(session.defaultSession);
+  logger.info('Strict offline mode is active; HTTP(S), WebSocket and permissions are blocked.');
 }
 
 function registerIpcHandlers() {
@@ -104,7 +96,7 @@ function registerIpcHandlers() {
   ipcMain.handle('app:get-runtime-info', async () => safeInvoke(() => ({
     version: app.getVersion(),
     buildFlavor: isWindows7Legacy ? 'win7-legacy' : 'standard',
-    offlineOnly: isWindows7Legacy,
+    offlineOnly: true,
     electronVersion: process.versions.electron
   }), true));
   ipcMain.handle('auth:status', async () => safeInvoke(() => securityService.status(), true));
@@ -744,7 +736,7 @@ async function safeInvoke(operation, allowLocked = false) {
 }
 
 app.whenReady().then(async () => {
-  configureLegacyOfflineMode();
+  configureOfflineMode();
   if (!shouldShowApplicationMenu(app.getVersion())) {
     Menu.setApplicationMenu(null);
   }
