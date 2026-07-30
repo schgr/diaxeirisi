@@ -196,25 +196,12 @@ async function renderAppVersion() {
     targets.forEach((target) => {
       target.textContent = `v${runtimeInfo.version}`;
     });
-    renderLegacyOfflineBadge(runtimeInfo);
   } catch (_error) {
     const targets = document.querySelectorAll('#home-version-label');
     targets.forEach((target) => {
       target.textContent = '';
     });
   }
-}
-
-function renderLegacyOfflineBadge(runtimeInfo) {
-  document.querySelector('[data-legacy-offline-badge]')?.remove();
-  if (!runtimeInfo?.offlineOnly) return;
-
-  const badge = document.createElement('div');
-  badge.className = 'legacy-offline-badge';
-  badge.dataset.legacyOfflineBadge = 'true';
-  badge.setAttribute('role', 'status');
-  badge.textContent = `WINDOWS 7 LEGACY · OFFLINE · v${runtimeInfo.version}`;
-  document.body.appendChild(badge);
 }
 
 function showWindowOptions() {

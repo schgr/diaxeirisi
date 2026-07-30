@@ -188,8 +188,13 @@ function renderSharePreparationStatus(message, current = 0, total = 0) {
 }
 
 async function loadShareCardsWithProgress(sharesApi, payload, preview, state, token) {
+  let acceptingProgress = true;
   const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
-    if (progress.id !== payload.taskId || token !== state.shareRenderToken) return;
+    if (
+      !acceptingProgress
+      || progress.id !== payload.taskId
+      || token !== state.shareRenderToken
+    ) return;
     preview.innerHTML = renderSharePreparationStatus(
       progress.message || 'Προετοιμασία μερίδων…',
       progress.current,
@@ -197,8 +202,11 @@ async function loadShareCardsWithProgress(sharesApi, payload, preview, state, to
     );
   });
   try {
-    return await sharesApi.getCardsBatch(payload);
+    const cards = await sharesApi.getCardsBatch(payload);
+    acceptingProgress = false;
+    return cards;
   } finally {
+    acceptingProgress = false;
     stopProgress();
   }
 }

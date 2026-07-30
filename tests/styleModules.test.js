@@ -17,7 +17,8 @@ const expectedImports = [
   './styles/transaction-documents.css',
   './styles/modals-tables.css',
   './styles/official-prints.css',
-  './styles/registries-legacy.css'
+  './styles/registries-legacy.css',
+  './styles/share-print-ui.css'
 ];
 const actualImports = Array.from(
   entry.matchAll(/@import url\(['"](.+?)['"]\);/g),
@@ -39,7 +40,10 @@ const modules = actualImports.map((relativePath) => {
     contents: fs.readFileSync(absolutePath, 'utf8')
   };
 });
-const combined = modules.map(({ contents }) => contents).join('');
+const baselineModules = modules.filter(
+  ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
+);
+const combined = baselineModules.map(({ contents }) => contents).join('');
 const baseline = execFileSync(
   'git',
   ['show', '1617ca455cb78579bf4b544a9bc31f6a203bcbc1:src/ui/styles.css'],
@@ -50,6 +54,25 @@ assert.strictEqual(combined, baseline, 'Module concatenation differs from the pr
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
   'bc3be3b50355cef03e855adebb3d803131e2cbf98375e108d4d9c74bcdcaee11'
+);
+
+const sharePrintUi = modules.find(
+  ({ relativePath }) => relativePath === './styles/share-print-ui.css'
+).contents;
+assert.match(
+  sharePrintUi,
+  /\.legacy-offline-badge\s*\{[\s\S]*display:\s*none\s*!important/,
+  'The legacy/offline badge must remain hidden in every build.'
+);
+assert.match(
+  sharePrintUi,
+  /\.all-share-controls\s*\{[\s\S]*grid-template-columns:/,
+  'All-share controls must define their five-column row.'
+);
+assert.match(
+  sharePrintUi,
+  /#print-share-from,[\s\S]*#print-share-to\s*\{[\s\S]*width:\s*100%/,
+  'The from/to share fields must have equal sizing rules.'
 );
 
 for (const { absolutePath, contents } of modules) {

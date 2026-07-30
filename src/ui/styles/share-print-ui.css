@@ -1,0 +1,26 @@
+/* Targeted share-print screen adjustments. Loaded last by design. */
+.legacy-offline-badge {
+  display: none !important;
+}
+
+.all-share-controls {
+  grid-template-columns:
+    120px
+    minmax(150px, 1fr)
+    minmax(150px, 1fr)
+    minmax(150px, max-content)
+    minmax(190px, max-content);
+}
+
+.all-share-controls .field,
+.all-share-controls #print-share-from,
+.all-share-controls #print-share-to {
+  min-width: 0;
+  width: 100%;
+}
+
+.all-share-controls .compact-print-button {
+  min-width: 0;
+  width: 100%;
+  white-space: nowrap;
+}
