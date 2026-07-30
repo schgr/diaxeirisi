@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('appApi', {
     getShareByNumber: (shareNumber) => invoke('shares:get-by-number', shareNumber),
     add: (payload) => invoke('shares:add', payload),
     getCard: (id, year) => invoke('shares:get-card', id, year),
+    getCardsBatch: (payload) => invoke('shares:get-cards-batch', payload),
     listMovedCards: (year) => invoke('shares:list-moved-cards', year),
     updateDetails: (id, payload) => invoke('shares:update-details', id, payload),
     listSerialRegistry: () => invoke('shares:list-serial-registry'),

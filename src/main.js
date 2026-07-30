@@ -212,6 +212,9 @@ function registerIpcHandlers() {
   ipcMain.handle('shares:get-card', async (_event, id, year) =>
     safeInvoke(() => services.shares.getShareCard(id, year))
   );
+  ipcMain.handle('shares:get-cards-batch', async (_event, payload) =>
+    safeInvoke(() => services.shares.getShareCardsBatch(payload))
+  );
   ipcMain.handle('shares:list-moved-cards', async (_event, year) =>
     safeInvoke(() => services.shares.listMovedShareCards(year))
   );

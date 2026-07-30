@@ -207,6 +207,41 @@ function createSharesService(db) {
         .map((shareId) => this.getShareCard(shareId, fiscalYear));
     },
 
+    getShareCardsBatch(payload = {}) {
+      const fiscalYear = Number(payload.year || new Date().getFullYear());
+      if (!Number.isInteger(fiscalYear) || fiscalYear < 2000 || fiscalYear > 2100) {
+        throw new AppError('Το οικονομικό έτος δεν είναι έγκυρο.', 'VALIDATION_ERROR');
+      }
+      const mode = ['single', 'all', 'moved'].includes(payload.mode) ? payload.mode : 'single';
+      const options = {
+        mode,
+        shareId: mode === 'single' ? requirePositiveId(payload.shareId) : null,
+        fromShareNumber: normalizeOptionalShareBoundary(payload.fromShareNumber),
+        toShareNumber: normalizeOptionalShareBoundary(payload.toShareNumber)
+      };
+      const archivedYear = readFiscalYearArchive(repository, fiscalYear);
+      if (archivedYear) {
+        return filterArchivedPrintCards(archivedYear.cards || [], options);
+      }
+      const shares = repository.listSharePrintRows(fiscalYear, options);
+      const shareIds = shares.map((share) => Number(share.id));
+      const transactions = repository.listTransactionsForSharePrint(fiscalYear, shareIds);
+      const balances = new Map(
+        repository.listBalancesBeforeYearForSharePrint(fiscalYear, shareIds)
+          .map((row) => [Number(row.share_id), Number(row.movement || 0)])
+      );
+      const inventories = repository.listInventoriesForSharePrint(fiscalYear, shareIds);
+      const transactionsByShare = groupRowsByShare(transactions);
+      const inventoriesByShare = groupRowsByShare(inventories);
+      return shares.map((share) => buildPrintCard(
+        share,
+        fiscalYear,
+        transactionsByShare.get(Number(share.id)) || [],
+        balances.get(Number(share.id)) || 0,
+        inventoriesByShare.get(Number(share.id)) || []
+      ));
+    },
+
     saveComposition(id, items) {
       const shareId = requirePositiveId(id);
       if (!repository.getShare(shareId)) throw new AppError('Η μερίδα δεν βρέθηκε.', 'NOT_FOUND');
@@ -386,6 +421,74 @@ function createSharesService(db) {
       return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
     }
   };
+}
+
+function normalizeOptionalShareBoundary(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 0) {
+    throw new AppError('Το εύρος μερίδων δεν είναι έγκυρο.', 'VALIDATION_ERROR');
+  }
+  return number;
+}
+
+function groupRowsByShare(rows) {
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const id = Number(row.share_id);
+    if (!grouped.has(id)) grouped.set(id, []);
+    grouped.get(id).push(row);
+  });
+  return grouped;
+}
+
+function buildPrintCard(share, year, rows, beforeYearBalance, inventories) {
+  const transactions = rows.map((row, index) => {
+    const isCharge = row.transaction_type === 'Χρέωση';
+    return {
+      serialNumber: index + 1,
+      id: row.id,
+      date: row.transaction_date,
+      transactionUnit: row.transaction_unit,
+      registryNumber: formatCardRegistryNumber(row.document_reference, row.transaction_type),
+      imports: isCharge ? row.quantity : 0,
+      exports: isCharge ? 0 : row.quantity,
+      notes: ''
+    };
+  });
+  const cardYearInventory = inventories.find((row) =>
+    String(row.transaction_date).startsWith(`${year}-`)
+  );
+  const openingInventory = inventories.find((row) => row.transaction_date < `${year}-01-01`);
+  let runningBalance = cardYearInventory ? Number(cardYearInventory.quantity || 0) : beforeYearBalance;
+  const transactionsWithBalance = transactions.map((transaction) => {
+    runningBalance += transaction.imports - transaction.exports;
+    return { ...transaction, balance: runningBalance };
+  });
+  const cardBaseBalance = cardYearInventory
+    ? Number(cardYearInventory.quantity || 0)
+    : beforeYearBalance;
+  return {
+    share: createCardShare(share, transactionsWithBalance, cardBaseBalance),
+    year,
+    openingTransfer: {
+      balance: Number(beforeYearBalance || 0),
+      inventoryDate: openingInventory ? openingInventory.transaction_date : '',
+      reference: openingInventory ? openingInventory.document_reference : ''
+    },
+    transactions: transactionsWithBalance
+  };
+}
+
+function filterArchivedPrintCards(cards, options) {
+  return cards.filter((card) => {
+    const number = Number(card.share.shareNumber);
+    if (options.mode === 'single' && Number(card.share.id) !== Number(options.shareId)) return false;
+    if (options.mode === 'moved' && !(card.transactions || []).length) return false;
+    if (options.fromShareNumber !== null && number < options.fromShareNumber) return false;
+    if (options.toShareNumber !== null && number > options.toShareNumber) return false;
+    return true;
+  });
 }
 
 function aggregateAssignmentQuantities(assignments) {

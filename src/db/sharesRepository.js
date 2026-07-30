@@ -54,6 +54,81 @@ function createSharesRepository(db) {
       `).all(`${year}-01-01`, `${year}-12-31`).map((row) => Number(row.share_id));
     },
 
+    listSharePrintRows(year, options = {}) {
+      const filters = ["shares.archive_status = 'Ενεργή'"];
+      const params = [];
+      if (options.mode === 'single') {
+        filters.push('shares.id = ?');
+        params.push(Number(options.shareId));
+      }
+      if (options.mode === 'moved') {
+        filters.push(`EXISTS (
+          SELECT 1 FROM share_transactions moved
+          WHERE moved.share_id = shares.id
+            AND moved.transaction_date >= ?
+            AND moved.transaction_date <= ?
+            AND moved.notes <> 'INITIAL_ANNUAL_INVENTORY'
+        )`);
+        params.push(`${year}-01-01`, `${year}-12-31`);
+      }
+      if (options.fromShareNumber) {
+        filters.push('CAST(shares.share_number AS INTEGER) >= ?');
+        params.push(Number(options.fromShareNumber));
+      }
+      if (options.toShareNumber) {
+        filters.push('CAST(shares.share_number AS INTEGER) <= ?');
+        params.push(Number(options.toShareNumber));
+      }
+      return db.prepare(`
+        SELECT shares.*
+        FROM shares
+        WHERE ${filters.join(' AND ')}
+        ORDER BY CASE WHEN shares.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+                 CAST(shares.share_number AS INTEGER), shares.share_number COLLATE NOCASE, shares.id
+      `).all(...params);
+    },
+
+    listTransactionsForSharePrint(year, shareIds) {
+      if (!shareIds.length) return [];
+      const placeholders = shareIds.map(() => '?').join(',');
+      return db.prepare(`
+        SELECT id, share_id, transaction_date, transaction_unit, transaction_type,
+               document_reference, quantity, notes
+        FROM share_transactions
+        WHERE share_id IN (${placeholders})
+          AND transaction_date >= ?
+          AND transaction_date <= ?
+          AND notes <> 'INITIAL_ANNUAL_INVENTORY'
+        ORDER BY share_id, transaction_date, id
+      `).all(...shareIds, `${year}-01-01`, `${year}-12-31`);
+    },
+
+    listBalancesBeforeYearForSharePrint(year, shareIds) {
+      if (!shareIds.length) return [];
+      const placeholders = shareIds.map(() => '?').join(',');
+      return db.prepare(`
+        SELECT share_id, COALESCE(SUM(
+          CASE WHEN transaction_type = 'Χρέωση' THEN quantity ELSE -quantity END
+        ), 0) AS movement
+        FROM share_transactions
+        WHERE share_id IN (${placeholders}) AND transaction_date < ?
+        GROUP BY share_id
+      `).all(...shareIds, `${year}-01-01`);
+    },
+
+    listInventoriesForSharePrint(year, shareIds) {
+      if (!shareIds.length) return [];
+      const placeholders = shareIds.map(() => '?').join(',');
+      return db.prepare(`
+        SELECT id, share_id, transaction_date, quantity, document_reference
+        FROM share_transactions
+        WHERE share_id IN (${placeholders})
+          AND transaction_date <= ?
+          AND notes = 'INITIAL_ANNUAL_INVENTORY'
+        ORDER BY share_id, transaction_date DESC, id DESC
+      `).all(...shareIds, `${year}-12-31`);
+    },
+
     listDocumentCompositionMovements(shareId, year) {
       return db.prepare(`
         SELECT movement.id AS transaction_id,
