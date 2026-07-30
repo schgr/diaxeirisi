@@ -1,0 +1,986 @@
+
+
+.exhp-reason-setting header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.exhp-reason-setting textarea {
+  min-height: 48px;
+  resize: vertical;
+}
+
+.exhp-support-checklist {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+
+#exhp-documents-editor:empty {
+  display: none;
+}
+
+.exhp-support-checklist.manual-only {
+  margin: 8px 0 12px;
+  padding: 10px 14px 12px;
+}
+
+.exhp-support-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.exhp-support-row {
+  display: grid;
+  grid-template-columns: 22px minmax(260px, 1.5fr) minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.official-exhp-support-grid {
+  margin-bottom: 18px;
+}
+
+.official-exhp-support-row {
+  grid-template-columns: minmax(220px, 1040px);
+  padding: 0 10px 14px;
+  border-bottom: 0;
+}
+
+.manual-exhp-support-row {
+  grid-template-columns: minmax(360px, 1fr) minmax(88px, 116px);
+  padding: 8px 10px;
+}
+
+.exhp-support-row > span {
+  display: grid;
+  gap: 3px;
+}
+
+.exhp-support-row input:not([type='checkbox']),
+.exhp-support-row button {
+  width: 100%;
+}
+
+.manual-exhp-support-row .secondary-button {
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.exhp-other-support-row {
+  grid-template-columns: minmax(260px, 1.5fr) minmax(320px, 1fr) auto;
+}
+
+.exhp-support-modal {
+  width: min(1100px, calc(100vw - 32px));
+}
+
+.support-form-modal {
+  width: min(1480px, calc(100vw - 32px));
+}
+
+.support-form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.support-form-fields textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.support-application-fields {
+  margin: 0 18px 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.support-application-fields h3 {
+  margin: 0 0 12px;
+}
+
+.official-document-form-state,
+.support-template-form-state {
+  padding: 0 18px 20px;
+  overflow: auto;
+}
+
+.official-document-data-form,
+.support-template-form-state {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.official-editable-materials {
+  margin: 18px 0;
+}
+
+.official-editable-materials h3 {
+  margin: 0 0 10px;
+}
+
+.official-editable-materials table {
+  min-width: 920px;
+}
+
+.official-editable-materials input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 80px;
+}
+
+.doc-z-analosimo-editor {
+  display: grid;
+  gap: 24px;
+}
+
+.doc-z-analosimo-editor .doc-z-edit-grid {
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 18px 22px;
+  max-width: 1180px;
+}
+
+.doc-z-analosimo-editor .field {
+  min-width: 0;
+}
+
+.doc-z-analosimo-editor .exhp-materials-editor {
+  display: grid;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.doc-z-analosimo-editor .exhp-materials-table-input {
+  min-width: 1320px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.doc-z-analosimo-editor .exhp-materials-table-input th,
+.doc-z-analosimo-editor .exhp-materials-table-input td {
+  padding: 6px 7px;
+  vertical-align: middle;
+}
+
+.doc-z-analosimo-editor .exhp-materials-table-input input {
+  min-height: 34px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-seq {
+  width: 76px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-picker {
+  width: 170px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-nomenclature {
+  width: 190px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-description {
+  width: 260px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-unit {
+  width: 150px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-quantity {
+  width: 130px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-notes {
+  width: 210px;
+}
+
+.doc-z-analosimo-editor .exhp-materials-col-actions {
+  width: 130px;
+}
+
+.doc-ia-pyromaxika-editor {
+  display: grid;
+  gap: 22px;
+}
+
+.doc-ia-pyromaxika-editor .doc-ia-edit-grid {
+  grid-template-columns: repeat(7, minmax(150px, max-content));
+  gap: 16px 18px;
+  max-width: 1320px;
+}
+
+.doc-ia-materials-section {
+  display: grid;
+  gap: 10px;
+}
+
+.doc-ia-materials-section h3 {
+  margin: 0;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-editor {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-table-input {
+  min-width: 1040px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-table-input th,
+.doc-ia-pyromaxika-editor .exhp-materials-table-input td {
+  padding: 6px 7px;
+  vertical-align: middle;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-table-input input {
+  min-height: 34px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-seq {
+  width: 78px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-picker {
+  width: 210px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-description {
+  width: 370px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-unit {
+  width: 170px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-quantity {
+  width: 140px;
+}
+
+.doc-ia-pyromaxika-editor .exhp-materials-col-actions {
+  width: 120px;
+}
+
+.support-template-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.exhp-form-edit-fields,
+.doc-z-edit-grid,
+.doc-ia-edit-grid,
+.doc-d-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.exhp-form-field-narrow input,
+.exhp-form-field-narrow select,
+.exhp-form-field-narrow textarea,
+.doc-z-edit-grid .field input,
+.doc-z-edit-grid .field select,
+.doc-z-edit-grid .field textarea,
+.doc-ia-edit-grid .field input,
+.doc-ia-edit-grid .field select,
+.doc-ia-edit-grid .field textarea,
+.doc-d-edit-grid .field input,
+.doc-d-edit-grid .field select,
+.doc-d-edit-grid .field textarea {
+  width: min(100%, 520px);
+  max-width: 520px;
+}
+
+.exhp-form-field-person input,
+.exhp-form-field-person select,
+.exhp-form-field-person textarea,
+.doc-z-edit-grid .field input[data-doc-z-field*='proedros'],
+.doc-z-edit-grid .field input[data-doc-z-field*='melos'],
+.doc-d-edit-grid .field input[data-doc-d-field*='proedros'],
+.doc-d-edit-grid .field input[data-doc-d-field*='melos'],
+.doc-ia-edit-grid .field input[data-doc-ia-field*='vathmosOnomatepwnymo'] {
+  width: min(100%, 360px);
+  max-width: 360px;
+}
+
+.exhp-form-field-date input,
+.doc-z-edit-grid .field input[type='date'],
+.doc-ia-edit-grid .field input[type='date'],
+.doc-d-edit-grid .field input[type='date'] {
+  width: min(100%, 180px);
+  max-width: 180px;
+}
+
+.exhp-committee-suggestion {
+  display: flex;
+  justify-content: flex-start;
+  margin: 8px 0 12px;
+}
+
+.exhp-document-tab-group {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.exhp-document-tab-group h4 {
+  margin: 0 0 10px;
+}
+
+.exhp-document-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.support-template-preview-state {
+  max-height: calc(100vh - 170px);
+  padding: 18px;
+  overflow: auto;
+  background: #30343b;
+}
+
+.support-attachment-section {
+  margin: 18px 0;
+}
+
+.support-attachment-section h2 {
+  font-size: 15px;
+  text-align: left;
+}
+
+.annual-account-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.annual-account-summary > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.annual-account-summary span,
+.annual-account-checklist small {
+  color: var(--muted);
+}
+
+.administration-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.administration-form-grid.handover-create-grid {
+  grid-template-columns:
+    minmax(145px, 0.8fr)
+    minmax(145px, 0.8fr)
+    minmax(240px, 1.6fr)
+    minmax(240px, 1.6fr)
+    minmax(190px, 1fr)
+    minmax(145px, 0.8fr);
+}
+
+.handover-create-grid .administration-wide-field {
+  grid-column: auto;
+}
+
+.administration-wide-field {
+  grid-column: span 2;
+}
+
+.administration-table {
+  min-width: 900px;
+}
+
+.archive-options-grid {
+  margin-bottom: 14px;
+}
+
+.archive-selection-table {
+  min-width: 760px;
+}
+
+.archive-submit-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.archived-shares-heading,
+.annual-prints-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.archived-shares-heading .compact-print-button {
+  margin-top: -4px;
+}
+
+.annual-prints-heading .compact-field {
+  width: 180px;
+  flex: 0 0 180px;
+}
+
+.annual-prints-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.annual-share-prints-table input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.annual-share-print-modal {
+  width: min(1500px, calc(100vw - 32px));
+}
+
+.annual-share-print-preview {
+  display: grid;
+  justify-content: center;
+  gap: 18px;
+}
+
+.annual-share-print-preview [data-annual-card-pages],
+.annual-share-print-preview [data-annual-change-sheet-pages] {
+  display: grid;
+  gap: 18px;
+}
+
+table.administration-table th,
+table.administration-table td {
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.handover-workspace {
+  margin-top: 16px;
+}
+
+.handover-protocol-form {
+  margin-top: 18px;
+}
+
+.handover-document-backdrop {
+  align-items: start;
+  overflow: auto;
+}
+
+.handover-document-modal {
+  width: min(1120px, calc(100vw - 32px));
+}
+
+.handover-document-preview {
+  max-height: calc(100vh - 150px);
+  padding: 18px;
+  overflow: auto;
+  background: #30343b;
+}
+
+@media screen {
+  .new-exhp-support-preview-modal {
+    width: min(860px, calc(100vw - 32px));
+  }
+
+  .new-exhp-support-preview-modal .handover-document-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+    padding: 12px 16px;
+  }
+
+  .new-exhp-support-preview-modal .exhp-print-page {
+    flex: 0 0 auto;
+    padding: 8mm 10mm;
+  }
+
+  .new-exhp-support-preview-modal .efed505-page {
+    aspect-ratio: 2481 / 3040;
+  }
+}
+
+.exhp-materials-table-input th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+@media (max-width: 1100px) {
+  .doc-z-analosimo-editor .doc-z-edit-grid {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .doc-z-analosimo-editor .doc-z-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.handover-protocol-form h4 {
+  margin: 20px 0 10px;
+}
+
+.handover-assistants-table {
+  min-width: 960px;
+}
+
+.handover-assistants-table input {
+  width: 100%;
+  min-width: 110px;
+}
+
+.handover-protocol-fields {
+  margin-top: 18px;
+}
+
+.handover-checkbox-field input {
+  width: auto;
+  justify-self: start;
+}
+
+.handover-checklist {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.handover-check {
+  display: grid;
+  grid-template-columns: 24px minmax(280px, 1.5fr) minmax(180px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.handover-check input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+}
+
+.handover-check input[type='text'],
+.handover-check input:not([type]) {
+  width: 100%;
+}
+
+.handover-completion {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.handover-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 28px;
+  text-align: center;
+}
+
+.handover-signatures > div {
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding: 14px;
+}
+
+.handover-signatures em {
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+}
+
+.official-handover-page {
+  box-sizing: border-box;
+  width: 210mm;
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 18px;
+  padding: 16mm 18mm 14mm;
+  background: #fff;
+  color: #000;
+  font-family: Arial, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.official-handover-page h1 {
+  margin: 10mm 0 8mm;
+  text-align: center;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+.official-handover-page h1 span {
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.official-handover-page h2 {
+  margin: 5mm 0 2mm;
+  text-align: center;
+  font-size: 13px;
+}
+
+.official-handover-page p {
+  margin: 2mm 0;
+  text-align: justify;
+}
+
+.official-handover-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.official-fill {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 38mm;
+  min-height: 5mm;
+  margin-inline: 1mm;
+  padding: 0 2mm;
+  border-bottom: 1px dotted #000;
+  line-height: 1.25;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.official-fill.long {
+  min-width: 100mm;
+}
+
+.official-fill.compact {
+  min-width: 16mm;
+  padding-inline: 1.5mm;
+  text-align: center;
+}
+
+.official-fill.compact.year {
+  min-width: 20mm;
+}
+
+.official-handover-table {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 4mm;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10px;
+}
+
+.official-handover-table th,
+.official-handover-table td {
+  box-sizing: border-box;
+  height: 13mm;
+  padding: 2mm;
+  border: 1px solid #000;
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.official-handover-table .official-fill {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: 0;
+  padding-inline: 0.5mm;
+  white-space: normal;
+}
+
+.exhp-modal-metadata {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 16px 12px;
+  padding: 8px 12px;
+  border: 1px solid #c7d2df;
+  border-radius: 7px;
+  background: #eef4fa;
+  color: #263746;
+  font-size: 12px;
+}
+
+.exhp-modal-metadata span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.exhp-modal-metadata strong {
+  color: #607080;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.official-exhp-material-table .official-exhp-col-serial {
+  width: 5%;
+}
+
+.official-exhp-material-table .official-exhp-col-nomenclature {
+  width: 16%;
+}
+
+.official-exhp-material-table .official-exhp-col-description {
+  width: 22%;
+}
+
+.official-exhp-material-table .official-exhp-col-unit {
+  width: 10%;
+}
+
+.official-exhp-material-table .official-exhp-col-quantity {
+  width: 8%;
+}
+
+.official-exhp-material-table .official-exhp-col-price {
+  width: 10%;
+}
+
+.official-exhp-material-table .official-exhp-col-date {
+  width: 12%;
+}
+
+.official-exhp-material-table .official-exhp-col-remarks {
+  width: 17%;
+}
+
+.official-handover-writing span {
+  display: block;
+  min-height: 7mm;
+  border-bottom: 1px dotted #000;
+}
+
+.official-choice {
+  font-family: "Segoe UI Symbol", Arial, sans-serif;
+}
+
+.official-box {
+  position: relative;
+  display: inline-block;
+  width: 4mm;
+  height: 4mm;
+  margin: 0 1mm;
+  border: 1px solid #000;
+  vertical-align: -0.7mm;
+}
+
+.official-box.checked::after {
+  position: absolute;
+  inset: -1.5mm 0 0 0.4mm;
+  content: "X";
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.official-handover-approval,
+.official-handover-signatures {
+  display: grid;
+  gap: 8mm;
+  margin-top: 45mm;
+  text-align: center;
+}
+
+.official-handover-approval {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.official-handover-signatures {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 55mm;
+}
+
+.official-handover-approval div,
+.official-handover-signatures div {
+  display: flex;
+  min-height: 28mm;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.official-handover-approval em,
+.official-handover-signatures em {
+  font-style: normal;
+}
+
+.addy-composition-modal {
+  max-width: 1050px;
+}
+
+.addy-composition-document {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 18mm 15mm 12mm;
+}
+
+.selected-row {
+  background: var(--panel-strong);
+}
+
+.addy-list-panel {
+  margin-top: 14px;
+}
+
+.addy-table {
+  min-width: 1480px;
+}
+
+.addy-table-wrap {
+  max-height: 340px;
+  min-height: 180px;
+}
+
+.addy-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.addy-secondary-grid {
+  margin-top: 16px;
+}
+
+.print-preview-shell {
+  display: grid;
+  justify-content: center;
+  gap: 18px;
+  height: auto;
+  max-height: calc(100vh - 320px);
+  min-height: 0;
+  margin-top: 18px;
+  padding: 22px;
+  background: #050a14;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+@media screen {
+  #inventory-statement-preview.print-preview-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+
+  #inventory-statement-preview .official-inventory-page {
+    position: relative;
+    flex: 0 0 auto;
+    width: 210mm;
+    min-width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0 auto;
+  }
+
+  .print-preview-shell.share-card-preview {
+    grid-auto-flow: row;
+    grid-auto-rows: max-content;
+    align-content: start;
+  }
+
+  .print-preview-shell.share-card-preview .official-share-page {
+    position: relative;
+    display: block;
+    grid-column: 1;
+    width: 210mm;
+    min-width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0 auto 18px;
+    clear: both;
+    float: none;
+  }
+}
+
+.latest-inventory-share-controls {
+  width: fit-content;
+  grid-template-columns: minmax(260px, 1fr) auto;
+}
+
+.latest-inventory-share-summary {
+  display: grid;
+  gap: 5px;
+}
+
+.latest-inventory-share-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.share-exact-copy-overlay,
+.share-issuer-name-overlay,
+.share-issuer-rank-overlay {
+  align-items: center;
+  justify-content: center;
+  padding: 0 1mm;
+  line-height: 1;
+  text-align: center;
+}
+
+.share-exact-copy-overlay {
+  font-weight: 700;
+}
+
+.material-registry-page {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 16mm 14mm 12mm;
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, "Segoe UI", sans-serif;
+  font-size: 10px;
+  box-shadow: 0 12px 35px rgba(16, 24, 40, 0.18);
+}
+
+.registry-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0 12px 12px;
+  font-size: 12px;
+}
+
+.registry-topline span:last-child {
+  font-weight: 700;
+  text-decoration: underline;
+}

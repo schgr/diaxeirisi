@@ -1,0 +1,423 @@
+
+
+.serial-number-registry-table {
+  min-width: 1180px;
+}
+
+.serial-number-registry-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.serial-number-registry-table td[rowspan] {
+  vertical-align: top;
+}
+
+.serial-number-registry-table input {
+  width: 100%;
+  min-width: 145px;
+}
+
+.serial-department-cell {
+  min-width: 180px;
+  white-space: normal;
+}
+
+.auth-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background-color: var(--hs-bg, var(--bg));
+  background-image:
+    repeating-linear-gradient(0deg, rgba(133, 199, 224, 0.08) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(133, 199, 224, 0.08) 0 1px, transparent 1px 28px);
+}
+
+.auth-card {
+  width: min(460px, calc(100vw - 48px));
+  padding: 30px;
+  border: 1px solid var(--hs-line, var(--line));
+  background: rgba(13, 33, 56, 0.96);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+}
+
+.auth-card h1 {
+  margin: 0 0 10px;
+  color: var(--hs-ink, var(--text));
+  font-size: 28px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.auth-form[hidden],
+[data-show-auth-recovery][hidden] {
+  display: none !important;
+}
+
+@media screen {
+  .addy-document-backdrop {
+    align-items: center;
+    padding: 16px;
+  }
+
+  .addy-document-backdrop .request-document-modal {
+    width: min(1500px, calc(100vw - 32px));
+    min-height: 0;
+    max-height: calc(100vh - 32px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .addy-document-backdrop .request-document-preview {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .addy-document-backdrop .addy-document-page {
+    position: relative;
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+    width: min(100%, calc((100vh - 130px) * 1.4142857));
+  }
+
+  .addy-document-backdrop .addy-composition-document {
+    position: relative;
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+    width: min(210mm, 100%);
+    height: auto;
+    min-height: min(297mm, calc(100vh - 130px));
+    margin: 0;
+  }
+
+  .addy-document-backdrop .addy-document-table {
+    height: calc(100% - 42px);
+  }
+}
+
+.auth-message {
+  min-height: 20px;
+  margin: 0;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.security-settings-layout {
+  align-items: start;
+}
+
+.credential-recovery-settings {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.credential-recovery-settings h4,
+.credential-recovery-settings p {
+  margin: 0;
+}
+
+.recovery-code-result {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--primary);
+  background: var(--panel-strong);
+}
+
+.recovery-code-result[hidden] {
+  display: none;
+}
+
+.recovery-code-result strong {
+  color: var(--primary);
+  font-family: Consolas, monospace;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.auth-recovery-form h2 {
+  margin: 0;
+}
+
+.information-settings-layout {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
+}
+
+.app-information-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 22px;
+  padding: 26px;
+}
+
+.app-information-mark {
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 16px;
+  object-fit: contain;
+}
+
+.app-information-content > h3 {
+  margin-top: 4px;
+}
+
+.app-information-list {
+  display: grid;
+  gap: 1px;
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.app-information-list > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--panel-strong);
+}
+
+.app-information-list dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.app-information-list dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.copyright-notice {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.copyright-notice p {
+  margin: 6px 0 0;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.backup-list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.backup-list article {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+}
+
+.backup-list span {
+  color: var(--muted);
+}
+
+.serial-registry-actions {
+  flex-wrap: nowrap;
+}
+
+.serial-registry-preview-modal {
+  width: min(1400px, calc(100vw - 32px));
+}
+
+.serial-registry-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.serial-registry-print-page {
+  box-sizing: border-box;
+  position: relative;
+  width: 297mm;
+  min-height: 210mm;
+  padding: 12mm 10mm 16mm;
+  color: #111;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.serial-registry-print-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.serial-registry-print-page h2 {
+  margin: 0 0 8mm;
+  text-align: center;
+  color: #111;
+}
+
+.serial-number-registry-print-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+
+.serial-number-registry-print-table th,
+.serial-number-registry-print-table td {
+  padding: 5px;
+  border: 1px solid #222;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+
+.serial-number-registry-print-table th:nth-child(1) { width: 4%; }
+.serial-number-registry-print-table th:nth-child(2) { width: 9%; }
+.serial-number-registry-print-table th:nth-child(3) { width: 11%; }
+.serial-number-registry-print-table th:nth-child(4) { width: 23%; }
+.serial-number-registry-print-table th:nth-child(5) { width: 7%; }
+.serial-number-registry-print-table th:nth-child(6) { width: 15%; }
+.serial-number-registry-print-table th:nth-child(7) { width: 15%; }
+.serial-number-registry-print-table th:nth-child(8) { width: 16%; }
+
+.serial-registry-print-page footer {
+  position: absolute;
+  right: 10mm;
+  bottom: 7mm;
+  color: #111;
+  font-size: 9pt;
+}
+
+.management-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.management-report-card {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  background: rgba(18, 53, 80, 0.72);
+}
+
+.management-report-card strong {
+  color: var(--accent);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.management-report-card span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.management-report-details {
+  margin-top: 24px;
+}
+
+.management-report-details .index-table th,
+.management-report-details .index-table td {
+  color: var(--text);
+}
+
+.balance-difference-controls {
+  align-items: end;
+  justify-content: space-between;
+}
+
+.balance-differences-page {
+  background: #fff;
+  color: #000;
+  padding: 12mm;
+}
+
+.balance-differences-page h1 {
+  margin: 0 0 7mm;
+  text-align: center;
+  font-size: 18pt;
+}
+
+.balance-differences-table {
+  color: #000;
+  font-size: 9pt;
+}
+
+.balance-differences-table th,
+.balance-differences-table td {
+  border: 1px solid #555;
+  color: #000;
+}
+
+.balance-differences-table .material-description-cell small {
+  display: block;
+  margin-top: 2px;
+  color: #444;
+  font-size: 0.82em;
+}
+
+.document-export-button {
+  min-width: 64px;
+  padding-inline: 12px;
+}
+
+.fiscal-year-close-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.fiscal-year-close-warning {
+  padding: 18px;
+  border: 1px solid #e06a54;
+  background: rgba(142, 48, 33, 0.28);
+  color: #ffd8d0;
+  font-weight: 800;
+}
+
+.fiscal-year-closures-table {
+  margin-top: 8px;
+}
+
+@media (max-width: 1050px) {
+  .management-report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  .serial-registry-print-root .serial-registry-print-page {
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    overflow: hidden;
+  }
+}

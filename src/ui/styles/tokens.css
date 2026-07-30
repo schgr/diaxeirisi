@@ -1,0 +1,258 @@
+:root {
+  color-scheme: dark;
+  --bg: #080e1b;
+  --panel: #101929;
+  --panel-strong: #172239;
+  --text: #e8f0ff;
+  --muted: #7892bc;
+  --line: #2b3d5f;
+  --primary: #e1b500;
+  --primary-strong: #ffd323;
+  --danger: #ff4d55;
+  --danger-soft: #35151d;
+  --nav: #d8e5fb;
+  --nav-active: #18243b;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.legacy-offline-badge {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  z-index: 10000;
+  padding: 6px 10px;
+  border: 1px solid #f2c94c;
+  border-radius: 4px;
+  background: #3a2d08;
+  color: #ffe69a;
+  font: 700 11px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+@media print {
+  .legacy-offline-badge {
+    display: none !important;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --panel-strong: #f1f5f9;
+  --text: #18202a;
+  --muted: #657181;
+  --line: #d4dce6;
+  --primary: #146c63;
+  --primary-strong: #0f554e;
+  --danger: #b42318;
+  --danger-soft: #fff1f0;
+  --nav: #1d2939;
+  --nav-active: #edf5f4;
+}
+
+:root[data-theme="light"] .app-header {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.06);
+}
+
+:root[data-theme="light"] .brand-mark {
+  border-color: #146c63;
+  background: #146c63;
+  color: #ffffff;
+}
+
+:root[data-theme="light"] .transaction-tabs {
+  background: #ffffff;
+}
+
+:root[data-theme="light"] input[readonly],
+:root[data-theme="light"] input:disabled,
+:root[data-theme="light"] select:disabled {
+  background: #f8fafc;
+  color: #657181;
+}
+
+:root[data-theme="light"] .material-card-modal {
+  background: #f4f6f8;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="blueprint"] {
+  color-scheme: dark;
+  --bg: #0A1A2E;
+  --panel: #0D2138;
+  --panel-strong: #123049;
+  --text: #D9EEF5;
+  --muted: #7FA3B8;
+  --line: #2A4A63;
+  --primary: #4FD1E8;
+  --primary-strong: #6FE0F2;
+  --danger: #E86B5C;
+  --danger-soft: #3A1F1B;
+  --nav: #D9EEF5;
+  --nav-active: #123049;
+}
+
+:root[data-theme="blueprint"] body {
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(133, 199, 224, 0.08) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(133, 199, 224, 0.08) 0 1px, transparent 1px 28px);
+}
+
+:root[data-theme="blueprint"] * {
+  scrollbar-color: var(--primary) #061525;
+}
+
+:root[data-theme="blueprint"] .app-shell {
+  background: transparent;
+}
+
+:root[data-theme="blueprint"] .app-header {
+  background: rgba(10, 26, 46, 0.96);
+  box-shadow: 0 1px 0 rgba(79, 209, 232, 0.35);
+}
+
+:root[data-theme="blueprint"] .brand-mark {
+  border-color: var(--primary);
+  background: var(--panel-strong);
+  color: var(--primary-strong);
+}
+
+:root[data-theme="blueprint"] .content {
+  background: transparent;
+}
+
+:root[data-theme="blueprint"] .page-panel,
+:root[data-theme="blueprint"] .settings-request-grid > article,
+:root[data-theme="blueprint"] .exhp-entry-section,
+:root[data-theme="blueprint"] .renewal-modal,
+:root[data-theme="blueprint"] .material-card-modal,
+:root[data-theme="blueprint"] .request-document-modal {
+  background: rgba(13, 33, 56, 0.92);
+  border-color: var(--line);
+  box-shadow: inset 0 0 0 1px rgba(79, 209, 232, 0.05);
+}
+
+:root[data-theme="blueprint"] .home-screen {
+  --hs-bg: transparent;
+  --hs-grid-line: rgba(133, 199, 224, 0);
+  --hs-grid-line-strong: rgba(133, 199, 224, 0);
+}
+
+:root[data-theme="blueprint"] .transaction-tabs {
+  background: rgba(13, 33, 56, 0.92);
+}
+
+:root[data-theme="blueprint"] input,
+:root[data-theme="blueprint"] select,
+:root[data-theme="blueprint"] textarea {
+  background: var(--panel-strong);
+  color: var(--text);
+}
+
+:root[data-theme="blueprint"] input:focus,
+:root[data-theme="blueprint"] select:focus,
+:root[data-theme="blueprint"] textarea:focus {
+  outline: 2px solid rgba(79, 209, 232, 0.18);
+}
+
+:root[data-theme="blueprint"] .locked-input,
+:root[data-theme="blueprint"] input[readonly],
+:root[data-theme="blueprint"] .locked-input:focus,
+:root[data-theme="blueprint"] input[readonly]:focus,
+:root[data-theme="blueprint"] input:disabled,
+:root[data-theme="blueprint"] select:disabled,
+:root[data-theme="blueprint"] textarea:disabled {
+  border-color: #203A52;
+  background: #081726;
+  color: var(--muted);
+}
+
+:root[data-theme="blueprint"] .primary-button {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #061525;
+}
+
+:root[data-theme="blueprint"] .primary-button:hover {
+  background: var(--primary-strong);
+}
+
+:root[data-theme="blueprint"] .secondary-button:hover {
+  border-color: var(--primary);
+  background: var(--panel-strong);
+  color: var(--primary-strong);
+}
+
+:root[data-theme="blueprint"] .danger-button {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+:root[data-theme="blueprint"] .exhp-step-indicator span.active {
+  color: #061525;
+}
+
+:root[data-theme="blueprint"] .shares-table th {
+  border-bottom-color: var(--line);
+}
+
+:root[data-theme="blueprint"] .page-panel tbody tr:hover,
+:root[data-theme="blueprint"] .shares-table tbody tr:hover,
+:root[data-theme="blueprint"] .material-card-modal tbody tr:hover {
+  background: rgba(79, 209, 232, 0.08);
+}
+
+:root[data-theme="blueprint"] .status-pill {
+  background: #16314A;
+}
+
+:root[data-theme="blueprint"] .status-pill.deficit {
+  background: var(--danger-soft);
+}
+
+:root[data-theme="blueprint"] .status-pill.surplus {
+  background: #0B2D4A;
+}
+
+:root[data-theme="blueprint"] .status-pill.balanced {
+  background: #0D332F;
+}
+
+:root[data-theme="blueprint"] .deficit {
+  color: var(--danger);
+}
+
+:root[data-theme="blueprint"] .surplus {
+  color: #7CCBFF;
+}
+
+:root[data-theme="blueprint"] .balanced {
+  color: #62DCA6;
+}
+
+:root[data-theme="blueprint"] .toast {
+  background: var(--panel-strong);
+  color: var(--text);
+  box-shadow: 0 10px 28px rgba(3, 14, 26, 0.32);
+}
+
+:root[data-theme="blueprint"] .toast.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+:root[data-theme="blueprint"] .modal-backdrop {
+  background: rgba(3, 12, 24, 0.82);
+}
+
+:root[data-theme="blueprint"] .request-document-preview {
+  background: #061525;
+}

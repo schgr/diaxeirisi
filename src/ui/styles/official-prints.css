@@ -1,0 +1,2524 @@
+
+
+.official-form-table-wrap {
+  margin: 8mm 0 12mm;
+  overflow: visible;
+}
+
+.official-form-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: #000;
+  font-size: 11px;
+}
+
+.official-form-table th,
+.official-form-table td {
+  height: 10mm;
+  padding: 2px 3px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.official-form-table input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 2px;
+  border: 0;
+  border-bottom: 1px dotted #555;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+}
+
+.official-form-table th:nth-child(4),
+.official-form-table td:nth-child(4) {
+  width: 30%;
+}
+
+.official-form-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10mm;
+  margin-top: 17mm;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.dyp192-editor p {
+  margin: 6mm 0;
+}
+
+.official-ammo-lines {
+  width: calc(100% - 11mm);
+  margin: 4mm 0 8mm 11mm;
+  border-collapse: collapse;
+  color: #000;
+}
+
+.official-ammo-lines td {
+  height: 8mm;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: #000;
+}
+
+.official-ammo-lines input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1px 3px;
+  border: 0;
+  border-bottom: 1px dotted #333;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+}
+
+.official-ammo-lines input[type="number"] {
+  width: 22mm;
+  text-align: center;
+}
+
+.official-dot-leader {
+  width: 10mm;
+  border-bottom: 1px dotted #333;
+}
+
+.faithful-form-editor {
+  display: grid;
+  gap: 18px;
+}
+
+.faithful-form-page {
+  position: relative;
+  width: min(100%, 210mm);
+  margin: 0 auto;
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0 0 1px #c8ced8;
+  break-after: page;
+  page-break-after: always;
+}
+
+.faithful-form-page-landscape {
+  width: min(100%, 297mm);
+  aspect-ratio: 297 / 210;
+}
+
+.faithful-form-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.faithful-form-page > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.support-clean-mask {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background: #fff;
+}
+
+.support-page-number-mask {
+  top: 0.4%;
+  left: 39%;
+  width: 22%;
+  height: 4.8%;
+}
+
+.support-sample-mask {
+  top: 13.6%;
+  left: 39%;
+  width: 22%;
+  height: 2.8%;
+}
+
+.support-footer-mask {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5.4%;
+}
+
+.faithful-overlay-field {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 1px 3px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(7px, 0.8vw, 12px);
+  line-height: 1.1;
+  text-align: center;
+  box-sizing: border-box;
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+.faithful-table-field {
+  font-size: clamp(6px, 0.65vw, 9px);
+}
+
+.exhp-faithful-page {
+  position: relative;
+  width: min(100%, 297mm);
+  margin: 0 auto 16px;
+  aspect-ratio: 297 / 210;
+  overflow: hidden;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.exhp-document-backdrop {
+  align-items: start;
+  overflow: auto;
+}
+
+.exhp-document-backdrop .request-document-preview {
+  display: block;
+  overflow: auto;
+}
+
+.exhp-document-backdrop .exhp-faithful-page {
+  width: 297mm;
+  min-width: 297mm;
+  height: 210mm;
+  min-height: 210mm;
+}
+
+@media screen {
+  .exhp-document-backdrop .exhp-unit-overlay {
+    width: 18% !important;
+    overflow: visible;
+    white-space: nowrap;
+    transform: translateX(-12px);
+  }
+
+  .exhp-document-backdrop .exhp-date-overlay {
+    transform: translateY(-4px);
+  }
+
+  .exhp-document-backdrop .exhp-field-15-signature {
+    height: 4.3% !important;
+    overflow: visible;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature {
+    transform: translateX(-8px);
+    width: 9.2% !important;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature .exhp-officer-signature strong {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .exhp-document-backdrop .exhp-credit-field-15-signature .exhp-officer-signature em {
+    font-size: 7px;
+  }
+}
+
+.exhp-document-backdrop[data-exhp-preview-side='front'] .exhp-faithful-back-side,
+.exhp-document-backdrop[data-exhp-preview-side='back'] .exhp-faithful-front-side {
+  display: none;
+}
+
+.exhp-faithful-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.exhp-page-content {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform: scaleY(1.1);
+  transform-origin: center;
+}
+
+.exhp-page-content > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.exhp-static-overlay {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(10px, 1vw, 15px);
+  line-height: 1.12;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+
+.exhp-row-overlay {
+  display: grid;
+  place-items: center;
+  padding: 1px 2px;
+  font-size: clamp(7px, 0.72vw, 11px);
+  line-height: 1;
+}
+
+.material-description-cell,
+.material-description-overlay {
+  text-align: left !important;
+}
+
+.material-description-cell {
+  padding-left: 4px !important;
+}
+
+.official-overlay-page {
+  position: relative;
+  width: min(100%, 210mm);
+  margin: 0 auto 16px;
+  overflow: hidden;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.official-overlay-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.official-overlay-page > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.official-overlay-field {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(10px, 1vw, 14px);
+  line-height: 1.1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+
+.dyp192-page {
+  aspect-ratio: 2481 / 2912;
+}
+
+.dyp192-overlay {
+  display: grid;
+  place-items: center start;
+  padding: 1px 3px;
+}
+
+.dyp192-list-overlay {
+  align-items: center;
+}
+
+.dyp192-list-description {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dyp192-list-quantity {
+  justify-items: end;
+  padding-right: 2px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dyp192-officer-overlay {
+  display: block;
+  padding: 1px 3px;
+  text-indent: 0;
+}
+
+.dyp192-signature-overlay {
+  display: grid;
+  place-items: center;
+  padding: 1px 2px;
+  font-weight: 700;
+  text-align: center;
+  font-size: clamp(5px, 0.52vw, 7.4px);
+  line-height: 1.05;
+}
+
+.dyp192-signature-overlay span {
+  display: block;
+  width: 100%;
+  min-height: 1em;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.efed506-page {
+  aspect-ratio: 2480 / 3042;
+}
+
+.efed506-row-overlay {
+  display: grid;
+  place-items: center;
+  padding: 1px 2px;
+  text-align: center;
+  font-size: clamp(7px, 0.72vw, 10px);
+  line-height: 1;
+}
+
+.efed506-item-description {
+  place-items: center start;
+  padding-left: 4px;
+  text-align: left;
+}
+
+.efed506-signature-name {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  line-height: 1.05;
+}
+
+.efed505-page {
+  position: relative;
+  width: min(100%, 210mm);
+  margin: 0 auto 16px;
+  aspect-ratio: 2481 / 2912;
+  overflow: hidden;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.efed505-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.efed505-page > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.efed505-static-overlay {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(9px, 0.9vw, 13px);
+  line-height: 1.1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+}
+
+.efed505-header-monada {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  text-align: left;
+}
+
+.efed505-row-overlay {
+  display: grid;
+  place-items: center;
+  padding: 1px 2px;
+  text-align: center;
+  font-size: clamp(5.6px, 0.56vw, 7.8px);
+  line-height: 0.95;
+}
+
+.efed505-item-description {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 0;
+  text-align: left !important;
+}
+
+.efed505-item-nomenclature,
+.efed505-item-unit,
+.efed505-item-quantity,
+.efed505-row-overlay.material-description-overlay {
+  place-items: center;
+  text-align: center !important;
+}
+
+.efed505-signature-name {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: clamp(6px, 0.6vw, 8px);
+  line-height: 1.02;
+}
+
+.efed505-signature-committee-member {
+  line-height: 1.08;
+}
+
+.material-description-overlay.exhp-row-overlay {
+  place-items: center start;
+  padding-left: 2px;
+}
+
+.exhp-back-copy {
+  padding: 2px 6px;
+  font-size: clamp(10px, 0.92vw, 14px);
+  line-height: 1.25;
+  white-space: pre-wrap;
+}
+
+.exhp-back-value {
+  display: grid;
+  place-items: center start;
+  font-size: clamp(10px, 0.92vw, 14px);
+  font-weight: 700;
+}
+
+.exhp-back-signature {
+  display: grid;
+  place-items: center;
+}
+
+.exhp-back-signature .exhp-officer-signature {
+  min-height: 0;
+  width: 100%;
+}
+
+.exhp-back-signature .exhp-officer-signature strong {
+  font-size: clamp(10px, 0.92vw, 14px);
+}
+
+.exhp-back-signature .exhp-officer-signature em {
+  font-size: clamp(9px, 0.8vw, 12px);
+}
+
+.exhp-front-signature {
+  display: grid;
+  place-items: center;
+}
+
+.exhp-front-signature .exhp-officer-signature {
+  min-height: 0;
+  width: 100%;
+}
+
+.exhp-front-signature .exhp-officer-signature strong {
+  font-size: clamp(8px, 0.72vw, 11px);
+}
+
+.exhp-front-signature .exhp-officer-signature em {
+  font-size: clamp(7px, 0.64vw, 10px);
+}
+
+.official-inline-input {
+  min-width: 110px;
+  border: 0;
+  border-bottom: 1px dotted #000;
+  border-radius: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: #000;
+}
+
+.official-inline-input.wide {
+  width: min(520px, 70%);
+}
+
+.official-textarea {
+  width: 100%;
+  border: 1px solid #777;
+  background: #fff;
+  color: #000;
+}
+
+.official-inline-value {
+  display: inline-block;
+  min-width: 28mm;
+  min-height: 1.2em;
+  padding: 0 1mm;
+  border-bottom: 1px dotted #000;
+  color: #000;
+  vertical-align: baseline;
+  white-space: pre-wrap;
+}
+
+.official-inline-value.wide {
+  min-width: 90mm;
+}
+
+.official-text-value {
+  width: 100%;
+  border-bottom: 1px dotted #000;
+  color: #000;
+  white-space: pre-wrap;
+}
+
+.official-centered {
+  text-align: center;
+  letter-spacing: 8px;
+}
+
+.official-items-table {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  color: #000;
+}
+
+.official-items-table th,
+.official-items-table td {
+  height: 24px;
+  border: 1px solid #555;
+  padding: 3px;
+  text-align: center;
+}
+
+.official-signatures {
+  align-items: end;
+  min-height: 82px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.k2310-page {
+  position: relative;
+  min-height: 190mm;
+  padding-top: 8mm;
+  break-after: page;
+  page-break-after: always;
+}
+
+.k2310-document-modal [data-k2310-pages] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.k2310-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.k2310-heading {
+  position: relative;
+  width: 100%;
+  min-height: 12mm;
+  margin-bottom: 0;
+  padding-top: 5mm;
+}
+
+.k2310-heading h1 {
+  margin: 0 0 1mm;
+  text-align: center;
+  line-height: 1;
+}
+
+.k2310-heading .print-document-code {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+}
+
+.k2310-table {
+  width: 100%;
+  table-layout: fixed;
+  font-size: 8px;
+}
+
+.k2310-col-serial { width: 3.5%; }
+.k2310-col-share { width: 7%; }
+.k2310-col-nominal { width: 12%; }
+.k2310-col-description { width: 22%; }
+.k2310-col-unit { width: 7%; }
+.k2310-col-projected { width: 7.5%; }
+.k2310-col-movement { width: 3.3%; }
+.k2310-col-balance { width: 8%; }
+
+.k2310-table th,
+.k2310-table td {
+  height: 24px;
+  padding: 2px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.k2310-table th {
+  overflow-wrap: anywhere;
+}
+
+.k2310-description-cell {
+  padding-left: 4px !important;
+  text-align: left !important;
+}
+
+.k2310-date-row td {
+  height: 20px;
+  padding: 1px;
+  font-size: 7px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.k2310-number-row td {
+  height: 18px;
+  font-weight: 700;
+}
+
+.k2310-letter-cell {
+  height: 38px !important;
+  padding: 2px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.k2310-table .k2310-integrated-meta {
+  height: 38px;
+  padding: 5px 7px;
+  text-align: left;
+  font-weight: 400;
+}
+
+.k2310-meta-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 0.75fr;
+  align-items: end;
+  gap: 12px;
+}
+
+.k2310-meta-grid span:last-child {
+  text-align: right;
+}
+
+.k2310-dark-cell {
+  background: #555 !important;
+  color: #fff !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.k2310-table .k2310-signatures {
+  position: relative;
+  height: 72px;
+  padding: 5px;
+  overflow: visible;
+  text-align: center;
+  vertical-align: top;
+}
+
+.k2310-signature-label {
+  display: block;
+  margin-bottom: 3px;
+  text-align: left;
+}
+
+.k2310-horizontal-signatures {
+  position: relative;
+  min-height: 50px;
+  margin-top: -8px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.k2310-horizontal-signatures > div {
+  position: absolute;
+  top: 0;
+  width: 190px;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.k2310-signature-mode-manager .k2310-signature-manager,
+.k2310-signature-mode-department .k2310-signature-department {
+  left: 60.5%;
+}
+
+.k2310-signature-mode-all .k2310-signature-manager {
+  left: 16.5%;
+}
+
+.k2310-signature-mode-all .k2310-signature-department {
+  left: 60.5%;
+}
+
+/* In every document-preview toolbar, closing is always the final action. */
+.row-actions > [data-close-k2310],
+.row-actions > [data-close-addy-document],
+.row-actions > [data-close-exhp-doc-preview],
+.row-actions > [data-close-exhp-document],
+.row-actions > [data-close-exhp-official-document],
+.row-actions > [data-close-new-support-preview],
+.row-actions > [data-close-useless-form],
+.row-actions > [data-close-card],
+.row-actions > [data-close-material-form],
+.row-actions > [data-close-share-print],
+.row-actions > [data-close-index-preview],
+.row-actions > [data-close-serial-preview],
+.row-actions > [data-close-handover-document],
+.row-actions > [data-close-annual-share-print],
+.row-actions > [data-close-md-document],
+.row-actions > [data-close-template],
+.row-actions > [data-close-support-folder] {
+  order: 999;
+}
+
+.inventory-statement-modal {
+  width: min(1120px, 94vw);
+  max-height: 92vh;
+}
+
+.inventory-modal-preview {
+  overflow: auto;
+  padding: 18px;
+  background: #050b14;
+}
+
+.inventory-modal-preview .official-inventory-page {
+  margin-inline: auto;
+}
+
+.collection-credit-modal {
+  width: min(1050px, 94vw);
+}
+
+.k2310-horizontal-signatures strong,
+.k2310-horizontal-signatures span {
+  display: block;
+}
+
+.k2310-horizontal-signatures strong {
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+.k2310-preview-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.material-card-section {
+  padding: 18px;
+}
+
+.material-card-section-title {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.material-card-section-title h3 {
+  margin-bottom: 0;
+}
+
+.material-photo-box {
+  display: grid;
+  place-items: center;
+  min-height: 210px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0d1626;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.material-photo-box img {
+  width: 100%;
+  height: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.material-details-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.card-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.page-panel table thead,
+.material-card-modal table thead,
+.renewal-modal table thead {
+  background: var(--panel-strong);
+}
+
+.page-panel tbody tr:hover,
+.material-card-modal tbody tr:hover {
+  background: #15233a;
+}
+
+.page-panel td,
+.page-panel th,
+.material-card-modal td,
+.material-card-modal th {
+  border-bottom-color: var(--line);
+}
+
+.share-document-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 17mm 12mm;
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, "Segoe UI", sans-serif;
+  font-size: 9px;
+  box-shadow: 0 12px 35px rgba(16, 24, 40, 0.18);
+}
+
+.share-document-side {
+  float: left;
+  font-size: 11px;
+}
+
+.share-document-code {
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.share-document-page h1 {
+  margin: 12px 0 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.share-document-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 2px solid #000000;
+}
+
+.share-document-table td {
+  border: 1px solid #000000;
+  height: 20px;
+  padding: 2px 4px;
+  color: #000000;
+  vertical-align: top;
+}
+
+.share-document-ledger-header td {
+  height: 44px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.share-document-ledger-numbers td {
+  height: 18px;
+  padding: 1px 2px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+}
+
+.share-document-transfer-row td {
+  vertical-align: middle;
+}
+
+.share-document-transfer {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.share-document-footer {
+  margin-top: 14px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.official-share-page,
+.official-inventory-page {
+  position: relative;
+  width: min(100%, 210mm);
+  margin: 0 auto 16px;
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  background: #ffffff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.official-share-page:last-child,
+.official-inventory-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.official-share-page > img,
+.official-inventory-page > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.official-share-back-sheet {
+  position: absolute;
+  inset: 0;
+  padding: 8.5% 6.5% 5%;
+  color: #000;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.official-share-back-code {
+  position: absolute;
+  top: 5.8%;
+  right: 7%;
+  font-size: clamp(9px, 0.86vw, 12px);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.official-share-back-sheet h2 {
+  margin: 0 0 1.1%;
+  font-size: clamp(12px, 1.25vw, 18px);
+  text-align: center;
+}
+
+.official-share-back-table,
+.official-share-back-summary {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: clamp(8px, 0.72vw, 10px);
+}
+
+.official-share-back-table th,
+.official-share-back-table td,
+.official-share-back-summary th,
+.official-share-back-summary td {
+  border: 1px solid #222;
+  padding: 0 2px;
+  text-align: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.official-share-back-table th:nth-child(1) { width: 7%; }
+.official-share-back-table th:nth-child(2) { width: 9%; }
+.official-share-back-table th:nth-child(3) { width: 13%; }
+.official-share-back-table th:nth-child(4) { width: 21%; }
+.official-share-back-table th:nth-child(5) { width: 15%; }
+.official-share-back-table th:nth-child(6) { width: 13%; }
+.official-share-back-table th:nth-child(7) { width: 13%; }
+.official-share-back-table th:nth-child(8) { width: 9%; }
+
+.official-share-back-table thead tr:first-child {
+  height: 5.2%;
+}
+
+.official-share-back-table tr {
+  height: 21px;
+}
+
+.official-share-back-column-numbers {
+  height: 14px !important;
+}
+
+.official-share-back-transfer-row {
+  height: 21px !important;
+  font-weight: 700;
+}
+
+.official-share-back-transfer-row td:first-child {
+  padding-left: 5px;
+  text-align: left;
+}
+
+.official-share-back-summary th {
+  width: 28%;
+  padding-left: 5px;
+  text-align: left;
+}
+
+.official-share-back-summary tr {
+  height: 24px;
+}
+
+.official-share-back-footer {
+  margin-top: 2.2%;
+  font-size: clamp(9px, 0.8vw, 11px);
+  font-weight: 700;
+}
+
+.official-share-overlay,
+.official-inventory-overlay {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 1px 2px;
+  color: #000000;
+  font-family: Arial, sans-serif;
+  font-size: clamp(9px, 0.82vw, 12px);
+  line-height: 1.05;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.official-share-overlay.material-description-overlay,
+.official-inventory-overlay.material-description-overlay {
+  place-items: center start;
+}
+
+.official-share-overlay.share-opening-inventory-overlay {
+  place-items: center start;
+  padding-left: 7px;
+  font-weight: 700;
+}
+
+.official-share-overlay.share-opening-balance-overlay {
+  font-weight: 700;
+}
+
+.inventory-signature-overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: clamp(12px, 1.15vw, 16px);
+  line-height: 1.15;
+}
+
+.inventory-signature-overlay strong,
+.inventory-signature-overlay em {
+  display: block;
+  font-style: normal;
+}
+
+.inventory-signature-overlay strong {
+  font-weight: 700;
+}
+
+.inventory-meta-overlay,
+.inventory-date-overlay {
+  font-size: clamp(12px, 1.2vw, 17px);
+  font-weight: 700;
+}
+
+.inventory-committee-overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  font-size: clamp(9px, 0.88vw, 12px);
+  line-height: 1.05;
+}
+
+.inventory-committee-overlay span,
+.inventory-committee-overlay b,
+.inventory-committee-overlay i {
+  display: block;
+  font-style: normal;
+}
+
+.official-inventory-overlay.inventory-row-overlay {
+  font-size: clamp(7px, 0.72vw, 10px);
+  font-weight: 600;
+  line-height: 0.95;
+}
+
+@media screen {
+  .official-inventory-overlay.inventory-row-overlay {
+    font-size: clamp(7px, 0.7vw, 9px);
+  }
+
+  .official-inventory-overlay.inventory-meta-overlay,
+  .official-inventory-overlay.inventory-date-overlay {
+    font-size: clamp(8px, 0.8vw, 11px);
+  }
+
+  .official-inventory-overlay.inventory-signature-overlay {
+    font-size: clamp(8px, 0.78vw, 11px);
+  }
+
+  .official-inventory-overlay.inventory-committee-overlay {
+    gap: 1px;
+    font-size: clamp(7px, 0.68vw, 9px);
+  }
+}
+
+.exhp-management-type {
+  place-items: center start;
+  font-size: clamp(10px, 0.95vw, 14px);
+  font-weight: 700;
+}
+
+.inventory-committee-fields {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.inventory-committee-fields legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.inventory-committee-member {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.6fr) repeat(2, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-top: 8px;
+}
+
+.card-table-wrap table th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-strong);
+}
+
+.material-form-preview-backdrop {
+  z-index: 40;
+}
+
+.composition-document-page,
+.change-sheet-document-page {
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, "Segoe UI", sans-serif;
+  box-shadow: 0 12px 35px rgba(16, 24, 40, 0.18);
+}
+
+.composition-document-page {
+  width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  padding: 18mm 15mm 12mm;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.composition-document-page + .composition-document-page {
+  margin-top: 18px;
+}
+
+.change-sheet-document-page {
+  width: 297mm;
+  height: 210mm;
+  min-height: 210mm;
+  padding: 12mm 18mm 10mm;
+  font-size: 9px;
+  overflow: hidden;
+}
+
+.change-sheet-document-page + .change-sheet-document-page {
+  margin-top: 18px;
+}
+
+.material-form-code {
+  margin-bottom: 5mm;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.composition-document-page h1,
+.change-sheet-document-page h1 {
+  margin: 0 0 5mm;
+  text-align: center;
+  font-size: 15px;
+  text-decoration: underline;
+}
+
+.change-sheet-document-page h1 {
+  line-height: 1.4;
+}
+
+.composition-document-details {
+  display: grid;
+  gap: 1mm;
+  margin-bottom: 3mm;
+}
+
+.composition-document-details p,
+.change-sheet-details p {
+  margin: 0;
+  min-height: 6mm;
+}
+
+.composition-details-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 8mm;
+}
+
+.composition-document-details .composition-title {
+  padding-top: 1mm;
+  border-top: 1px dotted #000000;
+}
+
+.composition-document-table,
+.change-sheet-document-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 1.5px solid #000000;
+}
+
+.composition-document-table th,
+.composition-document-table td,
+.change-sheet-document-table th,
+.change-sheet-document-table td {
+  border: 1px solid #000000;
+  padding: 2px 3px;
+  color: #000000;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.composition-document-table th {
+  height: 8mm;
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.composition-document-table .composition-column-numbers th {
+  height: 5mm;
+  font-size: 8px;
+}
+
+.composition-document-table td {
+  height: 10mm;
+}
+
+.composition-document-table th:nth-child(1),
+.composition-document-table td:nth-child(1) {
+  width: 6%;
+}
+
+.composition-document-table th:nth-child(2),
+.composition-document-table td:nth-child(2) {
+  width: 18%;
+}
+
+.composition-document-table th:nth-child(3),
+.composition-document-table td:nth-child(3) {
+  width: 25%;
+}
+
+.composition-document-table th:nth-child(4),
+.composition-document-table td:nth-child(4) {
+  width: 14%;
+}
+
+.composition-document-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12mm;
+  margin-top: 4mm;
+  font-size: 10px;
+}
+
+.composition-footer-field > span {
+  display: block;
+  text-decoration: underline;
+}
+
+.composition-footer-field-14 {
+  text-align: right;
+}
+
+.composition-footer-field small {
+  display: block;
+  margin-top: 4mm;
+  text-decoration: none;
+}
+
+.composition-footer-field .composition-footer-reference {
+  margin-top: 3mm;
+}
+
+.material-form-page-number {
+  margin-top: 3mm;
+  text-align: center;
+  font-size: 9px;
+}
+
+.change-sheet-details {
+  display: grid;
+  gap: 1mm;
+  margin: 0 0 3mm;
+  font-size: 10px;
+}
+
+.change-sheet-registration {
+  display: grid;
+  gap: 1mm;
+  width: 45%;
+}
+
+.change-sheet-main-description {
+  text-align: center;
+}
+
+.change-sheet-main-quantity {
+  text-align: right;
+}
+
+.change-sheet-document-table th {
+  height: 18mm;
+  font-size: 6px;
+  font-weight: 400;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.change-sheet-document-table td {
+  height: 5.5mm;
+  font-size: 6px;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.change-sheet-document-table th:nth-child(1),
+.change-sheet-document-table td:nth-child(1) {
+  width: 15%;
+}
+
+.change-sheet-document-table th:nth-child(2),
+.change-sheet-document-table td:nth-child(2) {
+  width: 23%;
+}
+
+.change-sheet-document-table .vertical-table-heading {
+  position: relative;
+  height: 32mm;
+  padding: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.change-sheet-document-table .vertical-table-heading > span {
+  display: block;
+  height: 100%;
+  margin: 0 auto;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: 6px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.change-sheet-document-table .change-sheet-movement-heading > span {
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.change-sheet-document-table .change-sheet-movement-value {
+  font-size: 8px;
+  font-weight: 700;
+}
+
+@media (max-width: 1280px) {
+  .content {
+    padding: 20px;
+  }
+
+  .transaction-flow-home.financial-year-menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .settings-layout,
+  .split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .addy-line-grid,
+  .addy-entry-grid,
+  .request-line-row,
+  .exhp-entry-grid,
+  .exhp-line-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
+
+  .exhp-reason-tile-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .internal-movement-context,
+  .internal-material-line,
+  .internal-movement-entry-row {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+
+  .inventory-session-grid,
+  .inventory-count-grid {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+
+  .movement-difference-grid {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+
+  .addy-line-grid .primary-button {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content {
+    padding: clamp(24px, 2.4vw, 48px);
+  }
+
+  .official-document-data-form,
+  .doc-z-analosimo-editor .doc-z-edit-grid,
+  .doc-ia-pyromaxika-editor .doc-ia-edit-grid {
+    max-width: min(1480px, calc(100vw - 96px));
+  }
+}
+
+@media (max-width: 920px) {
+  .initial-inventory-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .main-navigation {
+    padding: 0 12px;
+  }
+
+  .brand {
+    padding-inline: 16px;
+  }
+
+  .settings-layout,
+  .split-grid,
+  .inline-form,
+  .compact-form,
+  .shares-filter-grid,
+  .addy-header-grid,
+  .addy-line-grid,
+  .addy-entry-grid,
+  .registry-controls,
+  .request-header-grid,
+  .request-line-row,
+  .exhp-controls,
+  .exhp-entry-grid,
+  .exhp-line-grid,
+  .exhp-entry-split,
+  .settings-request-grid,
+  .support-form-fields,
+  .doc-ia-pyromaxika-editor .doc-ia-edit-grid,
+  .doc-z-analosimo-editor .doc-z-edit-grid,
+  .material-card-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .request-line-actions .primary-button {
+    width: 100%;
+  }
+
+  .internal-movement-context,
+  .internal-material-line,
+  .internal-movement-entry-row,
+  .internal-movement-line {
+    grid-template-columns: 1fr;
+  }
+
+  .internal-print-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .internal-print-controls .field {
+    min-width: 0;
+  }
+
+  .inventory-session-grid,
+  .inventory-count-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-count-notes {
+    grid-column: auto;
+  }
+
+  .movement-difference-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .movement-difference-notes {
+    grid-column: auto;
+  }
+
+  .material-card-top,
+  .material-card-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .requests-status-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .compact-year-field {
+    width: 100%;
+  }
+
+  .row-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 10px;
+  }
+
+  .page-panel {
+    padding: 12px;
+  }
+
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .main-navigation {
+    padding: 0 8px;
+  }
+
+  .nav-item {
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .transaction-tabs {
+    overflow-x: auto;
+  }
+
+  .transaction-tab {
+    min-width: 100px;
+  }
+
+  .addy-save-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .danger-button {
+    width: 100%;
+  }
+
+  .request-document-modal,
+  .material-card-modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .brand {
+    gap: 8px;
+    min-height: 50px;
+    padding-inline: 10px;
+  }
+
+  .brand h1 {
+    font-size: 15px;
+  }
+
+  .brand p {
+    display: none;
+  }
+
+  .home-tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transaction-flow-home,
+  .exhp-reason-tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .official-document-editor,
+  .support-application-fields,
+  .material-card-section,
+  .material-card-top {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 920px) {
+  .transaction-flow-home.financial-year-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .administration-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .administration-form-grid.handover-create-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .administration-wide-field {
+    grid-column: span 2;
+  }
+
+  .handover-check {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .handover-check input:not([type='checkbox']) {
+    grid-column: 2;
+  }
+
+  .settings-audit-grid,
+  .annual-account-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .exhp-support-row {
+    grid-template-columns: 22px 1fr;
+  }
+
+  .official-exhp-support-row {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-exhp-support-row {
+    grid-template-columns: 1fr minmax(82px, 112px);
+  }
+
+  .exhp-support-row > input:not([type='checkbox']),
+  .exhp-support-row > .row-actions,
+  .exhp-support-row > .status-pill {
+    grid-column: 2;
+  }
+
+  .manual-exhp-support-row > input:not([type='checkbox']) {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .administration-form-grid,
+  .handover-signatures {
+    grid-template-columns: 1fr;
+  }
+
+  .administration-wide-field {
+    grid-column: auto;
+  }
+
+  .settings-audit-grid,
+  .annual-account-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 921px) {
+  .content {
+    padding: 18px;
+  }
+
+  .brand {
+    min-height: 48px;
+    padding-block: 5px;
+  }
+
+  .nav-item {
+    padding: 8px 10px;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@page landscape {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@page portrait {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body[data-isolated-document-print='true'] > *:not(.isolated-print-root) {
+    display: none !important;
+  }
+
+  body[data-isolated-document-print='true'] .isolated-print-root {
+    display: block !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  body[data-isolated-document-print='true'] .isolated-print-root > .print-document-area:not(:last-child) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  body[data-isolated-document-print='true'] .isolated-print-root > .print-document-area:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  body[data-addy-print-target='addy'] .addy-composition-document,
+  body[data-addy-print-target='composition'] .addy-document-page {
+    display: none;
+  }
+
+  body[data-addy-print-target='composition'] .addy-document-backdrop,
+  body[data-addy-print-target='composition'] .addy-document-backdrop .request-document-modal,
+  body[data-addy-print-target='composition'] .addy-document-backdrop .request-document-preview {
+    width: 210mm;
+  }
+
+  body[data-addy-print-target='composition'] .addy-composition-document.print-document-area {
+    margin: 9mm;
+  }
+
+  body:has(.addy-document-backdrop) > #app {
+    display: none;
+  }
+
+  body:has(.exhp-document-backdrop) > #app {
+    display: none;
+  }
+
+  body:has(.new-exhp-support-preview-backdrop) > #app {
+    display: none;
+  }
+
+  .new-exhp-support-preview-backdrop,
+  .new-exhp-support-preview-modal,
+  .new-exhp-support-preview-modal .handover-document-preview {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  .new-exhp-support-preview-modal .exhp-axristo-page.print-document-area {
+    page: portrait;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    display: flex !important;
+    box-sizing: border-box;
+    width: 210mm !important;
+    height: 277mm !important;
+    min-height: 277mm !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    overflow: hidden !important;
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .new-exhp-support-preview-modal .exhp-axristo-page.print-document-area:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  html,
+  body,
+  .app-shell,
+  .content {
+    width: auto;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .addy-document-backdrop {
+    position: static;
+    display: block;
+    width: 297mm;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .addy-document-backdrop .request-document-modal {
+    position: static;
+    width: 297mm;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .addy-document-backdrop .request-document-preview {
+    display: block;
+    width: 297mm;
+    height: auto;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .material-form-preview-backdrop {
+    position: static;
+    display: block;
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .material-form-preview-backdrop .request-document-modal {
+    position: static;
+    display: block;
+    width: 210mm;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .material-form-preview-backdrop .request-document-preview {
+    display: block;
+    width: 210mm;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .exhp-document-backdrop {
+    position: static;
+    display: block;
+    width: 297mm;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .exhp-document-backdrop .request-document-modal {
+    position: static;
+    display: block;
+    width: 297mm;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .exhp-document-backdrop .request-document-preview {
+    display: block;
+    width: 297mm;
+    height: auto;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .faithful-form-page {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .faithful-form-page-landscape {
+    page: landscape;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+  }
+
+  .exhp-faithful-page {
+    page: landscape;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .exhp-faithful-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .exhp-clean-page {
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .faithful-overlay-field {
+    border: 0;
+    background: transparent;
+  }
+
+  .support-form-fields input,
+  .support-form-fields textarea {
+    border: 0;
+    padding: 2px 0;
+    background: transparent;
+    color: #000;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-document-area,
+  .print-document-area * {
+    visibility: visible;
+  }
+
+  .print-preview-shell {
+    display: block;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #ffffff;
+    overflow: visible;
+  }
+
+  .print-document-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .official-a4-form.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 16mm 15mm 14mm;
+    overflow: hidden;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .official-a4-form .official-inline-input,
+  .official-a4-form .official-form-table input,
+  .official-a4-form .official-ammo-lines input {
+    outline: 0;
+    border-bottom-color: #000;
+    background: transparent;
+    color: #000;
+  }
+
+  .official-a4-form .official-admin-column {
+    display: none;
+  }
+
+  .request-document-page.print-document-area {
+    page: landscape;
+    width: 297mm;
+    min-height: 210mm;
+  }
+
+  .share-document-page.print-document-area {
+    page: portrait;
+    width: 210mm;
+    min-height: 297mm;
+  }
+
+  .official-share-page.print-document-area,
+  .official-inventory-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .official-movement-protocol-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .official-movement-protocol-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .official-handover-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 210mm;
+    max-width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .official-handover-page.print-document-area .official-handover-table {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+
+  .official-handover-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .official-share-overlay {
+    font-size: 12px;
+  }
+
+  .official-share-overlay.material-description-overlay {
+    font-size: 11px;
+  }
+
+  .official-inventory-overlay.inventory-row-overlay {
+    font-size: 8px;
+    line-height: 0.95;
+  }
+
+  .official-index-overlay {
+    font-size: 7px;
+  }
+
+  .official-index-unit {
+    font-size: 9px;
+  }
+
+  .official-share-page.print-document-area:last-child,
+  .official-inventory-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .addy-document-page.print-document-area {
+    page: landscape;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 289mm;
+    height: 202mm;
+    min-height: 202mm;
+    margin: 4mm;
+    padding: 0;
+    font-size: 12px;
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .addy-document-page .addy-document-code {
+    font-size: 14px;
+  }
+
+  .addy-document-page h1 {
+    font-size: 19px;
+  }
+
+  .addy-document-page .addy-document-table td {
+    font-size: 11.5px;
+  }
+
+  .addy-document-page .addy-document-table {
+    height: 184mm;
+  }
+
+  .addy-document-page .addy-document-table span:not(.addy-doc-number) {
+    font-size: 10.5px;
+  }
+
+  .addy-document-page .addy-doc-field-3 .addy-doc-cell-content > div:first-child,
+  .addy-document-page .addy-doc-field-4 .addy-doc-cell-content > div:first-child {
+    font-size: 8px;
+  }
+
+  .addy-document-page .addy-doc-number {
+    font-size: 10px;
+  }
+
+  .addy-document-page .addy-document-footer {
+    font-size: 17px;
+  }
+
+  .exhp-document-page.print-document-area {
+    page: landscape;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    padding: 4mm 6mm 3mm;
+  }
+
+  .exhp-faithful-page.print-document-area {
+    page: landscape;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .exhp-document-backdrop .exhp-faithful-front-side.print-document-area,
+  .exhp-document-backdrop .exhp-faithful-back-side.print-document-area {
+    display: block;
+  }
+
+  .exhp-faithful-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .efed505-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 210mm;
+    height: calc(210mm * 2912 / 2481);
+    min-height: calc(210mm * 2912 / 2481);
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .efed505-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .efed505-static-overlay {
+    font-size: 10pt;
+  }
+
+  .efed505-row-overlay {
+    font-size: 5.9pt;
+    line-height: 0.95;
+  }
+
+  .efed505-signature-name {
+    font-size: 6.3pt;
+    line-height: 1.02;
+  }
+
+  .official-overlay-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 210mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .official-overlay-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .dyp192-page.print-document-area {
+    height: calc(210mm * 2912 / 2481);
+    min-height: calc(210mm * 2912 / 2481);
+  }
+
+  .efed506-page.print-document-area {
+    height: calc(210mm * 3042 / 2480);
+    min-height: calc(210mm * 3042 / 2480);
+  }
+
+  .official-overlay-field {
+    font-size: 11pt;
+  }
+
+  .index-page.print-document-area {
+    page: landscape;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .official-index-page.print-document-area {
+    page: landscape;
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .index-page.print-document-area:last-child,
+  .official-index-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .material-registry-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .material-registry-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .composition-document-page.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .composition-document-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .addy-composition-document.print-document-area {
+    page: portrait;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 192mm;
+    height: 279mm;
+    min-height: 279mm;
+    margin: 9mm;
+    padding: 2mm 0 0;
+    font-size: 15px;
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .addy-composition-document .material-form-code {
+    margin-bottom: 3mm;
+    font-size: 15px;
+  }
+
+  .addy-composition-document h1 {
+    margin-bottom: 4mm;
+    font-size: 21px;
+  }
+
+  .addy-composition-document .composition-document-details {
+    gap: 1.5mm;
+    margin-bottom: 4mm;
+    font-size: 14px;
+  }
+
+  .addy-composition-document .composition-document-table th {
+    height: 10mm;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .addy-composition-document .composition-document-table td {
+    height: 12mm;
+    font-size: 14px;
+  }
+
+  .addy-composition-document .composition-document-footer {
+    margin-top: 6mm;
+    font-size: 14px;
+  }
+
+  .change-sheet-document-page.print-document-area {
+    page: landscape;
+    width: 297mm;
+    min-height: 210mm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+.material-card-flags-table th:nth-last-child(-n + 3),
+.material-card-flags-table td:nth-last-child(-n + 3) {
+  width: 150px;
+  text-align: center;
+}
+
+.material-card-flags-table input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.material-card-flags-table th,
+.material-card-flags-table td,
+.serial-number-registry-table th,
+.serial-number-registry-table td {
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.serial-number-registry-wrap {
+  max-height: calc(100vh - 290px);
+  overflow: auto;
+}

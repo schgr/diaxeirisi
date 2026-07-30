@@ -5,9 +5,10 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PRE_SPLIT_COMMIT = 'b99e543642ecbc649f8758e0f4439ebdca1f7c9b';
 const previousSource = execFileSync(
   'git',
-  ['show', 'HEAD:src/ui/pages/printsPage.js'],
+  ['show', `${PRE_SPLIT_COMMIT}:src/ui/pages/printsPage.js`],
   { cwd: root, encoding: 'utf8' }
 );
 const currentSources = [
