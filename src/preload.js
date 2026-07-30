@@ -10,7 +10,8 @@ async function invoke(channel, ...args) {
 
 contextBridge.exposeInMainWorld('appApi', {
   app: {
-    getVersion: () => invoke('app:get-version')
+    getVersion: () => invoke('app:get-version'),
+    getRuntimeInfo: () => invoke('app:get-runtime-info')
   },
   auth: {
     status: () => invoke('auth:status'),

@@ -15,6 +15,28 @@
   font-family: "Segoe UI", Arial, sans-serif;
 }
 
+.legacy-offline-badge {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  z-index: 10000;
+  padding: 6px 10px;
+  border: 1px solid #f2c94c;
+  border-radius: 4px;
+  background: #3a2d08;
+  color: #ffe69a;
+  font: 700 11px/1.2 "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+@media print {
+  .legacy-offline-badge {
+    display: none !important;
+  }
+}
+
 :root[data-theme="light"] {
   color-scheme: light;
   --bg: #f4f6f8;

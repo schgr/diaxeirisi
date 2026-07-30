@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, session } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const packageMetadata = require('../package.json');
 const { shouldShowApplicationMenu } = require('./applicationMenu');
 const { initializeDatabase } = require('./db/database');
 const { createSettingsService } = require('./services/settingsService');
@@ -28,6 +29,8 @@ const { createLogger } = require('./utils/logger');
 const { AppError, toAppError } = require('./core/errorHandler');
 
 const logger = createLogger('main');
+const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
+  && packageMetadata.legacyWindows7 === true;
 
 let services;
 let securityService;
@@ -39,7 +42,9 @@ function createWindow() {
     height: 820,
     minWidth: 980,
     minHeight: 680,
-    title: 'diaxeirisi Ylikoy',
+    title: isWindows7Legacy
+      ? 'diaxeirisi Ylikoy - Windows 7 Legacy (Offline)'
+      : 'diaxeirisi Ylikoy',
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     backgroundColor: '#f4f6f8',
     fullscreen: true,
@@ -50,11 +55,44 @@ function createWindow() {
     }
   });
 
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-navigate', (event, targetUrl) => {
+    if (!targetUrl.startsWith('file:')) {
+      event.preventDefault();
+    }
+  });
   window.loadFile(path.join(__dirname, 'ui', 'index.html'));
+}
+
+function configureLegacyOfflineMode() {
+  if (!isWindows7Legacy) return;
+
+  const legacySession = session.defaultSession;
+  legacySession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(false);
+  });
+  legacySession.webRequest.onBeforeRequest(
+    {
+      urls: [
+        'http://*/*',
+        'https://*/*',
+        'ws://*/*',
+        'wss://*/*'
+      ]
+    },
+    (_details, callback) => callback({ cancel: true })
+  );
+  logger.info('Windows 7 Legacy offline mode is active; network requests are blocked.');
 }
 
 function registerIpcHandlers() {
   ipcMain.handle('app:get-version', async () => safeInvoke(() => app.getVersion(), true));
+  ipcMain.handle('app:get-runtime-info', async () => safeInvoke(() => ({
+    version: app.getVersion(),
+    buildFlavor: isWindows7Legacy ? 'win7-legacy' : 'standard',
+    offlineOnly: isWindows7Legacy,
+    electronVersion: process.versions.electron
+  }), true));
   ipcMain.handle('auth:status', async () => safeInvoke(() => securityService.status(), true));
   ipcMain.handle('auth:setup', async (_event, username, password, confirmation, securityQuestions) =>
     safeInvoke(() => securityService.setup(username, password, confirmation, securityQuestions), true)
@@ -668,6 +706,7 @@ async function safeInvoke(operation, allowLocked = false) {
 }
 
 app.whenReady().then(async () => {
+  configureLegacyOfflineMode();
   if (!shouldShowApplicationMenu(app.getVersion())) {
     Menu.setApplicationMenu(null);
   }

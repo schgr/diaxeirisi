@@ -1,0 +1,43 @@
+{
+  "appId": "gr.local.diaxeirisi.ylikoy.win7legacy",
+  "productName": "diaxeirisi Ylikoy - Windows 7 Legacy",
+  "electronVersion": "22.3.27",
+  "npmRebuild": false,
+  "extraMetadata": {
+    "name": "diaxeirisi-ylikoy-win7-legacy",
+    "productName": "diaxeirisi Ylikoy - Windows 7 Legacy",
+    "buildFlavor": "win7-legacy",
+    "legacyWindows7": true
+  },
+  "icon": "build/icon.ico",
+  "directories": {
+    "output": "release/win7-legacy"
+  },
+  "files": [
+    "src/**/*",
+    "build/icon.ico",
+    "package.json"
+  ],
+  "asar": true,
+  "win": {
+    "icon": "build/icon.ico",
+    "signAndEditExecutable": true,
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "diaxeirisi Ylikoy - Windows 7 Legacy",
+    "include": "build/installer.nsh",
+    "artifactName": "diaxeirisi-Ylikoy-Windows-7-Legacy-Setup-${version}.${ext}"
+  }
+}

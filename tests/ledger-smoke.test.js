@@ -259,6 +259,15 @@ async function run() {
     assert.match(registryHtml, /Σελίδα 5 από 5/);
     assert.match(registryHtml, /Το Παρόν αφού σελιδομετρήθηκε βρέθηκε να έχει 5 σελίδες/);
 
+    const singleRegistryPageHtml = renderMaterialRegistryPages(
+      [],
+      printSettings,
+      { displayCount: 28 }
+    );
+    assert.strictEqual((singleRegistryPageHtml.match(/material-registry-page/g) || []).length, 2);
+    assert.match(singleRegistryPageHtml, /<td>28<\/td>/);
+    assert.doesNotMatch(singleRegistryPageHtml, /<td>29<\/td>/);
+
     const surplusBalance = calculateShareBalance(3, 2);
     assert.strictEqual(surplusBalance.differenceQuantity, -1);
     assert.strictEqual(surplusBalance.status, 'Έλλειμμα');
