@@ -21,15 +21,20 @@ https://USERNAME.github.io/REPOSITORY/
 ## Διάθεση του installer
 
 1. Ανοίξτε την ενότητα **Releases** του repository.
-2. Δημιουργήστε release με tag `v0.13.212`.
-3. Επισυνάψτε το αρχείο:
+2. Δημιουργήστε release με tag `v0.13.214`.
+3. Επισυνάψτε και τα τέσσερα αρχεία, διατηρώντας ακριβώς τις παρακάτω
+   ονομασίες:
 
 ```text
-release/diaxeirisi-Ylikoy-Setup-0.13.212.exe
+diaxeirisi-Ylikoy-Setup-0.13.214.exe
+diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-0.13.214.exe
+diaxeirisi-Ylikoy-Windows-7-Legacy-Setup-0.13.214.exe
+diaxeirisi-Ylikoy-Windows-7-SP1-x86-Legacy-Setup-0.13.214.exe
 ```
 
 Η ιστοσελίδα αναγνωρίζει αυτόματα το repository από τη διεύθυνση GitHub
-Pages και τα κουμπιά λήψης οδηγούν στο τελευταίο διαθέσιμο release.
+Pages και τα κουμπιά λήψης οδηγούν στα αντίστοιχα αρχεία του τελευταίου
+διαθέσιμου release.
 
 Για custom domain, συμπληρώστε στο `index.html`:
 

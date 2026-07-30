@@ -39,14 +39,15 @@ function resolveGitHubRepository() {
 }
 
 const repository = resolveGitHubRepository();
-const installerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.212.exe';
+const defaultInstallerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.214.exe';
 const downloadLinks = document.querySelectorAll('[data-download-link]');
 const downloadNote = document.querySelector('[data-download-note]');
 
 if (repository) {
   const repositoryUrl = `https://github.com/${repository}`;
-  const installerUrl = `${repositoryUrl}/releases/latest/download/${installerFileName}`;
   downloadLinks.forEach((link) => {
+    const installerFileName = link.dataset.installer || defaultInstallerFileName;
+    const installerUrl = `${repositoryUrl}/releases/latest/download/${installerFileName}`;
     link.href = installerUrl;
     link.setAttribute('download', installerFileName);
   });
