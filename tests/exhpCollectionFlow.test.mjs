@@ -3,7 +3,11 @@ import fs from 'node:fs';
 
 const helpers = fs.readFileSync(new URL('../src/ui/transactions/entryHelpers.js', import.meta.url), 'utf8');
 const form = fs.readFileSync(new URL('../src/ui/transactions/addyForm.js', import.meta.url), 'utf8');
-const service = fs.readFileSync(new URL('../src/services/transactionsService.js', import.meta.url), 'utf8');
+const service = [
+  '../src/services/transactions/transactionQueryService.js',
+  '../src/services/transactions/exhpService.js',
+  '../src/services/transactions/shared.js'
+].map((file) => fs.readFileSync(new URL(file, import.meta.url), 'utf8')).join('\n');
 
 assert.match(helpers, /data-collection-quantity/u);
 assert.match(helpers, /collectionShare\.composition\.map/u);
