@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { splitOfficerSignature } from '../officerSignature.js';
 import { renderShareBackTemplate, renderSharePrintDocument } from '../pages/sharesPage.js';
 import { printIsolatedPreview } from './printPreview.js';
 import { compareShareNumbers } from './shared.js';

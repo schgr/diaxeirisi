@@ -63,14 +63,55 @@ const state = {
   sharePreviewPage: 0
 };
 await renderAllShareCardPreview(
-  { async getCardsBatch() { return []; } },
-  [{ id: 1, shareNumber: '1' }],
+  {
+    async getCardsBatch() {
+      return [{
+        share: {
+          id: 1,
+          shareNumber: '1',
+          nominalNumber: 'N-1',
+          description: 'Δοκιμαστικό υλικό',
+          materialCode: 'M-1',
+          measurementUnit: 'ΤΕΜ',
+          unitPrice: 1,
+          accountingBalance: 0
+        },
+        year: 2026,
+        openingTransfer: {
+          balance: 0,
+          inventoryDate: '2025-12-31',
+          reference: 'Απογραφή'
+        },
+        transactions: []
+      }];
+    }
+  },
+  [{
+    id: 1,
+    shareNumber: '1',
+    nominalNumber: 'N-1',
+    description: 'Δοκιμαστικό υλικό',
+    materialCode: 'M-1',
+    measurementUnit: 'ΤΕΜ',
+    unitPrice: 1,
+    accountingBalance: 0
+  }],
   {},
   state,
   preview
 );
 assert.ok(stopped, 'The progress subscription must be cleaned up.');
 const completedPreview = preview.innerHTML;
+assert.match(
+  completedPreview,
+  /share-preview-pagination/,
+  'A completed batch must replace the progress bar with the share preview.'
+);
+assert.match(
+  completedPreview,
+  /official-share-page/,
+  'A completed batch must render at least one material share page.'
+);
 progressListener({
   id: 'share-print-1',
   message: 'Προετοιμασία μερίδων…',
