@@ -120,7 +120,7 @@ async function run() {
     });
     assert.match(sharePrintHtml, /share-card-expanded-23-24\.png/);
     assert.doesNotMatch(sharePrintHtml, /official-share-column-adjustment/);
-    assert.match(sharePrintHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ 31\/12\/2025/);
+    assert.match(sharePrintHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ 31-12-2025/);
     assert.doesNotMatch(sharePrintHtml, /ΥΠΟΛΟΙΠΟ/);
     assert.match(sharePrintHtml, /left:68\.1%;top:64\.45%;width:11\.6%;height:1\.75%;">4<\/div>/);
     assert.match(sharePrintHtml, /left:4%;top:30\.6%;width:28\.4%;/);
@@ -129,6 +129,20 @@ async function run() {
     assert.match(sharePrintHtml, /share-exact-copy-overlay/);
     assert.match(sharePrintHtml, /left:4\.1%;top:21\.8%;width:28\.2%;height:1\.5%/);
     assert.match(sharePrintHtml, /left:4\.1%;top:23\.3%;width:28\.2%;height:1\.5%/);
+
+    const selectedYearOpeningHtml = renderSharePrintDocument({
+      share: {
+        nominalNumber: 'TEST-OPENING',
+        shareNumber: '3',
+        description: 'Υλικό χωρίς ημερομηνία αρχικής απογραφής',
+        materialCode: '',
+        measurementUnit: 'Τεμάχια',
+        unitPrice: 1
+      },
+      openingTransfer: { balance: 7, inventoryDate: '' },
+      transactions: []
+    }, { fiscalYear: 2026 });
+    assert.match(selectedYearOpeningHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ 31-12-2025/);
 
     const overflowingShareHtml = renderSharePrintDocument({
       share: {

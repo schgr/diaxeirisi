@@ -668,6 +668,7 @@ async function renderAllShareCardPreview(
   const issuer = splitOfficerSignature(settings?.financialOfficers?.ped || '');
   preview.innerHTML = cards
     .map((card) => renderSharePrintDocument(card, {
+      fiscalYear: state.fiscalYear,
       issuerName: issuer.name,
       issuerRank: issuer.rank
     }))
@@ -742,6 +743,7 @@ async function renderShareCardPreview(sharesApi, shares, settings, state, previe
     const manager = splitOfficerSignature(settings?.financialOfficers?.manager || '');
     preview.innerHTML = movedCards.length
       ? movedCards.map((card) => renderSharePrintDocument(card, {
+        fiscalYear: state.fiscalYear,
         exactCopy: 'Ακριβές Αντίγραφο',
         issuerName: manager.name,
         issuerRank: manager.rank
@@ -753,7 +755,7 @@ async function renderShareCardPreview(sharesApi, shares, settings, state, previe
   const selectedId = Number(state.selectedShareId) || shares[0].id;
   const card = await sharesApi.getCard(selectedId, state.fiscalYear);
   if (state.activeTab !== 'share-card') return;
-  preview.innerHTML = renderSharePrintDocument(card);
+  preview.innerHTML = renderSharePrintDocument(card, { fiscalYear: state.fiscalYear });
 }
 
 function renderFiscalYearControls(state) {

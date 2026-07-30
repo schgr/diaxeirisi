@@ -1023,23 +1023,14 @@ export function renderSharePrintDocument(card, options = {}) {
         ${shareDocumentOverlay(card.share.materialCode, 70.0, 22.9, 18.0, 2.6)}
         ${shareDocumentOverlay(card.share.measurementUnit, 4.0, 30.6, 28.4, 2.6)}
         ${shareDocumentOverlay(card.share.unitPrice ? formatQuantity(card.share.unitPrice) : '', 55.0, 30.6, 16.0, 2.6)}
-        ${pageIndex === 0 && card.openingTransfer?.inventoryDate
-          ? shareDocumentOverlay(
-            `ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ ${formatDate(card.openingTransfer.inventoryDate)}`,
-            3.9,
-            64.45,
-            86.2,
-            1.75,
-            'share-opening-inventory-overlay'
-          )
-          : shareDocumentOverlay(
-            'ΑΠΟ ΜΕΤΑΦΟΡΑ',
-            3.9,
-            64.45,
-            86.2,
-            1.75,
-            'share-opening-inventory-overlay'
-          )}
+        ${shareDocumentOverlay(
+          `ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ ${resolvePreviousYearInventoryDate(card, options)}`,
+          3.9,
+          64.45,
+          86.2,
+          1.75,
+          'share-opening-inventory-overlay'
+        )}
         ${shareDocumentOverlay(
           formatQuantity(openingBalance || 0),
           68.1,
@@ -1062,6 +1053,24 @@ export function renderSharePrintDocument(card, options = {}) {
       </article>
     `;
   }).join('');
+}
+
+function resolvePreviousYearInventoryDate(card, options) {
+  const selectedFiscalYear = Number(options?.fiscalYear);
+  if (Number.isInteger(selectedFiscalYear) && selectedFiscalYear > 1) {
+    return `31-12-${selectedFiscalYear - 1}`;
+  }
+
+  const inventoryYear = Number(String(card.openingTransfer?.inventoryDate || '').slice(0, 4));
+  if (Number.isInteger(inventoryYear) && inventoryYear > 0) {
+    return `31-12-${inventoryYear}`;
+  }
+
+  const transactionYear = Number(String(card.transactions?.[0]?.date || '').slice(0, 4));
+  const fiscalYear = Number.isInteger(transactionYear) && transactionYear > 1
+    ? transactionYear
+    : new Date().getFullYear();
+  return `31-12-${fiscalYear - 1}`;
 }
 
 function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {

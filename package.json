@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.214",
+  "version": "0.13.215",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης",
   "main": "src/main.js",
@@ -16,7 +16,7 @@
     "dist:win7": "electron-builder --config electron-builder.win7.json --win nsis --x64",
     "dist:win7:x86": "electron-builder --config electron-builder.win7-x86.json --win nsis --ia32",
     "dist:win:stable": "electron-builder --win nsis --x64",
-    "dist:win:beta": "electron-builder --win nsis --x64 --config.extraMetadata.version=0.13.214-beta --config.nsis.artifactName=diaxeirisi-Ylikoy-Beta-Setup-${version}.${ext}",
+    "dist:win:beta": "electron-builder --config electron-builder.beta.js --win nsis --x64",
     "dist:win:all": "npm run dist:win:stable && npm run dist:win:beta"
   },
   "build": {
