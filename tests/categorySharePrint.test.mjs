@@ -41,14 +41,14 @@ assert.doesNotMatch(html, /Υλικό 9/u);
 assert.match(html, /Κατηγορία Α/u);
 assert.match(html, /Κατηγορία Β/u);
 
-const printsPageSource = fs.readFileSync(
-  new URL('../src/ui/pages/printsPage.js', import.meta.url),
+const shareRegistryPrintSource = fs.readFileSync(
+  new URL('../src/ui/prints/shareRegistryPrint.js', import.meta.url),
   'utf8'
 );
-assert.match(printsPageSource, /id="preview-category-shares"/u);
-assert.match(printsPageSource, /category-share-preview-modal/u);
+assert.match(shareRegistryPrintSource, /id="preview-category-shares"/u);
+assert.match(shareRegistryPrintSource, /category-share-preview-modal/u);
 assert.doesNotMatch(
-  printsPageSource.match(/function bindCategoryShareControls[\s\S]*?\n\}\n/u)?.[0] || '',
+  shareRegistryPrintSource.match(/function bindCategoryShareControls[\s\S]*?\n\}\n/u)?.[0] || '',
   /preview\.innerHTML/u
 );
 
