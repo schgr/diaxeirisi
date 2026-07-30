@@ -3466,6 +3466,39 @@ table.administration-table td {
     minmax(170px, 1fr) minmax(170px, 1fr) minmax(180px, 1.2fr) auto;
 }
 
+.request-entry-all-row {
+  display: grid;
+  grid-template-columns:
+    120px 110px minmax(160px, 1.1fr) minmax(160px, 1.1fr)
+    105px minmax(180px, 1.3fr) 75px 100px
+    minmax(140px, 1fr) minmax(140px, 1fr) minmax(150px, 1.1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.request-entry-all-row > .request-header-grid,
+.request-entry-all-row > .request-line-grid,
+.request-entry-all-row .request-line-row {
+  display: contents;
+}
+
+.request-entry-all-row #request-add-item {
+  min-width: 84px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1700px) {
+  .request-entry-all-row {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .request-entry-all-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1500px) {
   .request-entry-single-row {
     grid-template-columns: repeat(4, minmax(150px, 1fr));

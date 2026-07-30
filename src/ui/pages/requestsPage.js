@@ -33,39 +33,41 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </nav>
     <div class="transaction-tab-panel" data-requests-panel="requests" hidden>
     <section class="page-panel request-panel no-print">
-      <div class="request-header-grid">
-        <label class="field">
-          <span>Ημερομηνία</span>
-          <input id="request-date" type="date" value="${reference.today}" />
-        </label>
-        <label class="field">
-          <span>Πρωτόκολλο</span>
-          <input id="request-protocol" autocomplete="off" />
-        </label>
-        <label class="field">
-          <span>Αιτούσα Μονάδα</span>
-          <input id="request-unit" value="${escapeHtml(reference.requestingUnit || '')}" readonly />
-        </label>
-        <label class="field">
-          <span>Χορηγούσα Μονάδα</span>
-          <select id="request-issuing-unit">
-            <option value="">Επιλογή</option>
-            ${reference.issuingUnits.map((unit) => `<option value="${escapeHtml(unit.name)}">${escapeHtml(unit.name)}</option>`).join('')}
-          </select>
-        </label>
-      </div>
-      <div class="request-line-grid request-entry-single-row">
-        <div class="request-line-row">
-          ${input('Αριθμός Ονομαστικού', 'request-nominal')}
-          ${input('Περιγραφή', 'request-description')}
-          ${input('Ποσότητα', 'request-quantity', 'number')}
-          ${selectMeasurement(reference.measurementUnits)}
+      <div class="request-entry-all-row">
+        <div class="request-header-grid">
+          <label class="field">
+            <span>Ημερομηνία</span>
+            <input id="request-date" type="date" value="${reference.today}" />
+          </label>
+          <label class="field">
+            <span>Πρωτόκολλο</span>
+            <input id="request-protocol" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>Αιτούσα Μονάδα</span>
+            <input id="request-unit" value="${escapeHtml(reference.requestingUnit || '')}" readonly />
+          </label>
+          <label class="field">
+            <span>Χορηγούσα Μονάδα</span>
+            <select id="request-issuing-unit">
+              <option value="">Επιλογή</option>
+              ${reference.issuingUnits.map((unit) => `<option value="${escapeHtml(unit.name)}">${escapeHtml(unit.name)}</option>`).join('')}
+            </select>
+          </label>
         </div>
-        <div class="request-line-row request-line-actions">
-          ${selectJustification(reference.justificationCodes)}
-          ${selectPriority()}
-          ${input('Παρατηρήσεις', 'request-notes')}
-          <button id="request-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
+        <div class="request-line-grid request-entry-single-row">
+          <div class="request-line-row">
+            ${input('Αριθμός Ονομαστικού', 'request-nominal')}
+            ${input('Περιγραφή', 'request-description')}
+            ${input('Ποσότητα', 'request-quantity', 'number')}
+            ${selectMeasurement(reference.measurementUnits)}
+          </div>
+          <div class="request-line-row request-line-actions">
+            ${selectJustification(reference.justificationCodes)}
+            ${selectPriority()}
+            ${input('Παρατηρήσεις', 'request-notes')}
+            <button id="request-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
+          </div>
         </div>
       </div>
     </section>
