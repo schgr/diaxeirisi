@@ -25,7 +25,7 @@ async function run() {
   await createCompositionImportService(db).writeTemplate(compositionPath);
 
   await verifyHeaderOnlyTemplate(initialPath, 8);
-  await verifyHeaderOnlyTemplate(compositionPath, 5);
+  await verifyHeaderOnlyTemplate(compositionPath, 6);
   fs.rmSync(tempDir, { recursive: true, force: true });
   console.log('Excel templates contain headers only.');
 }

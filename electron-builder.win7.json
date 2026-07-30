@@ -15,6 +15,12 @@
   },
   "files": [
     "src/**/*",
+    "!src/**/*-Movies.js",
+    "!src/**/*-TECLAST.js",
+    "!src/types/**/*",
+    "!src/exhpForm/supportingDocs/shared/docHeader.js",
+    "!src/exhpForm/supportingDocs/shared/letteredList.js",
+    "!node_modules/**/*.codexbak",
     "build/icon.ico",
     "package.json"
   ],
