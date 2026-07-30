@@ -713,7 +713,23 @@ app.whenReady().then(async () => {
   const userDataPath = app.getPath('userData');
   applyPendingRestore(userDataPath);
   securityService = createSecurityService(userDataPath);
-  const database = await initializeDatabase(userDataPath);
+  const database = await initializeDatabase(userDataPath, {
+    offerBackupRecovery: async ({ mainExists }) => {
+      const result = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['Ασφαλής ανάκτηση', 'Ακύρωση'],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true,
+        title: 'Ανάκτηση βάσης δεδομένων',
+        message: mainExists
+          ? 'Η κύρια βάση δεδομένων είναι κατεστραμμένη.'
+          : 'Η κύρια βάση δεδομένων λείπει.',
+        detail: 'Βρέθηκε έγκυρο προηγούμενο αντίγραφο (.bak). Θέλετε να ανακτηθεί με ασφάλεια;'
+      });
+      return result.response === 0;
+    }
+  });
   backupService = createBackupService(userDataPath);
   try {
     backupService.createAutomatic();

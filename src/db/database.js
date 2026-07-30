@@ -4,18 +4,35 @@ const initSqlJs = require('sql.js');
 const { migrations } = require('./migrations');
 const { seedDefaults } = require('./seed');
 const { createLogger } = require('../utils/logger');
+const { atomicPersist, cleanupOwnedTemporaryFiles, restoreBackup } = require('./atomicPersistence');
 
 const logger = createLogger('database');
 
-async function initializeDatabase(userDataPath) {
+async function initializeDatabase(userDataPath, options = {}) {
   const dataDirectory = path.join(userDataPath, 'data');
   fs.mkdirSync(dataDirectory, { recursive: true });
 
   const dbPath = path.join(dataDirectory, 'dchsi.sqlite');
+  const backupPath = `${dbPath}.bak`;
   const SQL = await initSqlJs({
     locateFile: (file) => path.join(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist', file)
   });
-  const fileBuffer = fs.existsSync(dbPath) ? fs.readFileSync(dbPath) : null;
+  cleanupOwnedTemporaryFiles(dataDirectory);
+  let fileBuffer = readValidDatabase(SQL, dbPath);
+  if (!fileBuffer && fs.existsSync(backupPath)) {
+    const backupBuffer = readValidDatabase(SQL, backupPath);
+    if (backupBuffer) {
+      const recover = options.offerBackupRecovery || (async () => false);
+      if (await recover({ dbPath, backupPath, mainExists: fs.existsSync(dbPath) })) {
+        restoreBackup(dbPath, backupBuffer);
+        fileBuffer = backupBuffer;
+        logger.info(`Recovered SQLite database from ${backupPath}`);
+      }
+    }
+  }
+  if (!fileBuffer && fs.existsSync(dbPath)) {
+    throw new Error('The main database is corrupt and no recovery was accepted.');
+  }
   const db = createPersistentDatabase(new SQL.Database(fileBuffer), dbPath);
   db.pragma('foreign_keys = ON');
 
@@ -33,6 +50,22 @@ async function initializeDatabase(userDataPath) {
   return db;
 }
 
+function readValidDatabase(SQL, filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const contents = fs.readFileSync(filePath);
+    const candidate = new SQL.Database(contents);
+    try {
+      const result = candidate.exec('PRAGMA integrity_check');
+      return result[0]?.values[0]?.[0] === 'ok' ? contents : null;
+    } finally {
+      candidate.close();
+    }
+  } catch (_error) {
+    return null;
+  }
+}
+
 function createPersistentDatabase(sqlDatabase, dbPath) {
   let transactionDepth = 0;
 
@@ -40,7 +73,7 @@ function createPersistentDatabase(sqlDatabase, dbPath) {
     if (transactionDepth > 0) {
       return;
     }
-    fs.writeFileSync(dbPath, Buffer.from(sqlDatabase.export()));
+    atomicPersist(dbPath, Buffer.from(sqlDatabase.export()));
   }
 
   return {
@@ -157,5 +190,7 @@ function runMigrations(db) {
 }
 
 module.exports = {
-  initializeDatabase
+  initializeDatabase,
+  createPersistentDatabase,
+  readValidDatabase
 };
