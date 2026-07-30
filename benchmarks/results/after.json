@@ -1,0 +1,190 @@
+{
+  "dataset": {
+    "deterministic": true,
+    "shares": 1500,
+    "movedShares": 750,
+    "transactions": 6751,
+    "fiscalYears": [
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "photos": 300,
+    "compositions": 150,
+    "serialRegistries": 100,
+    "ammunitionRegistries": 60,
+    "databaseBytes": 2121728
+  },
+  "iterations": 3,
+  "limits": {
+    "startup": 3000,
+    "shareRegistry": 750,
+    "search": 250,
+    "openShare": 250,
+    "saveTransaction": 1000,
+    "previewAll": 5000,
+    "previewMoved": 3000,
+    "backup": 10000,
+    "excelExport": 10000,
+    "excelImport": 10000,
+    "mainStall": 1500,
+    "rendererStall": 250,
+    "workerStall": 250,
+    "rssMb": 700
+  },
+  "metrics": {
+    "startupFresh": {
+      "medianMs": 580.81,
+      "p95Ms": 580.81,
+      "minMs": 580.81,
+      "maxMs": 580.81
+    },
+    "shareRegistry": {
+      "medianMs": 93.66,
+      "p95Ms": 113.67,
+      "minMs": 92.36,
+      "maxMs": 113.67
+    },
+    "search": {
+      "medianMs": 8.37,
+      "p95Ms": 8.61,
+      "minMs": 6.02,
+      "maxMs": 8.61
+    },
+    "openShare": {
+      "medianMs": 0.79,
+      "p95Ms": 2.09,
+      "minMs": 0.73,
+      "maxMs": 2.09
+    },
+    "previewAll": {
+      "medianMs": 163.05,
+      "p95Ms": 178.89,
+      "minMs": 162.35,
+      "maxMs": 178.89
+    },
+    "previewMoved": {
+      "medianMs": 121.61,
+      "p95Ms": 122.77,
+      "minMs": 120.14,
+      "maxMs": 122.77
+    },
+    "saveTransaction": {
+      "medianMs": 10.79,
+      "p95Ms": 10.79,
+      "minMs": 10.79,
+      "maxMs": 10.79
+    },
+    "excelExport": {
+      "medianMs": 834.99,
+      "p95Ms": 834.99,
+      "minMs": 834.99,
+      "maxMs": 834.99
+    },
+    "excelImport": {
+      "medianMs": 767.4,
+      "p95Ms": 767.4,
+      "minMs": 767.4,
+      "maxMs": 767.4
+    },
+    "backup": {
+      "medianMs": 846.97,
+      "p95Ms": 846.97,
+      "minMs": 846.97,
+      "maxMs": 846.97
+    },
+    "startupExisting": {
+      "medianMs": 37.43,
+      "p95Ms": 37.43,
+      "minMs": 37.43,
+      "maxMs": 37.43
+    }
+  },
+  "stalls": {
+    "byOperation": {
+      "startupFresh": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "minMs": 0,
+        "maxMs": 0
+      },
+      "shareRegistry": {
+        "medianMs": 83.18,
+        "p95Ms": 103.24,
+        "minMs": 81.96,
+        "maxMs": 103.24
+      },
+      "search": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "minMs": 0,
+        "maxMs": 0
+      },
+      "openShare": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "minMs": 0,
+        "maxMs": 0
+      },
+      "previewAll": {
+        "medianMs": 152.27,
+        "p95Ms": 168.14,
+        "minMs": 151.93,
+        "maxMs": 168.14
+      },
+      "previewMoved": {
+        "medianMs": 111.2,
+        "p95Ms": 112.34,
+        "minMs": 110.01,
+        "maxMs": 112.34
+      },
+      "saveTransaction": {
+        "medianMs": 0.71,
+        "p95Ms": 0.71,
+        "minMs": 0.71,
+        "maxMs": 0.71
+      },
+      "excelExport": {
+        "medianMs": 10.82,
+        "p95Ms": 10.82,
+        "minMs": 10.82,
+        "maxMs": 10.82
+      },
+      "excelImport": {
+        "medianMs": 6.11,
+        "p95Ms": 6.11,
+        "minMs": 6.11,
+        "maxMs": 6.11
+      },
+      "backup": {
+        "medianMs": 10.03,
+        "p95Ms": 10.03,
+        "minMs": 10.03,
+        "maxMs": 10.03
+      },
+      "startupExisting": {
+        "medianMs": 27.41,
+        "p95Ms": 27.41,
+        "minMs": 27.41,
+        "maxMs": 27.41
+      }
+    },
+    "maximumMainMs": 27.41,
+    "maximumRendererMs": 168.14,
+    "maximumWorkerMs": 10.82
+  },
+  "rssMb": 211.21,
+  "queryPlans": {
+    "registry": [
+      "SEARCH shares USING INDEX idx_share_archive_status (archive_status=?)",
+      "USE TEMP B-TREE FOR ORDER BY"
+    ],
+    "moved": [
+      "SCAN share_transactions USING INDEX idx_share_transactions_share_year"
+    ],
+    "card": [
+      "SEARCH share_transactions USING INDEX idx_share_transactions_share_year (share_id=? AND transaction_date>? AND transaction_date<?)"
+    ]
+  }
+}
