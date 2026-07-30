@@ -670,10 +670,14 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
 
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
+    const taskId = `initial-inventory-${Date.now()}`;
+    const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
+      if (progress.id === taskId && progress.message) status.textContent = progress.message;
+    });
     status.textContent = 'Δημιουργία αντιγράφου ασφαλείας και έλεγχος του αρχείου Excel...';
     try {
       await window.appApi.backup.createAutomatic();
-      const result = await settingsApi.importInitialInventory(inventoryDate);
+      const result = await settingsApi.importInitialInventory(inventoryDate, taskId);
       if (!result) {
         status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
         return;
@@ -684,6 +688,7 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
       status.textContent = error.message || 'Δεν ήταν δυνατή η εισαγωγή της αρχικής απογραφής.';
       showToast(status.textContent, 'error');
     } finally {
+      stopProgress();
       submitButton.disabled = false;
     }
   });
@@ -712,9 +717,13 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
   importButton?.addEventListener('click', async () => {
     if (!window.confirm('Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;')) return;
     importButton.disabled = true;
+    const taskId = `composition-import-${Date.now()}`;
+    const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
+      if (progress.id === taskId && progress.message) status.textContent = progress.message;
+    });
     status.textContent = 'Έλεγχος και εισαγωγή του αρχείου συνθέσεων...';
     try {
-      const result = await settingsApi.importCompositions();
+      const result = await settingsApi.importCompositions(taskId);
       if (!result) {
         status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
         return;
@@ -725,6 +734,7 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
       status.textContent = error.message || 'Δεν ήταν δυνατή η εισαγωγή των συνθέσεων.';
       showToast(status.textContent, 'error');
     } finally {
+      stopProgress();
       importButton.disabled = false;
     }
   });

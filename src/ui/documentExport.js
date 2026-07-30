@@ -33,13 +33,19 @@ export function initializeDocumentExports(showToast) {
     const printButton = button._printButton;
     if (!printButton) return;
     button.disabled = true;
+    const taskId = `document-export-${Date.now()}`;
+    const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
+      if (progress.id === taskId && progress.message) button.title = progress.message;
+    });
     try {
       const payload = buildDocumentExportPayload(printButton);
-      const result = await window.appApi.export.document(button.dataset.documentExportFormat, payload);
+      const result = await window.appApi.export.document(button.dataset.documentExportFormat, payload, taskId);
       if (result && !result.canceled) showToast(result.message);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η εξαγωγή του αρχείου.', 'error');
     } finally {
+      stopProgress();
+      button.title = '';
       button.disabled = Boolean(printButton.disabled);
     }
   }, true);

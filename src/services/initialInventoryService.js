@@ -39,6 +39,18 @@ function createInitialInventoryService(db) {
     },
 
     async importWorkbook(filePath, inventoryDate) {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile(filePath);
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) throw new AppError('Το αρχείο Excel δεν περιέχει φύλλο εργασίας.', 'VALIDATION_ERROR');
+      const matrix = [];
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
+      });
+      return this.importMatrix(matrix, filePath, inventoryDate);
+    },
+
+    importMatrix(matrix, filePath, inventoryDate) {
       const date = String(inventoryDate || '').trim();
       if (!isValidInventoryDate(date)) {
         throw new AppError('Συμπλήρωσε την ημερομηνία της τελευταίας ετήσιας απογραφής.', 'VALIDATION_ERROR');
@@ -51,14 +63,6 @@ function createInitialInventoryService(db) {
         );
       }
 
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(filePath);
-      const worksheet = workbook.worksheets[0];
-      if (!worksheet) throw new AppError('Το αρχείο Excel δεν περιέχει φύλλο εργασίας.', 'VALIDATION_ERROR');
-      const matrix = [];
-      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
-      });
       const rows = parseRows(matrix);
       const sourceFile = path.basename(filePath);
       let sessionId;

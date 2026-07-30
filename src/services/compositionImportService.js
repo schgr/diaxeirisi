@@ -45,6 +45,10 @@ function createCompositionImportService(db) {
       worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
         matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
       });
+      return this.importMatrix(matrix);
+    },
+
+    importMatrix(matrix) {
       const rows = parseCompositionRows(matrix);
       const shares = sharesService.listShares();
       const sharesByNumber = new Map(shares.map((share) => [normalizeKey(share.shareNumber), share]));

@@ -188,6 +188,10 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
 
     isDirty() {
       return dirty;
+    },
+
+    exportSnapshot() {
+      return Buffer.from(sqlDatabase.export());
     }
   };
 }

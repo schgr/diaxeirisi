@@ -21,12 +21,11 @@ const { createClothingService } = require('./services/clothingService');
 const { createSecurityService } = require('./services/securityService');
 const { createBackupService, applyPendingRestore } = require('./services/backupService');
 const {
-  sanitizeExportFilename,
-  writeExcelExport,
-  writeWordExport
+  sanitizeExportFilename
 } = require('./services/documentExportService');
 const { createLogger } = require('./utils/logger');
 const { AppError, toAppError } = require('./core/errorHandler');
+const { createHeavyTaskRunner } = require('./workers/heavyTaskRunner');
 
 const logger = createLogger('main');
 const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
@@ -36,6 +35,20 @@ let services;
 let securityService;
 let backupService;
 let persistentDatabase;
+let heavyTaskRunner;
+
+function runHeavyTask(event, task, payload, options = {}) {
+  const taskId = options.taskId || `${task}-${Date.now()}`;
+  return heavyTaskRunner.run(task, payload, {
+    id: taskId,
+    timeoutMs: options.timeoutMs,
+    onProgress: (progress) => {
+      if (event && !event.sender.isDestroyed()) {
+        event.sender.send('heavy-task:progress', progress);
+      }
+    }
+  });
+}
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -176,7 +189,16 @@ function registerIpcHandlers() {
   ipcMain.handle('print:current-document', async (event, options) =>
     safeInvoke(() => printCurrentDocument(event.sender, options))
   );
-  ipcMain.handle('export:document', async (_event, format, payload) =>
+  ipcMain.handle('heavy-task:cancel', async (_event, taskId) =>
+    safeInvoke(() => heavyTaskRunner.cancel(taskId), true)
+  );
+  ipcMain.handle('database:integrity-check', async (event, taskId) =>
+    safeInvoke(() => runHeavyTask(event, 'database-integrity', {
+      snapshot: persistentDatabase.exportSnapshot(),
+      sqlJsDirectory: path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist')
+    }, { taskId, timeoutMs: 60000 }))
+  );
+  ipcMain.handle('export:document', async (event, format, payload, taskId) =>
     safeInvoke(async () => {
       const exportFormat = format === 'word' ? 'word' : 'excel';
       const title = sanitizeExportFilename(payload && payload.title);
@@ -190,11 +212,11 @@ function registerIpcHandlers() {
         }]
       });
       if (result.canceled || !result.filePath) return { canceled: true };
-      if (exportFormat === 'word') {
-        writeWordExport(result.filePath, { ...payload, title });
-      } else {
-        await writeExcelExport(result.filePath, { ...payload, title });
-      }
+      await runHeavyTask(event, 'export-document', {
+        format: exportFormat,
+        filePath: result.filePath,
+        document: { ...payload, title }
+      }, { taskId, timeoutMs: 180000 });
       return {
         canceled: false,
         filePath: result.filePath,
@@ -212,8 +234,14 @@ function registerIpcHandlers() {
   ipcMain.handle('shares:get-card', async (_event, id, year) =>
     safeInvoke(() => services.shares.getShareCard(id, year))
   );
-  ipcMain.handle('shares:get-cards-batch', async (_event, payload) =>
-    safeInvoke(() => services.shares.getShareCardsBatch(payload))
+  ipcMain.handle('shares:get-cards-batch', async (event, payload) =>
+    safeInvoke(async () => {
+      const cards = services.shares.getShareCardsBatch(payload);
+      return runHeavyTask(event, 'prepare-share-print', { cards }, {
+        taskId: payload && payload.taskId,
+        timeoutMs: 120000
+      });
+    })
   );
   ipcMain.handle('shares:list-moved-cards', async (_event, year) =>
     safeInvoke(() => services.shares.listMovedShareCards(year))
@@ -275,7 +303,7 @@ function registerIpcHandlers() {
       return services.initialInventory.writeTemplate(result.filePath);
     })
   );
-  ipcMain.handle('settings:import-initial-inventory', async (_event, inventoryDate) =>
+  ipcMain.handle('settings:import-initial-inventory', async (event, inventoryDate, taskId) =>
     safeInvoke(async () => {
       const result = await dialog.showOpenDialog({
         title: 'Επιλογή τελευταίας ετήσιας απογραφής',
@@ -283,7 +311,10 @@ function registerIpcHandlers() {
         filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
       });
       if (result.canceled || !result.filePaths.length) return null;
-      return services.initialInventory.importWorkbook(result.filePaths[0], inventoryDate);
+      const matrix = await runHeavyTask(event, 'read-excel-matrix', {
+        filePath: result.filePaths[0]
+      }, { taskId, timeoutMs: 180000 });
+      return services.initialInventory.importMatrix(matrix, result.filePaths[0], inventoryDate);
     })
   );
   ipcMain.handle('settings:download-composition-template', async () =>
@@ -297,7 +328,7 @@ function registerIpcHandlers() {
       return services.compositionImport.writeTemplate(result.filePath);
     })
   );
-  ipcMain.handle('settings:import-compositions', async () =>
+  ipcMain.handle('settings:import-compositions', async (event, taskId) =>
     safeInvoke(async () => {
       const result = await dialog.showOpenDialog({
         title: 'Επιλογή αρχείου συνθέσεων μερίδων',
@@ -306,7 +337,10 @@ function registerIpcHandlers() {
       });
       if (result.canceled || !result.filePaths.length) return null;
       backupService.createAutomatic(true);
-      return services.compositionImport.importWorkbook(result.filePaths[0]);
+      const matrix = await runHeavyTask(event, 'read-excel-matrix', {
+        filePath: result.filePaths[0]
+      }, { taskId, timeoutMs: 180000 });
+      return services.compositionImport.importMatrix(matrix);
     })
   );
   ipcMain.handle('settings:save-service', async (_event, payload) =>
@@ -735,6 +769,7 @@ app.whenReady().then(async () => {
     }
   });
   persistentDatabase = database;
+  heavyTaskRunner = createHeavyTaskRunner();
   backupService = createBackupService(userDataPath);
   try {
     backupService.createAutomatic();
@@ -784,6 +819,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', (event) => {
+  if (heavyTaskRunner) void heavyTaskRunner.close();
   if (!persistentDatabase) return;
   try {
     persistentDatabase.flush();

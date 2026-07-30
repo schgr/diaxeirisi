@@ -675,12 +675,13 @@ async function renderAllShareCardPreview(
 
   const token = ++state.shareRenderToken;
   preview.innerHTML = renderSharePreparationStatus('Φόρτωση μερίδων…');
-  const loadedCards = await sharesApi.getCardsBatch({
+  const loadedCards = await loadShareCardsWithProgress(sharesApi, {
+    taskId: `share-print-${token}`,
     mode: 'all',
     year: state.fiscalYear,
     fromShareNumber: state.shareFrom,
     toShareNumber: state.shareTo
-  });
+  }, preview, state, token);
   if (token !== state.shareRenderToken || state.activeTab !== 'share-card') return;
   const cards = loadedCards.map((card) => {
     const share = shares.find((item) => Number(item.id) === Number(card.share.id)) || {};
@@ -778,13 +779,14 @@ async function renderShareCardPreview(sharesApi, shares, settings, state, previe
   const token = ++state.shareRenderToken;
   preview.innerHTML = renderSharePreparationStatus('Προετοιμασία μερίδων…');
   const selectedId = Number(state.selectedShareId) || shares[0].id;
-  const cards = await sharesApi.getCardsBatch({
+  const cards = await loadShareCardsWithProgress(sharesApi, {
+    taskId: `share-print-${token}`,
     mode: state.onlyMovedCards ? 'moved' : 'single',
     shareId: selectedId,
     year: state.fiscalYear,
     fromShareNumber: state.shareFrom,
     toShareNumber: state.shareTo
-  });
+  }, preview, state, token);
   if (token !== state.shareRenderToken || state.activeTab !== 'share-card') return;
   state.sharePrintCards = cards;
   state.sharePreviewPage = 0;
@@ -796,6 +798,22 @@ function renderSharePreparationStatus(message, current = 0, total = 0) {
     ? `<progress max="${total}" value="${current}"></progress><span>${current}/${total}</span>`
     : '';
   return `<section class="page-panel share-print-preparation"><strong>${escapeHtml(message)}</strong>${progress}</section>`;
+}
+
+async function loadShareCardsWithProgress(sharesApi, payload, preview, state, token) {
+  const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
+    if (progress.id !== payload.taskId || token !== state.shareRenderToken) return;
+    preview.innerHTML = renderSharePreparationStatus(
+      progress.message || 'Προετοιμασία μερίδων…',
+      progress.current,
+      progress.total
+    );
+  });
+  try {
+    return await sharesApi.getCardsBatch(payload);
+  } finally {
+    stopProgress();
+  }
 }
 
 function renderShareCardBatchPreview(cards, settings, state, preview, latestInventory = null) {

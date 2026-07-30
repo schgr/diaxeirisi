@@ -9,6 +9,15 @@ async function invoke(channel, ...args) {
 }
 
 contextBridge.exposeInMainWorld('appApi', {
+  heavyTasks: {
+    cancel: (taskId) => invoke('heavy-task:cancel', taskId),
+    onProgress: (callback) => {
+      const listener = (_event, progress) => callback(progress);
+      ipcRenderer.on('heavy-task:progress', listener);
+      return () => ipcRenderer.removeListener('heavy-task:progress', listener);
+    },
+    checkDatabaseIntegrity: (taskId) => invoke('database:integrity-check', taskId)
+  },
   app: {
     getVersion: () => invoke('app:get-version'),
     getRuntimeInfo: () => invoke('app:get-runtime-info')
@@ -48,7 +57,7 @@ contextBridge.exposeInMainWorld('appApi', {
     })
   },
   export: {
-    document: (format, payload) => invoke('export:document', format, payload)
+    document: (format, payload, taskId) => invoke('export:document', format, payload, taskId)
   },
   shares: {
     list: () => invoke('shares:list'),
@@ -70,10 +79,10 @@ contextBridge.exposeInMainWorld('appApi', {
     get: () => invoke('settings:get'),
     downloadInitialInventoryTemplate: () =>
       invoke('settings:download-initial-inventory-template'),
-    importInitialInventory: (inventoryDate) =>
-      invoke('settings:import-initial-inventory', inventoryDate),
+    importInitialInventory: (inventoryDate, taskId) =>
+      invoke('settings:import-initial-inventory', inventoryDate, taskId),
     downloadCompositionTemplate: () => invoke('settings:download-composition-template'),
-    importCompositions: () => invoke('settings:import-compositions'),
+    importCompositions: (taskId) => invoke('settings:import-compositions', taskId),
     saveServiceInfo: (payload) => invoke('settings:save-service', payload),
     saveFinancialOfficers: (payload) => invoke('settings:save-financial-officers', payload),
     saveAuditSettings: (payload) => invoke('settings:save-audit', payload),
