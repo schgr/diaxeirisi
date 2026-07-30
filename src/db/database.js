@@ -66,25 +66,32 @@ function readValidDatabase(SQL, filePath) {
   }
 }
 
-function createPersistentDatabase(sqlDatabase, dbPath) {
+function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
   let transactionDepth = 0;
+  let dirty = false;
+  const persistDatabase = options.persistDatabase || atomicPersist;
 
-  function persist() {
-    if (transactionDepth > 0) {
-      return;
-    }
-    atomicPersist(dbPath, Buffer.from(sqlDatabase.export()));
+  function flush() {
+    if (!dirty || transactionDepth > 0) return false;
+    persistDatabase(dbPath, Buffer.from(sqlDatabase.export()));
+    dirty = false;
+    return true;
+  }
+
+  function markDirty() {
+    dirty = true;
+    if (transactionDepth === 0) flush();
   }
 
   return {
     exec(sql) {
       sqlDatabase.exec(sql);
-      persist();
+      if (isMutatingSql(sql)) markDirty();
     },
 
     pragma(statement) {
       sqlDatabase.exec(`PRAGMA ${statement}`);
-      persist();
+      if (isMutatingPragma(statement)) markDirty();
     },
 
     prepare(sql) {
@@ -117,7 +124,7 @@ function createPersistentDatabase(sqlDatabase, dbPath) {
           const statement = sqlDatabase.prepare(sql);
           try {
             statement.run(flattenParams(params));
-            persist();
+            if (isMutatingSql(sql)) markDirty();
             return {
               lastInsertRowid: sqlDatabase.exec('SELECT last_insert_rowid() AS id')[0].values[0][0]
             };
@@ -131,35 +138,82 @@ function createPersistentDatabase(sqlDatabase, dbPath) {
     transaction(operation) {
       return () => {
         const isOuterTransaction = transactionDepth === 0;
+        const dirtyBeforeTransaction = dirty;
+        const savepoint = `dchsi_nested_${transactionDepth}`;
         transactionDepth += 1;
         if (isOuterTransaction) {
           sqlDatabase.exec('BEGIN TRANSACTION');
+        } else {
+          sqlDatabase.exec(`SAVEPOINT ${savepoint}`);
         }
         let committed = false;
         try {
           operation();
           if (isOuterTransaction) {
             sqlDatabase.exec('COMMIT');
-            committed = true;
+          } else {
+            sqlDatabase.exec(`RELEASE SAVEPOINT ${savepoint}`);
           }
+          committed = true;
         } catch (error) {
-          if (isOuterTransaction && !committed) {
+          if (!committed) {
             try {
-              sqlDatabase.exec('ROLLBACK');
+              if (isOuterTransaction) {
+                sqlDatabase.exec('ROLLBACK');
+              } else {
+                sqlDatabase.exec(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+                sqlDatabase.exec(`RELEASE SAVEPOINT ${savepoint}`);
+              }
             } catch (_rollbackError) {
               // sql.js can auto-close a failed transaction after certain DDL errors.
             }
+            dirty = dirtyBeforeTransaction;
           }
           throw error;
         } finally {
           transactionDepth -= 1;
         }
         if (isOuterTransaction) {
-          persist();
+          flush();
         }
       };
+    },
+
+    flush,
+
+    close() {
+      flush();
+      sqlDatabase.close();
+    },
+
+    isDirty() {
+      return dirty;
     }
   };
+}
+
+function firstSqlKeyword(sql) {
+  return String(sql || '')
+    .replace(/^\s*(?:(?:--[^\r\n]*(?:\r?\n|$))|(?:\/\*[\s\S]*?\*\/)\s*)*/g, '')
+    .match(/^([A-Za-z]+)/)?.[1]?.toUpperCase() || '';
+}
+
+function isMutatingSql(sql) {
+  const keyword = firstSqlKeyword(sql);
+  if (keyword === 'PRAGMA') {
+    return isMutatingPragma(String(sql).replace(/^[\s\S]*?\bPRAGMA\b/i, ''));
+  }
+  if (keyword === 'WITH') {
+    return /\b(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(String(sql));
+  }
+  return !['', 'SELECT', 'EXPLAIN', 'VALUES'].includes(keyword);
+}
+
+function isMutatingPragma(statement) {
+  const value = String(statement || '').trim();
+  if (!value) return false;
+  if (/^(foreign_keys|query_only|busy_timeout)\s*=/i.test(value)) return false;
+  return /=/.test(value);
 }
 
 function flattenParams(params) {
@@ -192,5 +246,7 @@ function runMigrations(db) {
 module.exports = {
   initializeDatabase,
   createPersistentDatabase,
-  readValidDatabase
+  readValidDatabase,
+  isMutatingSql,
+  isMutatingPragma
 };

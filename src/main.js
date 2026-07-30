@@ -35,6 +35,7 @@ const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
 let services;
 let securityService;
 let backupService;
+let persistentDatabase;
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -730,6 +731,7 @@ app.whenReady().then(async () => {
       return result.response === 0;
     }
   });
+  persistentDatabase = database;
   backupService = createBackupService(userDataPath);
   try {
     backupService.createAutomatic();
@@ -775,5 +777,19 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', (event) => {
+  if (!persistentDatabase) return;
+  try {
+    persistentDatabase.flush();
+  } catch (error) {
+    event.preventDefault();
+    logger.error('Δεν ήταν δυνατή η τελική ασφαλής αποθήκευση της βάσης.', error);
+    dialog.showErrorBox(
+      'Αποτυχία ασφαλούς κλεισίματος',
+      'Η βάση δεν αποθηκεύτηκε με ασφάλεια. Η εφαρμογή θα παραμείνει ανοικτή.'
+    );
   }
 });
