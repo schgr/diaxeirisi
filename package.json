@@ -1,13 +1,13 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.223",
+  "version": "0.13.224",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης",
   "main": "src/main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "pretest": "node scripts/check-orphan-modules.js && node tests/atomicPersistence.test.js && node tests/databasePersistenceFrequency.test.js && node tests/shareCardBatch.test.js && node tests/heavyTaskRunner.test.js && node tests/offlinePolicy.test.js",
+    "pretest": "node scripts/check-orphan-modules.js && node tests/ipcHandlers.test.js && node tests/atomicPersistence.test.js && node tests/databasePersistenceFrequency.test.js && node tests/shareCardBatch.test.js && node tests/heavyTaskRunner.test.js && node tests/offlinePolicy.test.js",
     "check": "node --check src/main.js && node --check src/preload.js",
     "test": "node tests/shareBalance.test.js && node tests/shareValidation.test.js && node tests/shareSearch.test.mjs && node tests/sharesService.test.js && node tests/ammunitionBatchBook.test.js && node tests/securityBackup.test.js && node tests/compositionPrint.test.mjs && node tests/compositionImport.test.js && node tests/documentChangeSheet.test.js && node tests/managementReport.test.js && node tests/balanceDifferences.test.js && node tests/documentExport.test.js && node tests/settingsInitialInventory.test.mjs && node tests/financialYearMovements.test.js && node tests/yearEndRenumbering.test.js && node tests/fiscalYearClosure.test.js && node tests/exhpNominalTransfer.test.js && node tests/externalIndexRows.test.js && node tests/ledger-smoke.test.js && node tests/clothingService.test.js && node tests/exhpFormShared.test.js && node tests/docIAPyromaxika.test.js && node tests/exhpFormModuleBridge.test.js && node tests/exhpPrint.test.mjs && node tests/internalK2310.test.mjs && node tests/localizedQuantities.test.mjs && node tests/applicationMenu.test.js && node tests/requestEntryLayout.test.js",
     "pack:source": "node scripts/pack-source.js",
