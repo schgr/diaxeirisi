@@ -26,10 +26,16 @@ function registerPrintHandlers({
       safeInvoke(() => heavyTaskRunner.cancel(taskId), true)
     );
   register('database:integrity-check', async (event, taskId) =>
-      safeInvoke(() => runHeavyTask(event, 'database-integrity', {
-        snapshot: persistentDatabase.exportSnapshot(),
-        sqlJsDirectory: path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist')
-      }, { taskId, timeoutMs: 60000 }))
+      safeInvoke(() => {
+        const snapshot = persistentDatabase.exportSnapshot();
+        const transferList = snapshot.byteOffset === 0 && snapshot.byteLength === snapshot.buffer.byteLength
+          ? [snapshot.buffer]
+          : [];
+        return runHeavyTask(event, 'database-integrity', {
+          snapshot,
+          sqlJsDirectory: path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist')
+        }, { taskId, timeoutMs: 60000, transferList });
+      })
     );
   register('export:document', async (event, format, payload, taskId) =>
       safeInvoke(async () => {

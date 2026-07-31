@@ -15,12 +15,17 @@ function registerBackupHandlers({
   dialog,
   app
 }) {
+  const sendProgress = (event, progress) => {
+    if (event && event.sender && !event.sender.isDestroyed()) {
+      event.sender.send('backup:progress', progress);
+    }
+  };
   register('backup:list', async () => safeInvoke(() => backupService.list()));
   register('backup:create-automatic', async (event, taskId) =>
       safeInvoke(() => backupService.createAutomatic(true, {
         taskId,
         timeoutMs: 10 * 60 * 1000,
-        onProgress: (progress) => event.sender.send('backup:progress', progress)
+        onProgress: (progress) => sendProgress(event, progress)
       }))
     );
   register('backup:create-manual', async (event, taskId) =>
@@ -33,7 +38,7 @@ function registerBackupHandlers({
         return backupService.createManual(result.filePaths[0], {
           taskId,
           timeoutMs: 10 * 60 * 1000,
-          onProgress: (progress) => event.sender.send('backup:progress', progress)
+          onProgress: (progress) => sendProgress(event, progress)
         });
       })
     );
@@ -47,7 +52,7 @@ function registerBackupHandlers({
         const prepared = await backupService.prepareRestore(result.filePaths[0], {
           taskId,
           timeoutMs: 10 * 60 * 1000,
-          onProgress: (progress) => event.sender.send('backup:progress', progress)
+          onProgress: (progress) => sendProgress(event, progress)
         });
         setTimeout(() => {
           app.relaunch();

@@ -33,7 +33,7 @@ export function initializeDocumentExports(showToast) {
     const printButton = button._printButton;
     if (!printButton) return;
     button.disabled = true;
-    const taskId = `document-export-${Date.now()}`;
+    const taskId = crypto.randomUUID();
     const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
       if (progress.id === taskId && progress.message) button.title = progress.message;
     });

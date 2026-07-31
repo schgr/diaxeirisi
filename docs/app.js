@@ -39,7 +39,7 @@ function resolveGitHubRepository() {
 }
 
 const repository = resolveGitHubRepository();
-  const defaultInstallerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.230.exe';
+  const defaultInstallerFileName = 'diaxeirisi-Ylikoy-Setup-0.13.233.exe';
 const downloadLinks = document.querySelectorAll('[data-download-link]');
 const downloadNote = document.querySelector('[data-download-note]');
 

@@ -28,15 +28,6 @@ export const requestPriorityRows = [
   }
 ];
 
-export function listRequestPriorityOptions() {
-  return requestPriorityRows.flatMap((row) =>
-    requestPriorityColumns.map((column, index) => ({
-      code: row.codes[index],
-      label: `${row.codes[index]} - ${row.urgency} / ${column.label} - ${row.description}`
-    }))
-  );
-}
-
 export function listRequestPriorityOptionGroups() {
   return requestPriorityColumns.map((column, columnIndex) => ({
     key: column.key,

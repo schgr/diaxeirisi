@@ -6,6 +6,15 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSharesService } = require('../src/services/sharesService');
 
 async function run() {
+  const administrationSource = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'administrationPage.js'),
+    'utf8'
+  );
+  assert.match(
+    administrationSource,
+    /data-print-ammunition-batches\s+data-export-title="Βιβλίο Μερίδων Β\.Φ"/u
+  );
+
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-ammunition-batches-'));
   try {
     const db = await initializeDatabase(directory);

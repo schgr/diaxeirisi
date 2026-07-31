@@ -5,7 +5,7 @@ import {
   renderOfficialAmmoConsumptionCertificate,
   renderOfficialUselessDifferencesProtocol,
   renderOfficialUselessProtocol
-} from '../../exhpDocuments.js';
+} from '../../exhpDocuments.mjs';
 import {
   collectRows,
   formatDate,

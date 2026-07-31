@@ -5,48 +5,63 @@ if (!parentPort) {
   throw new Error('heavyTaskWorker must run inside a worker thread');
 }
 
-let canceled = false;
+let currentTaskId = null;
+let currentCancelView = null;
+const canceledTasks = new Set();
 
 parentPort.on('message', async (message) => {
   if (message && message.type === 'cancel') {
-    canceled = true;
+    canceledTasks.add(String(message.id || currentTaskId || ''));
     return;
   }
   if (!message || message.type !== 'run') return;
+  currentTaskId = String(message.id);
+  currentCancelView = message.cancelBuffer ? new Int32Array(message.cancelBuffer) : null;
   try {
-    const result = await executeTask(message.task, message.payload || {}, reportProgress);
+    const result = await executeTask(message.task, message.payload || {}, reportProgress, registerCleanup);
     checkCanceled();
-    parentPort.postMessage({ type: 'result', result });
+    parentPort.postMessage({ type: 'result', id: currentTaskId, result });
   } catch (error) {
     parentPort.postMessage({
       type: 'error',
+      id: currentTaskId,
       error: {
         message: error && error.message ? error.message : String(error),
         code: error && error.code ? error.code : 'WORKER_ERROR',
         stack: error && error.stack ? error.stack : ''
       }
     });
+  } finally {
+    canceledTasks.delete(currentTaskId);
+    currentTaskId = null;
+    currentCancelView = null;
   }
 });
 
 function reportProgress(current, total, message) {
   checkCanceled();
-  parentPort.postMessage({ type: 'progress', current, total, message });
+  parentPort.postMessage({ type: 'progress', id: currentTaskId, current, total, message });
 }
 
 function checkCanceled() {
-  if (!canceled) return;
+  if (!canceledTasks.has(currentTaskId)
+      && !(currentCancelView && Atomics.load(currentCancelView, 0) === 1)) return;
   const error = new Error('Η εργασία ακυρώθηκε.');
   error.code = 'WORKER_CANCELED';
   throw error;
 }
 
-async function executeTask(task, payload, progress) {
+function registerCleanup(filePath) {
+  parentPort.postMessage({ type: 'cleanup-path', id: currentTaskId, path: filePath });
+}
+
+async function executeTask(task, payload, progress, registerOwnedPath) {
   if (task.startsWith('backup-')) {
     const { executeBackupTask } = require('./backupWorkerTasks');
-    return executeBackupTask(task, payload, progress, checkCanceled);
+    return executeBackupTask(task, payload, progress, checkCanceled, registerOwnedPath);
   }
   if (task === 'export-document') {
+    registerOwnedPath(payload.filePath);
     progress(0, 1, 'Δημιουργία αρχείου…');
     const { writeExcelExport, writeWordExport } = require('../services/documentExportService');
     if (payload.format === 'word') {
@@ -126,6 +141,20 @@ async function executeTask(task, payload, progress) {
   }
   if (task === '__test-crash') {
     process.exit(23);
+  }
+  if (task === '__test-owned-failure') {
+    const fs = require('fs');
+    registerOwnedPath(payload.path);
+    await fs.promises.mkdir(payload.path, { recursive: true });
+    await fs.promises.writeFile(path.join(payload.path, 'partial.tmp'), 'partial');
+    throw Object.assign(new Error('Injected owned-file failure.'), { code: 'TEST_FAILURE' });
+  }
+  if (task === '__test-owned-crash') {
+    const fs = require('fs');
+    registerOwnedPath(payload.path);
+    await fs.promises.mkdir(payload.path, { recursive: true });
+    await fs.promises.writeFile(path.join(payload.path, 'partial.tmp'), 'partial');
+    process.exit(24);
   }
   throw Object.assign(new Error(`Unknown heavy task: ${task}`), { code: 'WORKER_TASK_UNKNOWN' });
 }

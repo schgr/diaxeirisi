@@ -9,7 +9,6 @@
   },
   "files": [
     "src/**/*",
-    "!src/**/*-Movies.js",
     "!src/**/*-TECLAST.js",
     "!src/types/**/*",
     "!src/exhpForm/supportingDocs/shared/docHeader.js",

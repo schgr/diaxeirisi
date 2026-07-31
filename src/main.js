@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu, session } = require('electron');
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const packageMetadata = require('../package.json');
 const { shouldShowApplicationMenu } = require('./applicationMenu');
@@ -28,10 +29,10 @@ const { AppError, toAppError } = require('./core/errorHandler');
 const { createHeavyTaskRunner } = require('./workers/heavyTaskRunner');
 const { createShutdownCoordinator } = require('./appLifecycle');
 const { registerAllIpcHandlers } = require('./ipc');
+const { createIpcSecurityPolicy } = require('./ipc/security');
 const {
-  applyOfflineSessionPolicy,
+  createOfflinePolicy,
   applyOfflineCommandLine,
-  isAllowedLocalResource
 } = require('./offlinePolicy');
 
 applyOfflineCommandLine(app.commandLine);
@@ -46,14 +47,24 @@ let backupService;
 let persistentDatabase;
 let heavyTaskRunner;
 let shutdownCoordinator;
+let offlinePolicy;
+let ipcSecurity;
+const pendingSessions = new Set();
+
+app.on('session-created', (createdSession) => {
+  if (offlinePolicy) offlinePolicy.applyToSession(createdSession);
+  else pendingSessions.add(createdSession);
+});
 
 function runHeavyTask(event, task, payload, options = {}) {
-  const taskId = options.taskId || `${task}-${Date.now()}`;
+  const taskId = options.taskId || crypto.randomUUID();
   return heavyTaskRunner.run(task, payload, {
     id: taskId,
     timeoutMs: options.timeoutMs,
+    resource: options.resource,
+    transferList: options.transferList,
     onProgress: (progress) => {
-      if (event && !event.sender.isDestroyed()) {
+      if (event && event.sender && !event.sender.isDestroyed()) {
         event.sender.send('heavy-task:progress', progress);
       }
     }
@@ -80,17 +91,23 @@ function createWindow() {
     }
   });
 
-  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  window.webContents.on('will-navigate', (event, targetUrl) => {
-    if (!isAllowedLocalResource(targetUrl)) {
-      event.preventDefault();
-    }
-  });
+  offlinePolicy.hardenWebContents(window.webContents);
   window.loadFile(path.join(__dirname, 'ui', 'index.html'));
 }
 
 function configureOfflineMode() {
-  applyOfflineSessionPolicy(session.defaultSession);
+  const userDataPath = app.getPath('userData');
+  offlinePolicy = createOfflinePolicy({
+    appPath: app.getAppPath(),
+    userDataPath
+  });
+  offlinePolicy.applyToSession(session.defaultSession);
+  for (const createdSession of pendingSessions) offlinePolicy.applyToSession(createdSession);
+  pendingSessions.clear();
+  ipcSecurity = createIpcSecurityPolicy({
+    isAllowedSenderUrl: offlinePolicy.isAllowedAppAssetUrl,
+    allowedPathRoots: [path.join(userDataPath, 'photos')]
+  });
   logger.info('Strict offline mode is active; HTTP(S), WebSocket and permissions are blocked.');
 }
 
@@ -104,6 +121,7 @@ function registerIpcHandlers() {
     path,
     __dirname,
     offlineOnly: true,
+    ipcSecurity,
     isWindows7Legacy,
     securityService,
     backupService,
@@ -217,7 +235,8 @@ app.whenReady().then(async () => {
   backupService = createBackupService(userDataPath, {
     runner: heavyTaskRunner,
     flush: () => database.flush(),
-    exportSnapshot: () => database.exportSnapshot()
+    exportSnapshot: () => database.exportSnapshot(),
+    transferableSnapshots: true
   });
   const settingsService = createSettingsService(database);
   services = {

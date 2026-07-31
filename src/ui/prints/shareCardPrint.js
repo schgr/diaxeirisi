@@ -64,7 +64,7 @@ async function renderAllShareCardPreview(
   const token = ++state.shareRenderToken;
   preview.innerHTML = renderSharePreparationStatus('Φόρτωση μερίδων…');
   const loadedCards = await loadShareCardsWithProgress(sharesApi, {
-    taskId: `share-print-${token}`,
+    taskId: crypto.randomUUID(),
     mode: 'all',
     year: state.fiscalYear,
     fromShareNumber: state.shareFrom,
@@ -168,7 +168,7 @@ async function renderShareCardPreview(sharesApi, shares, settings, state, previe
   preview.innerHTML = renderSharePreparationStatus('Προετοιμασία μερίδων…');
   const selectedId = Number(state.selectedShareId) || shares[0].id;
   const cards = await loadShareCardsWithProgress(sharesApi, {
-    taskId: `share-print-${token}`,
+    taskId: crypto.randomUUID(),
     mode: state.onlyMovedCards ? 'moved' : 'single',
     shareId: selectedId,
     year: state.fiscalYear,

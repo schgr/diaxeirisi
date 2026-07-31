@@ -25,7 +25,7 @@ const REGISTRARS = Object.freeze([
   registerAdministrationHandlers
 ]);
 
-function createIpcRegistrar(ipcMain) {
+function createIpcRegistrar(ipcMain, ipcSecurity) {
   const registeredChannels = new Set();
   return {
     registeredChannels,
@@ -34,13 +34,26 @@ function createIpcRegistrar(ipcMain) {
         throw new Error(`Duplicate IPC handler registration: ${channel}`);
       }
       registeredChannels.add(channel);
-      ipcMain.handle(channel, handler);
+      ipcMain.handle(channel, async (event, ...args) => {
+        const validationError = ipcSecurity && ipcSecurity.validate(event, args);
+        if (validationError) {
+          return {
+            ok: false,
+            error: {
+              message: 'Μη έγκυρη προέλευση ή δεδομένα IPC.',
+              code: validationError,
+              details: null
+            }
+          };
+        }
+        return handler(event, ...args);
+      });
     }
   };
 }
 
 function registerAllIpcHandlers(ipcMain, dependencies) {
-  const registrar = createIpcRegistrar(ipcMain);
+  const registrar = createIpcRegistrar(ipcMain, dependencies.ipcSecurity);
   const context = { ...dependencies, register: registrar.register };
   for (const registerHandlers of REGISTRARS) registerHandlers(context);
   const registered = [...registrar.registeredChannels];

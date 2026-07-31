@@ -1,7 +1,10 @@
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const { pathToFileURL } = require('url');
 const { IPC_CHANNELS } = require('../src/ipc/channelCatalog');
+const { createIpcSecurityPolicy } = require('../src/ipc/security');
 const {
   createIpcRegistrar,
   registerAllIpcHandlers
@@ -21,6 +24,7 @@ function createDependencies(safeInvoke) {
     path,
     __dirname: path.resolve(__dirname, '..', 'src'),
     offlineOnly: true,
+    ipcSecurity: { validate: () => null },
     isWindows7Legacy: false,
     securityService: callable,
     backupService: callable,
@@ -40,6 +44,7 @@ async function run() {
   );
   assert.match(backupHandlerSource, /app\.relaunch\(\)[\s\S]*app\.quit\(\)/u);
   assert.doesNotMatch(backupHandlerSource, /app\.exit\(/u);
+  assert.match(backupHandlerSource, /event\.sender[\s\S]*!event\.sender\.isDestroyed\(\)/u);
   const handlers = new Map();
   const registered = registerAllIpcHandlers(
     {
@@ -61,6 +66,46 @@ async function run() {
     () => registrar.register('test:duplicate', () => undefined),
     /Duplicate IPC handler registration: test:duplicate/
   );
+
+  const securityRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-ipc-security-'));
+  const appUrl = pathToFileURL(path.join(securityRoot, 'app', 'index.html')).href;
+  const photosRoot = path.join(securityRoot, 'user-data', 'photos');
+  fs.mkdirSync(photosRoot, { recursive: true });
+  fs.writeFileSync(path.join(photosRoot, 'safe.png'), 'safe');
+  const ipcSecurity = createIpcSecurityPolicy({
+    isAllowedSenderUrl: (url) => url === appUrl,
+    allowedPathRoots: [photosRoot]
+  });
+  const securedHandlers = new Map();
+  const securedRegistrar = createIpcRegistrar({
+    handle: (channel, handler) => securedHandlers.set(channel, handler)
+  }, ipcSecurity);
+  securedRegistrar.register('secured:test', async (_event, payload) => ({ ok: true, data: payload }));
+  const validEvent = { sender: { isDestroyed: () => false }, senderFrame: { url: appUrl } };
+  assert.deepStrictEqual(await securedHandlers.get('secured:test')(validEvent, {
+    photoPath: path.join(photosRoot, 'safe.png')
+  }), { ok: true, data: { photoPath: path.join(photosRoot, 'safe.png') } });
+  assert.strictEqual(
+    (await securedHandlers.get('secured:test')({
+      sender: { isDestroyed: () => false },
+      senderFrame: { url: 'https://example.test' }
+    }, {}))
+      .error.code,
+    'IPC_SENDER_INVALID'
+  );
+  assert.strictEqual(
+    (await securedHandlers.get('secured:test')(validEvent, { photoPath: path.join(securityRoot, 'secret') }))
+      .error.code,
+    'IPC_PATH_INVALID'
+  );
+  const tooDeep = {};
+  let cursor = tooDeep;
+  for (let index = 0; index < 14; index += 1) cursor = cursor.next = {};
+  assert.strictEqual(
+    (await securedHandlers.get('secured:test')(validEvent, tooDeep)).error.code,
+    'IPC_ARGUMENT_DEPTH'
+  );
+  fs.rmSync(securityRoot, { recursive: true, force: true });
 
   const expectedAllowLocked = [
     'app:get-version',

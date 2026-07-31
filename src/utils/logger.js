@@ -1,5 +1,6 @@
 function createLogger(scope) {
   function write(level, message, meta) {
+    if (level === 'info' && process.env.DCHSI_TEST_QUIET === '1') return;
     const timestamp = new Date().toISOString();
     const line = `[${timestamp}] [${level}] [${scope}] ${message}`;
     if (meta) {

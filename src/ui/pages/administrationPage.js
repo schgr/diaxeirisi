@@ -141,7 +141,8 @@ function renderAmmunitionBatchRegistry(registry) {
         </div>
         <div class="row-actions">
           <button class="primary-button" data-save-ammunition-batches type="button">Αποθήκευση</button>
-          <button class="secondary-button" data-print-ammunition-batches type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-print-ammunition-batches
+            data-export-title="Βιβλίο Μερίδων Β.Φ" type="button">Εκτύπωση</button>
         </div>
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">

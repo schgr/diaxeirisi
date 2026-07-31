@@ -603,7 +603,7 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     backupStatus.textContent = `${progress.message || 'Προετοιμασία…'} ${percentage}%`;
   });
   const runBackupAction = async (operation) => {
-    activeBackupTask = `backup-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    activeBackupTask = crypto.randomUUID();
     backupButtons.forEach((button) => { button.disabled = true; });
     if (cancelBackupButton) cancelBackupButton.hidden = false;
     if (backupStatus) backupStatus.textContent = 'Προετοιμασία…';
@@ -698,7 +698,7 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
 
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
-    const taskId = `initial-inventory-${Date.now()}`;
+    const taskId = crypto.randomUUID();
     const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
       if (progress.id === taskId && progress.message) status.textContent = progress.message;
     });
@@ -745,7 +745,7 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
   importButton?.addEventListener('click', async () => {
     if (!window.confirm('Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;')) return;
     importButton.disabled = true;
-    const taskId = `composition-import-${Date.now()}`;
+    const taskId = crypto.randomUUID();
     const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
       if (progress.id === taskId && progress.message) status.textContent = progress.message;
     });

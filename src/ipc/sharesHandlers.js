@@ -24,7 +24,8 @@ function registerSharesHandlers({
   runHeavyTask,
   dialog,
   fs,
-  path
+  path,
+  app
 }) {
   register('shares:list', async () => safeInvoke(() => services.shares.listShares()));
   register('shares:get-by-number', async (_event, shareNumber) =>

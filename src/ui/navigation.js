@@ -1,17 +1,3 @@
-export function createNavigation({ container, sections, activeSection, onNavigate }) {
-  container.innerHTML = '';
-
-  for (const section of sections) {
-    if (section.hidden) continue;
-    const button = document.createElement('button');
-    button.className = `nav-item${section.id === activeSection ? ' active' : ''}`;
-    button.type = 'button';
-    button.textContent = section.title;
-    button.addEventListener('click', () => onNavigate(section.id));
-    container.appendChild(button);
-  }
-}
-
 const HOME_TILE_META = {
   shares: { code: '§ 01-Α', icon: 'ΜΕ' },
   'share-compositions': { code: '§ 01-Ζ', icon: 'ΣΜ' },
