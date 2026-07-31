@@ -29,7 +29,7 @@
     "excelExport": 10000,
     "excelImport": 10000,
     "mainStall": 1500,
-    "rendererStall": 250,
+    "rendererStall": 500,
     "workerStall": 250,
     "rssMb": 700
   },

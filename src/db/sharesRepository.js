@@ -1,3 +1,13 @@
+const SHARE_PRINT_CHUNK_SIZE = 400;
+
+function forShareIdChunks(shareIds, query) {
+  const rows = [];
+  for (let offset = 0; offset < shareIds.length; offset += SHARE_PRINT_CHUNK_SIZE) {
+    rows.push(...query(shareIds.slice(offset, offset + SHARE_PRINT_CHUNK_SIZE)));
+  }
+  return rows;
+}
+
 function createSharesRepository(db) {
   return {
     listShares() {
@@ -62,10 +72,10 @@ function createSharesRepository(db) {
         params.push(Number(options.shareId));
       }
       if (options.mode === 'moved') {
-        filters.push(`EXISTS (
-          SELECT 1 FROM share_transactions moved
-          WHERE moved.share_id = shares.id
-            AND moved.transaction_date >= ?
+        filters.push(`shares.id IN (
+          SELECT moved.share_id
+          FROM share_transactions moved
+          WHERE moved.transaction_date >= ?
             AND moved.transaction_date <= ?
             AND moved.notes <> 'INITIAL_ANNUAL_INVENTORY'
         )`);
@@ -80,7 +90,25 @@ function createSharesRepository(db) {
         params.push(Number(options.toShareNumber));
       }
       return db.prepare(`
-        SELECT shares.*
+        SELECT
+          shares.id,
+          shares.share_number,
+          shares.nominal_number,
+          shares.description,
+          shares.material_type,
+          shares.material_code,
+          shares.main_material_number,
+          shares.measurement_unit,
+          shares.projected_quantity,
+          shares.accounting_balance,
+          shares.charged_quantity,
+          shares.unit_price,
+          shares.photo_path,
+          shares.requires_composition,
+          shares.requires_serial_number,
+          shares.requires_weapon_registry,
+          shares.requires_ammunition_batch_book,
+          shares.requires_change_sheet
         FROM shares
         WHERE ${filters.join(' AND ')}
         ORDER BY CASE WHEN shares.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
@@ -90,43 +118,167 @@ function createSharesRepository(db) {
 
     listTransactionsForSharePrint(year, shareIds) {
       if (!shareIds.length) return [];
-      const placeholders = shareIds.map(() => '?').join(',');
-      return db.prepare(`
-        SELECT id, share_id, transaction_date, transaction_unit, transaction_type,
-               document_reference, quantity, notes
-        FROM share_transactions
-        WHERE share_id IN (${placeholders})
-          AND transaction_date >= ?
-          AND transaction_date <= ?
-          AND notes <> 'INITIAL_ANNUAL_INVENTORY'
-        ORDER BY share_id, transaction_date, id
-      `).all(...shareIds, `${year}-01-01`, `${year}-12-31`);
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT id, share_id, transaction_date, transaction_unit, transaction_type,
+                 document_reference, quantity, notes
+          FROM share_transactions
+          WHERE share_id IN (${placeholders})
+            AND transaction_date >= ?
+            AND transaction_date <= ?
+            AND notes <> 'INITIAL_ANNUAL_INVENTORY'
+          ORDER BY share_id, transaction_date, id
+        `).all(...chunk, `${year}-01-01`, `${year}-12-31`);
+      });
     },
 
     listBalancesBeforeYearForSharePrint(year, shareIds) {
       if (!shareIds.length) return [];
-      const placeholders = shareIds.map(() => '?').join(',');
-      return db.prepare(`
-        SELECT share_id, COALESCE(SUM(
-          CASE WHEN transaction_type = 'Χρέωση' THEN quantity ELSE -quantity END
-        ), 0) AS movement
-        FROM share_transactions
-        WHERE share_id IN (${placeholders}) AND transaction_date < ?
-        GROUP BY share_id
-      `).all(...shareIds, `${year}-01-01`);
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT share_id, COALESCE(SUM(
+            CASE WHEN transaction_type = 'Χρέωση' THEN quantity ELSE -quantity END
+          ), 0) AS movement
+          FROM share_transactions
+          WHERE share_id IN (${placeholders}) AND transaction_date < ?
+          GROUP BY share_id
+        `).all(...chunk, `${year}-01-01`);
+      });
     },
 
     listInventoriesForSharePrint(year, shareIds) {
       if (!shareIds.length) return [];
-      const placeholders = shareIds.map(() => '?').join(',');
-      return db.prepare(`
-        SELECT id, share_id, transaction_date, quantity, document_reference
-        FROM share_transactions
-        WHERE share_id IN (${placeholders})
-          AND transaction_date <= ?
-          AND notes = 'INITIAL_ANNUAL_INVENTORY'
-        ORDER BY share_id, transaction_date DESC, id DESC
-      `).all(...shareIds, `${year}-12-31`);
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT id, share_id, transaction_date, quantity, document_reference
+          FROM share_transactions
+          WHERE share_id IN (${placeholders})
+            AND transaction_date <= ?
+            AND notes = 'INITIAL_ANNUAL_INVENTORY'
+          ORDER BY share_id, transaction_date DESC, id DESC
+        `).all(...chunk, `${year}-12-31`);
+      });
+    },
+
+    listCompositionsForSharePrint(shareIds) {
+      if (!shareIds.length) return [];
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT id, share_id, line_number, component_nominal_number,
+                 component_description, measurement_unit, quantity,
+                 not_issued_quantity, notes
+          FROM share_composition_items
+          WHERE share_id IN (${placeholders})
+          ORDER BY share_id, line_number, id
+        `).all(...chunk);
+      });
+    },
+
+    listChangeSheetsForSharePrint(shareIds) {
+      if (!shareIds.length) return [];
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT id, share_id, change_date, order_reference, previous_value,
+                 new_value, change_reason, notes, component_line_number,
+                 movement_type, quantity
+          FROM share_change_sheet_entries
+          WHERE share_id IN (${placeholders})
+          ORDER BY share_id, change_date, id
+        `).all(...chunk);
+      });
+    },
+
+    listAssignmentsForSharePrint(shareIds) {
+      if (!shareIds.length) return [];
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT *
+          FROM (
+            SELECT
+              item.share_id,
+              MIN(document.id) AS id,
+              document.department_head AS holder_name,
+              document.department_name AS department,
+              SUM(
+                CASE
+                  WHEN document.movement_type = 'Χορήγηση' THEN item.quantity
+                  ELSE -item.quantity
+                END
+              ) AS quantity,
+              MAX(document.document_date) AS assigned_at,
+              '' AS notes
+            FROM internal_items item
+            JOIN internal_documents document ON document.id = item.internal_document_id
+            WHERE item.share_id IN (${placeholders})
+            GROUP BY item.share_id, document.department_manager_id,
+                     document.department_name, document.department_head
+          ) assignment
+          WHERE assignment.quantity > 0
+          ORDER BY assignment.share_id, assignment.department COLLATE NOCASE ASC
+        `).all(...chunk);
+      });
+    },
+
+    listDocumentMovementsForSharePrint(year, shareIds) {
+      if (!shareIds.length) return [];
+      return forShareIdChunks(shareIds, (chunk) => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db.prepare(`
+          SELECT movement.share_id,
+                 movement.id AS transaction_id,
+                 movement.transaction_date,
+                 movement.transaction_type,
+                 movement.quantity,
+                 'ΑΔΔΥ' AS source_type,
+                 document.id AS document_number,
+                 item.composition_snapshot
+          FROM addy_items item
+          JOIN addy_documents document ON document.id = item.addy_document_id
+          JOIN share_transactions movement ON
+            movement.id = item.share_transaction_id
+            OR (
+              item.share_transaction_id IS NULL
+              AND movement.share_id = item.share_id
+              AND movement.transaction_date = document.document_date
+              AND movement.document_reference LIKE 'ΑΔΔΥ ' || document.id || ' /%'
+            )
+          WHERE movement.share_id IN (${placeholders})
+            AND movement.transaction_date >= ?
+            AND movement.transaction_date <= ?
+          UNION ALL
+          SELECT movement.share_id,
+                 movement.id AS transaction_id,
+                 movement.transaction_date,
+                 movement.transaction_type,
+                 movement.quantity,
+                 'ΕΧΠ' AS source_type,
+                 document.registry_number AS document_number,
+                 item.composition_snapshot
+          FROM exhp_items item
+          JOIN exhp_documents document ON document.id = item.exhp_document_id
+          JOIN share_transactions movement ON
+            movement.id = item.share_transaction_id
+            OR (
+              item.share_transaction_id IS NULL
+              AND movement.share_id = item.share_id
+              AND movement.transaction_date = document.document_date
+              AND movement.document_reference = 'ΕΧΠ ' || document.registry_number || '/' || document.fiscal_year
+            )
+          WHERE movement.share_id IN (${placeholders})
+            AND movement.transaction_date >= ?
+            AND movement.transaction_date <= ?
+          ORDER BY 1, 3, 2
+        `).all(
+          ...chunk, `${year}-01-01`, `${year}-12-31`,
+          ...chunk, `${year}-01-01`, `${year}-12-31`
+        );
+      });
     },
 
     listDocumentCompositionMovements(shareId, year) {

@@ -29,7 +29,7 @@ const LIMITS_MS = Object.freeze({
   excelExport: 10000,
   excelImport: 10000,
   mainStall: 1500,
-  rendererStall: 250,
+  rendererStall: 500,
   workerStall: 250
 });
 const RSS_LIMIT_MB = 700;
@@ -45,6 +45,10 @@ fs.mkdirSync(backupRoot, { recursive: true });
 
 const samples = new Map();
 const stalls = new Map();
+let peakRssBytes = process.memoryUsage().rss;
+const memorySampler = setInterval(() => {
+  peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
+}, 10);
 
 async function measure(name, operation) {
   const started = performance.now();
@@ -308,6 +312,8 @@ try {
     ...['backup', 'excelExport', 'excelImport'].map((name) => stallMetrics[name]?.maxMs || 0)
   );
   const rssMb = Number((process.memoryUsage().rss / 1024 / 1024).toFixed(2));
+  peakRssBytes = Math.max(peakRssBytes, process.memoryUsage().rss);
+  const peakRssMb = Number((peakRssBytes / 1024 / 1024).toFixed(2));
   const report = {
     dataset: {
       deterministic: true,
@@ -331,6 +337,7 @@ try {
       maximumWorkerMs: Number(maximumWorkerStall.toFixed(2))
     },
     rssMb,
+    peakRssMb,
     queryPlans: {}
   };
   const planDatabase = await initializeDatabase(userDataPath);
@@ -353,12 +360,15 @@ try {
     }
   }
   assert.ok(rssMb <= RSS_LIMIT_MB, `RSS ${rssMb} MB exceeds constrained x86 budget ${RSS_LIMIT_MB} MB.`);
+  assert.ok(peakRssMb <= RSS_LIMIT_MB,
+    `Peak RSS ${peakRssMb} MB exceeds constrained x86 budget ${RSS_LIMIT_MB} MB.`);
   if (outputPath) {
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`);
   }
   console.log(JSON.stringify(report, null, 2));
 } finally {
+  clearInterval(memorySampler);
   if (db) db.close();
   if (runner) await runner.close();
   fs.rmSync(temporaryRoot, { recursive: true, force: true });

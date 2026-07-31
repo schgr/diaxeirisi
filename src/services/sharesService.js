@@ -231,15 +231,33 @@ function createSharesService(db) {
           .map((row) => [Number(row.share_id), Number(row.movement || 0)])
       );
       const inventories = repository.listInventoriesForSharePrint(fiscalYear, shareIds);
+      const compositions = repository.listCompositionsForSharePrint(shareIds);
+      const savedChanges = repository.listChangeSheetsForSharePrint(shareIds);
+      const assignments = repository.listAssignmentsForSharePrint(shareIds);
+      const documentMovements = repository.listDocumentMovementsForSharePrint(fiscalYear, shareIds);
       const transactionsByShare = groupRowsByShare(transactions);
       const inventoriesByShare = groupRowsByShare(inventories);
-      return shares.map((share) => buildPrintCard(
-        share,
-        fiscalYear,
-        transactionsByShare.get(Number(share.id)) || [],
-        balances.get(Number(share.id)) || 0,
-        inventoriesByShare.get(Number(share.id)) || []
-      ));
+      const compositionsByShare = groupRowsByShare(compositions);
+      const changesByShare = groupRowsByShare(savedChanges);
+      const assignmentsByShare = groupRowsByShare(assignments);
+      const documentMovementsByShare = groupRowsByShare(documentMovements);
+      return shares.map((share) => {
+        const shareId = Number(share.id);
+        const card = buildPrintCard(
+          share,
+          fiscalYear,
+          transactionsByShare.get(shareId) || [],
+          balances.get(shareId) || 0,
+          inventoriesByShare.get(shareId) || []
+        );
+        return addPrintCardDetails(
+          card,
+          compositionsByShare.get(shareId) || [],
+          changesByShare.get(shareId) || [],
+          documentMovementsByShare.get(shareId) || [],
+          assignmentsByShare.get(shareId) || []
+        );
+      });
     },
 
     saveComposition(id, items) {
@@ -477,6 +495,52 @@ function buildPrintCard(share, year, rows, beforeYearBalance, inventories) {
       reference: openingInventory ? openingInventory.document_reference : ''
     },
     transactions: transactionsWithBalance
+  };
+}
+
+function addPrintCardDetails(card, compositionRows, savedChangeRows, documentMovements, assignmentRows) {
+  const compositionItems = compositionRows.map((row) => ({
+    id: row.id,
+    componentNominalNumber: row.component_nominal_number,
+    componentDescription: row.component_description,
+    measurementUnit: row.measurement_unit,
+    projectedQuantity: Number(row.quantity) * Number(card.share.accountingBalance || 0),
+    quantityPerMaterial: Number(row.quantity),
+    notIssuedQuantity: Number(row.not_issued_quantity || 0),
+    quantity: Number(row.quantity),
+    notes: row.notes
+  }));
+  const savedChangeEntries = savedChangeRows.map((row) => ({
+    id: row.id,
+    changeDate: row.change_date,
+    orderReference: row.order_reference,
+    previousValue: row.previous_value,
+    newValue: row.new_value,
+    changeReason: row.change_reason,
+    notes: row.notes,
+    componentLineNumber: Number(row.component_line_number || 1),
+    movementType: row.movement_type || 'ΧΡΕΩΣΗ',
+    quantity: Number(row.quantity || 0)
+  }));
+  const documentChangeEntries = buildDocumentChangeEntries(documentMovements, compositionItems)
+    .filter((documentEntry) => !savedChangeEntries.some((savedEntry) =>
+      savedEntry.changeDate === documentEntry.changeDate &&
+      savedEntry.orderReference === documentEntry.orderReference &&
+      savedEntry.componentLineNumber === documentEntry.componentLineNumber &&
+      savedEntry.movementType === documentEntry.movementType
+    ));
+  return {
+    ...card,
+    compositionItems,
+    changeSheetEntries: [...savedChangeEntries, ...documentChangeEntries],
+    assignments: assignmentRows.map((row) => ({
+      id: row.id,
+      holderName: row.holder_name,
+      department: row.department,
+      quantity: row.quantity,
+      assignedAt: row.assigned_at,
+      notes: row.notes
+    }))
   };
 }
 

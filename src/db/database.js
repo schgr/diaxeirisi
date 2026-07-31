@@ -5,6 +5,7 @@ const { migrations } = require('./migrations');
 const { seedDefaults } = require('./seed');
 const { createLogger } = require('../utils/logger');
 const { atomicPersist, cleanupOwnedTemporaryFiles, restoreBackup } = require('./atomicPersistence');
+const { createPersistenceCoordinator } = require('./persistenceCoordinator');
 
 const logger = createLogger('database');
 
@@ -18,20 +19,30 @@ async function initializeDatabase(userDataPath, options = {}) {
     locateFile: (file) => path.join(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist', file)
   });
   cleanupOwnedTemporaryFiles(dataDirectory);
+  const mainExists = fs.existsSync(dbPath);
+  const backupExists = fs.existsSync(backupPath);
   let fileBuffer = readValidDatabase(SQL, dbPath);
-  if (!fileBuffer && fs.existsSync(backupPath)) {
+  if (!fileBuffer && backupExists) {
     const backupBuffer = readValidDatabase(SQL, backupPath);
     if (backupBuffer) {
       const recover = options.offerBackupRecovery || (async () => false);
-      if (await recover({ dbPath, backupPath, mainExists: fs.existsSync(dbPath) })) {
-        restoreBackup(dbPath, backupBuffer);
-        fileBuffer = backupBuffer;
-        logger.info(`Recovered SQLite database from ${backupPath}`);
+      if (!await recover({ dbPath, backupPath, mainExists, reason: mainExists ? 'main-corrupt' : 'main-missing' })) {
+        throw databaseError('Database recovery was not accepted.', 'DATABASE_RECOVERY_DECLINED');
       }
+      try {
+        (options.restoreBackup || restoreBackup)(dbPath, backupBuffer);
+      } catch (error) {
+        throw databaseError('Database recovery failed.', 'DATABASE_RECOVERY_FAILED', error);
+      }
+      fileBuffer = readValidDatabase(SQL, dbPath);
+      if (!fileBuffer) throw databaseError('Recovered database validation failed.', 'DATABASE_RECOVERY_FAILED');
+      logger.info(`Recovered SQLite database from ${backupPath}`);
+    } else {
+      throw databaseError('The database backup is corrupt.', 'DATABASE_BACKUP_CORRUPT');
     }
   }
-  if (!fileBuffer && fs.existsSync(dbPath)) {
-    throw new Error('The main database is corrupt and no recovery was accepted.');
+  if (!fileBuffer && mainExists) {
+    throw databaseError('The main database is corrupt and no valid backup is available.', 'DATABASE_MAIN_CORRUPT');
   }
   const db = createPersistentDatabase(new SQL.Database(fileBuffer), dbPath);
   db.pragma('foreign_keys = ON');
@@ -48,6 +59,10 @@ async function initializeDatabase(userDataPath, options = {}) {
   seedDefaults(db);
   logger.info(`SQLite ready at ${dbPath}`);
   return db;
+}
+
+function databaseError(message, code, cause) {
+  return Object.assign(new Error(message), { code, cause });
 }
 
 function readValidDatabase(SQL, filePath) {
@@ -68,19 +83,22 @@ function readValidDatabase(SQL, filePath) {
 
 function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
   let transactionDepth = 0;
-  let dirty = false;
   const persistDatabase = options.persistDatabase || atomicPersist;
+  const persistence = createPersistenceCoordinator({
+    debounceMs: options.persistenceDelayMs,
+    maxDelayMs: options.persistenceMaxDelayMs,
+    scheduler: options.scheduler,
+    onError: options.onPersistenceError || ((error) => logger.error('Scheduled database persistence failed.', error)),
+    persist: () => persistDatabase(dbPath, Buffer.from(sqlDatabase.export()))
+  });
 
   function flush() {
-    if (!dirty || transactionDepth > 0) return false;
-    persistDatabase(dbPath, Buffer.from(sqlDatabase.export()));
-    dirty = false;
-    return true;
+    if (transactionDepth > 0) return false;
+    return persistence.flush();
   }
 
   function markDirty() {
-    dirty = true;
-    if (transactionDepth === 0) flush();
+    persistence.markDirty(transactionDepth === 0);
   }
 
   return {
@@ -138,7 +156,7 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
     transaction(operation) {
       return () => {
         const isOuterTransaction = transactionDepth === 0;
-        const dirtyBeforeTransaction = dirty;
+        const dirtyBeforeTransaction = persistence.isDirty();
         const savepoint = `dchsi_nested_${transactionDepth}`;
         transactionDepth += 1;
         if (isOuterTransaction) {
@@ -147,8 +165,15 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
           sqlDatabase.exec(`SAVEPOINT ${savepoint}`);
         }
         let committed = false;
+        let result;
         try {
-          operation();
+          result = operation();
+          if (result && typeof result.then === 'function') {
+            Promise.resolve(result).catch(() => {});
+            throw Object.assign(new TypeError('Database transaction callbacks must be synchronous.'), {
+              code: 'DATABASE_ASYNC_TRANSACTION'
+            });
+          }
           if (isOuterTransaction) {
             sqlDatabase.exec('COMMIT');
           } else {
@@ -167,7 +192,7 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
             } catch (_rollbackError) {
               // sql.js can auto-close a failed transaction after certain DDL errors.
             }
-            dirty = dirtyBeforeTransaction;
+            persistence.restoreDirty(dirtyBeforeTransaction);
           }
           throw error;
         } finally {
@@ -176,6 +201,7 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
         if (isOuterTransaction) {
           flush();
         }
+        return result;
       };
     },
 
@@ -183,15 +209,23 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
 
     close() {
       flush();
+      persistence.close();
       sqlDatabase.close();
     },
 
     isDirty() {
-      return dirty;
+      return persistence.isDirty();
     },
 
     exportSnapshot() {
+      flush();
       return Buffer.from(sqlDatabase.export());
+    },
+
+    forceDurability: flush,
+
+    persistenceError() {
+      return persistence.lastError();
     }
   };
 }

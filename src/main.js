@@ -26,6 +26,7 @@ const {
 const { createLogger } = require('./utils/logger');
 const { AppError, toAppError } = require('./core/errorHandler');
 const { createHeavyTaskRunner } = require('./workers/heavyTaskRunner');
+const { createShutdownCoordinator } = require('./appLifecycle');
 const { registerAllIpcHandlers } = require('./ipc');
 const {
   applyOfflineSessionPolicy,
@@ -44,6 +45,7 @@ let securityService;
 let backupService;
 let persistentDatabase;
 let heavyTaskRunner;
+let shutdownCoordinator;
 
 function runHeavyTask(event, task, payload, options = {}) {
   const taskId = options.taskId || `${task}-${Date.now()}`;
@@ -200,8 +202,21 @@ app.whenReady().then(async () => {
     }
   });
   persistentDatabase = database;
+  shutdownCoordinator = createShutdownCoordinator({
+    app,
+    database: persistentDatabase,
+    workerRunner: heavyTaskRunner,
+    onError: (error) => {
+      logger.error('Δεν ήταν δυνατή η τελική ασφαλής αποθήκευση της βάσης.', error);
+      dialog.showErrorBox(
+        'Αποτυχία ασφαλούς κλεισίματος',
+        'Η βάση δεν αποθηκεύτηκε με ασφάλεια. Η εφαρμογή θα παραμείνει ανοικτή.'
+      );
+    }
+  });
   backupService = createBackupService(userDataPath, {
     runner: heavyTaskRunner,
+    flush: () => database.flush(),
     exportSnapshot: () => database.exportSnapshot()
   });
   const settingsService = createSettingsService(database);
@@ -250,16 +265,5 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', (event) => {
-  if (heavyTaskRunner) void heavyTaskRunner.close();
-  if (!persistentDatabase) return;
-  try {
-    persistentDatabase.flush();
-  } catch (error) {
-    event.preventDefault();
-    logger.error('Δεν ήταν δυνατή η τελική ασφαλής αποθήκευση της βάσης.', error);
-    dialog.showErrorBox(
-      'Αποτυχία ασφαλούς κλεισίματος',
-      'Η βάση δεν αποθηκεύτηκε με ασφάλεια. Η εφαρμογή θα παραμείνει ανοικτή.'
-    );
-  }
+  if (shutdownCoordinator) shutdownCoordinator.beforeQuit(event);
 });

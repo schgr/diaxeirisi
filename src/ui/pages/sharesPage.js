@@ -7,6 +7,7 @@ export { renderCompositionDocument, renderCompositionDocumentFooter, numberToGre
 export { renderChangeSheetDocument, renderSharePrintDocument, renderShareBackTemplate } from '../shares/sharePrint.js';
 
 export async function renderSharesPage(container, sharesApi, settingsApi, showToast, options = {}) {
+  if (typeof container.__sharePageCleanup === 'function') container.__sharePageCleanup();
   const [allShares, settings] = await Promise.all([
     sharesApi.list(),
     settingsApi.get()
@@ -69,9 +70,15 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
   if (options.compositionOnly) {
     container.querySelector('#shares-body').innerHTML = renderRows(shares, true);
   } else {
-    bindLiveFilters(container, shares, showToast);
+    container.__sharePageCleanup = bindLiveFilters(container, shares, showToast);
   }
-  bindShareCardOpen(container, sharesApi, showToast, settings, options);
+  const disposeCardOpen = bindShareCardOpen(container, sharesApi, showToast, settings, options);
+  const disposeFilters = container.__sharePageCleanup;
+  container.__sharePageCleanup = () => {
+    if (typeof disposeFilters === 'function') disposeFilters();
+    disposeCardOpen();
+    container.__sharePageCleanup = null;
+  };
 }
 
 
@@ -82,7 +89,7 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
 
 
 function bindShareCardOpen(container, sharesApi, showToast, settings, options) {
-  container.addEventListener('dblclick', async (event) => {
+  const openFromEvent = async (event) => {
     const row = event.target.closest('tr[data-share-id]');
     if (!row) {
       return;
@@ -97,5 +104,16 @@ function bindShareCardOpen(container, sharesApi, showToast, settings, options) {
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατό το άνοιγμα της καρτέλας υλικού.', 'error');
     }
-  });
+  };
+  const onKeydown = (event) => {
+    if (event.key === 'Enter' && event.target.closest('tr[data-share-id]')) {
+      void openFromEvent(event);
+    }
+  };
+  container.addEventListener('dblclick', openFromEvent);
+  container.addEventListener('keydown', onKeydown);
+  return () => {
+    container.removeEventListener('dblclick', openFromEvent);
+    container.removeEventListener('keydown', onKeydown);
+  };
 }

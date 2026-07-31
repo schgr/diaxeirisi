@@ -27,6 +27,7 @@ function readManifest(backupPath) {
 function createBackupService(userDataPath, options = {}) {
   const runner = options.runner;
   const exportSnapshot = options.exportSnapshot;
+  const flush = options.flush || (() => {});
   if (!runner || typeof runner.run !== 'function' || typeof exportSnapshot !== 'function') {
     throw new TypeError('Backup service requires a worker runner and database snapshot provider.');
   }
@@ -53,6 +54,7 @@ function createBackupService(userDataPath, options = {}) {
     const taskId = runOptions.taskId || `backup-${kind}-${Date.now()}`;
     active.add(taskId);
     try {
+      flush();
       return await runner.run('backup-create', {
         userDataPath,
         destinationRoot,
@@ -94,6 +96,7 @@ function createBackupService(userDataPath, options = {}) {
       const taskId = runOptions.taskId || `backup-restore-${Date.now()}`;
       active.add(taskId);
       try {
+        flush();
         return await runner.run('backup-prepare-restore', {
           backupPath,
           userDataPath,

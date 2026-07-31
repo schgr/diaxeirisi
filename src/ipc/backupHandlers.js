@@ -51,7 +51,7 @@ function registerBackupHandlers({
         });
         setTimeout(() => {
           app.relaunch();
-          app.exit(0);
+          app.quit();
         }, 250);
         return prepared;
       })

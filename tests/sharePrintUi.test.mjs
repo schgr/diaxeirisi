@@ -39,9 +39,14 @@ assert.match(controls, /class="[^"]*all-share-controls[^"]*"/);
 
 let progressListener;
 let stopped = false;
+const canceledTasks = [];
 globalThis.window = {
   appApi: {
     heavyTasks: {
+      async cancel(taskId) {
+        canceledTasks.push(taskId);
+        return true;
+      },
       onProgress(listener) {
         progressListener = listener;
         return () => {
@@ -62,6 +67,7 @@ const state = {
   sharePrintCards: [],
   sharePreviewPage: 0
 };
+state.activeSharePrintTaskId = 'share-print-old';
 await renderAllShareCardPreview(
   {
     async getCardsBatch() {
@@ -100,6 +106,7 @@ await renderAllShareCardPreview(
   state,
   preview
 );
+assert.deepEqual(canceledTasks, ['share-print-old'], 'a newer preview must cancel the older worker task');
 assert.ok(stopped, 'The progress subscription must be cleaned up.');
 const completedPreview = preview.innerHTML;
 assert.match(

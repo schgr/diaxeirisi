@@ -1,5 +1,6 @@
 const assert = require('assert');
 const path = require('path');
+const fs = require('fs');
 const { IPC_CHANNELS } = require('../src/ipc/channelCatalog');
 const {
   createIpcRegistrar,
@@ -33,6 +34,12 @@ function createDependencies(safeInvoke) {
 }
 
 async function run() {
+  const backupHandlerSource = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'ipc', 'backupHandlers.js'),
+    'utf8'
+  );
+  assert.match(backupHandlerSource, /app\.relaunch\(\)[\s\S]*app\.quit\(\)/u);
+  assert.doesNotMatch(backupHandlerSource, /app\.exit\(/u);
   const handlers = new Map();
   const registered = registerAllIpcHandlers(
     {

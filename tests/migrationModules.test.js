@@ -85,7 +85,13 @@ function schemaSnapshot(db) {
 }
 
 (async () => {
-  assert.deepStrictEqual(snapshot(migrations), snapshot(baseline), 'Migration SQL hashes changed.');
+  assert.deepStrictEqual(
+    snapshot(migrations.slice(0, baseline.length)),
+    snapshot(baseline),
+    'Published migration SQL hashes changed.'
+  );
+  assert.strictEqual(migrations.length, 62);
+  assert.strictEqual(migrations[61].name, 'share_print_query_indexes');
   assert.throws(
     () => validateMigrations([migrations[0], migrations[0]]),
     /Duplicate or invalid migration version/
@@ -101,21 +107,31 @@ function schemaSnapshot(db) {
   const baselineDb = new SQL.Database();
   const currentDb = new SQL.Database();
   assert.strictEqual(applyMigrations(baselineDb, baseline), 61);
-  assert.strictEqual(applyMigrations(currentDb, migrations), 61);
-  assert.deepStrictEqual(schemaSnapshot(currentDb), schemaSnapshot(baselineDb));
+  assert.strictEqual(applyMigrations(currentDb, migrations), 62);
+  const currentIndexes = queryRows(
+    currentDb,
+    `SELECT name FROM sqlite_master
+      WHERE type = 'index'
+        AND name IN ('idx_shares_print_order', 'idx_share_transactions_moved_year')
+      ORDER BY name`
+  );
+  assert.deepStrictEqual(currentIndexes.map(({ name }) => name), [
+    'idx_share_transactions_moved_year',
+    'idx_shares_print_order'
+  ]);
   assert.strictEqual(applyMigrations(currentDb, migrations), 0, 'Second startup reran migrations.');
 
   for (const version of [10, 30, 50]) {
     const upgradeDb = new SQL.Database();
     applyMigrations(upgradeDb, baseline.filter((migration) => migration.version <= version));
-    assert.strictEqual(applyMigrations(upgradeDb, migrations), 61 - version);
-    assert.deepStrictEqual(schemaSnapshot(upgradeDb), schemaSnapshot(baselineDb));
+    assert.strictEqual(applyMigrations(upgradeDb, migrations), 62 - version);
+    assert.deepStrictEqual(schemaSnapshot(upgradeDb), schemaSnapshot(currentDb));
     upgradeDb.close();
   }
 
   baselineDb.close();
   currentDb.close();
-  console.log('migrationModules.test.js: OK (61 SQL hashes, fresh/upgrade/idempotent schema parity)');
+  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migration 62, fresh/upgrade/idempotent parity)');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

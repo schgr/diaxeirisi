@@ -6,6 +6,21 @@ const TEMP_PREFIX = '.dchsi.sqlite.tmp-';
 const temporaryPath = (directory) =>
   path.join(directory, `${TEMP_PREFIX}${process.pid}-${crypto.randomBytes(8).toString('hex')}`);
 
+function temporaryOwner(name) {
+  const match = String(name).match(/^\.dchsi\.sqlite\.tmp-(\d+)-[a-f0-9]+$/i);
+  return match ? Number(match[1]) : null;
+}
+
+function isProcessAlive(pid, processApi = process) {
+  if (pid === processApi.pid) return true;
+  try {
+    processApi.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error && error.code === 'EPERM';
+  }
+}
+
 function syncDirectory(directory, io) {
   let handle;
   try {
@@ -23,7 +38,13 @@ function writeAndSync(filePath, contents, io) {
   try {
     let offset = 0;
     while (offset < contents.length) {
-      offset += io.writeSync(handle, contents, offset, contents.length - offset);
+      const written = io.writeSync(handle, contents, offset, contents.length - offset);
+      if (!Number.isInteger(written) || written <= 0) {
+        throw Object.assign(new Error('Atomic database write made no progress.'), {
+          code: 'DATABASE_WRITE_STALLED'
+        });
+      }
+      offset += written;
     }
     io.fsyncSync(handle);
   } finally {
@@ -35,9 +56,10 @@ function safeUnlink(filePath, io) {
   try { io.unlinkSync(filePath); } catch (error) { if (error.code !== 'ENOENT') throw error; }
 }
 
-function cleanupOwnedTemporaryFiles(directory, io = fs) {
+function cleanupOwnedTemporaryFiles(directory, io = fs, processApi = process) {
   for (const entry of io.readdirSync(directory, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.startsWith(TEMP_PREFIX)) {
+    const owner = entry.isFile() ? temporaryOwner(entry.name) : null;
+    if (owner !== null && !isProcessAlive(owner, processApi)) {
       safeUnlink(path.join(directory, entry.name), io);
     }
   }
@@ -57,10 +79,21 @@ function atomicPersist(dbPath, contents, options = {}) {
     if (io.existsSync(backupPath)) {
       io.renameSync(backupPath, previousBackupPath);
       movedPreviousBackup = true;
+      syncDirectory(directory, io);
     }
     if (io.existsSync(dbPath)) {
-      io.renameSync(dbPath, backupPath);
-      movedMain = true;
+      try {
+        io.renameSync(dbPath, backupPath);
+        movedMain = true;
+        syncDirectory(directory, io);
+      } catch (error) {
+        if (movedPreviousBackup && !io.existsSync(backupPath)) {
+          io.renameSync(previousBackupPath, backupPath);
+          movedPreviousBackup = false;
+          syncDirectory(directory, io);
+        }
+        throw error;
+      }
     }
     try {
       io.renameSync(stagedPath, dbPath);
@@ -69,14 +102,19 @@ function atomicPersist(dbPath, contents, options = {}) {
       if (movedMain && !io.existsSync(dbPath)) {
         io.renameSync(backupPath, dbPath);
         movedMain = false;
+        syncDirectory(directory, io);
       }
       if (movedPreviousBackup && !io.existsSync(backupPath)) {
         io.renameSync(previousBackupPath, backupPath);
         movedPreviousBackup = false;
+        syncDirectory(directory, io);
       }
       throw replaceError;
     }
-    if (movedPreviousBackup) safeUnlink(previousBackupPath, io);
+    if (movedPreviousBackup) {
+      safeUnlink(previousBackupPath, io);
+      syncDirectory(directory, io);
+    }
   } catch (error) {
     try {
       if (movedPreviousBackup && !io.existsSync(backupPath)) io.renameSync(previousBackupPath, backupPath);
@@ -113,4 +151,11 @@ function restoreBackup(dbPath, backupContents, options = {}) {
   }
 }
 
-module.exports = { TEMP_PREFIX, atomicPersist, cleanupOwnedTemporaryFiles, restoreBackup };
+module.exports = {
+  TEMP_PREFIX,
+  atomicPersist,
+  cleanupOwnedTemporaryFiles,
+  restoreBackup,
+  temporaryOwner,
+  isProcessAlive
+};

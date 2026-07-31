@@ -108,12 +108,15 @@ async function runBackupTests(root) {
 
   const runner = createHeavyTaskRunner();
   let snapshot = originalDatabase;
+  let flushes = 0;
   const backupService = createBackupService(userData, {
     retention: 2,
     runner,
+    flush: () => { flushes += 1; },
     exportSnapshot: () => snapshot
   });
   const automatic = await backupService.createAutomatic(true);
+  assert.strictEqual(flushes, 1, 'backup must flush pending database writes before snapshot export');
   assert.ok(fs.existsSync(path.join(automatic.path, 'data', 'dchsi.sqlite')));
   assert.ok(fs.existsSync(path.join(automatic.path, 'photos', 'material.png')));
   assert.strictEqual(backupService.list().length, 1);
@@ -124,6 +127,7 @@ async function runBackupTests(root) {
   await assert.rejects(backupService.createManual(path.join(userData, 'photos')),
     (error) => error && error.code === 'BACKUP_DESTINATION_UNSAFE');
   await backupService.prepareRestore(manual.path);
+  assert.ok(flushes >= 3, 'restore preparation must flush pending database writes');
 
   snapshot = await sqliteFixture('changed-data');
   fs.writeFileSync(databasePath, snapshot);

@@ -189,6 +189,10 @@ function renderSharePreparationStatus(message, current = 0, total = 0) {
 }
 
 async function loadShareCardsWithProgress(sharesApi, payload, preview, state, token) {
+  if (state.activeSharePrintTaskId && state.activeSharePrintTaskId !== payload.taskId) {
+    void window.appApi.heavyTasks.cancel(state.activeSharePrintTaskId);
+  }
+  state.activeSharePrintTaskId = payload.taskId;
   let acceptingProgress = true;
   const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
     if (
@@ -209,6 +213,9 @@ async function loadShareCardsWithProgress(sharesApi, payload, preview, state, to
   } finally {
     acceptingProgress = false;
     stopProgress();
+    if (state.activeSharePrintTaskId === payload.taskId) {
+      state.activeSharePrintTaskId = '';
+    }
   }
 }
 
