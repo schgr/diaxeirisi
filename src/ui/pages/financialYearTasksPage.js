@@ -1,5 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
-import { printArchivedSharesTable, renderArchivePanel } from './administrationPage.js';
+import { openArchivedSharesPreview, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderInventoryStatement } from '../prints/inventoryPrint.js';
@@ -408,7 +408,7 @@ export async function renderFinancialYearTasksPage(
   archiveDetail.addEventListener('click', async (event) => {
     const submit = event.target.closest('#archive-submit');
     const restore = event.target.closest('[data-restore-share]');
-    const print = event.target.closest('[data-print-archive-table]');
+    const preview = event.target.closest('[data-preview-archive-table]');
     try {
       if (submit) {
         const selected = [...archiveContent.querySelectorAll('[data-archive-share]:checked')];
@@ -427,8 +427,8 @@ export async function renderFinancialYearTasksPage(
         const result = await administrationApi.restoreShare(Number(restore.dataset.restoreShare), data.today);
         showToast(result.message);
         await loadArchive();
-      } else if (print) {
-        await printArchivedSharesTable(archiveContent.querySelector('[data-archived-shares-table]'));
+      } else if (preview) {
+        openArchivedSharesPreview(archiveContent.querySelector('[data-archived-shares-table]'));
       }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια αρχείου.', 'error');

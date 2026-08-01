@@ -95,7 +95,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     exhpReason.value = reason;
     if (exhpReasonDisplay) exhpReasonDisplay.value = reason;
     if (exhpSelectedReasonText) {
-      exhpSelectedReasonText.textContent = reason || 'Δεν έχει επιλεγεί αιτιολογία.';
+      exhpSelectedReasonText.textContent = reason || '';
     }
     container.querySelectorAll('[data-exhp-reason-tile]').forEach((button) => {
       button.classList.toggle('selected', button.dataset.exhpReasonTile === reason);

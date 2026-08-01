@@ -15,6 +15,8 @@ import {
 } from '../transactions/entryHelpers.js';
 import { isSameIssueReason } from '../transactions/shared.js';
 
+const EXHP_REASON_DISPLAY_CODES = ['ΑΥ', 'ΟΥ', 'ΜΥ', 'ΚΜ', 'ΣΥ', 'ΔΙΧ', 'ΔΑ', 'ΣΕ', 'ΤΔ', 'ΔΑΕ', 'ΠΕ', 'ΑΠ'];
+
 const transactionDraftState = {
   items: [],
   exhpItems: [],
@@ -245,9 +247,9 @@ export async function renderTransactionsPage(
       </label>
       <div class="exhp-reason-tile-grid">
         ${EXP_AITIOLOGIES
-          .map((aitiologia) => `
+          .map((aitiologia, index) => `
             <button class="home-tile transaction-flow-tile exhp-reason-tile" data-exhp-reason-tile="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-exhp-reason-code="${escapeHtml(aitiologia.code)}" type="button">
-              <span class="home-tile-icon" aria-hidden="true">${escapeHtml(aitiologia.code.toUpperCase())}</span>
+              <span class="home-tile-icon" aria-hidden="true">${escapeHtml(EXHP_REASON_DISPLAY_CODES[index])}</span>
               <span class="home-tile-title">${escapeHtml(aitiologia.label)}</span>
               <span class="home-tile-code">§ ΕΧΠ-${escapeHtml(aitiologia.code.toUpperCase())}</span>
             </button>
@@ -255,7 +257,7 @@ export async function renderTransactionsPage(
           .join('')}
       </div>
       <div class="addy-save-row">
-        <span id="exhp-selected-reason-text" class="muted">Δεν έχει επιλεγεί αιτιολογία.</span>
+        <span id="exhp-selected-reason-text" class="muted"></span>
         <button id="exhp-wizard-next" class="primary-button" type="button">Επόμενο</button>
       </div>
     </section>

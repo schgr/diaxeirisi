@@ -55,7 +55,7 @@ export function renderManagementReport(report) {
     ['Μερίδες με Έλλειμμα', report.deficitShares],
     ['Μερίδες με Πλεόνασμα', report.surplusShares],
     ['Μερίδες που απαιτούν Σύνθεση', report.compositionShares],
-    ['Σύνθεση που δεν καταχωρίστηκε', report.missingCompositionShares],
+    ['Σύνθεση που δεν καταχωρήθηκε', report.missingCompositionShares],
     ['Μερίδες με ίδιο Αριθμό Ονομαστικού', report.duplicateNominalShares]
   ];
   return `
@@ -351,7 +351,7 @@ export function renderArchivePanel(data) {
     <section class="page-panel">
       <div class="section-heading archived-shares-heading">
         <h3>Αρχειοθετημένες Μερίδες</h3>
-        <button class="primary-button compact-print-button no-print" data-print-archive-table type="button" ${data.archivedShares.length ? '' : 'disabled'}>Εκτύπωση</button>
+        <button class="primary-button compact-print-button no-print" data-preview-archive-table type="button" ${data.archivedShares.length ? '' : 'disabled'}>Προβολή</button>
       </div>
       <div class="table-wrap">
         <table class="index-table administration-table" data-archived-shares-table>
@@ -592,8 +592,8 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'archive');
   }, showToast));
 
-  container.querySelector('[data-print-archive-table]')?.addEventListener('click', async () => run(async () => {
-    await printArchivedSharesTable(container.querySelector('[data-archived-shares-table]'));
+  container.querySelector('[data-preview-archive-table]')?.addEventListener('click', async () => run(async () => {
+    openArchivedSharesPreview(container.querySelector('[data-archived-shares-table]'));
   }, showToast));
 
   container.addEventListener('click', async (event) => {
@@ -787,6 +787,36 @@ export async function printArchivedSharesTable(table) {
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }
+}
+
+export function openArchivedSharesPreview(table) {
+  if (!table) return;
+  document.querySelector('.archived-shares-preview-backdrop')?.remove();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop archived-shares-preview-backdrop';
+  backdrop.innerHTML = `
+    <section class="request-document-modal archived-shares-preview-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΑΡΧΕΙΟ ΜΕΡΙΔΩΝ</p><h2>Αρχειοθετημένες Μερίδες</h2></div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-archive-table type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-archive-preview type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="request-document-preview archived-shares-preview-content">
+        ${table.outerHTML}
+      </div>
+    </section>`;
+  backdrop.addEventListener('click', async (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-archive-preview]')) {
+      backdrop.remove();
+      return;
+    }
+    if (event.target.closest('[data-print-archive-table]')) {
+      await printArchivedSharesTable(backdrop.querySelector('[data-archived-shares-table]'));
+    }
+  });
+  document.body.appendChild(backdrop);
 }
 
 async function printAmmunitionBatchTable(table) {

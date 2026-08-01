@@ -147,8 +147,10 @@ function resolveExportSource(printButton) {
     return document.querySelector('[data-ammunition-batch-table]');
   }
   if (printButton.matches('[data-print-archive-table]')) {
-    return printButton.closest('[data-financial-detail], main, body')
-      ?.querySelector('[data-archived-shares-table]');
+    return printButton.closest('.archived-shares-preview-backdrop')
+      ?.querySelector('[data-archived-shares-table]')
+      || printButton.closest('[data-financial-detail], main, body')
+        ?.querySelector('[data-archived-shares-table]');
   }
   if (printButton.matches('[data-print-k2310]')) {
     return printButton.closest('.modal-backdrop')?.querySelector('[data-k2310-pages]');
