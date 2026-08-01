@@ -130,7 +130,7 @@ export async function renderPrintsPage(
             <p class="home-group-label">${escapeHtml(options.menuTitle || visiblePrintTabGroups[0].label)}</p>
             <span class="home-zone-tag">§ ${visiblePrintTabGroups[0].key === 'shares' ? 'ΣΕ' : 'ΕΥ'}</span>
           </div>
-          <div class="home-tile-grid print-tile-grid">
+          <div class="home-tile-grid print-tile-grid uniform-task-menu">
             ${visiblePrintTabGroups[0].tabs.map((tab) => `
               <button class="home-tile panel corner" data-print-tab="${tab.key}" type="button">
                 <span class="home-tile-icon" aria-hidden="true">${escapeHtml(PRINT_TILE_META[tab.key]?.icon || 'ΕΥ')}</span>

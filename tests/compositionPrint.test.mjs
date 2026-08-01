@@ -52,6 +52,7 @@ const addyDocument = renderAddyCompositionDocument(
     composition: [compositionItem(0)]
   }]
 );
+assert.match(addyDocument, /material-form-page-number">Σελίδα 1 από 1</u);
 assert.ok(addyDocument.includes(footer), 'The ADDY composition must use the complete official footer.');
 assert.match(addyDocument, /class="composition-column-numbers"/);
 

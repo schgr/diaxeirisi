@@ -24,3 +24,174 @@
   width: 100%;
   white-space: nowrap;
 }
+.key-catalogue-panel {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.key-catalogue-panel > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.key-catalogue-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 0.75rem;
+}
+
+.key-catalogue-search-field {
+  flex: 1;
+}
+
+.key-catalogue-result-list {
+  display: grid;
+  max-height: 18rem;
+  overflow: auto;
+  gap: 0.35rem;
+}
+
+.key-catalogue-result {
+  display: grid;
+  grid-template-columns: 10rem minmax(15rem, 1fr);
+  gap: 0.2rem 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.key-catalogue-result:hover,
+.key-catalogue-result:focus-visible {
+  border-color: var(--primary);
+}
+
+.key-catalogue-result small {
+  grid-column: 2;
+}
+
+.request-line-barcode {
+  display: block;
+  width: 100%;
+  min-width: 92px;
+  height: 30px;
+  background: #fff;
+}
+
+.request-document-notes-cell > span:not(:empty) {
+  display: block;
+  margin-top: 2px;
+  font-size: 7px;
+}
+
+/* Keep the complete request entry form on one row at every renderer width. */
+.request-panel {
+  overflow-x: auto;
+}
+
+.request-entry-all-row {
+  min-width: 1850px;
+  grid-template-columns:
+    115px 105px minmax(190px, 1fr) minmax(190px, 1fr)
+    120px minmax(220px, 1.25fr) 85px minmax(150px, 0.9fr)
+    minmax(165px, 1fr) minmax(175px, 1fr) minmax(150px, 0.9fr) 96px;
+  align-items: end;
+}
+
+.request-entry-all-row .field,
+.request-entry-all-row input,
+.request-entry-all-row select,
+.request-entry-all-row button {
+  min-width: 0;
+  width: 100%;
+}
+
+.request-entry-all-row #request-add-item {
+  min-width: 96px;
+  white-space: nowrap;
+}
+
+/* Inventory entry controls stay on one horizontal line; the panel scrolls when needed. */
+.inventory-session-grid {
+  min-width: 1050px;
+  grid-template-columns: 160px minmax(420px, 1fr) minmax(320px, 1fr) 120px;
+}
+
+.inventory-create-panel,
+.inventory-workspace {
+  overflow-x: auto;
+}
+
+.inventory-count-grid {
+  min-width: 1680px;
+  grid-template-columns:
+    170px 210px 150px 130px 130px 180px 140px 140px minmax(200px, 1fr) 120px;
+}
+
+.inventory-count-notes {
+  grid-column: auto;
+}
+
+.composition-document-page .material-form-page-number {
+  position: absolute;
+  right: 15mm;
+  bottom: 8mm;
+  margin-top: 0;
+  text-align: right;
+}
+
+.annual-inventory-panel {
+  overflow-x: auto;
+}
+
+.annual-inventory-form {
+  display: grid;
+  grid-template-columns: 150px 150px repeat(3, minmax(360px, 1fr)) 120px;
+  gap: 12px;
+  min-width: 1550px;
+  align-items: end;
+}
+
+.annual-inventory-committee-member {
+  display: grid;
+  grid-template-columns: 120px minmax(200px, 1fr);
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.annual-inventory-committee-member legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.uniform-task-menu {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1500px) {
+  .uniform-task-menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .uniform-task-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .uniform-task-menu {
+    grid-template-columns: 1fr;
+  }
+}

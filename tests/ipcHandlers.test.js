@@ -33,7 +33,8 @@ function createDependencies(safeInvoke) {
     services: callable,
     runHeavyTask: callable,
     sanitizeExportFilename: callable,
-    printCurrentDocument: callable
+    printCurrentDocument: callable,
+    keyCatalogueService: callable
   };
 }
 
@@ -58,7 +59,7 @@ async function run() {
 
   assert.deepStrictEqual(registered, IPC_CHANNELS);
   assert.deepStrictEqual([...handlers.keys()], IPC_CHANNELS);
-  assert.strictEqual(IPC_CHANNELS.length, 156);
+  assert.strictEqual(IPC_CHANNELS.length, 159);
 
   const registrar = createIpcRegistrar({ handle() {} });
   registrar.register('test:duplicate', () => undefined);

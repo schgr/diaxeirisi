@@ -383,6 +383,7 @@ async function renderActivePage() {
         window.appApi.administration,
         window.appApi.shares,
         window.appApi.settings,
+        window.appApi.inventory,
         showToast
       );
       return;

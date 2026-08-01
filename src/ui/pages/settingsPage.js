@@ -996,7 +996,17 @@ function debounce(operation, delay, showToast) {
 }
 
 async function refresh(container, settingsApi, showToast, message) {
-  await renderSettingsPage(container, settingsApi, window.appApi.clothing, showToast, '', window.appApi.shares);
+  const activePanel = Array.from(container.querySelectorAll('[data-settings-panel]'))
+    .find((panel) => !panel.hidden);
+  const activeTab = activePanel?.dataset.settingsPanel || '';
+  await renderSettingsPage(
+    container,
+    settingsApi,
+    window.appApi.clothing,
+    showToast,
+    activeTab,
+    window.appApi.shares
+  );
   const content = container.closest('.content');
   if (content) content.scrollTop = 0;
   showToast(message);

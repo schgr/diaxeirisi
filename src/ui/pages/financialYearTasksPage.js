@@ -2,6 +2,7 @@ import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { printArchivedSharesTable, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 import { splitOfficerSignature } from '../officerSignature.js';
+import { renderInventoryStatement } from '../prints/inventoryPrint.js';
 
 export async function renderFinancialYearTasksPage(
   container,
@@ -10,6 +11,7 @@ export async function renderFinancialYearTasksPage(
   administrationApi,
   sharesApi,
   settingsApi,
+  inventoryApi,
   showToast
 ) {
   const yearStatus = await yearEndApi.getStatus();
@@ -28,7 +30,7 @@ export async function renderFinancialYearTasksPage(
       </div>
     </section>
 
-    <section class="transaction-flow-home financial-year-menu" data-financial-menu aria-label="Επιλογή εργασίας οικονομικού έτους">
+    <section class="transaction-flow-home financial-year-menu uniform-task-menu" data-financial-menu aria-label="Επιλογή εργασίας οικονομικού έτους">
       <button class="home-tile transaction-flow-tile" data-financial-source="addy" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
         <span class="home-tile-title">Έλεγχος Κινήσεων ΑΔΔΥ</span>
@@ -55,9 +57,14 @@ export async function renderFinancialYearTasksPage(
         <span class="home-tile-code">§ ΕΟΕ-5</span>
       </button>
       <button class="home-tile transaction-flow-tile" data-financial-source="close-year" type="button">
+        <span class="home-tile-icon" aria-hidden="true">ΑΠ</span>
+        <span class="home-tile-title">Καταστάσεις Απογραφής Έτους</span>
+        <span class="home-tile-code">§ ΕΟΕ-6</span>
+      </button>
+      <button class="home-tile transaction-flow-tile" data-financial-source="close-year" data-close-year-tile type="button">
         <span class="home-tile-icon" aria-hidden="true">ΚΕ</span>
         <span class="home-tile-title">Κλείσιμο Οικονομικού Έτους</span>
-        <span class="home-tile-code">§ ΕΟΕ-6</span>
+        <span class="home-tile-code">§ ΕΟΕ-7</span>
       </button>
     </section>
 
@@ -136,12 +143,30 @@ export async function renderFinancialYearTasksPage(
       </section>
     </div>
 
+    <div data-annual-inventory-detail hidden>
+      <div class="page-toolbar no-print">
+        <button class="secondary-button" data-annual-inventory-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
+      </div>
+      <section class="page-panel annual-inventory-panel">
+        <p class="eyebrow">ΕΟΕ-6</p>
+        <h3>Καταστάσεις Απογραφής Έτους</h3>
+        <div class="annual-inventory-form">
+          <label class="field"><span>Από</span><input data-annual-inventory-from type="date" value="${state.fiscalYear}-01-01" /></label>
+          <label class="field"><span>Έως</span><input data-annual-inventory-to type="date" value="${state.fiscalYear}-12-31" /></label>
+          ${renderAnnualInventoryCommitteeFields('Πρόεδρος', 'president')}
+          ${renderAnnualInventoryCommitteeFields('Α΄ Μέλος', 'member-a')}
+          ${renderAnnualInventoryCommitteeFields('Β΄ Μέλος', 'member-b')}
+          <button class="primary-button" data-create-annual-inventory type="button">Δημιουργία</button>
+        </div>
+      </section>
+    </div>
+
     <div data-close-year-detail hidden>
       <div class="page-toolbar no-print">
         <button class="secondary-button" data-close-year-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
       </div>
       <section class="page-panel fiscal-year-close-panel">
-        <p class="eyebrow">ΕΟΕ-6</p>
+        <p class="eyebrow">ΕΟΕ-7</p>
         <h3>Κλείσιμο Οικονομικού Έτους</h3>
         <p class="muted">Το ενεργό οικονομικό έτος είναι το <strong>${escapeHtml(state.fiscalYear)}</strong>. Με το κλείσιμο δημιουργείται κλειδωμένο αρχείο και το επόμενο έτος γίνεται ενεργό.</p>
         <div class="fiscal-year-close-warning">
@@ -178,6 +203,7 @@ export async function renderFinancialYearTasksPage(
   const archiveContent = container.querySelector('[data-archive-content]');
   const yearPrintsDetail = container.querySelector('[data-year-prints-detail]');
   const yearPrintsResults = container.querySelector('[data-year-prints-results]');
+  const annualInventoryDetail = container.querySelector('[data-annual-inventory-detail]');
   const closeYearDetail = container.querySelector('[data-close-year-detail]');
 
   function showMenu() {
@@ -186,6 +212,7 @@ export async function renderFinancialYearTasksPage(
     renumberDetail.hidden = true;
     archiveDetail.hidden = true;
     yearPrintsDetail.hidden = true;
+    annualInventoryDetail.hidden = true;
     closeYearDetail.hidden = true;
     menu.classList.remove('is-hidden');
     menu.hidden = false;
@@ -283,8 +310,10 @@ export async function renderFinancialYearTasksPage(
       } else if (state.source === 'prints') {
         yearPrintsDetail.hidden = false;
         void loadYearPrints();
-      } else if (state.source === 'close-year') {
+      } else if (button.hasAttribute('data-close-year-tile')) {
         closeYearDetail.hidden = false;
+      } else if (state.source === 'close-year') {
+        annualInventoryDetail.hidden = false;
       } else {
         detail.hidden = false;
         void refresh();
@@ -298,7 +327,35 @@ export async function renderFinancialYearTasksPage(
   container.querySelector('[data-renumber-back]').addEventListener('click', showMenu);
   container.querySelector('[data-archive-back]').addEventListener('click', showMenu);
   container.querySelector('[data-year-prints-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-annual-inventory-back]').addEventListener('click', showMenu);
   container.querySelector('[data-close-year-back]').addEventListener('click', showMenu);
+  container.querySelector('[data-create-annual-inventory]').addEventListener('click', async () => {
+    try {
+      const periodStart = container.querySelector('[data-annual-inventory-from]').value;
+      const periodEnd = container.querySelector('[data-annual-inventory-to]').value;
+      const result = await inventoryApi.createSession({
+        inventoryDate: periodEnd,
+        periodStart,
+        periodEnd,
+        inventoryReason: 'Ετήσια απογραφή Διαχείρισης',
+        title: 'Ετήσια απογραφή Διαχείρισης',
+        committeePresidentRank: container.querySelector('[data-annual-inventory-president-rank]').value,
+        committeePresidentName: container.querySelector('[data-annual-inventory-president-name]').value,
+        committeeMemberARank: container.querySelector('[data-annual-inventory-member-a-rank]').value,
+        committeeMemberAName: container.querySelector('[data-annual-inventory-member-a-name]').value,
+        committeeMemberBRank: container.querySelector('[data-annual-inventory-member-b-rank]').value,
+        committeeMemberBName: container.querySelector('[data-annual-inventory-member-b-name]').value
+      });
+      const [session, settings] = await Promise.all([
+        inventoryApi.getSession(result.id),
+        settingsApi.get()
+      ]);
+      showToast(result.message, 'success');
+      openAnnualInventoryPreview(settings, session, showToast);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η δημιουργία της Κατάστασης Απογραφής Έτους.', 'error');
+    }
+  });
   container.querySelector('[data-close-year-accept]').addEventListener('click', async () => {
     const accepted = await confirmFiscalYearClosure(state.fiscalYear);
     if (!accepted) return;
@@ -312,6 +369,7 @@ export async function renderFinancialYearTasksPage(
         administrationApi,
         sharesApi,
         settingsApi,
+        inventoryApi,
         showToast
       );
     } catch (error) {
@@ -421,6 +479,71 @@ export async function renderFinancialYearTasksPage(
     state.transactionType = event.target.value;
     void refresh();
   });
+}
+
+function renderAnnualInventoryCommitteeFields(label, id) {
+  return `
+    <fieldset class="annual-inventory-committee-member">
+      <legend>${label}</legend>
+      <label class="field">
+        <span>Βαθμός</span>
+        <input data-annual-inventory-${id}-rank data-preserve-case="true" autocomplete="off" />
+      </label>
+      <label class="field">
+        <span>Ονοματεπώνυμο</span>
+        <input data-annual-inventory-${id}-name data-preserve-case="true" autocomplete="off" />
+      </label>
+    </fieldset>
+  `;
+}
+
+function openAnnualInventoryPreview(settings, session, showToast) {
+  document.querySelector('.annual-inventory-backdrop')?.remove();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop annual-inventory-backdrop';
+  backdrop.innerHTML = `
+    <section class="request-document-modal inventory-statement-modal">
+      <header class="material-card-header no-print">
+        <div>
+          <p class="eyebrow">ΟΙΚΟΝΟΜΙΚΟ ΕΤΟΣ ${escapeHtml(session.fiscalYear)}</p>
+          <h2>Κατάσταση Απογραφής Έτους</h2>
+        </div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-annual-inventory type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-annual-inventory type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="inventory-modal-preview" data-annual-inventory-preview>
+        ${renderInventoryStatement(settings, session)}
+      </div>
+    </section>
+  `;
+  backdrop.addEventListener('click', async (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-annual-inventory]')) {
+      backdrop.remove();
+      return;
+    }
+    if (!event.target.closest('[data-print-annual-inventory]')) return;
+    const printRoot = document.createElement('div');
+    printRoot.className = 'isolated-print-root';
+    printRoot.innerHTML = backdrop.querySelector('[data-annual-inventory-preview]').innerHTML;
+    document.body.dataset.isolatedDocumentPrint = 'true';
+    document.body.appendChild(printRoot);
+    try {
+      await waitForPrintLayout();
+      const result = await window.appApi.print.currentDocument({
+        landscape: false,
+        title: `Κατάσταση Απογραφής Έτους ${session.fiscalYear}`
+      });
+      if (result?.printed === false) throw new Error(result.failureReason || 'Η εκτύπωση ακυρώθηκε.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση.', 'error');
+    } finally {
+      printRoot.remove();
+      delete document.body.dataset.isolatedDocumentPrint;
+    }
+  });
+  document.body.appendChild(backdrop);
 }
 
 function confirmFiscalYearClosure(fiscalYear) {

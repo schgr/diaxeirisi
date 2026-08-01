@@ -3,7 +3,11 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const packageMetadata = require('../package.json');
-const { shouldShowApplicationMenu } = require('./applicationMenu');
+const {
+  configureApplicationMenu,
+  shouldShowApplicationMenu,
+  shouldToggleDevToolsForInput
+} = require('./applicationMenu');
 const { initializeDatabase } = require('./db/database');
 const { createSettingsService } = require('./services/settingsService');
 const { createSharesService } = require('./services/sharesService');
@@ -20,6 +24,7 @@ const { createCompositionImportService } = require('./services/compositionImport
 const { createExhpDocumentsService } = require('./services/exhpDocumentsService');
 const { createClothingService } = require('./services/clothingService');
 const { createSecurityService } = require('./services/securityService');
+const { createKeyCatalogueService } = require('./services/keyCatalogueService');
 const { createBackupService, applyPendingRestore } = require('./services/backupService');
 const {
   sanitizeExportFilename
@@ -49,6 +54,7 @@ let heavyTaskRunner;
 let shutdownCoordinator;
 let offlinePolicy;
 let ipcSecurity;
+let keyCatalogueService;
 const pendingSessions = new Set();
 
 app.on('session-created', (createdSession) => {
@@ -72,6 +78,7 @@ function runHeavyTask(event, task, payload, options = {}) {
 }
 
 function createWindow() {
+  const isBetaBuild = shouldShowApplicationMenu(app.getVersion());
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -87,11 +94,20 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      devTools: isBetaBuild,
       spellcheck: false
     }
   });
 
   offlinePolicy.hardenWebContents(window.webContents);
+  if (isBetaBuild) {
+    window.webContents.on('before-input-event', (event, input) => {
+      if (!shouldToggleDevToolsForInput(app.getVersion(), input)) return;
+      event.preventDefault();
+      if (window.webContents.isDevToolsOpened()) window.webContents.closeDevTools();
+      else window.webContents.openDevTools({ mode: 'detach', activate: true });
+    });
+  }
   window.loadFile(path.join(__dirname, 'ui', 'index.html'));
 }
 
@@ -130,7 +146,8 @@ function registerIpcHandlers() {
     services,
     runHeavyTask,
     sanitizeExportFilename,
-    printCurrentDocument
+    printCurrentDocument,
+    keyCatalogueService
   });
 }
 
@@ -195,11 +212,13 @@ async function safeInvoke(operation, allowLocked = false) {
 
 app.whenReady().then(async () => {
   configureOfflineMode();
-  if (!shouldShowApplicationMenu(app.getVersion())) {
-    Menu.setApplicationMenu(null);
-  }
+  configureApplicationMenu({ Menu, BrowserWindow, version: app.getVersion() });
   const userDataPath = app.getPath('userData');
   heavyTaskRunner = createHeavyTaskRunner({ defaultTimeout: 10 * 60 * 1000 });
+  keyCatalogueService = createKeyCatalogueService({
+    configFile: path.join(app.getPath('userData'), 'key-catalogue.json')
+  });
+  await keyCatalogueService.initialize();
   await applyPendingRestore(userDataPath, heavyTaskRunner);
   securityService = createSecurityService(userDataPath);
   const database = await initializeDatabase(userDataPath, {

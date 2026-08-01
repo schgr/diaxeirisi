@@ -106,6 +106,7 @@ export function renderAddyCompositionDocument(documentData, items) {
         </tbody>
       </table>
       ${renderCompositionDocumentFooter()}
+      <div class="material-form-page-number">Σελίδα 1 από 1</div>
     </article>
   `;
 }
@@ -279,7 +280,15 @@ export function addySignatureCell(label, number, value = '') {
 
 export async function printAddyDocument(target) {
   const body = window.document.body;
+  const selector = target === 'addy' ? '.addy-document-page' : '.addy-composition-document';
+  const source = window.document.querySelector(`.addy-document-backdrop ${selector}`);
+  if (!source) return;
+  const printRoot = window.document.createElement('div');
+  printRoot.className = 'isolated-print-root addy-isolated-print-root';
+  printRoot.innerHTML = source.outerHTML;
   body.dataset.addyPrintTarget = target;
+  body.dataset.isolatedDocumentPrint = 'true';
+  body.appendChild(printRoot);
   try {
     await window.appApi.print.currentDocument({
       landscape: target === 'addy',
@@ -288,6 +297,8 @@ export async function printAddyDocument(target) {
         : 'Κατάσταση Συνθέσεως'
     });
   } finally {
+    printRoot.remove();
+    delete body.dataset.isolatedDocumentPrint;
     delete body.dataset.addyPrintTarget;
   }
 }

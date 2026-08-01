@@ -186,7 +186,10 @@ contextBridge.exposeInMainWorld('appApi', {
     updateStatus: (id, status) => invoke('requests:update-status', id, status),
     getRenewalCandidates: () => invoke('requests:renewal-candidates'),
     postponeRenewal: (id) => invoke('requests:postpone-renewal', id),
-    renew: (id, payload) => invoke('requests:renew', id, payload)
+    renew: (id, payload) => invoke('requests:renew', id, payload),
+    getKeyCatalogueStatus: () => invoke('requests:key-catalogue-status'),
+    chooseKeyCatalogue: () => invoke('requests:key-catalogue-choose'),
+    searchKeyCatalogue: (query) => invoke('requests:key-catalogue-search', query)
   },
   internal: {
     getReferenceData: () => invoke('internal:reference-data'),

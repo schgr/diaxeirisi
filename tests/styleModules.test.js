@@ -43,7 +43,9 @@ const modules = actualImports.map((relativePath) => {
 const baselineModules = modules.filter(
   ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
 );
-const combined = baselineModules.map(({ contents }) => contents).join('');
+const combined = baselineModules.map(({ relativePath, contents }) =>
+  relativePath === './styles/base-layout.css' ? contents.replace(/\r?\n$/, '') : contents
+).join('');
 const baseline = execFileSync(
   'git',
   ['show', '1617ca455cb78579bf4b544a9bc31f6a203bcbc1:src/ui/styles.css'],

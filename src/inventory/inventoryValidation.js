@@ -9,6 +9,8 @@ function validateInventorySession(payload) {
     inventoryReason: optionalText(payload && payload.inventoryReason) || 'Τακτική Απογραφή',
     title: optionalText(payload && payload.title) || 'Ετήσια Απογραφή Γενικής Διαχείρισης',
     notes: optionalText(payload && payload.notes),
+    periodStart: optionalText(payload && payload.periodStart),
+    periodEnd: optionalText(payload && payload.periodEnd),
     committeePresidentRank: optionalText(payload && payload.committeePresidentRank),
     committeePresidentName: optionalText(payload && payload.committeePresidentName),
     committeeMemberARank: optionalText(payload && payload.committeeMemberARank),

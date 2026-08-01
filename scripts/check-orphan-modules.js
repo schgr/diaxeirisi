@@ -7,6 +7,7 @@ const ENTRY_POINTS = [
   'src/main.js',
   'src/preload.js',
   'src/workers/heavyTaskWorker.js',
+  'src/workers/keyCatalogueWorker.js',
   'src/ui/renderer.js'
 ];
 const MODULE_PATTERN = /\.(?:js|mjs)$/;

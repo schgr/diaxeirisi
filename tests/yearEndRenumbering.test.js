@@ -7,6 +7,7 @@ const { createSharesService } = require('../src/services/sharesService');
 const { createInventoryService } = require('../src/services/inventoryService');
 const { createYearEndService } = require('../src/services/yearEndService');
 const { createAdministrationService } = require('../src/services/administrationService');
+const { createTransactionsService } = require('../src/services/transactionsService');
 
 async function run() {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-year-end-'));
@@ -16,6 +17,7 @@ async function run() {
     const inventory = createInventoryService(db);
     const yearEnd = createYearEndService(db);
     const administration = createAdministrationService(db);
+    const transactions = createTransactionsService(db);
 
     shares.addShare(makeShare('10', 'Ενεργό υλικό', 12));
     shares.addShare(makeShare('20', 'Υλικό μηδενικού υπολοίπου', 0));
@@ -97,6 +99,32 @@ async function run() {
     assert.strictEqual(annualSession.items[0].finalCount, 12);
     assert.strictEqual(annualSession.items[0].partialManagementQuantity, 0);
     assert.strictEqual(annualSession.items[0].expectedWarehouseQuantity, 0);
+
+    transactions.saveAddy({
+      documentDate: '2028-01-15',
+      transactionUnit: 'ΜΟΝΑΔΑ',
+      items: [{
+        shareNumber: '101', nominalNumber: 'N-10', description: 'ΥΛΙΚΟ 10',
+        quantity: 5, transactionType: 'Χρέωση', measurementUnit: 'Τεμάχια', materialType: 'Υλικό'
+      }]
+    });
+    const datedAnnual = inventory.createSession({
+      inventoryDate: '2028-12-31',
+      periodStart: '2027-07-01',
+      periodEnd: '2027-12-31',
+      inventoryReason: 'Ετήσια απογραφή Διαχείρισης',
+      committeePresidentRank: 'Τχης',
+      committeePresidentName: 'Πρόεδρος'
+    });
+    const datedSession = inventory.getSession(datedAnnual.id);
+    const datedItem = datedSession.items.find((item) => item.shareNumber === '101');
+    assert.strictEqual(datedSession.inventoryDate, '2027-12-31');
+    assert.strictEqual(datedSession.periodStart, '2027-07-01');
+    assert.strictEqual(datedSession.periodEnd, '2027-12-31');
+    assert.strictEqual(datedSession.committeePresidentName, 'Πρόεδρος');
+    assert.strictEqual(datedItem.accountingBalance, 12);
+    assert.strictEqual(datedItem.finalCount, 12);
+    assert.strictEqual(datedItem.difference, 0);
     console.log('yearEndRenumbering.test.js: OK');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

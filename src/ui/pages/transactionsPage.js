@@ -68,7 +68,7 @@ export async function renderTransactionsPage(
       </div>
     </section>
 
-    <section class="transaction-flow-home ${activeTab === 'home' ? '' : 'is-hidden'}" aria-label="Επιλογή ροής δοσοληψιών">
+    <section class="transaction-flow-home uniform-task-menu ${activeTab === 'home' ? '' : 'is-hidden'}" aria-label="Επιλογή ροής δοσοληψιών">
       <button class="home-tile transaction-flow-tile" data-transaction-flow="addy" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
         <span class="home-tile-title">ΑΔΔΥ</span>

@@ -8,6 +8,9 @@ const CHANNELS = Object.freeze([
   "requests:renewal-candidates",
   "requests:postpone-renewal",
   "requests:renew",
+  "requests:key-catalogue-status",
+  "requests:key-catalogue-choose",
+  "requests:key-catalogue-search",
   "internal:reference-data",
   "internal:list",
   "internal:department-balances",
@@ -17,7 +20,10 @@ const CHANNELS = Object.freeze([
 function registerRequestsHandlers({
   register,
   safeInvoke,
-  services
+  services,
+  dialog,
+  BrowserWindow,
+  keyCatalogueService
 }) {
   register('requests:reference-data', async () =>
       safeInvoke(() => services.requests.getReferenceData())
@@ -39,6 +45,23 @@ function registerRequestsHandlers({
     );
   register('requests:renew', async (_event, id, payload) =>
       safeInvoke(() => services.requests.renewRequest(id, payload))
+    );
+  register('requests:key-catalogue-status', async () =>
+      safeInvoke(() => keyCatalogueService.status())
+    );
+  register('requests:key-catalogue-choose', async (event) =>
+      safeInvoke(async () => {
+        const owner = BrowserWindow.fromWebContents(event.sender);
+        const result = await dialog.showOpenDialog(owner, {
+          title: 'Επιλογή φακέλου Καταλόγου ΚΕΥ',
+          properties: ['openDirectory']
+        });
+        if (result.canceled || !result.filePaths[0]) return { configured: false, canceled: true };
+        return keyCatalogueService.configure(result.filePaths[0]);
+      })
+    );
+  register('requests:key-catalogue-search', async (_event, query) =>
+      safeInvoke(() => keyCatalogueService.search(query))
     );
   register('internal:reference-data', async () =>
       safeInvoke(() => services.internal.getReferenceData())

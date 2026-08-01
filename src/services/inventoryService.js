@@ -23,9 +23,15 @@ function createInventoryService(db) {
       const session = validateInventorySession(payload);
       const isAnnual = session.inventoryReason === 'Ετήσια απογραφή Διαχείρισης';
       if (isAnnual) {
-        session.inventoryDate = `${session.fiscalYear}-12-31`;
-        session.periodStart = `${session.fiscalYear}-01-01`;
-        session.periodEnd = session.inventoryDate;
+        session.periodStart = session.periodStart || `${session.fiscalYear}-01-01`;
+        session.periodEnd = session.periodEnd || `${session.fiscalYear}-12-31`;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(session.periodStart)
+          || !/^\d{4}-\d{2}-\d{2}$/.test(session.periodEnd)
+          || session.periodStart > session.periodEnd) {
+          throw new AppError('Η περίοδος της ετήσιας απογραφής δεν είναι έγκυρη.', 'VALIDATION_ERROR');
+        }
+        session.inventoryDate = session.periodEnd;
+        session.fiscalYear = Number(session.periodEnd.slice(0, 4));
         session.title = `Ετήσια απογραφή Διαχείρισης ${session.fiscalYear}`;
       }
       let id;
@@ -35,7 +41,7 @@ function createInventoryService(db) {
         serialNumber = repository.getNextSerial(session.fiscalYear);
         id = repository.createSession({ ...session, serialNumber });
         if (isAnnual) {
-          itemCount = repository.populateAnnualSession(id, session.fiscalYear);
+          itemCount = repository.populateAnnualSession(id, session.periodEnd);
           repository.completeSession(id);
         }
       });

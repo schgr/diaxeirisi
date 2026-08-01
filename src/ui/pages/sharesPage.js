@@ -1,6 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 import { openShareCard } from '../shares/shareCard.js';
-import { renderSharesTableHeader, bindLiveFilters, collectMaterialTypes } from '../shares/shareList.js';
+import { renderSharesTableHeader, bindLiveFilters, collectMaterialTypes, renderRows } from '../shares/shareList.js';
 
 export { filterAndRankShares, renderRows } from '../shares/shareList.js';
 export { renderCompositionDocument, renderCompositionDocumentFooter, numberToGreekWords } from '../shares/shareComposition.js';

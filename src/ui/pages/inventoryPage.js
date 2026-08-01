@@ -32,7 +32,7 @@ export async function renderInventoryPage(
     ${activeTab === 'statement'
       ? renderInventoryStatementTab(settings, statementSession)
       : `
-        <section class="page-panel">
+        <section class="page-panel inventory-create-panel">
           <h3>Νέα Απογραφή</h3>
           <div class="inventory-session-grid">
             <label class="field">
@@ -50,12 +50,6 @@ export async function renderInventoryPage(
               <span>Παρατηρήσεις</span>
               <input id="inventory-session-notes" autocomplete="off" />
             </label>
-            <fieldset class="inventory-committee-fields">
-              <legend>Επιτροπή Καταμέτρησης</legend>
-              ${renderCommitteeMemberFields('Πρόεδρος', 'president')}
-              ${renderCommitteeMemberFields('Α΄ Μέλος', 'member-a')}
-              ${renderCommitteeMemberFields('Β΄ Μέλος', 'member-b')}
-            </fieldset>
             <button id="inventory-create" class="primary-button" type="button">Δημιουργία</button>
           </div>
         </section>
@@ -190,12 +184,12 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
         inventoryReason,
         title: inventoryReason,
         notes: container.querySelector('#inventory-session-notes').value,
-        committeePresidentRank: container.querySelector('#inventory-president-rank').value,
-        committeePresidentName: container.querySelector('#inventory-president-name').value,
-        committeeMemberARank: container.querySelector('#inventory-member-a-rank').value,
-        committeeMemberAName: container.querySelector('#inventory-member-a-name').value,
-        committeeMemberBRank: container.querySelector('#inventory-member-b-rank').value,
-        committeeMemberBName: container.querySelector('#inventory-member-b-name').value
+        committeePresidentRank: '',
+        committeePresidentName: '',
+        committeeMemberARank: '',
+        committeeMemberAName: '',
+        committeeMemberBRank: '',
+        committeeMemberBName: ''
       });
       showToast(result.message);
       await renderInventoryPage(container, inventoryApi, settingsApi, showToast, result.id);

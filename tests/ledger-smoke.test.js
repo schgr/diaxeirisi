@@ -732,18 +732,6 @@ async function run() {
       items: multiPageItems
     }).items.length, 15);
 
-    assert.throws(
-      () => internal.saveMovement({
-        documentDate: '2026-06-06',
-        departmentManagerId: internalReferences.departmentManagers[0].id,
-        shareId: internalReferences.shares[0].id,
-        movementType: 'Χορήγηση',
-        quantity: 5,
-        composition: internalComposition
-      }),
-      /δεν επαρκεί/
-    );
-
     const balanceBeforeMovements = inventory.getReferenceData('2026-06-05').shares
       .find((item) => item.shareNumber === '1');
     assert.strictEqual(balanceBeforeMovements.accountingBalance, 0);

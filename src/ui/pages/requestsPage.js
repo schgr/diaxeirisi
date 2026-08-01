@@ -1,6 +1,7 @@
 import { escapeHtml, field } from '../components/forms.js';
 import { listRequestPriorityOptionGroups } from '../requestPriorities.js';
 import { splitOfficerSignature } from '../officerSignature.js';
+import { renderRequestItemBarcode } from '../barcode/code128.js';
 import {
   bindRequestSettings,
   renderNamedList,
@@ -8,7 +9,7 @@ import {
   renderRequestPriorityTable
 } from './settingsPage.js';
 
-export async function renderRequestsPage(container, requestsApi, settingsApi, showToast, activeTab = 'requests') {
+export async function renderRequestsPage(container, requestsApi, settingsApi, showToast, activeTab = '') {
   const [reference, settings] = await Promise.all([
     requestsApi.getReferenceData(),
     settingsApi.get()
@@ -16,8 +17,10 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
   const state = {
     items: [],
     year: reference.year,
-    requests: await requestsApi.list(reference.year)
+    requests: await requestsApi.list(reference.year),
+    catalogueRequest: 0
   };
+  const catalogueStatus = await requestsApi.getKeyCatalogueStatus();
 
   container.innerHTML = `
     <section class="page-header">
@@ -33,42 +36,54 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </nav>
     <div class="transaction-tab-panel" data-requests-panel="requests" hidden>
     <section class="page-panel request-panel no-print">
+      <details class="key-catalogue-panel">
+        <summary>Προαιρετική αναζήτηση στον Κατάλογο ΚΕΥ</summary>
+        <div class="key-catalogue-controls">
+          <button id="key-catalogue-choose" class="secondary-button" type="button">
+            ${catalogueStatus.configured ? 'Αλλαγή φακέλου καταλόγου' : 'Επιλογή φακέλου καταλόγου'}
+          </button>
+          <label class="field key-catalogue-search-field">
+            <span>Α/Ο, P/N ή περιγραφή</span>
+            <input id="key-catalogue-search" autocomplete="off"
+              ${catalogueStatus.configured ? '' : 'disabled'}
+              placeholder="${catalogueStatus.configured ? 'Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες' : 'Δεν έχει επιλεγεί κατάλογος'}" />
+          </label>
+        </div>
+        <p id="key-catalogue-status" class="muted">
+          ${catalogueStatus.configured
+            ? 'Ο κατάλογος είναι διαθέσιμος ως προαιρετικό βοήθημα.'
+            : 'Η χειροκίνητη καταχώρηση παραμένει διαθέσιμη χωρίς κατάλογο.'}
+        </p>
+        <div id="key-catalogue-results" class="key-catalogue-results" aria-live="polite"></div>
+      </details>
       <div class="request-entry-all-row">
-        <div class="request-header-grid">
-          <label class="field">
-            <span>Ημερομηνία</span>
-            <input id="request-date" type="date" value="${reference.today}" />
-          </label>
-          <label class="field">
-            <span>Πρωτόκολλο</span>
-            <input id="request-protocol" autocomplete="off" />
-          </label>
-          <label class="field">
-            <span>Αιτούσα Μονάδα</span>
-            <input id="request-unit" value="${escapeHtml(reference.requestingUnit || '')}" readonly />
-          </label>
-          <label class="field">
-            <span>Χορηγούσα Μονάδα</span>
-            <select id="request-issuing-unit">
-              <option value="">Επιλογή</option>
-              ${reference.issuingUnits.map((unit) => `<option value="${escapeHtml(unit.name)}">${escapeHtml(unit.name)}</option>`).join('')}
-            </select>
-          </label>
-        </div>
-        <div class="request-line-grid request-entry-single-row">
-          <div class="request-line-row">
-            ${input('Αριθμός Ονομαστικού', 'request-nominal')}
-            ${input('Περιγραφή', 'request-description')}
-            ${input('Ποσότητα', 'request-quantity', 'number')}
-            ${selectMeasurement(reference.measurementUnits)}
-          </div>
-          <div class="request-line-row request-line-actions">
-            ${selectJustification(reference.justificationCodes)}
-            ${selectPriority()}
-            ${input('Παρατηρήσεις', 'request-notes')}
-            <button id="request-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
-          </div>
-        </div>
+        <label class="field">
+          <span>Ημερομηνία</span>
+          <input id="request-date" type="date" value="${reference.today}" />
+        </label>
+        <label class="field">
+          <span>Πρωτόκολλο</span>
+          <input id="request-protocol" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Αιτούσα Μονάδα</span>
+          <input id="request-unit" value="${escapeHtml(reference.requestingUnit || '')}" readonly />
+        </label>
+        <label class="field">
+          <span>Χορηγούσα Μονάδα</span>
+          <select id="request-issuing-unit">
+            <option value="">Επιλογή</option>
+            ${reference.issuingUnits.map((unit) => `<option value="${escapeHtml(unit.name)}">${escapeHtml(unit.name)}</option>`).join('')}
+          </select>
+        </label>
+        ${input('Αριθμός Ονομαστικού', 'request-nominal')}
+        ${input('Περιγραφή', 'request-description')}
+        ${input('Ποσότητα', 'request-quantity', 'number')}
+        ${selectMeasurement(reference.measurementUnits)}
+        ${selectJustification(reference.justificationCodes)}
+        ${selectPriority()}
+        ${input('Παρατηρήσεις', 'request-notes')}
+        <button id="request-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
       </div>
     </section>
 
@@ -149,7 +164,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </div>
   `;
 
-  bindRequestsTabs(container, activeTab === 'settings' ? 'settings' : '');
+  bindRequestsTabs(container, activeTab);
   bindRequestsPage(container, requestsApi, settingsApi, reference, state, showToast);
   bindRequestSettings(
     container,
@@ -176,6 +191,7 @@ function bindRequestsTabs(container, initialTab = '') {
 
 function bindRequestsPage(container, requestsApi, settingsApi, reference, state, showToast) {
   const controls = getControls(container);
+  bindKeyCatalogue(container, requestsApi, controls, state, showToast);
 
   for (const control of Object.values(controls.line)) {
     control.addEventListener('input', () => updateRequestAddButton(controls, state));
@@ -237,11 +253,97 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
         items: state.items
       });
       showToast(result.message);
-      await renderRequestsPage(container, requestsApi, settingsApi, showToast);
+      await renderRequestsPage(container, requestsApi, settingsApi, showToast, 'requests');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση αίτησης.', 'error');
     }
   });
+}
+
+function bindKeyCatalogue(container, requestsApi, controls, state, showToast) {
+  const choose = container.querySelector('#key-catalogue-choose');
+  const search = container.querySelector('#key-catalogue-search');
+  const status = container.querySelector('#key-catalogue-status');
+  const results = container.querySelector('#key-catalogue-results');
+  let timer = null;
+
+  choose.addEventListener('click', async () => {
+    try {
+      const result = await requestsApi.chooseKeyCatalogue();
+      if (result.canceled) return;
+      search.disabled = false;
+      search.placeholder = 'Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες';
+      choose.textContent = 'Αλλαγή φακέλου καταλόγου';
+      status.textContent = `Ο κατάλογος είναι διαθέσιμος (${result.itemCount.toLocaleString('el-GR')} υλικά).`;
+      search.focus();
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση του Καταλόγου ΚΕΥ.', 'error');
+    }
+  });
+
+  search.addEventListener('input', () => {
+    clearTimeout(timer);
+    const query = search.value.trim();
+    const request = ++state.catalogueRequest;
+    if (query.length < 2) {
+      results.replaceChildren();
+      return;
+    }
+    timer = window.setTimeout(async () => {
+      try {
+        const response = await requestsApi.searchKeyCatalogue(query);
+        if (request !== state.catalogueRequest) return;
+        renderKeyCatalogueResults(results, response.items);
+      } catch (error) {
+        if (request !== state.catalogueRequest) return;
+        results.replaceChildren();
+        showToast(error.message || 'Δεν ήταν δυνατή η αναζήτηση στον Κατάλογο ΚΕΥ.', 'error');
+      }
+    }, 250);
+  });
+
+  results.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-key-catalogue-result]');
+    if (!button) return;
+    const item = JSON.parse(button.dataset.keyCatalogueResult);
+    controls.line.nominal.value = item.nominalNumber;
+    controls.line.description.value = item.description;
+    if (item.partNumber && !controls.line.notes.value.trim()) {
+      controls.line.notes.value = `P/N: ${item.partNumber}`;
+    }
+    updateRequestAddButton(controls, state);
+    controls.line.quantity.focus();
+  });
+}
+
+function renderKeyCatalogueResults(container, items) {
+  container.replaceChildren();
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted';
+    empty.textContent = 'Δεν βρέθηκε υλικό. Μπορείτε να συνεχίσετε με χειροκίνητη καταχώρηση.';
+    container.appendChild(empty);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'key-catalogue-result-list';
+  for (const item of items) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'key-catalogue-result';
+    button.dataset.keyCatalogueResult = JSON.stringify(item);
+    const title = document.createElement('strong');
+    title.textContent = item.nominalNumber || 'Χωρίς Α/Ο';
+    const description = document.createElement('span');
+    description.textContent = item.description;
+    const details = document.createElement('small');
+    details.textContent = [item.partNumber && `P/N ${item.partNumber}`, item.equipment, item.catalogue]
+      .filter(Boolean)
+      .join(' · ');
+    button.append(title, description, details);
+    list.appendChild(button);
+  }
+  container.appendChild(list);
 }
 
 function openRequestDocument(request, printImmediately) {
@@ -443,8 +545,8 @@ function renderSignatureCell(title, value) {
 }
 
 function renderRequestDocumentRow(item, index, rows) {
-  const notes = rows.filter(Boolean).map((row) => row.notes).filter(Boolean).join('\n');
   const fulfilledClass = item && item.isFulfilled ? ' class="request-fulfilled-row"' : '';
+  const barcode = item ? renderRequestItemBarcode(item) : '';
   return `
     <tr${fulfilledClass}>
       <td></td>
@@ -456,7 +558,10 @@ function renderRequestDocumentRow(item, index, rows) {
       <td>${item ? escapeHtml(item.justificationCode) : ''}</td>
       <td>${item ? escapeHtml(item.priorityCode) : ''}</td>
       <td></td>
-      ${index === 0 ? `<td class="request-document-notes-cell" rowspan="${rows.length}"><span>${escapeHtml(notes)}</span></td>` : ''}
+      <td class="request-document-notes-cell">
+        ${barcode}
+        ${item && item.notes ? `<span>${escapeHtml(item.notes)}</span>` : ''}
+      </td>
     </tr>
   `;
 }

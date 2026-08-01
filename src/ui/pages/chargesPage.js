@@ -15,7 +15,7 @@ export async function renderChargesPage(container, internalApi, showToast) {
     <section class="page-header">
       <div>
         <p class="eyebrow">ΓΕΝΙΚΗ ΔΙΑΧΕΙΡΙΣΗ</p>
-        <h2>ΚΙΝΗΣΕΙΣ ΜΕΡΙΚΩΝ ΔΙΑΧΕΙΡΙΣΕΩΝ</h2>
+        <h2>Κινήσεις Μερικών Διαχειριστών</h2>
       </div>
     </section>
 

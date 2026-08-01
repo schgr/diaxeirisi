@@ -15,7 +15,7 @@ export async function renderMovementDifferencesPage(container, api, showToast) {
           <p class="home-group-label">Διαφορές από Διακίνηση Υλικού</p>
           <span class="home-zone-tag">§ ΔΥ</span>
         </div>
-        <div class="home-tile-grid print-tile-grid">
+        <div class="home-tile-grid print-tile-grid uniform-task-menu">
           <button class="home-tile panel corner" data-md-open-protocols type="button">
             <span class="home-tile-icon" aria-hidden="true">ΠΔ</span>
             <span class="home-tile-title">Πρωτόκολλα Διαφορών από Διακίνηση Υλικού</span>

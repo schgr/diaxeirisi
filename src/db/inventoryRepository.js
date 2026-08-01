@@ -47,8 +47,8 @@ function createInventoryRepository(db) {
         ).lastInsertRowid;
     },
 
-    populateAnnualSession(sessionId, fiscalYear) {
-      const shares = listActiveShares(db);
+    populateAnnualSession(sessionId, asOfDate) {
+      const shares = this.listShares(asOfDate);
       shares.forEach((share) => this.upsertItem({
         sessionId,
         shareId: share.id,
@@ -122,7 +122,7 @@ function createInventoryRepository(db) {
     },
 
     listShares(asOfDate) {
-      const balances = db
+      const futureMovements = db
         .prepare(
           `
             SELECT movement.share_id,
@@ -132,15 +132,15 @@ function createInventoryRepository(db) {
                        WHEN movement.transaction_type = 'Πίστωση' THEN -movement.quantity
                        ELSE 0
                      END
-                   ), 0) AS accounting_balance
+                   ), 0) AS balance_change
             FROM share_transactions movement
-            WHERE movement.transaction_date <= ?
+            WHERE movement.transaction_date > ?
             GROUP BY movement.share_id
           `
         )
         .all(asOfDate);
-      const balanceByShareId = new Map(
-        balances.map((row) => [Number(row.share_id), row.accounting_balance])
+      const futureChangeByShareId = new Map(
+        futureMovements.map((row) => [Number(row.share_id), Number(row.balance_change || 0)])
       );
       return listActiveShares(db).map((share) => ({
         id: share.id,
@@ -148,7 +148,8 @@ function createInventoryRepository(db) {
         nominal_number: share.nominal_number,
         description: share.description,
         measurement_unit: share.measurement_unit,
-        accounting_balance: balanceByShareId.get(Number(share.id)) || 0,
+        accounting_balance: Number(share.accounting_balance || 0)
+          - (futureChangeByShareId.get(Number(share.id)) || 0),
         charged_quantity: share.charged_quantity
       }));
     },

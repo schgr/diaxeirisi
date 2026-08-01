@@ -60,12 +60,8 @@ function createInternalService(db) {
         }));
       }
 
-      const available = Number(share.accounting_balance) - Number(share.charged_quantity);
       const departmentBalance = repository.getDepartmentShareBalance(department.id, share.id);
 
-      if (movement.movementType === 'Χορήγηση' && movement.quantity > available) {
-        throw new AppError('Η διαθέσιμη ποσότητα της αποθήκης δεν επαρκεί.', 'VALIDATION_ERROR');
-      }
       if (movement.movementType === 'Επιστροφή' && movement.quantity > departmentBalance) {
         throw new AppError('Η Μερική Διαχείριση δεν έχει επαρκή χρεωμένη ποσότητα.', 'VALIDATION_ERROR');
       }

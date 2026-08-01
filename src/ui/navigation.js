@@ -26,9 +26,7 @@ export function renderHomeTiles({ container, groups, onNavigate }) {
     <section class="home-screen">
       <header class="home-heading corner">
         <div>
-          <p class="home-kicker">ΣΧΕΔΙΟ ΛΕΙΤΟΥΡΓΙΑΣ · ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</p>
           <h2>Διαχείριση Υλικού</h2>
-          <span class="home-subtitle">Offline-first prototype</span>
         </div>
         <div class="home-title-block" aria-hidden="true">
           <span>Έκδοση</span>
