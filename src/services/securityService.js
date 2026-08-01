@@ -3,10 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const { AppError } = require('../core/errorHandler');
 
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 10;
 const MIN_USERNAME_LENGTH = 3;
 const MAX_FAILURES = 5;
 const LOCK_DURATION_MS = 30_000;
+const MAX_LOCKOUT_EXPONENT = 6;
 
 function createSecurityService(userDataPath, now = () => Date.now()) {
   const configPath = path.join(userDataPath, 'security.json');
@@ -33,6 +34,12 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       throw new AppError(
         `Ο κωδικός πρέπει να έχει τουλάχιστον ${MIN_PASSWORD_LENGTH} χαρακτήρες.`,
         'PASSWORD_TOO_SHORT'
+      );
+    }
+    if (/^(.)\1+$/u.test(password)) {
+      throw new AppError(
+        'Ο κωδικός δεν μπορεί να αποτελείται μόνο από τον ίδιο επαναλαμβανόμενο χαρακτήρα.',
+        'PASSWORD_TOO_WEAK'
       );
     }
   }
@@ -166,13 +173,20 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
         });
       }
       const expectedUsername = normalizedUsername(config.username || 'admin');
-      const credentialsValid = normalizedUsername(username) === expectedUsername
-        && verifyPassword(String(password || ''), config);
+      const usernameValid = normalizedUsername(username) === expectedUsername;
+      const passwordValid = verifyPassword(String(password || ''), config);
+      const credentialsValid = usernameValid && passwordValid;
       if (!credentialsValid) {
         const failedAttempts = Number(config.failedAttempts || 0) + 1;
         config.failedAttempts = failedAttempts;
-        config.lockedUntil = failedAttempts >= MAX_FAILURES ? now() + LOCK_DURATION_MS : 0;
-        if (config.lockedUntil) config.failedAttempts = 0;
+        config.lockedUntil = 0;
+        if (failedAttempts >= MAX_FAILURES) {
+          const lockoutCount = Number(config.lockoutCount || 0);
+          const lockDurationMs = LOCK_DURATION_MS * Math.pow(2, Math.min(lockoutCount, MAX_LOCKOUT_EXPONENT));
+          config.lockedUntil = now() + lockDurationMs;
+          config.lockoutCount = lockoutCount + 1;
+          config.failedAttempts = 0;
+        }
         writeConfig(config);
         throw new AppError('Λανθασμένο όνομα χρήστη ή κωδικός εισόδου.', 'AUTH_INVALID_CREDENTIALS', {
           remainingAttempts: Math.max(0, MAX_FAILURES - failedAttempts),
@@ -181,6 +195,7 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       }
       config.failedAttempts = 0;
       config.lockedUntil = 0;
+      config.lockoutCount = 0;
       if (!config.username) {
         config.version = 2;
         config.username = 'admin';

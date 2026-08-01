@@ -1,5 +1,7 @@
 'use strict';
 
+const { AppError } = require('../core/errorHandler');
+
 const CHANNELS = Object.freeze([
   "shares:list",
   "shares:get-by-number",
@@ -85,6 +87,22 @@ function registerSharesHandlers({
         }
 
         const sourcePath = result.filePaths[0];
+        const header = Buffer.alloc(12);
+        const descriptor = fs.openSync(sourcePath, 'r');
+        let bytesRead;
+        try {
+          bytesRead = fs.readSync(descriptor, header, 0, header.length, 0);
+        } finally {
+          fs.closeSync(descriptor);
+        }
+        const isJpeg = bytesRead >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+        const isPng = bytesRead >= 8 && header.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+        const isWebp = bytesRead >= 12 && header.subarray(0, 4).toString('ascii') === 'RIFF'
+          && header.subarray(8, 12).toString('ascii') === 'WEBP';
+        const isBmp = bytesRead >= 2 && header[0] === 0x42 && header[1] === 0x4d;
+        if (!isJpeg && !isPng && !isWebp && !isBmp) {
+          throw new AppError('Το επιλεγμένο αρχείο δεν είναι έγκυρη εικόνα.', 'INVALID_IMAGE_FILE');
+        }
         const photosDirectory = path.join(app.getPath('userData'), 'photos');
         fs.mkdirSync(photosDirectory, { recursive: true });
         const extension = path.extname(sourcePath);

@@ -205,7 +205,14 @@ async function safeInvoke(operation, allowLocked = false) {
     return { ok: true, data: await operation() };
   } catch (error) {
     const appError = toAppError(error);
-    logger.error(appError.message, appError);
+    logger.error(
+      (error && error.message) || appError.message,
+      {
+        code: appError.code,
+        stack: error && error.stack,
+        details: appError.details
+      }
+    );
     return { ok: false, error: appError };
   }
 }

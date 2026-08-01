@@ -1,3 +1,19 @@
+const ALLOWED_TABLE_NAMES = new Set([
+  'department_managers',
+  'ranks',
+  'measurement_units',
+  'transaction_units',
+  'material_categories',
+  'request_issuing_units',
+  'exhp_issue_reasons'
+]);
+
+function assertAllowedTableName(tableName) {
+  if (!ALLOWED_TABLE_NAMES.has(tableName)) {
+    throw new Error(`Unsupported settings table: ${tableName}`);
+  }
+}
+
 function createSettingsRepository(db) {
   return {
     getServiceSettings() {
@@ -239,12 +255,14 @@ function createSettingsRepository(db) {
 }
 
 function listNamedRecords(db, tableName) {
+  assertAllowedTableName(tableName);
   return db
     .prepare(`SELECT id, name, sort_order FROM ${tableName} ORDER BY sort_order ASC, id ASC`)
     .all();
 }
 
 function createNamedRecord(db, tableName, name) {
+  assertAllowedTableName(tableName);
   const nextOrder = getNextOrder(db, tableName);
   const result = db
     .prepare(`INSERT INTO ${tableName} (name, sort_order) VALUES (?, ?)`)
@@ -253,15 +271,18 @@ function createNamedRecord(db, tableName, name) {
 }
 
 function updateNamedRecord(db, tableName, id, name) {
+  assertAllowedTableName(tableName);
   db.prepare(`UPDATE ${tableName} SET name = ? WHERE id = ?`).run(name, id);
   return getById(db, tableName, id);
 }
 
 function getById(db, tableName, id) {
+  assertAllowedTableName(tableName);
   return db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(id);
 }
 
 function getNextOrder(db, tableName) {
+  assertAllowedTableName(tableName);
   const row = db.prepare(`SELECT COALESCE(MAX(sort_order), 0) + 1 AS nextOrder FROM ${tableName}`).get();
   return row.nextOrder;
 }

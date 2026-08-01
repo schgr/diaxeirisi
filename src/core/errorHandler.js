@@ -17,7 +17,7 @@ function toAppError(error) {
   }
 
   return {
-    message: error && error.message ? error.message : 'Παρουσιάστηκε απρόβλεπτο σφάλμα.',
+    message: 'Παρουσιάστηκε απρόβλεπτο σφάλμα.',
     code: 'UNEXPECTED_ERROR',
     details: null
   };

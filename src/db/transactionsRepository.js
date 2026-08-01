@@ -1,5 +1,19 @@
 const { listActiveShares } = require('./shareQueries');
 
+const ALLOWED_TABLE_NAMES = new Set([
+  'share_assignments',
+  'share_composition_items',
+  'share_change_sheet_entries',
+  'share_serial_numbers',
+  'share_ammunition_batches'
+]);
+
+function assertAllowedTableName(tableName) {
+  if (!ALLOWED_TABLE_NAMES.has(tableName)) {
+    throw new Error(`Unsupported transactions table: ${tableName}`);
+  }
+}
+
 function createTransactionsRepository(db) {
   return {
     listShares() {
@@ -207,6 +221,7 @@ function createTransactionsRepository(db) {
         'share_serial_numbers',
         'share_ammunition_batches'
       ]) {
+        assertAllowedTableName(table);
         db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
           .run(targetShare.id, sourceShareId);
       }
@@ -532,6 +547,7 @@ function createTransactionsRepository(db) {
         'share_serial_numbers',
         'share_ammunition_batches'
       ]) {
+        assertAllowedTableName(table);
         db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
           .run(source.id, target.id);
       }

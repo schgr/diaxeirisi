@@ -1,5 +1,17 @@
 const DOCUMENT_TYPES = ['useless_material_a', 'useless_material_b', 'ammo_consumption', 'transformation_materials', 'clothing_monthly_summary'];
 
+const ALLOWED_TABLE_NAMES = new Set([
+  'exhp_document_useless_a',
+  'exhp_document_useless_b',
+  'exhp_document_ammo'
+]);
+
+function assertAllowedTableName(tableName) {
+  if (!ALLOWED_TABLE_NAMES.has(tableName)) {
+    throw new Error(`Unsupported EXHP document table: ${tableName}`);
+  }
+}
+
 function getDocumentsByExhpId(db, exhpId) {
   return db.prepare(`
     SELECT id, exhp_id, document_type, created_at, updated_at
@@ -448,6 +460,7 @@ function touchDocument(db, documentId) {
 }
 
 function getHeaderId(db, tableName, documentId) {
+  assertAllowedTableName(tableName);
   const row = db.prepare(`
     SELECT id
     FROM ${tableName}
