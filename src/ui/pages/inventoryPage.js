@@ -36,8 +36,12 @@ export async function renderInventoryPage(
           <h3>Νέα Απογραφή</h3>
           <div class="inventory-session-grid">
             <label class="field">
-              <span>Ημερομηνία</span>
-              <input id="inventory-date" type="date" value="${referenceData.today}" />
+              <span>Από</span>
+              <input id="inventory-period-start" type="date" value="${referenceData.today.slice(0, 4)}-01-01" />
+            </label>
+            <label class="field">
+              <span>Έως</span>
+              <input id="inventory-period-end" type="date" value="${referenceData.today}" />
             </label>
             <label class="field">
               <span>Αιτιολογία</span>
@@ -179,8 +183,12 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
   container.querySelector('#inventory-create').addEventListener('click', async () => {
     try {
       const inventoryReason = container.querySelector('#inventory-reason').value;
+      const periodStart = container.querySelector('#inventory-period-start').value;
+      const periodEnd = container.querySelector('#inventory-period-end').value;
       const result = await inventoryApi.createSession({
-        inventoryDate: container.querySelector('#inventory-date').value,
+        inventoryDate: periodEnd,
+        periodStart,
+        periodEnd,
         inventoryReason,
         title: inventoryReason,
         notes: container.querySelector('#inventory-session-notes').value,

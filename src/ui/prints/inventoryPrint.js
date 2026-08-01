@@ -1,5 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
-import { formatOfficerName, formatOfficerRank } from '../officerSignature.js';
+import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 import { formatDate, formatNumber } from './shared.js';
 
 function renderInventoryPrintControls(sessions, state) {

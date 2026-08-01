@@ -11,5 +11,7 @@ assert.match(source, /session\.inventoryReason \|\| session\.title/u);
 assert.match(source, /const previewSettings = await settingsApi\.get\(\);/u);
 assert.match(source, /openInventoryStatementModal\(previewSettings, session\)/u);
 assert.match(source, /class="request-document-modal inventory-statement-modal"/u);
+assert.match(source, /id="inventory-period-start"[\s\S]*id="inventory-period-end"/u);
+assert.match(source, /inventoryDate: periodEnd,[\s\S]*periodStart,[\s\S]*periodEnd/u);
 
 console.log('Inventory page reason-only and on-demand preview layout test passed.');

@@ -59,7 +59,7 @@ async function run() {
   );
   const newInventory = inventoryPage.match(/<h3>Νέα Απογραφή<\/h3>([\s\S]*?)<\/section>/u)?.[1] || '';
   assert.doesNotMatch(newInventory, /Επιτροπή Καταμέτρησης/u);
-  assert.match(newInventory, /inventory-date[\s\S]*inventory-reason[\s\S]*inventory-session-notes[\s\S]*inventory-create/u);
+  assert.match(newInventory, /inventory-period-start[\s\S]*inventory-period-end[\s\S]*inventory-reason[\s\S]*inventory-session-notes[\s\S]*inventory-create/u);
   assert.match(styles, /\.inventory-session-grid\s*\{[\s\S]*grid-template-columns:/u);
   assert.match(styles, /\.inventory-count-grid\s*\{[\s\S]*grid-template-columns:/u);
   assert.match(chargesPage, /<h2>Κινήσεις Μερικών Διαχειριστών<\/h2>/u);
