@@ -10,6 +10,7 @@ import {
 } from './settingsPage.js';
 
 export async function renderRequestsPage(container, requestsApi, settingsApi, showToast, activeTab = '') {
+  if (typeof container.__requestsPageCleanup === 'function') container.__requestsPageCleanup();
   const [reference, settings] = await Promise.all([
     requestsApi.getReferenceData(),
     settingsApi.get()
@@ -165,7 +166,14 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
   `;
 
   bindRequestsTabs(container, activeTab);
-  bindRequestsPage(container, requestsApi, settingsApi, reference, state, showToast);
+  container.__requestsPageCleanup = bindRequestsPage(
+    container,
+    requestsApi,
+    settingsApi,
+    reference,
+    state,
+    showToast
+  );
   bindRequestSettings(
     container,
     settingsApi,
@@ -224,7 +232,7 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
     updateRequestAddButton(controls, state);
   });
 
-  container.addEventListener('click', async (event) => {
+  const requestsClickHandler = async (event) => {
     const remove = event.target.closest('[data-remove-request-item]');
     if (remove) {
       state.items.splice(Number(remove.dataset.removeRequestItem), 1);
@@ -240,7 +248,8 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
       return;
     }
 
-  });
+  };
+  container.addEventListener('click', requestsClickHandler);
 
   controls.save.addEventListener('click', async () => {
     try {
@@ -258,6 +267,10 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση αίτησης.', 'error');
     }
   });
+
+  return () => {
+    container.removeEventListener('click', requestsClickHandler);
+  };
 }
 
 function bindKeyCatalogue(container, requestsApi, controls, state, showToast) {

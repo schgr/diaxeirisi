@@ -42,6 +42,9 @@ export async function renderMovementDifferencesPage(container, api, showToast) {
 }
 
 async function renderMovementDifferenceProtocolsPage(container, api, showToast) {
+  if (typeof container.__movementDifferencesPageCleanup === 'function') {
+    container.__movementDifferencesPageCleanup();
+  }
   const currentYear = new Date().getFullYear();
   const [referenceData, protocols] = await Promise.all([
     api.getReferenceData(),
@@ -111,7 +114,7 @@ async function renderMovementDifferenceProtocolsPage(container, api, showToast) 
     </section>
   `;
 
-  bindPage(container, api, referenceData, showToast, () =>
+  container.__movementDifferencesPageCleanup = bindPage(container, api, referenceData, showToast, () =>
     renderMovementDifferenceProtocolsPage(container, api, showToast)
   );
 }
@@ -164,7 +167,7 @@ function bindPage(container, api, referenceData, showToast, rerender) {
     }
   });
 
-  container.addEventListener('click', async (event) => {
+  const movementDifferencesClickHandler = async (event) => {
     const response = event.target.closest('[data-md-response]');
     const settle = event.target.closest('[data-md-settle]');
     const escalate = event.target.closest('[data-md-escalate]');
@@ -197,7 +200,12 @@ function bindPage(container, api, referenceData, showToast, rerender) {
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');
     }
-  });
+  };
+  container.addEventListener('click', movementDifferencesClickHandler);
+
+  return () => {
+    container.removeEventListener('click', movementDifferencesClickHandler);
+  };
 }
 
 function renderProtocolRows(protocols) {

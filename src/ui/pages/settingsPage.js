@@ -871,7 +871,9 @@ function clothingItemUpdatePayload(item, sortOrder) {
 }
 
 function bindDeletes(container, settingsApi, showToast) {
-  container.addEventListener('click', async (event) => {
+  if (typeof container.__settingsDeletesCleanup === 'function') container.__settingsDeletesCleanup();
+
+  const settingsDeletesClickHandler = async (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) {
       return;
@@ -925,16 +927,22 @@ function bindDeletes(container, settingsApi, showToast) {
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');
     }
-  });
+  };
+  container.addEventListener('click', settingsDeletesClickHandler);
+  container.__settingsDeletesCleanup = () => {
+    container.removeEventListener('click', settingsDeletesClickHandler);
+  };
 }
 
 export function bindRequestSettings(container, settingsApi, showToast, rerender) {
+  if (typeof container.__settingsRequestCleanup === 'function') container.__settingsRequestCleanup();
+
   bindForm(container, '#request-issuing-unit-form', showToast, async (form) => {
     await settingsApi.addRequestIssuingUnit(getFormData(form));
     await refreshMovedSettings(container, rerender, showToast, 'Η μονάδα χορήγησης προστέθηκε.');
   });
 
-  container.addEventListener('click', async (event) => {
+  const settingsRequestClickHandler = async (event) => {
     const button = event.target.closest('[data-action="delete-request-issuing-unit"]');
     if (!button) return;
     try {
@@ -943,10 +951,16 @@ export function bindRequestSettings(container, settingsApi, showToast, rerender)
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');
     }
-  });
+  };
+  container.addEventListener('click', settingsRequestClickHandler);
+  container.__settingsRequestCleanup = () => {
+    container.removeEventListener('click', settingsRequestClickHandler);
+  };
 }
 
 export function bindTransactionSettings(container, settingsApi, exhpIssueReasons, showToast, rerender) {
+  if (typeof container.__settingsTransactionCleanup === 'function') container.__settingsTransactionCleanup();
+
   bindForm(container, '#transaction-unit-form', showToast, async (form) => {
     await settingsApi.addTransactionUnit(getFormData(form));
     await refreshMovedSettings(container, () => rerender('addy'), showToast, 'Η μονάδα δοσοληψιών προστέθηκε.');
@@ -962,7 +976,7 @@ export function bindTransactionSettings(container, settingsApi, exhpIssueReasons
     syncExhpIssueReasonSettings(container, exhpIssueReasons, selectedItem?.name);
   });
 
-  container.addEventListener('click', async (event) => {
+  const settingsTransactionClickHandler = async (event) => {
     const saveTexts = event.target.closest('[data-save-exhp-reason-texts]');
     if (saveTexts) {
       const row = saveTexts.closest('[data-exhp-reason-setting]');
@@ -991,7 +1005,11 @@ export function bindTransactionSettings(container, settingsApi, exhpIssueReasons
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');
     }
-  });
+  };
+  container.addEventListener('click', settingsTransactionClickHandler);
+  container.__settingsTransactionCleanup = () => {
+    container.removeEventListener('click', settingsTransactionClickHandler);
+  };
 }
 
 function bindAutosaveForm(container, selector, showToast, onSave) {

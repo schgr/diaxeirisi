@@ -9,6 +9,7 @@ export async function renderInventoryPage(
   selectedSessionId = null,
   activeTab = 'counts'
 ) {
+  if (typeof container.__inventoryPageCleanup === 'function') container.__inventoryPageCleanup();
   let [referenceData, settings] = await Promise.all([
     inventoryApi.getReferenceData(),
     settingsApi.get()
@@ -77,7 +78,15 @@ export async function renderInventoryPage(
       `}
   `;
 
-  bindInventoryPage(container, inventoryApi, settingsApi, referenceData, selectedSession, showToast, activeTab);
+  container.__inventoryPageCleanup = bindInventoryPage(
+    container,
+    inventoryApi,
+    settingsApi,
+    referenceData,
+    selectedSession,
+    showToast,
+    activeTab
+  );
 }
 
 function renderInventoryStatementTab(settings, selectedSession) {
@@ -163,6 +172,11 @@ function renderEmptySession() {
 }
 
 function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, selectedSession, showToast, activeTab) {
+  let inventoryClickHandler = null;
+  const cleanup = () => {
+    if (inventoryClickHandler) container.removeEventListener('click', inventoryClickHandler);
+  };
+
   container.querySelector('#inventory-statement-back')?.addEventListener('click', async () => {
     await renderInventoryPage(
       container,
@@ -178,7 +192,7 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
     if (preview) await printInventoryStatementPreview(preview);
   });
 
-  if (activeTab === 'statement') return;
+  if (activeTab === 'statement') return cleanup;
 
   container.querySelector('#inventory-create').addEventListener('click', async () => {
     try {
@@ -206,7 +220,7 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
     }
   });
 
-  container.addEventListener('click', async (event) => {
+  inventoryClickHandler = async (event) => {
     const openButton = event.target.closest('[data-open-inventory]');
     if (openButton) {
       const session = await inventoryApi.getSession(Number(openButton.dataset.openInventory));
@@ -215,9 +229,10 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
       return;
     }
 
-  });
+  };
+  container.addEventListener('click', inventoryClickHandler);
 
-  if (!selectedSession) return;
+  if (!selectedSession) return cleanup;
 
   container.querySelector('#inventory-save-committee').addEventListener('click', async () => {
     try {
@@ -269,6 +284,8 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
       showToast(error.message || 'Δεν ήταν δυνατή η ολοκλήρωση.', 'error');
     }
   });
+
+  return cleanup;
 }
 
 function openInventoryStatementModal(settings, session) {
