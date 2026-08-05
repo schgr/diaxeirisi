@@ -1,15 +1,19 @@
 import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
+import { renderControlledMaterialsBook, renderWeaponRegistry, bindControlledMaterialEvents } from '../administration/controlledMaterials.js';
 
 export async function renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, selectedHandoverId = null, initialTab = '', sharesApi = window.appApi.shares) {
   const settings = await settingsApi.get();
   const currentYear = Number(settings?.serviceInfo?.activeFiscalYear || new Date().getFullYear());
-  const [data, serialRegistry, ammunitionBatchRegistry, managementReport] = await Promise.all([
+  const [data, serialRegistry, ammunitionBatchRegistry, trainingAmmunitionBatchRegistry, managementReport, shareCards, weaponRegistry] = await Promise.all([
     api.getReferenceData(),
     sharesApi.listSerialRegistry(),
     sharesApi.listAmmunitionBatchRegistry(),
-    api.getManagementReport(currentYear)
+    sharesApi.listTrainingAmmunitionBatchRegistry(),
+    api.getManagementReport(currentYear),
+    sharesApi.getCardsBatch({ mode: 'all', year: currentYear }),
+    sharesApi.listWeaponRegistry()
   ]);
   const selectedHandover = selectedHandoverId ? await api.getHandover(selectedHandoverId) : null;
 
@@ -27,6 +31,9 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
       <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="ammunition-batches" type="button"><span class="home-tile-icon">ΒΦ</span><span class="home-tile-title">Βιβλίο Μερίδων Β.Φ.</span><span class="home-tile-code">§ ΔΧ-Ε</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="training-ammunition-batches" type="button"><span class="home-tile-icon">ΠΕ</span><span class="home-tile-title">Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως</span><span class="home-tile-code">§ ΔΧ-ΣΤ</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="controlled-materials" type="button"><span class="home-tile-icon">ΕΥ</span><span class="home-tile-title">Βιβλίο Ελεγχομένων Υλικών</span><span class="home-tile-code">§ ΔΧ-Ζ</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="weapon-registry" type="button"><span class="home-tile-icon">ΜΟ</span><span class="home-tile-title">Μητρώο Οπλισμού</span><span class="home-tile-code">§ ΔΧ-Η</span></button>
     </section>
     <div data-administration-panel="handover" hidden>
       ${renderHandoverPanel(data, selectedHandover, settings)}
@@ -39,6 +46,15 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     </div>
     <div data-administration-panel="ammunition-batches" hidden>
       ${renderAmmunitionBatchRegistry(ammunitionBatchRegistry)}
+    </div>
+    <div data-administration-panel="training-ammunition-batches" hidden>
+      ${renderTrainingAmmunitionBatchRegistry(trainingAmmunitionBatchRegistry)}
+    </div>
+    <div data-administration-panel="controlled-materials" hidden>
+      ${renderControlledMaterialsBook(shareCards)}
+    </div>
+    <div data-administration-panel="weapon-registry" hidden>
+      ${renderWeaponRegistry(weaponRegistry)}
     </div>
   `;
 
@@ -179,6 +195,53 @@ function renderAmmunitionBatchRow(share, departments = [], entry = {}, shareInde
       <td class="no-print"><div class="row-actions"><button class="secondary-button" data-add-ammunition-batch="${share.id}" type="button">+ Νέα</button><button class="danger-button" data-remove-ammunition-batch type="button">Διαγραφή</button></div></td>
     </tr>
   `;
+}
+
+function renderTrainingAmmunitionBatchRegistry(registry) {
+  const rows = registry.flatMap((item, shareIndex) => {
+    const entries = item.entries.length ? item.entries : [{}];
+    return entries.map((entry, entryIndex) =>
+      renderTrainingAmmunitionBatchRow(item.share, item.departments, entry, shareIndex, entryIndex)
+    );
+  }).join('');
+  return `
+    <section class="page-panel wide-panel training-ammunition-batch-registry-panel">
+      <div class="requests-status-header">
+        <div>
+          <h3>Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως</h3>
+          <p class="muted">Εμφανίζονται μόνο οι καρτέλες με ενεργό το πεδίο «Πυρομαχικά Εκπαιδεύσεως» στις Ρυθμίσεις.</p>
+        </div>
+        <div class="row-actions">
+          <button class="primary-button" data-save-training-ammunition-batches type="button">Αποθήκευση</button>
+          <button class="secondary-button" data-print-training-ammunition-batches
+            data-export-title="Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως" type="button">Εκτύπωση</button>
+        </div>
+      </div>
+      <div class="table-wrap ammunition-batch-registry-wrap">
+        <table class="index-table ammunition-batch-registry-table" data-training-ammunition-batch-table>
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Εκπαιδεύσεως».</td></tr>'}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function renderTrainingAmmunitionBatchRow(share, departments = [], entry = {}, shareIndex = 0, entryIndex = 0) {
+  const selectedDepartment = entry.department || (departments.length === 1 ? departments[0].department : '');
+  const departmentOptions = [
+    '<option value="">Επιλογή</option>',
+    ...departments.map((item) => `<option value="${escapeHtml(item.department)}" ${item.department === selectedDepartment ? 'selected' : ''}>${escapeHtml(item.department)} (${escapeHtml(item.quantity)})</option>`)
+  ].join('');
+  return `
+    <tr data-training-ammunition-batch-row data-training-ammunition-share="${share.id}" data-share-index="${shareIndex}">
+      <td>${shareIndex + 1}</td><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td>
+      <td class="material-description-cell">${escapeHtml(share.description)}</td>
+      <td><input data-training-ammunition-batch-number value="${escapeHtml(entry.batchNumber || '')}" aria-label="Μερίδα Πυρκού ${entryIndex + 1}" /></td>
+      <td><input data-training-ammunition-batch-quantity type="number" min="0.001" step="0.001" value="${escapeHtml(entry.quantity || '')}" aria-label="Ποσότητα Μερίδας Πυρκού ${entryIndex + 1}" /></td>
+      <td><select data-training-ammunition-batch-department aria-label="Τμήμα Μερίδας Πυρκού ${entryIndex + 1}">${departmentOptions}</select></td>
+      <td><input data-training-ammunition-batch-notes value="${escapeHtml(entry.notes || '')}" aria-label="Παρατηρήσεις Μερίδας Πυρκού ${entryIndex + 1}" /></td>
+      <td class="no-print"><div class="row-actions"><button class="secondary-button" data-add-training-ammunition-batch="${share.id}" type="button">+ Νέα</button><button class="danger-button" data-remove-training-ammunition-batch type="button">Διαγραφή</button></div></td>
+    </tr>`;
 }
 
 function renderHandoverPanel(data, selected, settings) {
@@ -472,6 +535,7 @@ async function printSerialRegistryPreview(preview) {
 
 function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, sharesApi, data, selectedHandover, settings, showToast, initialTab = '') {
   const menu = container.querySelector('[data-administration-menu]');
+  bindControlledMaterialEvents(container, showToast, sharesApi);
   container.querySelectorAll('[data-administration-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       const tab = button.dataset.administrationTab;
@@ -562,6 +626,49 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
       } else {
         row.remove();
       }
+    }
+  });
+
+  container.querySelector('[data-save-training-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
+    const grouped = new Map();
+    container.querySelectorAll('[data-training-ammunition-batch-row]').forEach((row) => {
+      const shareId = Number(row.dataset.trainingAmmunitionShare);
+      if (!grouped.has(shareId)) grouped.set(shareId, []);
+      const batchNumber = row.querySelector('[data-training-ammunition-batch-number]').value.trim();
+      const quantity = row.querySelector('[data-training-ammunition-batch-quantity]').value;
+      const department = row.querySelector('[data-training-ammunition-batch-department]').value;
+      const notes = row.querySelector('[data-training-ammunition-batch-notes]').value.trim();
+      if (batchNumber || quantity || notes) grouped.get(shareId).push({ batchNumber, quantity, department, notes });
+    });
+    for (const [shareId, entries] of grouped) {
+      await sharesApi.saveTrainingAmmunitionBatches(shareId, entries);
+    }
+    showToast('Το Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως αποθηκεύτηκε.');
+    await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'training-ammunition-batches', sharesApi);
+  }, showToast));
+
+  container.querySelector('[data-print-training-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
+    await printAmmunitionBatchTable(
+      container.querySelector('[data-training-ammunition-batch-table]'),
+      'Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως'
+    );
+  }, showToast));
+
+  container.querySelector('[data-training-ammunition-batch-table]')?.addEventListener('click', (event) => {
+    const add = event.target.closest('[data-add-training-ammunition-batch]');
+    const remove = event.target.closest('[data-remove-training-ammunition-batch]');
+    const row = event.target.closest('[data-training-ammunition-batch-row]');
+    if (!row) return;
+    if (add) {
+      const clone = row.cloneNode(true);
+      clone.querySelectorAll('input').forEach((input) => { input.value = ''; });
+      const rows = [...container.querySelectorAll(`[data-training-ammunition-batch-row][data-training-ammunition-share="${row.dataset.trainingAmmunitionShare}"]`)];
+      rows[rows.length - 1].after(clone);
+      clone.querySelector('[data-training-ammunition-batch-number]')?.focus();
+    } else if (remove) {
+      const rows = [...container.querySelectorAll(`[data-training-ammunition-batch-row][data-training-ammunition-share="${row.dataset.trainingAmmunitionShare}"]`)];
+      if (rows.length === 1) row.querySelectorAll('input').forEach((input) => { input.value = ''; });
+      else row.remove();
     }
   });
 
@@ -819,7 +926,7 @@ export function openArchivedSharesPreview(table) {
   document.body.appendChild(backdrop);
 }
 
-async function printAmmunitionBatchTable(table) {
+async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδων Β.Φ.') {
   if (!table) return;
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
@@ -839,7 +946,7 @@ async function printAmmunitionBatchTable(table) {
       .ammunition-batch-print th { background: #e8eef5; }
       .ammunition-batch-print .no-print { display: none !important; }
     </style>
-    <section class="ammunition-batch-print print-document-area"><h2>Βιβλίο Μερίδων Β.Φ.</h2>${printableTable.outerHTML}</section>`;
+    <section class="ammunition-batch-print print-document-area"><h2>${escapeHtml(title)}</h2>${printableTable.outerHTML}</section>`;
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {

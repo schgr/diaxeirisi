@@ -130,10 +130,31 @@ function createAddyService(dependencies) {
       const quantityById = new Map(
         quantities.map((item) => [Number(item.id), Number(item.quantity)])
       );
+      const removedItemIds = new Set(
+        (Array.isArray(payload.removedItemIds) ? payload.removedItemIds : []).map(Number)
+      );
+      if (removedItemIds.size >= items.length) {
+        throw new Error('Το ΑΔΔΥ πρέπει να περιέχει τουλάχιστον ένα υλικό.');
+      }
       const notes = String(payload.notes || '').trim();
 
       repository.transaction(() => {
         for (const item of items) {
+          if (removedItemIds.has(Number(item.id))) {
+            const balanceDelta = item.transaction_type === 'Χρέωση'
+              ? -Number(item.quantity)
+              : Number(item.quantity);
+            if (item.share_id) {
+              const share = repository.getShareById(item.share_id);
+              if (!share || Number(share.accounting_balance) + balanceDelta < 0) {
+                throw new Error(`Η μερίδα ${item.share_number} έχει μεταγενέστερες κινήσεις και το υλικό δεν μπορεί να διαγραφεί.`);
+              }
+              repository.adjustAccountingBalance(item.share_id, balanceDelta);
+            }
+            repository.deleteAddyItem(item.id);
+            if (item.share_transaction_id) repository.deleteShareTransactions([item.share_transaction_id]);
+            continue;
+          }
           if (!quantityById.has(Number(item.id))) continue;
           const nextQuantity = quantityById.get(Number(item.id));
           if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {

@@ -222,6 +222,7 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       config.passwordHash = passwordDigest(newPassword, salt);
       config.failedAttempts = 0;
       config.lockedUntil = 0;
+      config.lockoutCount = 0;
       config.updatedAt = new Date(now()).toISOString();
       writeConfig(config);
       return publicStatus(config);
@@ -247,6 +248,7 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       config.passwordHash = passwordDigest(newPassword, salt);
       config.failedAttempts = 0;
       config.lockedUntil = 0;
+      config.lockoutCount = 0;
       config.updatedAt = new Date(now()).toISOString();
       writeConfig(config);
       return publicStatus(config);
@@ -321,6 +323,7 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       config.passwordHash = passwordDigest(newPassword, salt);
       config.failedAttempts = 0;
       config.lockedUntil = 0;
+      config.lockoutCount = 0;
       delete config.recoveryHash;
       delete config.recoveryCreatedAt;
       config.updatedAt = new Date(now()).toISOString();

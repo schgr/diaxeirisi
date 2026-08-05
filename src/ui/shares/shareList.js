@@ -136,7 +136,10 @@ function readFilters(inputs) {
 }
 
 function createShareFilterController(shares, options = {}) {
-  const scheduler = options.scheduler || { setTimeout, clearTimeout };
+  const scheduler = options.scheduler || {
+    setTimeout: (...args) => globalThis.setTimeout(...args),
+    clearTimeout: (...args) => globalThis.clearTimeout(...args)
+  };
   const delay = options.delay === undefined ? FILTER_DEBOUNCE_MS : options.delay;
   let timer = null;
   let generation = 0;

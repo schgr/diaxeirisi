@@ -105,7 +105,7 @@ export function renderAddyCompositionDocument(documentData, items) {
           `).join('')}
         </tbody>
       </table>
-      ${renderCompositionDocumentFooter()}
+      ${renderCompositionDocumentFooter({ financialOfficers: documentData.financialOfficers })}
       <div class="material-form-page-number">Σελίδα 1 από 1</div>
     </article>
   `;

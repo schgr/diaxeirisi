@@ -4,7 +4,8 @@ import {
   formatDate,
   formatQuantity,
   greekMonthNumber,
-  officialDateParts
+  officialDateParts,
+  readOptionalNumber
 } from './shared.js';
 import { bindShareRows, validateSharedMaterialPayload } from './exhpOfficialDocuments.js';
 

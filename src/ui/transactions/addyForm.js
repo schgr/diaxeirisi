@@ -50,6 +50,13 @@ import {
 import { syncExhpIssueReasonSettings } from '../pages/settingsPage.js';
 
 export function bindAddyForm(container, transactionsApi, settingsApi, referenceData, settings, state, showToast, rerender) {
+  if (container.__addyInputHandler) {
+    container.removeEventListener('input', container.__addyInputHandler);
+  }
+  if (container.__addyClickHandler) {
+    container.removeEventListener('click', container.__addyClickHandler);
+  }
+
   const controls = getControls(container);
   controls.referenceData = referenceData;
   state.referenceData = referenceData;
@@ -173,7 +180,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     }
   });
 
-  container.addEventListener('input', (event) => {
+  const inputHandler = (event) => {
     const transferInput = event.target.closest('[data-exhp-transfer-share-number]');
     if (!transferInput) return;
     const item = state.exhpItems[Number(transferInput.dataset.exhpTransferShareNumber)];
@@ -181,7 +188,9 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     container.querySelector('#exhp-save').disabled = state.exhpItems.some((entry) =>
       entry.sourceShareNumber && !String(entry.shareNumber || '').trim()
     );
-  });
+  };
+  container.addEventListener('input', inputHandler);
+  container.__addyInputHandler = inputHandler;
 
   exhpControls.addItem.addEventListener('click', async () => {
     const share = findShareByNumber(referenceData.shares, exhpControls.shareNumber.value);
@@ -368,7 +377,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     updateAddButton(controls, state);
   });
 
-  container.addEventListener('click', async (event) => {
+  const clickHandler = async (event) => {
     const button = event.target.closest('[data-remove-addy-item]');
     if (button) {
       state.items.splice(Number(button.dataset.removeAddyItem), 1);
@@ -580,15 +589,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
     const removeExhp = event.target.closest('[data-remove-exhp-item]');
     if (removeExhp) {
-      const removed = state.exhpItems[Number(removeExhp.dataset.removeExhpItem)];
-      if (removed?.transferGroup) {
-        state.exhpItems = state.exhpItems.filter((item) => item.transferGroup !== removed.transferGroup);
-      } else {
-        state.exhpItems.splice(Number(removeExhp.dataset.removeExhpItem), 1);
-      }
+      state.exhpItems.splice(Number(removeExhp.dataset.removeExhpItem), 1);
       renderExhpEntryState(container, state);
     }
-  });
+  };
+  container.addEventListener('click', clickHandler);
+  container.__addyClickHandler = clickHandler;
 
   controls.save.addEventListener('click', async () => {
     try {
@@ -634,6 +640,7 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
                 <th>Περιγραφή</th>
                 <th>Είδος</th>
                 <th>Ποσότητα</th>
+                <th>Ενέργεια</th>
               </tr>
             </thead>
             <tbody>
@@ -654,6 +661,7 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
                       required
                     />
                   </td>
+                  <td><button class="danger-button" data-remove-addy-edit-item="${Number(item.id)}" type="button">Διαγραφή</button></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -672,11 +680,22 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
   `;
 
   const close = () => modal.remove();
+  const removedItemIds = new Set();
   modal.querySelectorAll('[data-close-addy-edit]').forEach((button) => {
     button.addEventListener('click', close);
   });
   modal.addEventListener('click', (event) => {
     if (event.target === modal) close();
+    const removeButton = event.target.closest('[data-remove-addy-edit-item]');
+    if (!removeButton) return;
+    const remainingRows = modal.querySelectorAll('[data-addy-edit-quantity]');
+    if (remainingRows.length <= 1) {
+      showToast('Το ΑΔΔΥ πρέπει να περιέχει τουλάχιστον ένα υλικό.', 'error');
+      return;
+    }
+    if (!window.confirm('Να διαγραφεί μόνο αυτό το υλικό από το ΑΔΔΥ και από την αντίστοιχη Μερίδα Υλικού;')) return;
+    removedItemIds.add(Number(removeButton.dataset.removeAddyEditItem));
+    removeButton.closest('tr')?.remove();
   });
   modal.querySelector('[data-addy-edit-form]').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -698,7 +717,8 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
         items: quantityInputs.map((input) => ({
           id: Number(input.dataset.addyEditQuantity),
           quantity: Number(input.value)
-        }))
+        })),
+        removedItemIds: [...removedItemIds]
       });
       close();
       showToast(result.message);

@@ -36,6 +36,7 @@ function registerSettingsHandlers({
   register,
   safeInvoke,
   services,
+  backupService,
   runHeavyTask,
   dialog
 }) {
@@ -59,6 +60,7 @@ function registerSettingsHandlers({
           filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
         });
         if (result.canceled || !result.filePaths.length) return null;
+        await backupService.createAutomatic(true, { timeoutMs: 10 * 60 * 1000 });
         const matrix = await runHeavyTask(event, 'read-excel-matrix', {
           filePath: result.filePaths[0]
         }, { taskId, timeoutMs: 180000 });
@@ -76,7 +78,7 @@ function registerSettingsHandlers({
         return services.compositionImport.writeTemplate(result.filePath);
       })
     );
-  register('settings:import-compositions', async (event, taskId) =>
+  register('settings:import-compositions', async (event, taskId, inventoryDate) =>
       safeInvoke(async () => {
         const result = await dialog.showOpenDialog({
           title: 'Επιλογή αρχείου συνθέσεων μερίδων',
@@ -88,7 +90,7 @@ function registerSettingsHandlers({
         const matrix = await runHeavyTask(event, 'read-excel-matrix', {
           filePath: result.filePaths[0]
         }, { taskId, timeoutMs: 180000 });
-        return services.compositionImport.importMatrix(matrix);
+        return services.compositionImport.importMatrix(matrix, inventoryDate);
       })
     );
   register('settings:save-service', async (_event, payload) =>

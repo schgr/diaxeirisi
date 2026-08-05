@@ -465,7 +465,7 @@ function openInternalCompositionDialog(share, defaultQuantity = '') {
                   <td>${escapeHtml(item.componentNominalNumber)}</td>
                   <td class="material-description-cell">${escapeHtml(item.componentDescription)}</td>
                   <td>${escapeHtml(item.measurementUnit)}</td>
-                  <td><input data-component-quantity type="number" min="0.001" step="0.001" value="${escapeHtml(defaultQuantity || '')}" /></td>
+                  <td><input data-component-quantity type="number" min="0" step="0.001" /></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -489,7 +489,7 @@ function openInternalCompositionDialog(share, defaultQuantity = '') {
       if (!event.target.closest('[data-confirm-internal-composition]')) return;
       const rows = [...modal.querySelectorAll('[data-internal-composition-row]')];
       const quantities = rows.map((row) => Number(row.querySelector('[data-component-quantity]').value));
-      if (quantities.some((quantity) => !Number.isFinite(quantity) || quantity <= 0)) return;
+      if (quantities.some((quantity) => !Number.isFinite(quantity) || quantity < 0)) return;
       close(rows.map((row, index) => ({
         componentNominalNumber: row.dataset.nominal,
         componentDescription: row.dataset.description,

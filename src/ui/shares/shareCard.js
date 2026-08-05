@@ -2,7 +2,7 @@ import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { summaryItem, detailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows } from './shareDetails.js';
 import { renderCompositionRows, setCompositionLocked, renderChangeSheetRows, setChangeSheetLocked, collectCompositionRows, collectChangeSheetRows, collectRecordRow, renderCompositionDocument } from './shareComposition.js';
 import { openMaterialFormPreview, printMaterialFormDocument, renderChangeSheetDocument, openSharePrintDocument } from './sharePrint.js';
-import { formatQuantity, formatDate, pathToFileUrl } from './shared.js';
+import { formatQuantity, formatDate, pathToFileUrl, formatDifference } from './shared.js';
 
 function openShareCard(card, sharesApi, showToast, settings, options = {}) {
   const existing = document.querySelector('.modal-backdrop');

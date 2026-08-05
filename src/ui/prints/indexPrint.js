@@ -477,4 +477,4 @@ function renderIndexPage({ unit, code, subCode, title, subtitle, columns, number
   `;
 }
 
-export { bindExternalIndexControls, bindFiscalYearControls, bindOrdersIndexControls, renderChargeCreditOrdersIndex, renderExternalIndexTable, renderExternalTransactionsIndex, renderIndexAnnualSignatures, renderIndexTableControls, renderOrdersIndexTable, selectFirstMaterialPerAddy };
+export { bindExternalIndexControls, bindFiscalYearControls, bindOrdersIndexControls, renderChargeCreditOrdersIndex, renderExternalIndexTable, renderExternalTransactionsIndex, renderFiscalYearControls, renderIndexAnnualSignatures, renderIndexTableControls, renderOrdersIndexTable, selectFirstMaterialPerAddy };

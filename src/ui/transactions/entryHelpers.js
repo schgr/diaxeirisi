@@ -367,8 +367,8 @@ export function renderAddyRows(items) {
           <td>${escapeHtml(item.measurementUnit)}</td>
           <td>${escapeHtml(item.transactionType)}</td>
           <td>${escapeHtml(item.transactionUnit)}</td>
-          <td>${escapeHtml(item.materialType)}</td>
           <td><button class="danger-button" data-remove-addy-item="${index}" type="button">Διαγραφή</button></td>
+          <td>${escapeHtml(item.materialType)}</td>
         </tr>
       `
     )

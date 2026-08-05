@@ -101,7 +101,10 @@ const homeGroups = [
       { id: 'administration-report', sectionId: 'administration', tab: 'management-report', title: 'Αναφορά Διαχείρισης' },
       { id: 'administration-aggregate-prints', sectionId: 'prints', title: 'Συγκεντρωτικές Εκτυπώσεις' },
       { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' },
-      { id: 'administration-ammunition-batches', sectionId: 'administration', tab: 'ammunition-batches', title: 'Βιβλίο Μερίδων Β.Φ.' }
+      { id: 'administration-ammunition-batches', sectionId: 'administration', tab: 'ammunition-batches', title: 'Βιβλίο Μερίδων Β.Φ.' },
+      { id: 'administration-training-ammunition-batches', sectionId: 'administration', tab: 'training-ammunition-batches', title: 'Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως' },
+      { id: 'administration-controlled-materials', sectionId: 'administration', tab: 'controlled-materials', title: 'Βιβλίο Ελεγχομένων Υλικών' },
+      { id: 'administration-weapon-registry', sectionId: 'administration', tab: 'weapon-registry', title: 'Μητρώο Οπλισμού' }
     ]
   },
   {
@@ -484,8 +487,8 @@ function renderAuthGate(status) {
         <form class="auth-form" data-auth-form>
           ${isSetup ? `
             <label class="field"><span>Όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required autofocus /></label>
-            <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
-            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="10" autocomplete="new-password" required /></label>
+            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="10" autocomplete="new-password" required /></label>
             <h2>Ερωτήσεις Ασφαλείας</h2>
             <p class="muted">Ορίστε τρεις ερωτήσεις και απαντήσεις για ασφαλή ανάκτηση πρόσβασης.</p>
             ${[1, 2, 3].map((number) => `
@@ -498,7 +501,7 @@ function renderAuthGate(status) {
           `}
           <p class="auth-message" data-auth-message role="alert">${lockedSeconds ? `Η είσοδος είναι προσωρινά κλειδωμένη για ${lockedSeconds} δευτερόλεπτα.` : ''}</p>
           <button class="primary-button" type="submit" ${lockedSeconds ? 'disabled' : ''}>${isSetup ? 'Ενεργοποίηση προστασίας' : 'Είσοδος'}</button>
-          ${!isSetup && status.recoveryConfigured ? '<button class="secondary-button" data-show-auth-recovery type="button" hidden>Ξέχασα τα στοιχεία εισόδου</button>' : ''}
+          ${!isSetup && status.recoveryConfigured ? '<button class="secondary-button" data-show-auth-recovery type="button">Ξέχασα τα στοιχεία εισόδου</button>' : ''}
           <button class="secondary-button" data-auth-quit type="button">Έξοδος</button>
         </form>
         ${!isSetup && status.recoveryConfigured ? `
@@ -516,10 +519,10 @@ function renderAuthGate(status) {
             ` : ''}
             <h2>Επαναφορά στοιχείων εισόδου</h2>
             <p class="muted">Χρησιμοποιήστε τον κωδικό ανάκτησης που δημιουργήσατε από τις Ρυθμίσεις Ασφαλείας.</p>
-            <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" ${status.securityQuestionsConfigured ? 'readonly' : ''} required /></label>
+            <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" required /></label>
             <label class="field"><span>Νέο όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required /></label>
-            <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="6" autocomplete="new-password" required /></label>
-            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label class="field"><span>Νέος κωδικός</span><input name="newPassword" type="password" minlength="10" autocomplete="new-password" required /></label>
+            <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="10" autocomplete="new-password" required /></label>
             <p class="auth-message" data-recovery-message role="alert"></p>
             <button class="primary-button" type="submit">Επαναφορά και είσοδος</button>
             <button class="secondary-button" data-hide-auth-recovery type="button">Πίσω στην είσοδο</button>

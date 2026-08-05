@@ -17,7 +17,10 @@ const card = {
   },
   compositionItems: []
 };
-const settings = { serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' } };
+const settings = {
+  serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' },
+  financialOfficers: { ped: 'Λγός Πέτρος Ελεγκτής', manager: 'Υπλγός Μάριος Διαχειριστής' }
+};
 
 const emptyDocument = renderCompositionDocument(card, settings);
 assert.equal(countPages(emptyDocument), 1, 'An empty composition must print on one page.');
@@ -25,6 +28,8 @@ assert.match(emptyDocument, /13\.\s*<\/b> ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ/);
 assert.match(emptyDocument, /14\.\s*<\/b> ΠΑΡΑΛΑΜΒΑΝΟΥΣΑ ΜΟΝΑΔΑ/);
 assert.match(emptyDocument, /Αριθμ\. Ημερ\. Ευρετ\. Δικ\. Εξωτ\. Δοσ\./);
 assert.match(emptyDocument, /20\.\.\.\./);
+assert.match(emptyDocument, /Πέτρος Ελεγκτής/);
+assert.match(emptyDocument, /Μάριος Διαχειριστής/);
 
 const sixteenRows = Array.from({ length: 16 }, (_unused, index) => compositionItem(index));
 assert.equal(

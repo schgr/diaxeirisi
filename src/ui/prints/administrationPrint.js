@@ -54,14 +54,19 @@ function renderBalanceDifferenceControls(state, rows) {
         </select>
       </label>
       <div class="row-actions">
-        <button id="print-current-document" class="primary-button compact-print-button" type="button" ${rows.length ? '' : 'disabled'}>Εκτύπωση</button>
+        <button id="print-current-document" class="primary-button compact-print-button" type="button" ${rows.length ? '' : 'disabled'}>Προβολή</button>
       </div>
     </div>
   `;
 }
 
 function renderBalanceDifferenceTable(rows) {
-  return `
+  const pageSize = 18;
+  const pages = rows.length
+    ? Array.from({ length: Math.ceil(rows.length / pageSize) }, (_unused, index) =>
+        rows.slice(index * pageSize, (index + 1) * pageSize))
+    : [[]];
+  return pages.map((pageRows, pageIndex) => `
     <article class="balance-differences-page print-document-area">
       <h1>ΠΛΕΟΝΑΣΜΑΤΑ - ΕΛΛΕΙΜΜΑΤΑ</h1>
       <table class="index-table balance-differences-table">
@@ -80,9 +85,9 @@ function renderBalanceDifferenceTable(rows) {
           </tr>
         </thead>
         <tbody>
-          ${rows.length ? rows.map((row, index) => `
+          ${pageRows.length ? pageRows.map((row, index) => `
             <tr>
-              <td>${index + 1}</td>
+              <td>${pageIndex * pageSize + index + 1}</td>
               <td>${escapeHtml(row.sourceType)}</td>
               <td>${escapeHtml(row.shareNumber)}</td>
               <td>${escapeHtml(row.nominalNumber)}</td>
@@ -99,14 +104,23 @@ function renderBalanceDifferenceTable(rows) {
           `).join('') : '<tr><td colspan="10" class="empty-table">Δεν υπάρχουν πλεονάσματα ή ελλείμματα για την επιλεγμένη κατηγορία.</td></tr>'}
         </tbody>
       </table>
+      <div class="balance-differences-page-number">Σελίδα ${pageIndex + 1} από ${pages.length}</div>
     </article>
-  `;
+  `).join('');
 }
 
 function filterBalanceDifferences(rows, filter) {
-  if (filter === 'deficit') return rows.filter((row) => row.status === 'Έλλειμμα');
-  if (filter === 'surplus') return rows.filter((row) => row.status === 'Πλεόνασμα');
-  return rows;
+  const filtered = filter === 'deficit'
+    ? rows.filter((row) => row.status === 'Έλλειμμα')
+    : filter === 'surplus'
+      ? rows.filter((row) => row.status === 'Πλεόνασμα')
+      : rows;
+  return [...filtered].sort((left, right) =>
+    String(left.shareNumber || '').localeCompare(String(right.shareNumber || ''), 'el', {
+      numeric: true,
+      sensitivity: 'base'
+    })
+  );
 }
 
 function bindBalanceDifferenceControls(container, state, rows, preview) {

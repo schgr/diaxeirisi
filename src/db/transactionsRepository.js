@@ -5,7 +5,8 @@ const ALLOWED_TABLE_NAMES = new Set([
   'share_composition_items',
   'share_change_sheet_entries',
   'share_serial_numbers',
-  'share_ammunition_batches'
+  'share_ammunition_batches',
+  'share_training_ammunition_batches'
 ]);
 
 function assertAllowedTableName(tableName) {
@@ -184,7 +185,7 @@ function createTransactionsRepository(db) {
           accounting_balance, charged_quantity, unit_price, photo_path,
           archive_status, archived_at, archive_reason, requires_composition,
           requires_change_sheet, requires_serial_number, requires_weapon_registry,
-          requires_ammunition_batch_book,
+          requires_ammunition_batch_book, requires_training_ammunition_batch_book,
           previous_share_number
         )
         SELECT ?, nominal_number, description, material_type, material_code,
@@ -192,7 +193,7 @@ function createTransactionsRepository(db) {
                0, charged_quantity, unit_price, photo_path,
                'Ενεργή', NULL, '', requires_composition,
                requires_change_sheet, requires_serial_number, requires_weapon_registry,
-               requires_ammunition_batch_book,
+               requires_ammunition_batch_book, requires_training_ammunition_batch_book,
                ''
         FROM shares
         WHERE id = ?
@@ -219,7 +220,8 @@ function createTransactionsRepository(db) {
         'share_composition_items',
         'share_change_sheet_entries',
         'share_serial_numbers',
-        'share_ammunition_batches'
+        'share_ammunition_batches',
+        'share_training_ammunition_batches'
       ]) {
         assertAllowedTableName(table);
         db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
@@ -545,7 +547,8 @@ function createTransactionsRepository(db) {
         'share_composition_items',
         'share_change_sheet_entries',
         'share_serial_numbers',
-        'share_ammunition_batches'
+        'share_ammunition_batches',
+        'share_training_ammunition_batches'
       ]) {
         assertAllowedTableName(table);
         db.prepare(`UPDATE ${table} SET share_id = ? WHERE share_id = ?`)
@@ -948,6 +951,10 @@ function createTransactionsRepository(db) {
         db.prepare('UPDATE share_transactions SET quantity = ? WHERE id = ?')
           .run(quantity, shareTransactionId);
       }
+    },
+
+    deleteAddyItem(itemId) {
+      db.prepare('DELETE FROM addy_items WHERE id = ?').run(itemId);
     },
 
     deleteAddyDocument(documentId) {

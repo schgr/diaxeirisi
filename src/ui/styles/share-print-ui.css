@@ -195,3 +195,354 @@
     grid-template-columns: 1fr;
   }
 }
+/* Controlled-material administration tables and composition signatures. */
+.controlled-material-actions {
+  align-items: end;
+  justify-content: flex-end;
+  margin: 12px 0;
+}
+
+.controlled-material-print-category {
+  min-width: 390px;
+}
+
+.controlled-material-tabs {
+  grid-template-columns: repeat(2, minmax(280px, 390px));
+  max-width: none;
+  margin: 14px 0;
+}
+
+.official-index-annual-signatures {
+  bottom: 2.8%;
+}
+
+.weapon-registry-selector {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+}
+
+.weapon-registry-selector .field {
+  flex: 1;
+  max-width: 760px;
+}
+
+.controlled-materials-wrap {
+  max-height: calc(100vh - 310px);
+}
+
+.controlled-materials-table th,
+.controlled-materials-table td {
+  color: #fff;
+  white-space: nowrap;
+}
+
+.controlled-material-settings-table th,
+.controlled-material-settings-table td,
+.weapon-registry-form-table th,
+.weapon-registry-form-table td,
+.weapon-registry-title-row {
+  color: #fff;
+}
+
+.weapon-registry-books {
+  display: grid;
+  gap: 18px;
+}
+
+.weapon-registry-book {
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  background: rgba(8, 31, 54, .72);
+}
+
+.weapon-registry-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.weapon-registry-form-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.weapon-registry-form-table th,
+.weapon-registry-form-table td {
+  border: 1px solid rgba(127, 211, 235, .45);
+  text-align: center;
+}
+
+.weapon-registry-form-table input,
+.weapon-registry-form-table textarea {
+  width: 100%;
+  min-width: 100px;
+  border: 0;
+  color: #fff;
+  background: transparent;
+}
+
+.controlled-material-print .controlled-materials-table th,
+.controlled-material-print .controlled-materials-table td,
+.weapon-registry-print .weapon-registry-form-table th,
+.weapon-registry-print .weapon-registry-form-table td,
+.weapon-registry-print-heading {
+  color: #000;
+}
+
+.weapon-registry-print {
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 16mm 14mm 12mm;
+  color: #000;
+  background: #fff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.weapon-registry-print:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.weapon-registry-print-heading {
+  margin-bottom: 5mm;
+  font-size: 10pt;
+}
+
+.weapon-registry-print .weapon-registry-form-table {
+  table-layout: fixed;
+  font-size: 8pt;
+}
+
+.weapon-registry-print .weapon-registry-form-table tr {
+  height: 10mm;
+}
+
+.weapon-registry-print footer {
+  margin-top: 5mm;
+  color: #000;
+  text-align: right;
+}
+
+.weapon-registry-form-table textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.weapon-registry-index {
+  font-weight: 700;
+}
+
+.weapon-entry-delete {
+  display: block;
+  margin: 8px auto 0;
+  padding: 4px 7px;
+  font-size: 10px;
+}
+
+.weapon-registry-document-preview .weapon-registry-print + .weapon-registry-print {
+  margin-top: 18px;
+}
+
+.controlled-materials-table .material-description-cell {
+  min-width: 260px;
+  white-space: normal;
+}
+
+.controlled-material-settings-table td:nth-child(2) {
+  width: 190px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .controlled-materials-table th,
+  .controlled-materials-table td,
+  .controlled-material-settings-table th,
+  .controlled-material-settings-table td,
+  .weapon-registry-form-table th,
+  .weapon-registry-form-table td,
+  .weapon-registry-title-row {
+    color: #000 !important;
+  }
+
+  .weapon-registry-form-table th,
+  .weapon-registry-form-table td {
+    border-color: #000;
+  }
+}
+
+.composition-footer-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm;
+  position: absolute;
+  top: 22mm;
+  right: 0;
+  left: 0;
+  margin-top: 0;
+  text-align: center;
+}
+
+.composition-footer-field {
+  position: relative;
+  min-height: 45mm;
+}
+
+.composition-signature {
+  position: relative;
+  display: flex;
+  min-height: 18mm;
+  flex-direction: column;
+  align-items: center;
+}
+
+.composition-signature > span {
+  margin-bottom: 7mm;
+  font-weight: 700;
+}
+
+.composition-signature strong,
+.composition-signature em {
+  display: block;
+  min-height: 1.2em;
+  font-style: normal;
+}
+
+.composition-footer-signatures-blank strong,
+.composition-footer-signatures-blank em {
+  visibility: hidden;
+}
+
+.composition-signature-considered {
+  position: absolute;
+  top: -6mm;
+  display: block;
+  font-size: inherit;
+  font-weight: 700;
+  text-align: center;
+}
+
+.balance-differences-page {
+  position: relative;
+  box-sizing: border-box;
+  width: 297mm;
+  min-height: 210mm;
+  padding-bottom: 18mm;
+  break-after: page;
+  page-break-after: always;
+}
+
+.balance-differences-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.balance-differences-page-number {
+  position: absolute;
+  right: 12mm;
+  bottom: 8mm;
+  font-size: 9pt;
+}
+
+@media screen {
+  .generic-print-preview-backdrop .share-card-preview .official-share-page,
+  .generic-print-preview-backdrop .balance-differences-page {
+    flex: 0 0 auto;
+    margin: 0 auto 18px;
+  }
+
+  .addy-document-backdrop .request-document-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+
+  .addy-document-backdrop .addy-document-page,
+  .addy-document-backdrop .addy-composition-document {
+    flex: 0 0 auto;
+  }
+}
+
+.controlled-material-print {
+  box-sizing: border-box;
+  width: 297mm;
+  min-height: 210mm;
+  padding: 10mm;
+  color: #000;
+  background: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.controlled-material-print h2 {
+  margin: 0 0 3mm;
+  text-align: center;
+}
+
+.controlled-material-print h3 {
+  margin: 0 0 6mm;
+  text-align: center;
+  font-size: 12pt;
+  text-decoration: underline;
+}
+
+.controlled-material-print table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+
+.controlled-material-print th,
+.controlled-material-print td {
+  padding: 1.5mm;
+  border: 1px solid #000;
+}
+
+.controlled-material-print footer {
+  margin-top: 5mm;
+  text-align: center;
+  font-size: 9pt;
+}
+
+.controlled-material-document-preview .controlled-material-print + .controlled-material-print {
+  margin-top: 18px;
+}
+
+@media print {
+  body[data-isolated-document-print='true'] .isolated-print-root > .weapon-registry-print.print-document-area,
+  body[data-isolated-document-print='true'] .isolated-print-root > .controlled-material-print.print-document-area {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    display: block !important;
+  }
+
+  body[data-isolated-document-print='true'] .isolated-print-root > .weapon-registry-print.print-document-area:not(:last-child),
+  body[data-isolated-document-print='true'] .isolated-print-root > .controlled-material-print.print-document-area:not(:last-child) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .controlled-material-print.print-document-area {
+    page: landscape;
+    width: 297mm;
+    min-height: 210mm;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .controlled-material-print.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+.k2310-document-modal [data-k2310-pages] {
+  gap: 24px;
+}

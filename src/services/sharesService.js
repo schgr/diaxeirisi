@@ -81,6 +81,9 @@ function createSharesService(db) {
         requiresAmmunitionBatchBook: payload && payload.requiresAmmunitionBatchBook !== undefined
           ? Boolean(payload.requiresAmmunitionBatchBook)
           : Boolean(share.requires_ammunition_batch_book),
+        requiresTrainingAmmunitionBatchBook: payload && payload.requiresTrainingAmmunitionBatchBook !== undefined
+          ? Boolean(payload.requiresTrainingAmmunitionBatchBook)
+          : Boolean(share.requires_training_ammunition_batch_book),
         requiresChangeSheet: payload && payload.requiresChangeSheet !== undefined
           ? Boolean(payload.requiresChangeSheet)
           : Boolean(share.requires_change_sheet)
@@ -437,6 +440,87 @@ function createSharesService(db) {
       }
       repository.replaceAmmunitionBatches(shareId, cleanEntries);
       return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
+    },
+
+    listTrainingAmmunitionBatchRegistry() {
+      return repository.listTrainingAmmunitionBatchShares().map((row) => {
+        const departments = aggregateAssignmentQuantities(repository.listShareAssignments(row.id));
+        const defaultDepartment = departments.length === 1 ? departments[0].department : '';
+        return {
+          share: mapShare(row),
+          departments,
+          entries: repository.listTrainingAmmunitionBatches(row.id).map((entry) => ({
+            position: Number(entry.position),
+            batchNumber: entry.batch_number,
+            quantity: Number(entry.quantity || 0),
+            department: entry.department || defaultDepartment,
+            notes: entry.notes || ''
+          }))
+        };
+      });
+    },
+
+    saveTrainingAmmunitionBatches(id, entries) {
+      const shareId = requirePositiveId(id);
+      const share = repository.getShare(shareId);
+      if (!share || !share.requires_training_ammunition_batch_book) {
+        throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο το Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως.', 'VALIDATION_ERROR');
+      }
+      const expectedDepartments = aggregateAssignmentQuantities(repository.listShareAssignments(shareId));
+      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
+        const batchNumber = String(entry && entry.batchNumber || '').trim();
+        const quantity = Number(entry && entry.quantity);
+        const department = String(entry && entry.department || '').trim();
+        if (!batchNumber) {
+          throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
+        }
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+        }
+        if (expectedDepartments.length && !department) {
+          throw new AppError('Το Τμήμα της Μερίδας Πυρκού είναι υποχρεωτικό.', 'VALIDATION_ERROR');
+        }
+        return { batchNumber, quantity, department, notes: String(entry && entry.notes || '').trim() };
+      });
+      if (expectedDepartments.length) validateAmmunitionBatchAllocations(cleanEntries, expectedDepartments);
+      repository.replaceTrainingAmmunitionBatches(shareId, cleanEntries);
+      return { message: 'Οι μερίδες πυρομαχικών εκπαιδεύσεως αποθηκεύτηκαν.' };
+    },
+
+    listWeaponRegistry() {
+      return repository.listWeaponRegistryShares().map((row) => ({
+        share: mapShare(row),
+        entries: repository.listWeaponRegistryEntries(row.id).map((entry) => ({
+          position: Number(entry.position),
+          details: entry.details || '',
+          registryNumber: entry.registry_number || '',
+          sourceUnit: entry.source_unit || '',
+          entryYear: entry.document_year || '',
+          currentDepartment: entry.current_department || '',
+          fromDate: entry.assignment_from || '',
+          deliveredOutsideUnit: entry.delivered_outside_unit || '',
+          deliveredDate: entry.assignment_date || '',
+          notes: entry.notes || ''
+        }))
+      }));
+    },
+
+    saveWeaponRegistry(id, entries) {
+      const shareId = requirePositiveId(id);
+      const share = repository.getShare(shareId);
+      if (!share || !share.requires_weapon_registry) {
+        throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο το Μητρώο Οπλισμού.', 'VALIDATION_ERROR');
+      }
+      const fields = ['details', 'registryNumber', 'sourceUnit', 'entryYear', 'currentDepartment', 'fromDate', 'deliveredOutsideUnit', 'deliveredDate', 'notes'];
+      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => Object.fromEntries(
+        fields.map((field) => [field, String(entry && entry[field] || '').trim()])
+      ));
+      const expectedEntries = Math.max(0, Number(share.accounting_balance || 0));
+      if (cleanEntries.length !== expectedEntries) {
+        throw new AppError(`Οι εγγραφές του Μητρώου Οπλισμού πρέπει να είναι ακριβώς ${expectedEntries}, όσες και το υπόλοιπο της μερίδας.`, 'VALIDATION_ERROR');
+      }
+      repository.replaceWeaponRegistryEntries(shareId, cleanEntries);
+      return { message: 'Το Μητρώο Οπλισμού αποθηκεύτηκε.' };
     }
   };
 }

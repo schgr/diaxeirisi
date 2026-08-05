@@ -82,6 +82,8 @@ const intentionallyChanged = new Set([
   'bindShareCardOpen',
   'descriptionMatchRank',
   'filterAndRankShares',
+  'renderCompositionDocument',
+  'renderCompositionDocumentFooter',
   'renderRows',
   'renderSharesPage'
 ]);

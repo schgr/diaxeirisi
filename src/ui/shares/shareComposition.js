@@ -1,5 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 import { formatQuantity } from './shared.js';
+import { splitOfficerSignature } from '../officerSignature.js';
 
 function renderCompositionRows(items, locked = false) {
   if (!items.length) return '<tr class="empty-record-row"><td colspan="8" class="empty-table">Δεν έχει καταχωρηθεί σύνθεση.</td></tr>';
@@ -108,7 +109,7 @@ function renderCompositionDocument(card, settings) {
       <article class="composition-document-page print-document-area">
         ${isFirstPage ? renderCompositionDocumentHeader(card, settings) : ''}
         ${renderCompositionDocumentTable(pageItems, pageIndex * rowsPerPage)}
-        ${isLastPage ? renderCompositionDocumentFooter() : ''}
+        ${isLastPage ? renderCompositionDocumentFooter(settings) : ''}
         <div class="material-form-page-number">Σελίδα ${pageIndex + 1} από ${pageCount}</div>
       </article>
     `;
@@ -179,17 +180,38 @@ function renderCompositionDocumentRow(item, rowNumber) {
   `;
 }
 
-function renderCompositionDocumentFooter() {
+function renderCompositionDocumentFooter(settings = {}) {
+  const ped = splitOfficerSignature(settings?.financialOfficers?.ped || '');
+  const manager = splitOfficerSignature(settings?.financialOfficers?.manager || '');
   return `
     <div class="composition-document-footer">
       <div class="composition-footer-field composition-footer-field-13">
         <span><b>13.</b> ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ</span>
+        <div class="composition-footer-signatures">
+          ${renderCompositionSignature('Ο Π.Ε.Δ', ped, true)}
+          ${renderCompositionSignature('Ο ΔΧΣΤΗΣ', manager)}
+        </div>
       </div>
       <div class="composition-footer-field composition-footer-field-14">
         <span><b>14.</b> ΠΑΡΑΛΑΜΒΑΝΟΥΣΑ ΜΟΝΑΔΑ</span>
         <small>Αριθμ. Ημερ. Ευρετ. Δικ. Εξωτ. Δοσ.</small>
         <small class="composition-footer-reference">......../........................ 20....</small>
+        <div class="composition-footer-signatures composition-footer-signatures-blank">
+          ${renderCompositionSignature('Ο Π.Ε.Δ', {}, true)}
+          ${renderCompositionSignature('Ο ΔΧΣΤΗΣ')}
+        </div>
       </div>
+    </div>
+  `;
+}
+
+function renderCompositionSignature(role, officer = {}, considered = false) {
+  return `
+    <div class="composition-signature">
+      ${considered ? '<small class="composition-signature-considered">ΘΕΩΡΗΘΗΚΕ</small>' : ''}
+      <span>${role}</span>
+      <strong>${escapeHtml(officer.name || '')}</strong>
+      <em>${escapeHtml(officer.rank || '')}</em>
     </div>
   `;
 }

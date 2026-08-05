@@ -107,7 +107,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
         <section class="page-panel wide-panel">
           <h3>Πεδία Καρτελών Υλικού</h3>
-          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, τον Σειριακό Αριθμό, το Μητρώο Οπλισμού ή/και τα Πυρομαχικά Β.Φ.</p>
+          <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, τον Σειριακό Αριθμό, το Μητρώο Οπλισμού, τα Πυρομαχικά Β.Φ. ή/και τα Πυρομαχικά Εκπαιδεύσεως.</p>
           ${renderMaterialCardFlags(shares)}
         </section>
       </div>
@@ -194,7 +194,7 @@ function renderMaterialCardFlags(shares) {
   return `
     <div class="table-wrap material-card-flags-wrap">
       <table class="index-table material-card-flags-table">
-        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th><th>Μητρώο Οπλισμού</th><th>Πυρομαχικά Β.Φ.</th></tr></thead>
+        <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Σύνθεση Υλικού</th><th>Σειριακός Αριθμός</th><th>Μητρώο Οπλισμού</th><th>Πυρομαχικά Β.Φ.</th><th>Πυρομαχικά Εκπαιδεύσεως</th></tr></thead>
         <tbody>${shares.length ? shares.map((share, index) => `
           <tr data-material-card-flags="${share.id}">
             <td>${index + 1}</td>
@@ -205,28 +205,28 @@ function renderMaterialCardFlags(shares) {
             <td><input data-material-flag="requiresSerialNumber" type="checkbox" ${share.requiresSerialNumber ? 'checked' : ''} aria-label="Σειριακός Αριθμός ${escapeHtml(share.shareNumber)}" /></td>
             <td><input data-material-flag="requiresWeaponRegistry" type="checkbox" ${share.requiresWeaponRegistry ? 'checked' : ''} aria-label="Μητρώο Οπλισμού ${escapeHtml(share.shareNumber)}" /></td>
             <td><input data-material-flag="requiresAmmunitionBatchBook" type="checkbox" ${share.requiresAmmunitionBatchBook ? 'checked' : ''} aria-label="Πυρομαχικά Β.Φ. ${escapeHtml(share.shareNumber)}" /></td>
+            <td><input data-material-flag="requiresTrainingAmmunitionBatchBook" type="checkbox" ${share.requiresTrainingAmmunitionBatchBook ? 'checked' : ''} aria-label="Πυρομαχικά Εκπαιδεύσεως ${escapeHtml(share.shareNumber)}" /></td>
           </tr>
-        `).join('') : '<tr><td colspan="8" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
+        `).join('') : '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν ενεργές μερίδες υλικού.</td></tr>'}</tbody>
       </table>
     </div>
   `;
 }
 
 export function renderInitialInventorySection() {
-  const today = new Date().toISOString().slice(0, 10);
   return `
     <section class="page-panel wide-panel initial-inventory-panel">
       <div>
         <h3>Αρχική ενημέρωση μερίδων</h3>
         <p class="muted">Κατεβάστε το πρότυπο Excel, συμπληρώστε τα στοιχεία της τελευταίας ετήσιας απογραφής και εισαγάγετέ το. Οι υπάρχουσες μερίδες ενημερώνονται βάσει του αριθμού μερίδας και οι νέες δημιουργούνται αυτόματα.</p>
-        <p class="muted">Υποχρεωτικές στήλες: Α/Α, Αριθμός Μερίδας, Αριθμός Ονομαστικού, Περιγραφή, Μονάδα Μέτρησης και Ποσότητα.</p>
+        <p class="muted">Υποχρεωτικά πεδία: Α/Α, Αριθμός Μερίδας, Περιγραφή, Μονάδα Μέτρησης και Ποσότητα. Ο Αριθμός Ονομαστικού είναι προαιρετικός.</p>
       </div>
       <div class="initial-inventory-actions">
         <button class="secondary-button" data-download-initial-inventory-template type="button">Λήψη προτύπου Excel</button>
         <form id="initial-inventory-form" class="stacked-form initial-inventory-form">
           <label class="field">
             <span>Ημερομηνία τελευταίας ετήσιας απογραφής</span>
-            <input name="inventoryDate" type="date" max="${today}" required />
+            <input name="inventoryDate" type="date" />
           </label>
           <button class="primary-button" type="submit">Εισαγωγή αρχικής απογραφής</button>
         </form>
@@ -237,14 +237,20 @@ export function renderInitialInventorySection() {
 }
 
 export function renderCompositionImportSection() {
+  const today = new Date().toISOString().slice(0, 10);
   return `
     <section class="page-panel wide-panel initial-inventory-panel">
       <div>
         <h3>Ενημέρωση συνθέσεων μερίδων</h3>
         <p class="muted">Το πρότυπο περιλαμβάνει τις ενεργές συνθέσεις. Η εισαγωγή αντικαθιστά τις γραμμές των μερίδων που υπάρχουν στο Excel, χωρίς να επηρεάζει τις υπόλοιπες.</p>
         <p class="muted">Η Μη Χορηγηθείσα Ποσότητα υπολογίζεται αυτόματα: Προβλεπόμενη − Υπάρχουσα, με ελάχιστη τιμή το μηδέν.</p>
+        <p class="muted">Ο Αριθμός Ονομαστικού είναι προαιρετικός. Το πρότυπο περιλαμβάνει ξεχωριστό φύλλο με οδηγίες συμπλήρωσης.</p>
       </div>
       <div class="initial-inventory-actions">
+        <label class="field">
+          <span>Ημερομηνία τελευταίας ετήσιας απογραφής</span>
+          <input data-composition-inventory-date type="date" value="${today}" />
+        </label>
         <button class="secondary-button" data-download-composition-template type="button">Λήψη προτύπου συνθέσεων</button>
         <button class="primary-button" data-import-compositions type="button">Εισαγωγή συνθέσεων από Excel</button>
         <p class="muted" data-composition-import-status aria-live="polite">Δεν έχει επιλεγεί αρχείο.</p>
@@ -455,6 +461,7 @@ function renderDepartmentManagerTable(items) {
                   <td><input class="locked-input" data-field="departmentName" value="${escapeHtml(item.departmentName)}" readonly /></td>
                   <td><input class="locked-input" data-field="departmentHead" data-preserve-case="true" value="${escapeHtml(item.departmentHead)}" readonly /></td>
                   <td class="row-actions">
+                    <button class="secondary-button" data-action="edit-department" type="button">Επεξεργασία</button>
                     <button class="danger-button" data-action="delete-department" type="button">Διαγραφή</button>
                   </td>
                 </tr>
@@ -691,7 +698,14 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
     event.preventDefault();
     const inventoryDate = form.elements.inventoryDate.value;
     if (!inventoryDate) {
-      showToast('Συμπληρώστε την ημερομηνία της τελευταίας ετήσιας απογραφής.', 'error');
+      status.textContent = 'Συμπληρώστε την ημερομηνία της τελευταίας ετήσιας απογραφής.';
+      showToast(status.textContent, 'error');
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    if (inventoryDate > today) {
+      status.textContent = 'Η ημερομηνία δεν μπορεί να είναι μελλοντική.';
+      showToast(status.textContent, 'error');
       return;
     }
     if (!window.confirm('Η εισαγωγή θα δημιουργήσει νέες μερίδες και θα ενημερώσει τις υπάρχουσες βάσει του αριθμού μερίδας. Να συνεχιστεί;')) return;
@@ -702,9 +716,8 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
     const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
       if (progress.id === taskId && progress.message) status.textContent = progress.message;
     });
-    status.textContent = 'Δημιουργία αντιγράφου ασφαλείας και έλεγχος του αρχείου Excel...';
+    status.textContent = 'Έλεγχος και εισαγωγή του αρχείου αρχικής απογραφής...';
     try {
-      await window.appApi.backup.createAutomatic();
       const result = await settingsApi.importInitialInventory(inventoryDate, taskId);
       if (!result) {
         status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
@@ -726,6 +739,7 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
   const downloadButton = container.querySelector('[data-download-composition-template]');
   const importButton = container.querySelector('[data-import-compositions]');
   const status = container.querySelector('[data-composition-import-status]');
+  const inventoryDate = container.querySelector('[data-composition-inventory-date]');
 
   downloadButton?.addEventListener('click', async () => {
     downloadButton.disabled = true;
@@ -743,6 +757,16 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
   });
 
   importButton?.addEventListener('click', async () => {
+    if (!inventoryDate?.value) {
+      status.textContent = 'Συμπληρώστε την ημερομηνία τελευταίας ετήσιας απογραφής.';
+      showToast(status.textContent, 'error');
+      return;
+    }
+    if (inventoryDate.value > new Date().toISOString().slice(0, 10)) {
+      status.textContent = 'Η ημερομηνία δεν μπορεί να είναι μελλοντική.';
+      showToast(status.textContent, 'error');
+      return;
+    }
     if (!window.confirm('Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;')) return;
     importButton.disabled = true;
     const taskId = crypto.randomUUID();
@@ -751,7 +775,7 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
     });
     status.textContent = 'Έλεγχος και εισαγωγή του αρχείου συνθέσεων...';
     try {
-      const result = await settingsApi.importCompositions(taskId);
+      const result = await settingsApi.importCompositions(taskId, inventoryDate.value);
       if (!result) {
         status.textContent = 'Η επιλογή αρχείου ακυρώθηκε.';
         return;
@@ -858,6 +882,24 @@ function bindDeletes(container, settingsApi, showToast) {
     const action = button.dataset.action;
 
     try {
+      if (action === 'edit-department') {
+        const inputs = [...row.querySelectorAll('[data-field]')];
+        const editing = button.dataset.editing === 'true';
+        if (!editing) {
+          inputs.forEach((input) => { input.readOnly = false; input.classList.remove('locked-input'); });
+          button.dataset.editing = 'true';
+          button.textContent = 'Αποθήκευση';
+          inputs[0]?.focus();
+          return;
+        }
+        await settingsApi.updateDepartmentManager(id, {
+          departmentName: row.querySelector('[data-field="departmentName"]').value,
+          departmentHead: row.querySelector('[data-field="departmentHead"]').value
+        });
+        await refresh(container, settingsApi, showToast, 'Τα στοιχεία του Τμήματος ενημερώθηκαν.');
+        return;
+      }
+
       if (action === 'delete-department') {
         await settingsApi.deleteDepartmentManager(id);
         await refresh(container, settingsApi, showToast, 'Η εγγραφή διαγράφηκε.');

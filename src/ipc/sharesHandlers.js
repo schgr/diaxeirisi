@@ -14,6 +14,10 @@ const CHANNELS = Object.freeze([
   "shares:save-serial-numbers",
   "shares:list-ammunition-batch-registry",
   "shares:save-ammunition-batches",
+  "shares:list-training-ammunition-batch-registry",
+  "shares:save-training-ammunition-batches",
+  "shares:list-weapon-registry",
+  "shares:save-weapon-registry",
   "shares:save-composition",
   "shares:save-change-sheet",
   "shares:choose-photo"
@@ -65,6 +69,18 @@ function registerSharesHandlers({
     );
   register('shares:save-ammunition-batches', async (_event, id, entries) =>
       safeInvoke(() => services.shares.saveAmmunitionBatches(id, entries))
+    );
+  register('shares:list-training-ammunition-batch-registry', async () =>
+      safeInvoke(() => services.shares.listTrainingAmmunitionBatchRegistry())
+    );
+  register('shares:save-training-ammunition-batches', async (_event, id, entries) =>
+      safeInvoke(() => services.shares.saveTrainingAmmunitionBatches(id, entries))
+    );
+  register('shares:list-weapon-registry', async () =>
+      safeInvoke(() => services.shares.listWeaponRegistry())
+    );
+  register('shares:save-weapon-registry', async (_event, id, entries) =>
+      safeInvoke(() => services.shares.saveWeaponRegistry(id, entries))
     );
   register('shares:save-composition', async (_event, id, items) =>
       safeInvoke(() => services.shares.saveComposition(id, items))

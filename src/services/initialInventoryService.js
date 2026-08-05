@@ -142,8 +142,8 @@ function parseRows(matrix) {
     const measurementUnit = requiredText(row[index['Μονάδα Μέτρησης']]);
     const quantityText = requiredText(row[index['Ποσότητα']]).replace(',', '.');
     const quantity = Number(quantityText);
-    if (!serial || !shareNumber || !nominalNumber || !description || !measurementUnit || !quantityText) {
-      errors.push(`Γραμμή ${excelRow}: τα έξι πρώτα πεδία είναι υποχρεωτικά.`);
+    if (!serial || !shareNumber || !description || !measurementUnit || !quantityText) {
+      errors.push(`Γραμμή ${excelRow}: το Α/Α, ο Αριθμός Μερίδας, η Περιγραφή, η Μονάδα Μέτρησης και η Ποσότητα είναι υποχρεωτικά.`);
       return;
     }
     if (!Number.isFinite(quantity) || quantity < 0) {
@@ -188,5 +188,6 @@ function requiredText(value) {
 
 module.exports = {
   TEMPLATE_HEADERS,
-  createInitialInventoryService
+  createInitialInventoryService,
+  parseRows
 };

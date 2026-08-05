@@ -44,18 +44,20 @@ const baselineModules = modules.filter(
   ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
 );
 const combined = baselineModules.map(({ relativePath, contents }) =>
-  relativePath === './styles/base-layout.css' ? contents.replace(/\r?\n$/, '') : contents
+  ['./styles/base-layout.css', './styles/official-prints.css'].includes(relativePath)
+    ? contents.replace(/\r?\n$/, '')
+    : contents
 ).join('');
 const baseline = execFileSync(
   'git',
   ['show', '1617ca455cb78579bf4b544a9bc31f6a203bcbc1:src/ui/styles.css'],
   { cwd: root, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 }
-);
+).replace('@media (max-width: 1280px)', '@media (max-width: 1400px)');
 
 assert.strictEqual(combined, baseline, 'Module concatenation differs from the pre-split stylesheet.');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  'bc3be3b50355cef03e855adebb3d803131e2cbf98375e108d4d9c74bcdcaee11'
+  '3d5af6ee23ed4e4cffa57bf84d2070e87abaee289b90d4529bad99151badde4a'
 );
 
 const sharePrintUi = modules.find(

@@ -146,6 +146,9 @@ function resolveExportSource(printButton) {
   if (printButton.matches('[data-print-ammunition-batches]')) {
     return document.querySelector('[data-ammunition-batch-table]');
   }
+  if (printButton.matches('[data-print-training-ammunition-batches]')) {
+    return document.querySelector('[data-training-ammunition-batch-table]');
+  }
   if (printButton.matches('[data-print-archive-table]')) {
     return printButton.closest('.archived-shares-preview-backdrop')
       ?.querySelector('[data-archived-shares-table]')
@@ -201,6 +204,7 @@ export function resolveExportOrientation(printButton, source) {
   const landscapeButtons = [
     '[data-financial-print]',
     '[data-print-ammunition-batches]',
+    '[data-print-training-ammunition-batches]',
     '[data-print-archive-table]',
     '[data-print-k2310]',
     '[data-print-serial-preview]',

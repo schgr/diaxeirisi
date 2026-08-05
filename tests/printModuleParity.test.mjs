@@ -62,7 +62,6 @@ const criticalFunctions = [
   'renderChargeCreditOrdersIndex',
   'renderMaterialRegistryPages',
   'renderSharesByCategoryPages',
-  'renderBalanceDifferenceTable',
   'selectFirstMaterialPerAddy',
   'renderIndexAnnualSignatures'
 ];

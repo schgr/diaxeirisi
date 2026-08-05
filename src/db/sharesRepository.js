@@ -32,6 +32,7 @@ function createSharesRepository(db) {
               requires_serial_number,
               requires_weapon_registry,
               requires_ammunition_batch_book,
+              requires_training_ammunition_batch_book,
               requires_change_sheet
             FROM shares
             WHERE archive_status = 'Ενεργή'
@@ -108,6 +109,7 @@ function createSharesRepository(db) {
           shares.requires_serial_number,
           shares.requires_weapon_registry,
           shares.requires_ammunition_batch_book,
+          shares.requires_training_ammunition_batch_book,
           shares.requires_change_sheet
         FROM shares
         WHERE ${filters.join(' AND ')}
@@ -391,6 +393,7 @@ function createSharesRepository(db) {
               requires_serial_number = ?,
               requires_weapon_registry = ?,
               requires_ammunition_batch_book = ?,
+              requires_training_ammunition_batch_book = ?,
               requires_change_sheet = ?
           WHERE id = ?
         `
@@ -410,6 +413,7 @@ function createSharesRepository(db) {
         payload.requiresSerialNumber ? 1 : 0,
         payload.requiresWeaponRegistry ? 1 : 0,
         payload.requiresAmmunitionBatchBook ? 1 : 0,
+        payload.requiresTrainingAmmunitionBatchBook ? 1 : 0,
         payload.requiresChangeSheet ? 1 : 0,
         id
       );
@@ -519,6 +523,7 @@ function createSharesRepository(db) {
         FROM shares
         WHERE archive_status = 'Ενεργή'
           AND requires_serial_number = 1
+          AND accounting_balance > 0
         ORDER BY
           CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
           CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
@@ -559,6 +564,7 @@ function createSharesRepository(db) {
         FROM shares
         WHERE archive_status = 'Ενεργή'
           AND requires_ammunition_batch_book = 1
+          AND accounting_balance > 0
         ORDER BY CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
                  CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
       `).all();
@@ -589,6 +595,84 @@ function createSharesRepository(db) {
           entry.quantity,
           entry.department,
           entry.notes
+        ));
+      })();
+    },
+
+    listTrainingAmmunitionBatchShares() {
+      return db.prepare(`
+        SELECT *
+        FROM shares
+        WHERE archive_status = 'Ενεργή'
+          AND requires_training_ammunition_batch_book = 1
+          AND accounting_balance > 0
+        ORDER BY CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+                 CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
+      `).all();
+    },
+
+    listTrainingAmmunitionBatches(shareId) {
+      return db.prepare(`
+        SELECT position, batch_number, quantity, department, notes
+        FROM share_training_ammunition_batches
+        WHERE share_id = ?
+        ORDER BY position
+      `).all(shareId);
+    },
+
+    replaceTrainingAmmunitionBatches(shareId, entries) {
+      db.transaction(() => {
+        db.prepare('DELETE FROM share_training_ammunition_batches WHERE share_id = ?').run(shareId);
+        const insert = db.prepare(`
+          INSERT INTO share_training_ammunition_batches (
+            share_id, position, batch_number, quantity, department, notes
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
+        `);
+        entries.forEach((entry, index) => insert.run(
+          shareId,
+          index + 1,
+          entry.batchNumber,
+          entry.quantity,
+          entry.department,
+          entry.notes
+        ));
+      })();
+    },
+
+    listWeaponRegistryShares() {
+      return db.prepare(`
+        SELECT * FROM shares
+        WHERE archive_status = 'Ενεργή' AND requires_weapon_registry = 1
+        ORDER BY CASE WHEN main_material_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
+                 CAST(main_material_number AS INTEGER), main_material_number COLLATE NOCASE, id
+      `).all();
+    },
+
+    listWeaponRegistryEntries(shareId) {
+      return db.prepare(`
+        SELECT position, details, registry_number, source_unit, document_year,
+               current_department, assignment_from, delivered_outside_unit,
+               assignment_date, notes
+        FROM share_weapon_registry_entries
+        WHERE share_id = ?
+        ORDER BY position
+      `).all(shareId);
+    },
+
+    replaceWeaponRegistryEntries(shareId, entries) {
+      db.transaction(() => {
+        db.prepare('DELETE FROM share_weapon_registry_entries WHERE share_id = ?').run(shareId);
+        const insert = db.prepare(`
+          INSERT INTO share_weapon_registry_entries (
+            share_id, position, details, registry_number, source_unit, document_year,
+            current_department, assignment_from, delivered_outside_unit, assignment_date, notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        entries.forEach((entry, index) => insert.run(
+          shareId, index + 1, entry.details, entry.registryNumber, entry.sourceUnit,
+          entry.entryYear, entry.currentDepartment, entry.fromDate,
+          entry.deliveredOutsideUnit, entry.deliveredDate, entry.notes
         ));
       })();
     },

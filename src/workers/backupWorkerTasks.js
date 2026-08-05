@@ -164,7 +164,7 @@ async function availableSpace(targetPath, override) {
       const executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32',
         'WindowsPowerShell', 'v1.0', 'powershell.exe');
       execFile(executable, ['-NoProfile', '-NonInteractive', '-Command',
-        `(Get-PSDrive -Name '${drive}').Free`], (error, stdout) => {
+        `(Get-PSDrive -Name '${drive}').Free`], { timeout: 8000 }, (error, stdout) => {
         if (error) reject(taskError('Δεν ήταν δυνατός ο έλεγχος ελεύθερου χώρου.', 'BACKUP_SPACE_CHECK_FAILED'));
         else resolve(Number(String(stdout).trim()));
       });
@@ -174,7 +174,17 @@ async function availableSpace(targetPath, override) {
 }
 
 async function requireSpace(targetPath, bytes, override) {
-  const free = await availableSpace(targetPath, override);
+  let free;
+  try {
+    free = await availableSpace(targetPath, override);
+  } catch (error) {
+    if (error && error.code === 'BACKUP_SPACE_CHECK_FAILED') {
+      // Ο έλεγχος χώρου απέτυχε να ολοκληρωθεί (π.χ. PowerShell timeout σε Windows 7) -
+      // δεν σημαίνει ότι δεν υπάρχει χώρος. Προχωράμε χωρίς να μπλοκάρουμε το backup.
+      return;
+    }
+    throw error;
+  }
   if (!Number.isFinite(free) || free < bytes) {
     throw taskError('Δεν υπάρχει αρκετός ελεύθερος χώρος για την ασφαλή εργασία.', 'BACKUP_INSUFFICIENT_SPACE');
   }

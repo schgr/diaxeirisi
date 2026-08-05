@@ -90,8 +90,10 @@ function schemaSnapshot(db) {
     snapshot(baseline),
     'Published migration SQL hashes changed.'
   );
-  assert.strictEqual(migrations.length, 62);
-  assert.strictEqual(migrations[61].name, 'share_print_query_indexes');
+  assert.strictEqual(migrations.length, 65);
+  assert.strictEqual(migrations[62].name, 'training_ammunition_batch_book');
+  assert.strictEqual(migrations[63].name, 'weapon_registry_entries');
+  assert.strictEqual(migrations[64].name, 'weapon_registry_nine_fields');
   assert.throws(
     () => validateMigrations([migrations[0], migrations[0]]),
     /Duplicate or invalid migration version/
@@ -107,7 +109,7 @@ function schemaSnapshot(db) {
   const baselineDb = new SQL.Database();
   const currentDb = new SQL.Database();
   assert.strictEqual(applyMigrations(baselineDb, baseline), 61);
-  assert.strictEqual(applyMigrations(currentDb, migrations), 62);
+  assert.strictEqual(applyMigrations(currentDb, migrations), 65);
   const currentIndexes = queryRows(
     currentDb,
     `SELECT name FROM sqlite_master
@@ -124,14 +126,14 @@ function schemaSnapshot(db) {
   for (const version of [10, 30, 50]) {
     const upgradeDb = new SQL.Database();
     applyMigrations(upgradeDb, baseline.filter((migration) => migration.version <= version));
-    assert.strictEqual(applyMigrations(upgradeDb, migrations), 62 - version);
+    assert.strictEqual(applyMigrations(upgradeDb, migrations), 65 - version);
     assert.deepStrictEqual(schemaSnapshot(upgradeDb), schemaSnapshot(currentDb));
     upgradeDb.close();
   }
 
   baselineDb.close();
   currentDb.close();
-  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migration 62, fresh/upgrade/idempotent parity)');
+  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migrations 62-65, fresh/upgrade/idempotent parity)');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

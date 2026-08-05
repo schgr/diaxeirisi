@@ -77,6 +77,10 @@ contextBridge.exposeInMainWorld('appApi', {
     saveSerialNumbers: (id, entries) => invoke('shares:save-serial-numbers', id, entries),
     listAmmunitionBatchRegistry: () => invoke('shares:list-ammunition-batch-registry'),
     saveAmmunitionBatches: (id, entries) => invoke('shares:save-ammunition-batches', id, entries),
+    listTrainingAmmunitionBatchRegistry: () => invoke('shares:list-training-ammunition-batch-registry'),
+    saveTrainingAmmunitionBatches: (id, entries) => invoke('shares:save-training-ammunition-batches', id, entries),
+    listWeaponRegistry: () => invoke('shares:list-weapon-registry'),
+    saveWeaponRegistry: (id, entries) => invoke('shares:save-weapon-registry', id, entries),
     saveComposition: (id, items) => invoke('shares:save-composition', id, items),
     saveChangeSheet: (id, entries) => invoke('shares:save-change-sheet', id, entries),
     choosePhoto: () => invoke('shares:choose-photo')
@@ -88,7 +92,7 @@ contextBridge.exposeInMainWorld('appApi', {
     importInitialInventory: (inventoryDate, taskId) =>
       invoke('settings:import-initial-inventory', inventoryDate, taskId),
     downloadCompositionTemplate: () => invoke('settings:download-composition-template'),
-    importCompositions: (taskId) => invoke('settings:import-compositions', taskId),
+    importCompositions: (taskId, inventoryDate) => invoke('settings:import-compositions', taskId, inventoryDate),
     saveServiceInfo: (payload) => invoke('settings:save-service', payload),
     saveFinancialOfficers: (payload) => invoke('settings:save-financial-officers', payload),
     saveAuditSettings: (payload) => invoke('settings:save-audit', payload),

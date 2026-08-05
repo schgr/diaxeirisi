@@ -31,11 +31,12 @@ function createCompositionImportService(db) {
       sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
       sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       sheet.getRow(1).height = 32;
+      addInstructionsSheet(workbook);
       await workbook.xlsx.writeFile(filePath);
       return { filePath, message: 'Το πρότυπο συνθέσεων δημιουργήθηκε.' };
     },
 
-    async importWorkbook(filePath) {
+    async importWorkbook(filePath, inventoryDate) {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(filePath);
       const worksheet = workbook.worksheets[0];
@@ -45,10 +46,11 @@ function createCompositionImportService(db) {
       worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
         matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
       });
-      return this.importMatrix(matrix);
+      return this.importMatrix(matrix, inventoryDate);
     },
 
-    importMatrix(matrix) {
+    importMatrix(matrix, inventoryDate) {
+      const openingDate = requireInventoryDate(inventoryDate);
       const rows = parseCompositionRows(matrix);
       const shares = sharesService.listShares();
       const sharesByNumber = new Map(shares.map((share) => [normalizeKey(share.shareNumber), share]));
@@ -68,14 +70,14 @@ function createCompositionImportService(db) {
 
       let importedRows = 0;
       for (const { share, rows: groupRows } of groups.values()) {
-        const card = sharesService.getShareCard(share.id, new Date().getFullYear());
+        const card = sharesService.getShareCard(share.id, Number(openingDate.slice(0, 4)) + 1);
         const existingByNominal = new Map(
           card.compositionItems.map((item) => [normalizeKey(item.componentNominalNumber), item])
         );
         const balance = Number(card.share.accountingBalance || 0);
         const items = groupRows.map((row) => {
-          const existing = existingByNominal.get(normalizeKey(row.nominalNumber));
-          const componentShare = sharesByNominal.get(normalizeKey(row.nominalNumber));
+          const existing = row.nominalNumber ? existingByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
+          const componentShare = row.nominalNumber ? sharesByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
           const projectedTotal = row.projectedQuantity * balance;
           return {
             componentNominalNumber: row.nominalNumber,
@@ -87,7 +89,6 @@ function createCompositionImportService(db) {
           };
         });
         sharesService.saveComposition(share.id, items);
-        const openingDate = `${Number(card.year) - 1}-12-31`;
         sharesService.saveChangeSheet(
           share.id,
           groupRows.flatMap((row, index) => Number(row.existingQuantity) > 0 ? [{
@@ -114,6 +115,17 @@ function createCompositionImportService(db) {
   };
 }
 
+function requireInventoryDate(value) {
+  const date = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new AppError('Συμπληρώστε την ημερομηνία τελευταίας ετήσιας απογραφής.', 'VALIDATION_ERROR');
+  }
+  if (date > new Date().toISOString().slice(0, 10)) {
+    throw new AppError('Η ημερομηνία δεν μπορεί να είναι μελλοντική.', 'VALIDATION_ERROR');
+  }
+  return date;
+}
+
 function parseCompositionRows(matrix) {
   if (!matrix.length) throw new AppError('Το αρχείο Excel είναι κενό.', 'VALIDATION_ERROR');
   const headers = matrix[0].map(normalizeHeader);
@@ -138,8 +150,8 @@ function parseCompositionRows(matrix) {
     const measurementUnit = text(row[index['Μονάδα Μέτρησης']]);
     const projectedQuantity = number(row[index['Προβλεπόμενη Ποσότητα']]);
     const existingQuantity = number(row[index['Υπάρχουσα Ποσότητα']]);
-    if (!shareNumber || !nominalNumber || !description || !measurementUnit) {
-      errors.push(`Γραμμή ${excelRow}: η μερίδα, ο αριθμός ονομαστικού, η περιγραφή και η μονάδα μέτρησης είναι υποχρεωτικά.`);
+    if (!shareNumber || !description || !measurementUnit) {
+      errors.push(`Γραμμή ${excelRow}: η μερίδα, η περιγραφή και η μονάδα μέτρησης είναι υποχρεωτικά.`);
       return;
     }
     if (!Number.isFinite(projectedQuantity) || projectedQuantity <= 0) {
@@ -150,8 +162,9 @@ function parseCompositionRows(matrix) {
       errors.push(`Γραμμή ${excelRow}: η Υπάρχουσα Ποσότητα πρέπει να είναι μη αρνητική.`);
       return;
     }
-    const key = `${normalizeKey(shareNumber)}|${normalizeKey(nominalNumber)}`;
-    if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${nominalNumber}.`);
+    const componentKey = nominalNumber || `${description}|${measurementUnit}`;
+    const key = `${normalizeKey(shareNumber)}|${normalizeKey(componentKey)}`;
+    if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${componentKey}.`);
     seen.add(key);
     rows.push({ shareNumber, nominalNumber, description, measurementUnit, projectedQuantity, existingQuantity });
   });
@@ -160,6 +173,27 @@ function parseCompositionRows(matrix) {
   }
   if (!rows.length) throw new AppError('Δεν βρέθηκαν γραμμές συνθέσεων στο Excel.', 'VALIDATION_ERROR');
   return rows;
+}
+
+function addInstructionsSheet(workbook) {
+  const sheet = workbook.addWorksheet('Οδηγίες');
+  sheet.columns = [{ width: 30 }, { width: 92 }];
+  sheet.addRow(['Πεδίο', 'Οδηγίες συμπλήρωσης']);
+  sheet.addRows([
+    ['Αριθμός Μερίδας', 'Η Μερίδα Υλικού που έχει σύνθεση.'],
+    ['Αριθμός Ονομαστικού', 'Ο αριθμός ονομαστικού των υλικών της συλλογής. Η συμπλήρωση είναι προαιρετική.'],
+    ['Μονάδα Μέτρησης', 'Η μονάδα μέτρησης του υλικού της συλλογής.'],
+    ['Προβλεπόμενη Ποσότητα', 'Η προβλεπόμενη ποσότητα για 1 υλικό.'],
+    ['Υπάρχουσα Ποσότητα', 'Η ποσότητα του Φύλλου Μεταβολών την 31-12 του προηγούμενου οικονομικού έτους.']
+  ]);
+  sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
+  sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+  sheet.getRow(1).height = 26;
+  sheet.getColumn(1).font = { bold: true };
+  sheet.getColumn(2).alignment = { vertical: 'top', wrapText: true };
+  for (let row = 2; row <= 6; row += 1) sheet.getRow(row).height = 34;
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
 }
 
 function readCellValue(value) {

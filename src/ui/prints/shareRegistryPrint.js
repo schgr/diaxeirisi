@@ -13,7 +13,7 @@ function renderRegistryControls(shareCount, state) {
         <span>Πλήθος μερίδων για εμφάνιση</span>
         <input id="registry-display-count" type="number" min="1" value="${state.displayCount || shareCount || 1}" />
       </label>
-      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button">Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button compact-print-button" data-no-document-export type="button">Προβολή</button>
     </div>
   `;
 }

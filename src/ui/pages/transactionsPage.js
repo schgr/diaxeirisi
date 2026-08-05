@@ -171,8 +171,8 @@ export async function renderTransactionsPage(
               <th>Μονάδα Μέτρησης</th>
               <th>Είδος Δοσοληψίας</th>
               <th>Μονάδα Δοσοληψιών</th>
+              <th>Διαγραφή</th>
               <th>Είδος Υλικού</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="addy-items-body">

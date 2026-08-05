@@ -21,7 +21,7 @@ function renderShareCardControls(shares, state) {
         <input id="print-moved-only" type="checkbox" ${state.onlyMovedCards ? 'checked' : ''} />
       </label>
       ${renderShareRangeControls(state)}
-      <button id="print-current-document" class="primary-button" data-no-document-export type="button">Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button" data-no-document-export type="button">Προβολή</button>
     </div>`;
 }
 
@@ -33,7 +33,7 @@ function renderAllShareCardControls(shareCount, state) {
         <strong>${escapeHtml(shareCount)}</strong>
       </div>
       ${renderShareRangeControls(state)}
-      <button id="print-current-document" class="primary-button compact-print-button all-share-print-button" data-no-document-export type="button" ${shareCount ? '' : 'disabled'}>Εκτύπωση Μερίδων</button>
+      <button id="print-current-document" class="primary-button compact-print-button all-share-print-button" data-no-document-export type="button" ${shareCount ? '' : 'disabled'}>Προβολή Μερίδων</button>
       <button id="print-share-back-side" class="secondary-button compact-print-button" data-no-document-export type="button">Προβολή Πίσω Πλευράς</button>
     </div>
   `;

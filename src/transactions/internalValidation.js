@@ -20,8 +20,8 @@ function validateInternalMovement(payload) {
     quantity: Number(item && item.quantity)
   }));
 
-  if (composition.some((item) => !Number.isFinite(item.quantity) || item.quantity <= 0)) {
-    throw new AppError('Η ποσότητα κάθε υλικού της σύνθεσης πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+  if (composition.some((item) => !Number.isFinite(item.quantity) || item.quantity < 0)) {
+    throw new AppError('Η ποσότητα κάθε υλικού της σύνθεσης δεν μπορεί να είναι αρνητική.', 'VALIDATION_ERROR');
   }
 
   return {

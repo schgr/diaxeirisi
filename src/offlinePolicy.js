@@ -78,6 +78,7 @@ function createOfflinePolicy(options = {}) {
     try {
       const parsed = new URL(String(value));
       if (parsed.protocol === 'file:') return isAllowedFileUrl(parsed.href);
+      if (parsed.protocol === 'devtools:' || parsed.protocol === 'chrome-devtools:') return true;
       // No production flow requires arbitrary data/blob resources.
       if (EMBEDDED_PROTOCOLS.has(parsed.protocol)) return false;
       if (NETWORK_PROTOCOLS.has(parsed.protocol)) return false;

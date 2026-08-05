@@ -32,18 +32,21 @@ async function run() {
     const sheet = workbook.addWorksheet('Συνθέσεις');
     sheet.addRow(COMPOSITION_HEADERS);
     sheet.addRow(['13', 'COMP-1', 'Εξάρτημα', 'Τεμάχια', 15, 100]);
+    sheet.addRow(['13', '', 'Εξάρτημα χωρίς αριθμό ονομαστικού', 'Τεμάχια', 2, 5]);
     await workbook.xlsx.writeFile(input);
 
-    const result = await importer.importWorkbook(input);
+    const inventoryDate = `${new Date().getFullYear() - 1}-12-31`;
+    const result = await importer.importWorkbook(input, inventoryDate);
     assert.strictEqual(result.updatedShares, 1);
-    assert.strictEqual(result.importedRows, 1);
+    assert.strictEqual(result.importedRows, 2);
     const card = shares.getShareCard(share.id, new Date().getFullYear());
     assert.strictEqual(card.share.requiresComposition, true);
     assert.strictEqual(card.compositionItems[0].projectedQuantity, 150);
     assert.strictEqual(card.compositionItems[0].quantityPerMaterial, 15);
     assert.strictEqual(card.compositionItems[0].measurementUnit, 'Τεμάχια');
     assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 50);
-    assert.strictEqual(card.changeSheetEntries.length, 1);
+    assert.strictEqual(card.compositionItems[1].componentNominalNumber, '');
+    assert.strictEqual(card.changeSheetEntries.length, 2);
     assert.strictEqual(card.changeSheetEntries[0].changeDate, `${new Date().getFullYear() - 1}-12-31`);
     assert.strictEqual(card.changeSheetEntries[0].orderReference, 'Απογραφή');
     assert.strictEqual(card.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
@@ -55,6 +58,8 @@ async function run() {
     await exported.xlsx.readFile(output);
     assert.deepStrictEqual(exported.worksheets[0].getRow(1).values.slice(1), COMPOSITION_HEADERS);
     assert.strictEqual(exported.worksheets[0].actualRowCount, 1);
+    assert.strictEqual(exported.worksheets.length, 2);
+    assert.strictEqual(exported.worksheets[1].name, 'Οδηγίες');
     console.log('compositionImport.test.js: OK');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

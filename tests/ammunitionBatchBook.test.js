@@ -88,7 +88,7 @@ function makeShare(shareNumber, description) {
     description,
     materialType: 'Πυρομαχικά',
     projectedQuantity: 0,
-    accountingBalance: 0,
+    accountingBalance: shareNumber === '10' ? 200 : 0,
     chargedQuantity: shareNumber === '10' ? 200 : 0
   };
 }

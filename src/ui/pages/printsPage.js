@@ -1,6 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 import { bindCategoryShareControls, bindRegistryControls, getMaterialCategoryNames, openCategorySharePreview, renderCategoryShareControls, renderMaterialRegistryPages, renderRegistryControls, renderSharesByCategoryPages } from '../prints/shareRegistryPrint.js';
-import { bindExternalIndexControls, bindFiscalYearControls, bindOrdersIndexControls, renderExternalIndexTable, renderIndexTableControls, renderOrdersIndexTable, renderChargeCreditOrdersIndex, renderExternalTransactionsIndex, renderIndexAnnualSignatures, selectFirstMaterialPerAddy } from '../prints/indexPrint.js';
+import { bindExternalIndexControls, bindFiscalYearControls, bindOrdersIndexControls, renderExternalIndexTable, renderFiscalYearControls, renderIndexTableControls, renderOrdersIndexTable, renderChargeCreditOrdersIndex, renderExternalTransactionsIndex, renderIndexAnnualSignatures, selectFirstMaterialPerAddy } from '../prints/indexPrint.js';
 import { bindAllShareCardControls, bindShareCardControls, printPreparedShareCards, renderAllShareCardControls, renderAllShareCardPreview, renderShareCardBatchPreview, renderShareCardControls, renderShareCardPreview } from '../prints/shareCardPrint.js';
 import { printIsolatedPreview } from '../prints/printPreview.js';
 import { bindInventoryPrintControls, renderInventoryPrintControls, renderInventoryStatement } from '../prints/inventoryPrint.js';
@@ -192,6 +192,7 @@ export async function renderPrintsPage(
       controls.innerHTML = renderRegistryControls(shares.length, state);
       preview.innerHTML = renderMaterialRegistryPages(shares, settings, state);
       bindRegistryControls(container, shares, settings, state, preview);
+      preview.style.display = 'none';
       return;
     }
 
@@ -212,6 +213,7 @@ export async function renderPrintsPage(
         await renderShareCardPreview(sharesApi, shares, settings, state, preview);
         bindShareCardControls(container, sharesApi, shares, settings, state, preview);
       }
+      preview.style.display = 'none';
       return;
     }
 
@@ -272,6 +274,7 @@ export async function renderPrintsPage(
         filterBalanceDifferences(rows, state.balanceDifferenceFilter)
       );
       bindBalanceDifferenceControls(container, state, rows, preview);
+      preview.style.display = 'none';
       return;
     }
 
@@ -317,6 +320,23 @@ export async function renderPrintsPage(
     }
 
     if (event.target.closest('#print-current-document')) {
+      if (['registry', 'share-card', 'balance-differences'].includes(state.activeTab)) {
+        const titleByTab = {
+          registry: 'Μητρώο Μερίδων',
+          'share-card': 'Μερίδες Υλικού',
+          'balance-differences': 'Πλεονάσματα - Ελλείμματα'
+        };
+        openPrintDocumentPreview(
+          titleByTab[state.activeTab],
+          preview.innerHTML,
+          state.activeTab === 'balance-differences',
+          state.activeTab === 'share-card'
+            ? () => printPreparedShareCards(container, preview, settings, state)
+            : null,
+          state.activeTab === 'share-card' ? 'share-card-preview' : ''
+        );
+        return;
+      }
       if (state.activeTab === 'share-card') {
         void printPreparedShareCards(container, preview, settings, state);
         return;
@@ -379,4 +399,34 @@ function renderPrintNavigation(container, state, groups = printTabGroups) {
   if (subtabs) {
     subtabs.innerHTML = renderPrintSubtabs(state, groups);
   }
+}
+
+function openPrintDocumentPreview(title, documentHtml, landscape = false, printAction = null, contentClass = '') {
+  document.querySelector('.generic-print-preview-backdrop')?.remove();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop generic-print-preview-backdrop';
+  backdrop.innerHTML = `
+    <section class="request-document-modal index-document-preview-modal" role="dialog" aria-modal="true">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΠΡΟΕΠΙΣΚΟΠΗΣΗ</p><h2>${escapeHtml(title)}</h2></div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-generic-preview type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-generic-preview type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="print-preview-shell index-document-preview-content ${escapeHtml(contentClass)}" data-generic-preview-content>${documentHtml}</div>
+    </section>
+  `;
+  const close = () => backdrop.remove();
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-generic-preview]')) close();
+  });
+  backdrop.querySelector('[data-print-generic-preview]').addEventListener('click', () => {
+    if (printAction) {
+      void printAction();
+      return;
+    }
+    void printIsolatedPreview(backdrop.querySelector('[data-generic-preview-content]'), landscape);
+  });
+  document.body.appendChild(backdrop);
 }
