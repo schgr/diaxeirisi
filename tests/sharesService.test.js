@@ -231,6 +231,8 @@ function testSaveCompositionValidation({ service }) {
 }
 
 function testSerialNumberRegistry({ db, service }) {
+  const emptyShare = createShare(service, '499', { chargedQuantity: 0 });
+  service.updateShareDetails(emptyShare.id, { requiresSerialNumber: true });
   const share = createShare(service, '500', { chargedQuantity: 3 });
   service.updateShareDetails(share.id, { requiresSerialNumber: true });
 
@@ -249,6 +251,10 @@ function testSerialNumberRegistry({ db, service }) {
   assert.deepStrictEqual(createSharesRepository(db).listShareAssignments(share.id).map((item) => item.department), ['Α Πυρχία', 'Β Πυρχία']);
 
   let [registry] = service.listSerialNumberRegistry();
+  assert.deepStrictEqual(
+    service.listSerialNumberRegistry().map((item) => item.share.shareNumber),
+    ['500']
+  );
   assert.strictEqual(registry.quantity, 3);
   assert.deepStrictEqual(registry.entries.map((entry) => entry.department), ['Α Πυρχία', 'Α Πυρχία', 'Β Πυρχία']);
 

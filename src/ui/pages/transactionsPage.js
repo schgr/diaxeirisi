@@ -171,7 +171,7 @@ export async function renderTransactionsPage(
               <th>Μονάδα Μέτρησης</th>
               <th>Είδος Δοσοληψίας</th>
               <th>Μονάδα Δοσοληψιών</th>
-              <th>Διαγραφή</th>
+              <th>Ενέργειες</th>
               <th>Είδος Υλικού</th>
             </tr>
           </thead>

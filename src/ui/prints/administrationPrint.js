@@ -1,5 +1,6 @@
 import { escapeHtml } from '../components/forms.js';
 import { formatOfficerName, formatOfficerRank } from '../officerSignature.js';
+import { renderIndexPages } from './indexPrint.js';
 import { formatDate, formatNumber } from './shared.js';
 
 function renderOfficerIdentity(value) {

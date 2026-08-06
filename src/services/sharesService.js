@@ -361,7 +361,7 @@ function createSharesService(db) {
             };
           })
         };
-      });
+      }).filter((item) => item.quantity > 0);
     },
 
     saveSerialNumbers(id, entries) {

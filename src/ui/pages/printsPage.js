@@ -333,7 +333,21 @@ export async function renderPrintsPage(
           state.activeTab === 'share-card'
             ? () => printPreparedShareCards(container, preview, settings, state)
             : null,
-          state.activeTab === 'share-card' ? 'share-card-preview' : ''
+          state.activeTab === 'share-card' ? 'share-card-preview' : '',
+          state.activeTab === 'share-card'
+            ? (requestedPage, modalPreview) => {
+                state.sharePreviewPage = Math.max(
+                  0,
+                  Math.min(Math.ceil(state.sharePrintCards.length / 20) - 1, requestedPage)
+                );
+                renderShareCardBatchPreview(
+                  state.sharePrintCards,
+                  settings,
+                  state,
+                  modalPreview
+                );
+              }
+            : null
         );
         return;
       }
@@ -401,7 +415,7 @@ function renderPrintNavigation(container, state, groups = printTabGroups) {
   }
 }
 
-function openPrintDocumentPreview(title, documentHtml, landscape = false, printAction = null, contentClass = '') {
+function openPrintDocumentPreview(title, documentHtml, landscape = false, printAction = null, contentClass = '', pageAction = null) {
   document.querySelector('.generic-print-preview-backdrop')?.remove();
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop index-document-preview-backdrop generic-print-preview-backdrop';
@@ -420,6 +434,13 @@ function openPrintDocumentPreview(title, documentHtml, landscape = false, printA
   const close = () => backdrop.remove();
   backdrop.addEventListener('click', (event) => {
     if (event.target === backdrop || event.target.closest('[data-close-generic-preview]')) close();
+    const pageButton = event.target.closest('[data-share-preview-page]');
+    if (pageButton && pageAction) {
+      pageAction(
+        Number(pageButton.dataset.sharePreviewPage),
+        backdrop.querySelector('[data-generic-preview-content]')
+      );
+    }
   });
   backdrop.querySelector('[data-print-generic-preview]').addEventListener('click', () => {
     if (printAction) {

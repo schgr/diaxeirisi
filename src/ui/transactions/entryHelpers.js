@@ -224,7 +224,7 @@ export function renderExhpEntryTables(items) {
 
 export function canAddItem(controls, state) {
   return (
-    state.items.length < 10 &&
+    (state.items.length < 10 || Number.isInteger(state.addyEditingIndex)) &&
     controls.unit.value.trim() &&
     controls.shareNumber.value.trim() &&
     controls.nominalNumber.value.trim() &&
@@ -367,7 +367,7 @@ export function renderAddyRows(items) {
           <td>${escapeHtml(item.measurementUnit)}</td>
           <td>${escapeHtml(item.transactionType)}</td>
           <td>${escapeHtml(item.transactionUnit)}</td>
-          <td><button class="danger-button" data-remove-addy-item="${index}" type="button">Διαγραφή</button></td>
+          <td class="row-actions"><button class="secondary-button" data-edit-addy-item="${index}" type="button">Επεξεργασία</button><button class="danger-button" data-remove-addy-item="${index}" type="button">Διαγραφή</button></td>
           <td>${escapeHtml(item.materialType)}</td>
         </tr>
       `

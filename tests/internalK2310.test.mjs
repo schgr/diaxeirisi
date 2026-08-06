@@ -33,6 +33,22 @@ assert.match(
   html,
   /class="k2310-serial-numbers-row"><td><\/td><td><\/td><td><\/td><td class="k2310-description-cell">SN-001, SN-002, SN-003<\/td>/u
 );
+
+const zeroCompositionHtml = renderK2310Pages(
+  'Μονάδα Δοκιμής',
+  department,
+  [{ ...balances[0], composition: [{
+    componentNominalNumber: 'ZERO-1',
+    componentDescription: 'Μη χορηγηθέν υλικό',
+    measurementUnit: 'Τεμάχια',
+    finalQuantity: 0
+  }] }]
+);
+assert.match(
+  zeroCompositionHtml,
+  /class="k2310-composition-row"[^]*?<td>0<\/td>/u,
+  'A zero composition quantity must be printed as 0 instead of an empty cell.'
+);
 assert.match(
   html,
   /class="k2310-ammunition-batches-row"><td><\/td><td><\/td><td><\/td><td class="k2310-description-cell">ΠΥΡ-001, ΠΥΡ-002<\/td>/u

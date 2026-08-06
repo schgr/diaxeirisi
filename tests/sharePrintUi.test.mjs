@@ -12,11 +12,20 @@ const rendererSource = fs.readFileSync(
   path.join(root, 'src', 'ui', 'renderer.js'),
   'utf8'
 );
+const printsPageSource = fs.readFileSync(
+  path.join(root, 'src', 'ui', 'pages', 'printsPage.js'),
+  'utf8'
+);
 
 assert.doesNotMatch(
   rendererSource,
   /legacy-offline-badge|legacyOfflineBadge/,
   'The legacy/offline badge must not be rendered in any build.'
+);
+assert.match(
+  printsPageSource,
+  /pageAction\([\s\S]*?data-generic-preview-content/,
+  'Share-card pagination inside the modal preview must invoke the modal page action.'
 );
 
 const controls = renderAllShareCardControls(1485, {

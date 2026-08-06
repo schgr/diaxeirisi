@@ -317,6 +317,9 @@ function mapAddyDocumentItem({ item, share, ledgerSerial, transactionUnit, servi
   const entryReference = ledgerSerial ? `${share.share_number}/${ledgerSerial}` : '';
 
   return {
+    shareNumber: item.shareNumber || share.share_number || '',
+    nominalNumber: item.nominalNumber || '',
+    description: item.description || share.description || '',
     transactionType: item.transactionType,
     column1: isCharge ? serviceName : transactionUnit,
     column11: isCharge ? entryReference : '',

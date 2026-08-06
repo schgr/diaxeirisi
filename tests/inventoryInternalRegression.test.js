@@ -62,7 +62,7 @@ async function run() {
   assert.match(newInventory, /inventory-period-start[\s\S]*inventory-period-end[\s\S]*inventory-reason[\s\S]*inventory-session-notes[\s\S]*inventory-create/u);
   assert.match(styles, /\.inventory-session-grid\s*\{[\s\S]*grid-template-columns:/u);
   assert.match(styles, /\.inventory-count-grid\s*\{[\s\S]*grid-template-columns:/u);
-  assert.match(chargesPage, /<h2>Κινήσεις Μερικών Διαχειριστών<\/h2>/u);
+  assert.match(chargesPage, /<h2>Κινήσεις Μερικών Διαχειρίσεων<\/h2>/u);
   assert.match(addyPrint, /isolated-print-root addy-isolated-print-root/u);
   assert.match(addyPrint, /printRoot\.innerHTML = source\.outerHTML/u);
   assert.match(

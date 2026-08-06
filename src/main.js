@@ -173,8 +173,7 @@ async function printCurrentDocument(webContents, options) {
         margins: { marginType: 'none' },
         landscape,
         scaleFactor: 100,
-        pagesPerSheet: 1,
-        pageSize: 'A4'
+        pagesPerSheet: 1
       },
       (success, failureReason) => {
         if (!success) {

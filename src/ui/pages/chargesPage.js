@@ -15,7 +15,7 @@ export async function renderChargesPage(container, internalApi, showToast) {
     <section class="page-header">
       <div>
         <p class="eyebrow">ΓΕΝΙΚΗ ΔΙΑΧΕΙΡΙΣΗ</p>
-        <h2>Κινήσεις Μερικών Διαχειριστών</h2>
+        <h2>Κινήσεις Μερικών Διαχειρίσεων</h2>
       </div>
     </section>
 
@@ -400,7 +400,9 @@ function renderK2310Row(row) {
   if (row.type === 'component') {
     const component = row.component;
     const issueCells = [
-      component.finalQuantity ? formatQuantity(component.finalQuantity) : '',
+      component.finalQuantity === null || component.finalQuantity === undefined
+        ? ''
+        : formatQuantity(component.finalQuantity),
       '', '', '', ''
     ];
     const returnCells = ['', '', '', '', ''];

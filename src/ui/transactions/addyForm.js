@@ -357,7 +357,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       composition = result;
     }
 
-    state.items.push({
+    const nextItem = {
       shareNumber: controls.shareNumber.value.trim(),
       nominalNumber: controls.nominalNumber.value.trim(),
       description: controls.description.value.trim(),
@@ -369,7 +369,14 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       materialType: controls.materialType.value,
       justificationReference: '',
       composition
-    });
+    };
+    if (Number.isInteger(state.addyEditingIndex)) {
+      state.items[state.addyEditingIndex] = nextItem;
+      state.addyEditingIndex = null;
+      controls.addItem.textContent = 'Προσθήκη';
+    } else {
+      state.items.push(nextItem);
+    }
     state.items.sort(compareShareNumbers);
 
     clearLineControls(controls);
@@ -378,9 +385,38 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   });
 
   const clickHandler = async (event) => {
+    const editButton = event.target.closest('[data-edit-addy-item]');
+    if (editButton) {
+      const editIndex = Number(editButton.dataset.editAddyItem);
+      const item = state.items[editIndex];
+      if (!item) return;
+      state.addyEditingIndex = editIndex;
+      controls.unit.value = item.transactionUnit || '';
+      controls.shareNumber.value = item.shareNumber || '';
+      controls.nominalNumber.value = item.nominalNumber || '';
+      controls.description.value = item.description || '';
+      controls.quantity.value = item.quantity;
+      controls.unitPrice.value = item.unitPrice ?? '';
+      controls.measurementUnit.value = item.measurementUnit || '';
+      controls.transactionType.value = item.transactionType || '';
+      controls.materialType.value = item.materialType || '';
+      controls.addItem.textContent = 'Αποθήκευση αλλαγών';
+      updateAddButton(controls, state);
+      controls.shareNumber.focus();
+      return;
+    }
+
     const button = event.target.closest('[data-remove-addy-item]');
     if (button) {
-      state.items.splice(Number(button.dataset.removeAddyItem), 1);
+      const removeIndex = Number(button.dataset.removeAddyItem);
+      state.items.splice(removeIndex, 1);
+      if (state.addyEditingIndex === removeIndex) {
+        state.addyEditingIndex = null;
+        clearLineControls(controls);
+        controls.addItem.textContent = 'Προσθήκη';
+      } else if (Number.isInteger(state.addyEditingIndex) && state.addyEditingIndex > removeIndex) {
+        state.addyEditingIndex -= 1;
+      }
       renderState(container, state);
       updateAddButton(controls, state);
       return;
