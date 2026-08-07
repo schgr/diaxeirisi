@@ -32,6 +32,8 @@ const CHANNELS = Object.freeze([
   "settings:delete-exhp-issue-reason"
 ]);
 
+const EXCEL_FILTERS = [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }];
+
 function registerSettingsHandlers({
   register,
   safeInvoke,
@@ -40,58 +42,56 @@ function registerSettingsHandlers({
   runHeavyTask,
   dialog
 }) {
+  async function saveTemplate(title, defaultPath, writeTemplate) {
+    const result = await dialog.showSaveDialog({ title, defaultPath, filters: EXCEL_FILTERS });
+    if (result.canceled || !result.filePath) return null;
+    return writeTemplate(result.filePath);
+  }
+
+  async function importWorkbook(event, taskId, title, importMatrix) {
+    const result = await dialog.showOpenDialog({
+      title,
+      properties: ['openFile'],
+      filters: EXCEL_FILTERS
+    });
+    if (result.canceled || !result.filePaths.length) return null;
+    await backupService.createAutomatic(true, { timeoutMs: 10 * 60 * 1000 });
+    const matrix = await runHeavyTask(event, 'read-excel-matrix', {
+      filePath: result.filePaths[0]
+    }, { taskId, timeoutMs: 180000 });
+    return importMatrix(matrix, result.filePaths[0]);
+  }
+
   register('settings:get', async () => safeInvoke(() => services.settings.getSettings()));
   register('settings:download-initial-inventory-template', async () =>
-      safeInvoke(async () => {
-        const result = await dialog.showSaveDialog({
-          title: 'Αποθήκευση προτύπου αρχικής απογραφής',
-          defaultPath: 'Πρότυπο-Τελευταίας-Ετήσιας-Απογραφής.xlsx',
-          filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
-        });
-        if (result.canceled || !result.filePath) return null;
-        return services.initialInventory.writeTemplate(result.filePath);
-      })
+      safeInvoke(() => saveTemplate(
+        'Αποθήκευση προτύπου αρχικής απογραφής',
+        'Πρότυπο-Τελευταίας-Ετήσιας-Απογραφής.xlsx',
+        (filePath) => services.initialInventory.writeTemplate(filePath)
+      ))
     );
   register('settings:import-initial-inventory', async (event, inventoryDate, taskId) =>
-      safeInvoke(async () => {
-        const result = await dialog.showOpenDialog({
-          title: 'Επιλογή τελευταίας ετήσιας απογραφής',
-          properties: ['openFile'],
-          filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
-        });
-        if (result.canceled || !result.filePaths.length) return null;
-        await backupService.createAutomatic(true, { timeoutMs: 10 * 60 * 1000 });
-        const matrix = await runHeavyTask(event, 'read-excel-matrix', {
-          filePath: result.filePaths[0]
-        }, { taskId, timeoutMs: 180000 });
-        return services.initialInventory.importMatrix(matrix, result.filePaths[0], inventoryDate);
-      })
+      safeInvoke(() => importWorkbook(
+        event,
+        taskId,
+        'Επιλογή τελευταίας ετήσιας απογραφής',
+        (matrix, filePath) => services.initialInventory.importMatrix(matrix, filePath, inventoryDate)
+      ))
     );
   register('settings:download-composition-template', async () =>
-      safeInvoke(async () => {
-        const result = await dialog.showSaveDialog({
-          title: 'Αποθήκευση προτύπου συνθέσεων μερίδων',
-          defaultPath: 'Πρότυπο-Συνθέσεων-Μερίδων.xlsx',
-          filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
-        });
-        if (result.canceled || !result.filePath) return null;
-        return services.compositionImport.writeTemplate(result.filePath);
-      })
+      safeInvoke(() => saveTemplate(
+        'Αποθήκευση προτύπου συνθέσεων μερίδων',
+        'Πρότυπο-Συνθέσεων-Μερίδων.xlsx',
+        (filePath) => services.compositionImport.writeTemplate(filePath)
+      ))
     );
   register('settings:import-compositions', async (event, taskId, inventoryDate) =>
-      safeInvoke(async () => {
-        const result = await dialog.showOpenDialog({
-          title: 'Επιλογή αρχείου συνθέσεων μερίδων',
-          properties: ['openFile'],
-          filters: [{ name: 'Αρχείο Excel', extensions: ['xlsx'] }]
-        });
-        if (result.canceled || !result.filePaths.length) return null;
-        await backupService.createAutomatic(true, { timeoutMs: 10 * 60 * 1000 });
-        const matrix = await runHeavyTask(event, 'read-excel-matrix', {
-          filePath: result.filePaths[0]
-        }, { taskId, timeoutMs: 180000 });
-        return services.compositionImport.importMatrix(matrix, inventoryDate);
-      })
+      safeInvoke(() => importWorkbook(
+        event,
+        taskId,
+        'Επιλογή αρχείου συνθέσεων μερίδων',
+        (matrix) => services.compositionImport.importMatrix(matrix, inventoryDate)
+      ))
     );
   register('settings:save-service', async (_event, payload) =>
       safeInvoke(() => services.settings.saveServiceInfo(payload))

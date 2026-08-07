@@ -1,29 +1,7 @@
 'use strict';
 
-const { registerAuthHandlers } = require('./authHandlers');
-const { registerBackupHandlers } = require('./backupHandlers');
-const { registerWindowHandlers } = require('./windowHandlers');
-const { registerPrintHandlers } = require('./printHandlers');
-const { registerSharesHandlers } = require('./sharesHandlers');
-const { registerSettingsHandlers } = require('./settingsHandlers');
-const { registerTransactionsHandlers } = require('./transactionsHandlers');
-const { registerRequestsHandlers } = require('./requestsHandlers');
-const { registerInventoryHandlers } = require('./inventoryHandlers');
-const { registerAdministrationHandlers } = require('./administrationHandlers');
+const { HANDLER_MODULES } = require('./handlerModules');
 const { IPC_CHANNELS } = require('./channelCatalog');
-
-const REGISTRARS = Object.freeze([
-  registerAuthHandlers,
-  registerBackupHandlers,
-  registerWindowHandlers,
-  registerPrintHandlers,
-  registerSharesHandlers,
-  registerSettingsHandlers,
-  registerTransactionsHandlers,
-  registerRequestsHandlers,
-  registerInventoryHandlers,
-  registerAdministrationHandlers
-]);
 
 function createIpcRegistrar(ipcMain, ipcSecurity) {
   const registeredChannels = new Set();
@@ -55,12 +33,20 @@ function createIpcRegistrar(ipcMain, ipcSecurity) {
 function registerAllIpcHandlers(ipcMain, dependencies) {
   const registrar = createIpcRegistrar(ipcMain, dependencies.ipcSecurity);
   const context = { ...dependencies, register: registrar.register };
-  for (const registerHandlers of REGISTRARS) registerHandlers(context);
+  let verified = 0;
+  for (const module of HANDLER_MODULES) {
+    module.register(context);
+    const registered = [...registrar.registeredChannels].slice(verified);
+    if (
+      registered.length !== module.channels.length
+      || registered.some((channel, index) => channel !== module.channels[index])
+    ) {
+      throw new Error(`Registered IPC channels do not match the ${module.name} channel catalog`);
+    }
+    verified += registered.length;
+  }
   const registered = [...registrar.registeredChannels];
-  if (
-    registered.length !== IPC_CHANNELS.length
-    || registered.some((channel, index) => channel !== IPC_CHANNELS[index])
-  ) {
+  if (registered.length !== IPC_CHANNELS.length) {
     throw new Error('Registered IPC channels do not match the channel catalog');
   }
   return registered;

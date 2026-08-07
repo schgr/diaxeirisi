@@ -1,16 +1,20 @@
 const { AppError } = require('../core/errorHandler');
-const { optionalText, requirePositiveId, requireText } = require('../core/validation');
+const {
+  optionalText,
+  requireOneOf,
+  requirePositiveId,
+  requirePositiveQuantity,
+  requireText
+} = require('../core/validation');
 
 function validateInternalMovement(payload) {
-  const quantity = Number(payload && payload.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-  }
-
-  const movementType = requireText(payload && payload.movementType, 'Είδος Κίνησης');
-  if (!['Χορήγηση', 'Επιστροφή'].includes(movementType)) {
-    throw new AppError('Το είδος κίνησης πρέπει να είναι Χορήγηση ή Επιστροφή.', 'VALIDATION_ERROR');
-  }
+  const quantity = requirePositiveQuantity(payload && payload.quantity);
+  const movementType = requireOneOf(
+    payload && payload.movementType,
+    ['Χορήγηση', 'Επιστροφή'],
+    'Είδος Κίνησης',
+    'Το είδος κίνησης πρέπει να είναι Χορήγηση ή Επιστροφή.'
+  );
 
   const documentDate = optionalText(payload && payload.documentDate) || new Date().toISOString().slice(0, 10);
   const composition = (Array.isArray(payload && payload.composition) ? payload.composition : []).map((item) => ({

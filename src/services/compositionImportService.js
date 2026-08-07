@@ -1,5 +1,11 @@
-const ExcelJS = require('exceljs');
 const { AppError } = require('../core/errorHandler');
+const { normalizeHeaderText, normalizeText: normalizeKey } = require('../core/text');
+const {
+  applyTemplateHeaderStyle,
+  createTemplateWorkbook,
+  readFirstWorksheet,
+  worksheetToMatrix
+} = require('../utils/excel');
 const { createSharesService } = require('./sharesService');
 
 const COMPOSITION_HEADERS = [
@@ -16,8 +22,7 @@ function createCompositionImportService(db) {
 
   return {
     async writeTemplate(filePath) {
-      const workbook = new ExcelJS.Workbook();
-      workbook.creator = 'diaxeirisi Ylikoy';
+      const workbook = createTemplateWorkbook();
       const sheet = workbook.addWorksheet('Συνθέσεις Μερίδων', {
         views: [{ state: 'frozen', ySplit: 1 }]
       });
@@ -27,26 +32,16 @@ function createCompositionImportService(db) {
         { width: 20 }, { width: 26 }, { width: 48 }, { width: 20 }, { width: 24 }, { width: 22 }
       ];
       sheet.autoFilter = 'A1:F1';
-      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
-      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      sheet.getRow(1).height = 32;
+      applyTemplateHeaderStyle(sheet);
       addInstructionsSheet(workbook);
       await workbook.xlsx.writeFile(filePath);
       return { filePath, message: 'Το πρότυπο συνθέσεων δημιουργήθηκε.' };
     },
 
     async importWorkbook(filePath, inventoryDate) {
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(filePath);
-      const worksheet = workbook.worksheets[0];
+      const worksheet = await readFirstWorksheet(filePath);
       if (!worksheet) throw new AppError('Το αρχείο Excel δεν περιέχει φύλλο εργασίας.', 'VALIDATION_ERROR');
-
-      const matrix = [];
-      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
-      });
-      return this.importMatrix(matrix, inventoryDate);
+      return this.importMatrix(worksheetToMatrix(worksheet), inventoryDate);
     },
 
     importMatrix(matrix, inventoryDate) {
@@ -128,14 +123,14 @@ function requireInventoryDate(value) {
 
 function parseCompositionRows(matrix) {
   if (!matrix.length) throw new AppError('Το αρχείο Excel είναι κενό.', 'VALIDATION_ERROR');
-  const headers = matrix[0].map(normalizeHeader);
+  const headers = matrix[0].map(normalizeHeaderText);
   COMPOSITION_HEADERS.forEach((header) => {
-    if (!headers.includes(normalizeHeader(header))) {
+    if (!headers.includes(normalizeHeaderText(header))) {
       throw new AppError(`Λείπει η υποχρεωτική στήλη "${header}".`, 'VALIDATION_ERROR');
     }
   });
   const index = Object.fromEntries(
-    COMPOSITION_HEADERS.map((header) => [header, headers.indexOf(normalizeHeader(header))])
+    COMPOSITION_HEADERS.map((header) => [header, headers.indexOf(normalizeHeaderText(header))])
   );
   const errors = [];
   const seen = new Set();
@@ -186,33 +181,11 @@ function addInstructionsSheet(workbook) {
     ['Προβλεπόμενη Ποσότητα', 'Η προβλεπόμενη ποσότητα για 1 υλικό.'],
     ['Υπάρχουσα Ποσότητα', 'Η ποσότητα του Φύλλου Μεταβολών την 31-12 του προηγούμενου οικονομικού έτους.']
   ]);
-  sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
-  sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-  sheet.getRow(1).height = 26;
+  applyTemplateHeaderStyle(sheet, { height: 26, wrapText: false });
   sheet.getColumn(1).font = { bold: true };
   sheet.getColumn(2).alignment = { vertical: 'top', wrapText: true };
   for (let row = 2; row <= 6; row += 1) sheet.getRow(row).height = 34;
   sheet.views = [{ state: 'frozen', ySplit: 1 }];
-}
-
-function readCellValue(value) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'object') {
-    if (value.result !== undefined) return value.result;
-    if (value.text !== undefined) return value.text;
-    if (Array.isArray(value.richText)) return value.richText.map((part) => part.text).join('');
-  }
-  return value;
-}
-
-function normalizeHeader(value) {
-  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ').trim().toLocaleLowerCase('el-GR');
-}
-
-function normalizeKey(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
 }
 
 function text(value) {

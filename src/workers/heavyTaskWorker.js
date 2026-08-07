@@ -73,21 +73,17 @@ async function executeTask(task, payload, progress, registerOwnedPath) {
     return payload.filePath;
   }
   if (task === 'read-excel-matrix') {
-    const ExcelJS = require('exceljs');
+    const { readFirstWorksheet, worksheetToMatrix } = require('../utils/excel');
     progress(0, 2, 'Ανάγνωση Excel…');
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(payload.filePath);
+    const worksheet = await readFirstWorksheet(payload.filePath);
     checkCanceled();
-    const worksheet = workbook.worksheets[0];
     if (!worksheet) {
       const error = new Error('Το αρχείο Excel δεν περιέχει φύλλο εργασίας.');
       error.code = 'VALIDATION_ERROR';
       throw error;
     }
-    const matrix = [];
-    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-      matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
-      if (rowNumber % 250 === 0) progress(rowNumber, worksheet.rowCount, 'Ανάγνωση γραμμών…');
+    const matrix = worksheetToMatrix(worksheet, (rowNumber, rowCount) => {
+      if (rowNumber % 250 === 0) progress(rowNumber, rowCount, 'Ανάγνωση γραμμών…');
     });
     progress(2, 2, 'Το Excel αναγνώστηκε.');
     return matrix;
@@ -159,13 +155,3 @@ async function executeTask(task, payload, progress, registerOwnedPath) {
   throw Object.assign(new Error(`Unknown heavy task: ${task}`), { code: 'WORKER_TASK_UNKNOWN' });
 }
 
-function readCellValue(value) {
-  if (value === null || value === undefined) return '';
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === 'object') {
-    if (value.result !== undefined) return value.result;
-    if (value.text !== undefined) return value.text;
-    if (Array.isArray(value.richText)) return value.richText.map((part) => part.text).join('');
-  }
-  return value;
-}

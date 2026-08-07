@@ -1,5 +1,7 @@
 const { AppError } = require('../core/errorHandler');
-const { optionalText, requireText } = require('../core/validation');
+const { todayIsoDate } = require('../core/dates');
+const { optionalText, requirePositiveQuantity, requireText } = require('../core/validation');
+const { requireTransactionType } = require('./transactionTypes');
 
 function validateExhp(payload) {
   const items = Array.isArray(payload && payload.items) ? payload.items : [];
@@ -11,7 +13,7 @@ function validateExhp(payload) {
     throw new AppError('Η ΕΧΠ δέχεται έως 280 υλικά.', 'VALIDATION_ERROR');
   }
 
-  const documentDate = optionalText(payload && payload.documentDate) || getLocalDate();
+  const documentDate = optionalText(payload && payload.documentDate) || todayIsoDate();
   const fiscalYear = Number(documentDate.slice(0, 4));
 
   const validated = {
@@ -51,15 +53,8 @@ function sanitizeFormData(value) {
 }
 
 function validateItem(item) {
-  const quantity = Number(item && item.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-  }
-
-  const transactionType = requireText(item && item.transactionType, 'Είδος Δοσοληψίας');
-  if (!['Χρέωση', 'Πίστωση'].includes(transactionType)) {
-    throw new AppError('Το είδος δοσοληψίας πρέπει να είναι Χρέωση ή Πίστωση.', 'VALIDATION_ERROR');
-  }
+  const quantity = requirePositiveQuantity(item && item.quantity);
+  const transactionType = requireTransactionType(item && item.transactionType);
 
   return {
     shareNumber: requireText(item && item.shareNumber, 'Αριθμός Μερίδας'),
@@ -120,14 +115,6 @@ function isNominalNumberTransferReason(value) {
     .replace(/\s+/g, ' ')
     .trim();
   return normalized === 'μεταβολη υλικων λογω αλλαγης του αριθμου ονομαστικου';
-}
-
-function getLocalDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 module.exports = {

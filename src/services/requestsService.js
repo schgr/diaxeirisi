@@ -1,5 +1,7 @@
 const { createRequestsRepository } = require('../db/requestsRepository');
 const { AppError } = require('../core/errorHandler');
+const { differenceInDays, toIsoDate } = require('../core/dates');
+const { normalizeText: normalize } = require('../core/text');
 const { requirePositiveId } = require('../core/validation');
 const { validateSupplyRequest } = require('../requests/requestValidation');
 
@@ -13,7 +15,7 @@ function createRequestsService(db, settingsService) {
   function applyRetentionPolicy() {
     const today = new Date();
     const cutoff = new Date(today.getFullYear() - 1, today.getMonth(), 0);
-    repository.markExpiredOwedRequests(formatLocalDate(cutoff));
+    repository.markExpiredOwedRequests(toIsoDate(cutoff));
   }
 
   function synchronizeRequestStatuses() {
@@ -291,23 +293,6 @@ function mapItem(row, measurementUnitCodes = new Map(), fulfillment = []) {
     fulfilledQuantity: fulfillmentItem ? fulfillmentItem.fulfilledQuantity : 0,
     isFulfilled: fulfillmentItem ? fulfillmentItem.fulfilledQuantity >= Number(row.quantity || 0) : false
   };
-}
-
-function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
-}
-
-function differenceInDays(toDate, fromDate) {
-  const to = new Date(`${toDate}T00:00:00`);
-  const from = new Date(`${fromDate}T00:00:00`);
-  return Math.ceil((to - from) / 86400000);
-}
-
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 module.exports = {

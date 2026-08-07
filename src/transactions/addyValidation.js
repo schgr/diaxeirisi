@@ -1,5 +1,11 @@
 const { AppError } = require('../core/errorHandler');
-const { optionalText, requireText } = require('../core/validation');
+const { normalizeText: normalize } = require('../core/text');
+const {
+  optionalText,
+  requirePositiveQuantity,
+  requireText
+} = require('../core/validation');
+const { requireTransactionType } = require('./transactionTypes');
 
 function validateAddy(payload) {
   const items = Array.isArray(payload && payload.items) ? payload.items : [];
@@ -28,16 +34,8 @@ function validateAddy(payload) {
 }
 
 function validateAddyItem(item) {
-  const quantity = Number(item && item.quantity);
-
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-  }
-
-  const transactionType = requireText(item && item.transactionType, 'Είδος Δοσοληψίας');
-  if (!['Χρέωση', 'Πίστωση'].includes(transactionType)) {
-    throw new AppError('Το είδος δοσοληψίας πρέπει να είναι Χρέωση ή Πίστωση.', 'VALIDATION_ERROR');
-  }
+  const quantity = requirePositiveQuantity(item && item.quantity);
+  const transactionType = requireTransactionType(item && item.transactionType);
 
   const unitPriceText = optionalText(item && item.unitPrice);
   const unitPrice = unitPriceText ? Number(unitPriceText) : null;
@@ -88,7 +86,3 @@ function validateAddyItem(item) {
 module.exports = {
   validateAddy
 };
-
-function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
-}

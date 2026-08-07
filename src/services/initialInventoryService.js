@@ -1,7 +1,14 @@
 const path = require('path');
-const ExcelJS = require('exceljs');
 const { AppError } = require('../core/errorHandler');
+const { formatGreekDate } = require('../core/dates');
+const { normalizeHeaderText: normalizeHeader } = require('../core/text');
 const { createInitialInventoryRepository } = require('../db/initialInventoryRepository');
+const {
+  applyTemplateHeaderStyle,
+  createTemplateWorkbook,
+  readFirstWorksheet,
+  worksheetToMatrix
+} = require('../utils/excel');
 
 const TEMPLATE_HEADERS = [
   'Α/Α',
@@ -19,8 +26,7 @@ function createInitialInventoryService(db) {
 
   return {
     async writeTemplate(filePath) {
-      const workbook = new ExcelJS.Workbook();
-      workbook.creator = 'diaxeirisi Ylikoy';
+      const workbook = createTemplateWorkbook();
       const sheet = workbook.addWorksheet('Τελευταία Ετήσια Απογραφή', {
         views: [{ state: 'frozen', ySplit: 1 }]
       });
@@ -30,24 +36,15 @@ function createInitialInventoryService(db) {
         { width: 20 }, { width: 14 }, { width: 24 }, { width: 24 }
       ];
       sheet.autoFilter = 'A1:H1';
-      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } };
-      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      sheet.getRow(1).height = 32;
+      applyTemplateHeaderStyle(sheet);
       await workbook.xlsx.writeFile(filePath);
       return { filePath, message: 'Το πρότυπο Excel δημιουργήθηκε.' };
     },
 
     async importWorkbook(filePath, inventoryDate) {
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(filePath);
-      const worksheet = workbook.worksheets[0];
+      const worksheet = await readFirstWorksheet(filePath);
       if (!worksheet) throw new AppError('Το αρχείο Excel δεν περιέχει φύλλο εργασίας.', 'VALIDATION_ERROR');
-      const matrix = [];
-      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-        matrix[rowNumber - 1] = row.values.slice(1).map(readCellValue);
-      });
-      return this.importMatrix(matrix, filePath, inventoryDate);
+      return this.importMatrix(worksheetToMatrix(worksheet), filePath, inventoryDate);
     },
 
     importMatrix(matrix, filePath, inventoryDate) {
@@ -58,7 +55,7 @@ function createInitialInventoryService(db) {
       const latestImportDate = repository.getLatestImportDate();
       if (latestImportDate && date < latestImportDate) {
         throw new AppError(
-          `Υπάρχει ήδη νεότερη ετήσια απογραφή με ημερομηνία ${formatDate(latestImportDate)}.`,
+          `Υπάρχει ήδη νεότερη ετήσια απογραφή με ημερομηνία ${formatGreekDate(latestImportDate)}.`,
           'VALIDATION_ERROR'
         );
       }
@@ -93,27 +90,11 @@ function createInitialInventoryService(db) {
   };
 }
 
-function readCellValue(value) {
-  if (value === null || value === undefined) return '';
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === 'object') {
-    if (value.result !== undefined) return value.result;
-    if (value.text !== undefined) return value.text;
-    if (Array.isArray(value.richText)) return value.richText.map((part) => part.text).join('');
-  }
-  return value;
-}
-
 function isValidInventoryDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
     && value <= new Date().toISOString().slice(0, 10);
-}
-
-function formatDate(value) {
-  const [year, month, day] = value.split('-');
-  return `${day}/${month}/${year}`;
 }
 
 function parseRows(matrix) {
@@ -171,15 +152,6 @@ function parseRows(matrix) {
   }
   if (!rows.length) throw new AppError('Δεν βρέθηκαν γραμμές υλικών στο Excel.', 'VALIDATION_ERROR');
   return rows;
-}
-
-function normalizeHeader(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLocaleLowerCase('el-GR');
 }
 
 function requiredText(value) {

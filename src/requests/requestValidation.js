@@ -1,5 +1,5 @@
 const { AppError } = require('../core/errorHandler');
-const { optionalText, requireText } = require('../core/validation');
+const { optionalText, requirePositiveQuantity, requireText } = require('../core/validation');
 
 function validateSupplyRequest(payload) {
   const items = Array.isArray(payload && payload.items) ? payload.items : [];
@@ -27,10 +27,7 @@ function validateSupplyRequest(payload) {
 }
 
 function validateSupplyRequestItem(item) {
-  const quantity = Number(item && item.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-  }
+  const quantity = requirePositiveQuantity(item && item.quantity);
 
   return {
     nominalNumber: requireText(item && item.nominalNumber, 'Αριθμός Ονομαστικού'),

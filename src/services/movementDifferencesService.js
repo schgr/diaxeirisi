@@ -1,4 +1,5 @@
 const { AppError } = require('../core/errorHandler');
+const { addDays, todayIsoDate } = require('../core/dates');
 const { requirePositiveId } = require('../core/validation');
 const { createMovementDifferencesRepository } = require('../db/movementDifferencesRepository');
 const {
@@ -12,7 +13,7 @@ function createMovementDifferencesService(db) {
   return {
     getReferenceData() {
       return {
-        today: localDate(new Date()),
+        today: todayIsoDate(),
         shares: repository.listShares().map((row) => ({
           id: row.id,
           shareNumber: row.share_number,
@@ -64,14 +65,14 @@ function createMovementDifferencesService(db) {
     },
 
     listProtocols(year = new Date().getFullYear()) {
-      const today = localDate(new Date());
+      const today = todayIsoDate();
       return repository.listProtocols(Number(year)).map((row) => mapProtocol(row, today));
     },
 
     getProtocol(id) {
       const row = repository.getProtocol(requirePositiveId(id));
       if (!row) throw new AppError('Το Πρωτόκολλο Διαφορών δεν βρέθηκε.', 'NOT_FOUND');
-      return mapProtocol(row, localDate(new Date()), repository.getServiceName());
+      return mapProtocol(row, todayIsoDate(), repository.getServiceName());
     },
 
     recordResponse(id, payload) {
@@ -87,7 +88,7 @@ function createMovementDifferencesService(db) {
     settleProtocol(id, payload) {
       const protocolId = requirePositiveId(id);
       const settlementReference = String(payload && payload.settlementReference || '').trim();
-      const settlementDate = String(payload && payload.settlementDate || '').trim() || localDate(new Date());
+      const settlementDate = String(payload && payload.settlementDate || '').trim() || todayIsoDate();
       if (!settlementReference) {
         throw new AppError('Συμπλήρωσε το δικαιολογητικό τελικής τακτοποίησης.', 'VALIDATION_ERROR');
       }
@@ -97,7 +98,7 @@ function createMovementDifferencesService(db) {
 
     escalateProtocol(id, escalationDate) {
       const protocolId = requirePositiveId(id);
-      repository.markEscalated(protocolId, String(escalationDate || '').trim() || localDate(new Date()));
+      repository.markEscalated(protocolId, String(escalationDate || '').trim() || todayIsoDate());
       return { message: 'Καταχωρίστηκε η αποστολή στην Προϊστάμενη Αρχή.' };
     }
   };
@@ -138,19 +139,6 @@ function mapProtocol(row, today, serviceName = '') {
     notes: row.notes,
     serviceName
   };
-}
-
-function addDays(value, days) {
-  const date = new Date(`${value}T00:00:00`);
-  date.setDate(date.getDate() + days);
-  return localDate(date);
-}
-
-function localDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 module.exports = {

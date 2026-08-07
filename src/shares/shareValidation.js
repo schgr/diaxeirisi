@@ -1,5 +1,8 @@
-const { optionalText, requireText } = require('../core/validation');
-const { AppError } = require('../core/errorHandler');
+const {
+  optionalText,
+  requireNonNegativeQuantity: requireQuantity,
+  requireText
+} = require('../core/validation');
 
 function validateShare(payload) {
   return {
@@ -12,16 +15,6 @@ function validateShare(payload) {
     accountingBalance: requireQuantity(payload && payload.accountingBalance, 'Λογιστικό υπόλοιπο'),
     chargedQuantity: requireQuantity(payload && payload.chargedQuantity, 'Χρεωμένη ποσότητα')
   };
-}
-
-function requireQuantity(value, fieldName) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) {
-    throw new AppError(`Το πεδίο "${fieldName}" πρέπει να είναι μη αρνητικός αριθμός.`, 'VALIDATION_ERROR', {
-      field: fieldName
-    });
-  }
-  return number;
 }
 
 module.exports = {

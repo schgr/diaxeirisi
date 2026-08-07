@@ -1,5 +1,11 @@
 const { AppError } = require('../core/errorHandler');
-const { optionalText, requirePositiveId, requireText } = require('../core/validation');
+const {
+  optionalText,
+  requireNonNegativeQuantity: requireQuantity,
+  requireOneOf,
+  requirePositiveId,
+  requireText
+} = require('../core/validation');
 
 function validateMovementDifference(payload) {
   const documentQuantity = requireQuantity(payload && payload.documentQuantity, 'Ποσότητα δικαιολογητικού');
@@ -9,10 +15,12 @@ function validateMovementDifference(payload) {
   }
 
   const protocolDate = requireText(payload && payload.protocolDate, 'Ημερομηνία Πρωτοκόλλου');
-  const movementDirection = requireText(payload && payload.movementDirection, 'Κατεύθυνση Διακίνησης');
-  if (!['Παραλαβή', 'Αποστολή'].includes(movementDirection)) {
-    throw new AppError('Η κατεύθυνση πρέπει να είναι Παραλαβή ή Αποστολή.', 'VALIDATION_ERROR');
-  }
+  const movementDirection = requireOneOf(
+    payload && payload.movementDirection,
+    ['Παραλαβή', 'Αποστολή'],
+    'Κατεύθυνση Διακίνησης',
+    'Η κατεύθυνση πρέπει να είναι Παραλαβή ή Αποστολή.'
+  );
 
   return {
     protocolDate,
@@ -31,23 +39,17 @@ function validateMovementDifference(payload) {
 }
 
 function validateResponse(payload) {
-  const responseStatus = requireText(payload && payload.responseStatus, 'Απάντηση');
-  if (!['Έγινε δεκτή', 'Δεν έγινε δεκτή'].includes(responseStatus)) {
-    throw new AppError('Η απάντηση πρέπει να είναι αποδοχή ή μη αποδοχή της διαφοράς.', 'VALIDATION_ERROR');
-  }
+  const responseStatus = requireOneOf(
+    payload && payload.responseStatus,
+    ['Έγινε δεκτή', 'Δεν έγινε δεκτή'],
+    'Απάντηση',
+    'Η απάντηση πρέπει να είναι αποδοχή ή μη αποδοχή της διαφοράς.'
+  );
   return {
     responseDate: requireText(payload && payload.responseDate, 'Ημερομηνία Απάντησης'),
     responseStatus,
     responseNotes: optionalText(payload && payload.responseNotes)
   };
-}
-
-function requireQuantity(value, fieldName) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) {
-    throw new AppError(`Το πεδίο "${fieldName}" πρέπει να είναι μη αρνητικός αριθμός.`, 'VALIDATION_ERROR');
-  }
-  return number;
 }
 
 module.exports = {
