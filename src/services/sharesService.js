@@ -387,23 +387,11 @@ function createSharesService(db) {
     },
 
     listAmmunitionBatchRegistry() {
-      return repository.listAmmunitionBatchShares().map((row) => {
-        const departments = aggregateAssignmentQuantities(
-          repository.listShareAssignments(row.id)
-        );
-        const defaultDepartment = departments.length === 1 ? departments[0].department : '';
-        return {
-          share: mapShare(row),
-          departments,
-          entries: repository.listAmmunitionBatches(row.id).map((entry) => ({
-            position: Number(entry.position),
-            batchNumber: entry.batch_number,
-            quantity: Number(entry.quantity || 0),
-            department: entry.department || defaultDepartment,
-            notes: entry.notes || ''
-          }))
-        };
-      });
+      return buildBatchRegistry(
+        repository,
+        repository.listAmmunitionBatchShares(),
+        (shareId) => repository.listAmmunitionBatches(shareId)
+      );
     },
 
     saveAmmunitionBatches(id, entries) {
@@ -415,49 +403,17 @@ function createSharesService(db) {
       const expectedDepartments = aggregateAssignmentQuantities(
         repository.listShareAssignments(shareId)
       );
-      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
-        const batchNumber = String(entry && entry.batchNumber || '').trim();
-        const quantity = Number(entry && entry.quantity);
-        const department = String(entry && entry.department || '').trim();
-        if (!batchNumber) {
-          throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
-        }
-        if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-        }
-        if (expectedDepartments.length && !department) {
-          throw new AppError('Το Τμήμα της Μερίδας Πυρκού είναι υποχρεωτικό.', 'VALIDATION_ERROR');
-        }
-        return {
-          batchNumber,
-          quantity,
-          department,
-          notes: String(entry && entry.notes || '').trim()
-        };
-      });
-      if (expectedDepartments.length) {
-        validateAmmunitionBatchAllocations(cleanEntries, expectedDepartments);
-      }
+      const cleanEntries = sanitizeBatchEntries(entries, expectedDepartments);
       repository.replaceAmmunitionBatches(shareId, cleanEntries);
       return { message: 'Οι μερίδες πυρκού αποθηκεύτηκαν.' };
     },
 
     listTrainingAmmunitionBatchRegistry() {
-      return repository.listTrainingAmmunitionBatchShares().map((row) => {
-        const departments = aggregateAssignmentQuantities(repository.listShareAssignments(row.id));
-        const defaultDepartment = departments.length === 1 ? departments[0].department : '';
-        return {
-          share: mapShare(row),
-          departments,
-          entries: repository.listTrainingAmmunitionBatches(row.id).map((entry) => ({
-            position: Number(entry.position),
-            batchNumber: entry.batch_number,
-            quantity: Number(entry.quantity || 0),
-            department: entry.department || defaultDepartment,
-            notes: entry.notes || ''
-          }))
-        };
-      });
+      return buildBatchRegistry(
+        repository,
+        repository.listTrainingAmmunitionBatchShares(),
+        (shareId) => repository.listTrainingAmmunitionBatches(shareId)
+      );
     },
 
     saveTrainingAmmunitionBatches(id, entries) {
@@ -467,22 +423,7 @@ function createSharesService(db) {
         throw new AppError('Η μερίδα δεν έχει ενεργοποιημένο το Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως.', 'VALIDATION_ERROR');
       }
       const expectedDepartments = aggregateAssignmentQuantities(repository.listShareAssignments(shareId));
-      const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
-        const batchNumber = String(entry && entry.batchNumber || '').trim();
-        const quantity = Number(entry && entry.quantity);
-        const department = String(entry && entry.department || '').trim();
-        if (!batchNumber) {
-          throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
-        }
-        if (!Number.isFinite(quantity) || quantity <= 0) {
-          throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
-        }
-        if (expectedDepartments.length && !department) {
-          throw new AppError('Το Τμήμα της Μερίδας Πυρκού είναι υποχρεωτικό.', 'VALIDATION_ERROR');
-        }
-        return { batchNumber, quantity, department, notes: String(entry && entry.notes || '').trim() };
-      });
-      if (expectedDepartments.length) validateAmmunitionBatchAllocations(cleanEntries, expectedDepartments);
+      const cleanEntries = sanitizeBatchEntries(entries, expectedDepartments);
       repository.replaceTrainingAmmunitionBatches(shareId, cleanEntries);
       return { message: 'Οι μερίδες πυρομαχικών εκπαιδεύσεως αποθηκεύτηκαν.' };
     },
@@ -523,6 +464,46 @@ function createSharesService(db) {
       return { message: 'Το Μητρώο Οπλισμού αποθηκεύτηκε.' };
     }
   };
+}
+
+function buildBatchRegistry(repository, shareRows, listBatches) {
+  return shareRows.map((row) => {
+    const departments = aggregateAssignmentQuantities(repository.listShareAssignments(row.id));
+    const defaultDepartment = departments.length === 1 ? departments[0].department : '';
+    return {
+      share: mapShare(row),
+      departments,
+      entries: listBatches(row.id).map((entry) => ({
+        position: Number(entry.position),
+        batchNumber: entry.batch_number,
+        quantity: Number(entry.quantity || 0),
+        department: entry.department || defaultDepartment,
+        notes: entry.notes || ''
+      }))
+    };
+  });
+}
+
+function sanitizeBatchEntries(entries, expectedDepartments) {
+  const cleanEntries = (Array.isArray(entries) ? entries : []).map((entry) => {
+    const batchNumber = String(entry && entry.batchNumber || '').trim();
+    const quantity = Number(entry && entry.quantity);
+    const department = String(entry && entry.department || '').trim();
+    if (!batchNumber) {
+      throw new AppError('Η Μερίδα Πυρκού είναι υποχρεωτική.', 'VALIDATION_ERROR');
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new AppError('Η ποσότητα της Μερίδας Πυρκού πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+    }
+    if (expectedDepartments.length && !department) {
+      throw new AppError('Το Τμήμα της Μερίδας Πυρκού είναι υποχρεωτικό.', 'VALIDATION_ERROR');
+    }
+    return { batchNumber, quantity, department, notes: String(entry && entry.notes || '').trim() };
+  });
+  if (expectedDepartments.length) {
+    validateAmmunitionBatchAllocations(cleanEntries, expectedDepartments);
+  }
+  return cleanEntries;
 }
 
 function normalizeOptionalShareBoundary(value) {
