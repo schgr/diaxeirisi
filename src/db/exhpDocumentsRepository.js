@@ -1,3 +1,5 @@
+const { parseStoredJson } = require('../utils/safeJson');
+
 const DOCUMENT_TYPES = ['useless_material_a', 'useless_material_b', 'ammo_consumption', 'transformation_materials', 'clothing_monthly_summary'];
 
 const ALLOWED_TABLE_NAMES = new Set([
@@ -229,12 +231,7 @@ function getGeneric(db, documentId) {
     WHERE document_id = ?
   `).get(documentId);
   if (!row) return null;
-  let data = {};
-  try {
-    data = JSON.parse(row.data_json || '{}');
-  } catch (_error) {
-    data = {};
-  }
+  const data = parseStoredJson(row.data_json, {}, 'EXHP document data');
   return {
     documentId: row.document_id,
     data,

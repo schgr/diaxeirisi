@@ -1,5 +1,6 @@
 const { createSharesRepository } = require('../db/sharesRepository');
 const { AppError } = require('../core/errorHandler');
+const { parseStoredJson, parseStoredJsonArray } = require('../utils/safeJson');
 const { requirePositiveId } = require('../core/validation');
 const { mapShare } = require('../shares/shareMapper');
 const { validateShare } = require('../shares/shareValidation');
@@ -708,22 +709,13 @@ function buildDocumentChangeEntries(movements, compositionItems) {
 }
 
 function parseCompositionSnapshot(value) {
-  try {
-    const parsed = JSON.parse(value || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_error) {
-    return [];
-  }
+  return parseStoredJsonArray(value, 'composition snapshot');
 }
 
 function readFiscalYearArchive(repository, year) {
   const row = repository.getFiscalYearArchive(year);
   if (!row) return null;
-  try {
-    return JSON.parse(row.archive_snapshot || '{}');
-  } catch (_error) {
-    return null;
-  }
+  return parseStoredJson(row.archive_snapshot, null, 'share fiscal year archive');
 }
 
 module.exports = {

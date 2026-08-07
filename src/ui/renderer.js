@@ -19,6 +19,7 @@ const THEME_STORAGE_KEY = 'diaxeirisi-theme';
 const DEFAULT_THEME = 'blueprint';
 
 applyStoredTheme();
+registerGlobalErrorReporting();
 initializeDocumentExports(showToast);
 initializeLocalizedQuantities();
 
@@ -199,12 +200,25 @@ async function renderAppVersion() {
     targets.forEach((target) => {
       target.textContent = `v${runtimeInfo.version}`;
     });
-  } catch (_error) {
+  } catch (error) {
+    console.error('Δεν ήταν δυνατή η ανάγνωση της έκδοσης της εφαρμογής.', error);
     const targets = document.querySelectorAll('#home-version-label');
     targets.forEach((target) => {
       target.textContent = '';
     });
   }
+}
+
+function registerGlobalErrorReporting() {
+  const report = (reason) => {
+    console.error('Μη διαχειρισμένο σφάλμα διεπαφής.', reason);
+    showToast(
+      (reason && reason.message) || 'Παρουσιάστηκε απρόβλεπτο σφάλμα.',
+      'error'
+    );
+  };
+  window.addEventListener('error', (event) => report(event.error || event.message));
+  window.addEventListener('unhandledrejection', (event) => report(event.reason));
 }
 
 function showWindowOptions() {

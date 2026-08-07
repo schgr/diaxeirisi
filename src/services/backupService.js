@@ -2,6 +2,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const { AppError } = require('../core/errorHandler');
+const { createLogger } = require('../utils/logger');
 const { migrations } = require('../db/migrations');
 const packageMetadata = require('../../package.json');
 
@@ -10,6 +11,8 @@ const MANIFEST_FILE = 'backup-manifest.json';
 const DEFAULT_RETENTION = 15;
 const EXPECTED_SCHEMA_VERSION = Math.max(...migrations.map((migration) => migration.version));
 const SQL_JS_DIRECTORY = path.join(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist');
+
+const logger = createLogger('backupService');
 
 function resolveThroughExistingAncestor(target) {
   const absolute = path.resolve(target);
@@ -47,7 +50,11 @@ function readManifest(backupPath) {
       if (expected !== actual) return null;
     }
     return { path: backupPath, ...manifest };
-  } catch (_error) {
+  } catch (error) {
+    logger.warn(`Δεν ήταν δυνατή η ανάγνωση του manifest στο ${backupPath}.`, {
+      code: error && error.code,
+      message: error && error.message
+    });
     return null;
   }
 }
@@ -107,8 +114,12 @@ function createBackupService(userDataPath, options = {}) {
           expectedSchemaVersion: EXPECTED_SCHEMA_VERSION
         }, { id: crypto.randomUUID(), resource: 'backup' });
         verified.push(backup);
-      } catch (_error) {
+      } catch (error) {
         // Incomplete or corrupt backups are never retention candidates.
+        logger.warn(`Το αντίγραφο ${backup.path} δεν επαληθεύτηκε και εξαιρείται από τη διατήρηση.`, {
+          code: error && error.code,
+          message: error && error.message
+        });
       }
     }
     for (const backup of verified.slice(retention)) {

@@ -1,4 +1,5 @@
 const { AppError } = require('../core/errorHandler');
+const { parseStoredJson } = require('../utils/safeJson');
 const { optionalText, requirePositiveId } = require('../core/validation');
 const { createAdministrationRepository } = require('../db/administrationRepository');
 const {
@@ -346,11 +347,7 @@ function normalizeHandoverProtocol(payload = {}) {
 }
 
 function parseProtocolData(value) {
-  try {
-    return value ? JSON.parse(value) : {};
-  } catch {
-    return {};
-  }
+  return parseStoredJson(value, {}, 'protocol data');
 }
 
 function mapCheck(row) {
@@ -391,12 +388,7 @@ function mapShare(row) {
 function aggregateInternalComposition(rows) {
   const totals = new Map();
   rows.forEach((row) => {
-    let snapshot;
-    try {
-      snapshot = JSON.parse(row.composition_snapshot || '[]');
-    } catch (_error) {
-      snapshot = [];
-    }
+    const snapshot = parseStoredJson(row.composition_snapshot, [], 'composition snapshot');
     if (!Array.isArray(snapshot)) return;
     snapshot.forEach((item) => {
       const key = compositionKey(

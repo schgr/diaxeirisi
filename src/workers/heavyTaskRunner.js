@@ -2,6 +2,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { Worker } = require('worker_threads');
+const { createLogger } = require('../utils/logger');
+
+const logger = createLogger('heavyTaskRunner');
 
 const TERMINAL_STATES = new Set(['cancelled', 'completed', 'failed', 'timed-out']);
 
@@ -21,6 +24,8 @@ function createHeavyTaskRunner(options = {}) {
   const concurrency = Number.isFinite(requestedConcurrency) ? Math.max(1, Math.floor(requestedConcurrency)) : 2;
   const cancelGraceMs = Math.max(10, Number(options.cancelGraceMs || 1000));
   const WorkerClass = options.Worker || Worker;
+  const onCallbackError = options.onCallbackError
+    || ((error, context) => logger.error(`Heavy task ${context} callback failed.`, error));
   const queue = [];
   const tasks = new Map();
   const history = new Map();
@@ -36,7 +41,9 @@ function createHeavyTaskRunner(options = {}) {
     if (record.onStateChange) {
       try {
         record.onStateChange({ id: record.id, state });
-      } catch (_error) {}
+      } catch (error) {
+        onCallbackError(error, 'state-change');
+      }
     }
   }
 
@@ -58,7 +65,9 @@ function createHeavyTaskRunner(options = {}) {
     if (index < 0 || !accepting) return;
     slot.retiring = true;
     slot.worker.removeAllListeners();
-    void slot.worker.terminate().catch(() => {});
+    void slot.worker.terminate().catch((error) => {
+      logger.warn('Unable to terminate a retiring worker.', { message: error && error.message });
+    });
     const replacement = { worker: new WorkerClass(workerFile), task: null, retiring: false };
     slots[index] = replacement;
     replacement.worker.on('message', (message) => handleMessage(replacement, message));
@@ -118,7 +127,11 @@ function createHeavyTaskRunner(options = {}) {
     tasks.delete(record.id);
     if (error && record.cleanupPaths.size) {
       await Promise.all([...record.cleanupPaths].map((ownedPath) =>
-        fs.promises.rm(ownedPath, { recursive: true, force: true }).catch(() => {})
+        fs.promises.rm(ownedPath, { recursive: true, force: true }).catch((cleanupError) => {
+          logger.warn(`Unable to remove the temporary path ${ownedPath} of a failed task.`, {
+            message: cleanupError && cleanupError.message
+          });
+        })
       ));
     }
     setState(record, state);
@@ -164,7 +177,9 @@ function createHeavyTaskRunner(options = {}) {
       if (record.onProgress && record.state === 'running') {
         try {
           record.onProgress({ id: record.id, ...message });
-        } catch (_error) {}
+        } catch (error) {
+          onCallbackError(error, 'progress');
+        }
       }
       return;
     }
@@ -265,7 +280,9 @@ function createHeavyTaskRunner(options = {}) {
       await Promise.all(slots.map(async (slot) => {
         slot.retiring = true;
         slot.worker.removeAllListeners();
-        await slot.worker.terminate().catch(() => {});
+        await slot.worker.terminate().catch((error) => {
+          logger.warn('Unable to terminate a worker during shutdown.', { message: error && error.message });
+        });
       }));
     })();
     return closePromise;

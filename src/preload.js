@@ -1,9 +1,32 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Errors travel to the renderer as plain objects because contextBridge drops
+// custom properties (code, details) from thrown Error instances.
+function apiError(message, code, details = null) {
+  return { message, code, details };
+}
+
 async function invoke(channel, ...args) {
-  const result = await ipcRenderer.invoke(channel, ...args);
+  let result;
+  try {
+    result = await ipcRenderer.invoke(channel, ...args);
+  } catch (error) {
+    throw apiError(
+      'Η επικοινωνία με την εφαρμογή απέτυχε.',
+      'IPC_INVOKE_FAILED',
+      { channel, reason: error && error.message ? String(error.message) : String(error) }
+    );
+  }
+  if (!result || typeof result !== 'object' || typeof result.ok !== 'boolean') {
+    throw apiError('Η απόκριση της εφαρμογής δεν ήταν έγκυρη.', 'IPC_INVALID_RESPONSE', { channel });
+  }
   if (!result.ok) {
-    throw result.error;
+    const error = result.error || {};
+    throw apiError(
+      error.message || 'Παρουσιάστηκε απρόβλεπτο σφάλμα.',
+      error.code || 'UNEXPECTED_ERROR',
+      error.details === undefined ? null : error.details
+    );
   }
   return result.data;
 }

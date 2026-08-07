@@ -1,4 +1,5 @@
 const { AppError } = require('../core/errorHandler');
+const { parseStoredJson } = require('../utils/safeJson');
 const { createInternalRepository } = require('../db/internalRepository');
 const { validateInternalMovement } = require('../transactions/internalValidation');
 
@@ -168,12 +169,7 @@ function mapShare(row) {
 function aggregateCompositionMovements(rows) {
   const byShare = new Map();
   rows.forEach((row) => {
-    let snapshot = [];
-    try {
-      snapshot = JSON.parse(row.composition_snapshot || '[]');
-    } catch (_error) {
-      snapshot = [];
-    }
+    const snapshot = parseStoredJson(row.composition_snapshot, [], 'composition snapshot');
     if (!Array.isArray(snapshot)) return;
 
     const shareId = Number(row.share_id);

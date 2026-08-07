@@ -76,7 +76,11 @@ function readValidDatabase(SQL, filePath) {
     } finally {
       candidate.close();
     }
-  } catch (_error) {
+  } catch (error) {
+    logger.warn(`Unable to read a valid database from ${filePath}.`, {
+      code: error && error.code,
+      message: error && error.message
+    });
     return null;
   }
 }
@@ -169,7 +173,11 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
         try {
           result = operation();
           if (result && typeof result.then === 'function') {
-            Promise.resolve(result).catch(() => {});
+            Promise.resolve(result).catch((error) => {
+              logger.warn('Rejected asynchronous database transaction callback.', {
+                message: error && error.message
+              });
+            });
             throw Object.assign(new TypeError('Database transaction callbacks must be synchronous.'), {
               code: 'DATABASE_ASYNC_TRANSACTION'
             });
@@ -189,8 +197,11 @@ function createPersistentDatabase(sqlDatabase, dbPath, options = {}) {
                 sqlDatabase.exec(`ROLLBACK TO SAVEPOINT ${savepoint}`);
                 sqlDatabase.exec(`RELEASE SAVEPOINT ${savepoint}`);
               }
-            } catch (_rollbackError) {
+            } catch (rollbackError) {
               // sql.js can auto-close a failed transaction after certain DDL errors.
+              logger.warn('Database rollback did not complete.', {
+                message: rollbackError && rollbackError.message
+              });
             }
             persistence.restoreDirty(dirtyBeforeTransaction);
           }

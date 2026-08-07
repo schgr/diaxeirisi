@@ -108,7 +108,13 @@ function createWindow() {
       else window.webContents.openDevTools({ mode: 'detach', activate: true });
     });
   }
-  window.loadFile(path.join(__dirname, 'ui', 'index.html'));
+  window.loadFile(path.join(__dirname, 'ui', 'index.html')).catch((error) => {
+    logger.error('Δεν ήταν δυνατή η φόρτωση της διεπαφής.', error);
+    dialog.showErrorBox(
+      'Αποτυχία φόρτωσης',
+      'Δεν ήταν δυνατή η φόρτωση της διεπαφής της εφαρμογής.'
+    );
+  });
 }
 
 function configureOfflineMode() {
@@ -154,14 +160,19 @@ function registerIpcHandlers() {
 async function printCurrentDocument(webContents, options) {
   const landscape = Boolean(options && options.landscape);
   const requestedTitle = sanitizeExportFilename(options && options.title);
-  const previousTitle = await webContents.executeJavaScript('document.title', true).catch(() => '');
+  const previousTitle = await webContents.executeJavaScript('document.title', true).catch((error) => {
+    logger.warn('Δεν ήταν δυνατή η ανάγνωση του τίτλου του εγγράφου πριν την εκτύπωση.', error);
+    return '';
+  });
   const ownerWindow = BrowserWindow.fromWebContents(webContents);
   const previousWindowTitle = ownerWindow?.getTitle() || '';
   if (requestedTitle) {
     await webContents.executeJavaScript(
       `document.title = ${JSON.stringify(requestedTitle)}`,
       true
-    ).catch(() => {});
+    ).catch((error) => {
+      logger.warn('Δεν ήταν δυνατός ο ορισμός του τίτλου εκτύπωσης.', error);
+    });
     ownerWindow?.setTitle(requestedTitle);
   }
   const result = await new Promise((resolve) => {
@@ -189,7 +200,9 @@ async function printCurrentDocument(webContents, options) {
     await webContents.executeJavaScript(
       `document.title = ${JSON.stringify(previousTitle)}`,
       true
-    ).catch(() => {});
+    ).catch((error) => {
+      logger.warn('Δεν ήταν δυνατή η επαναφορά του τίτλου του εγγράφου.', error);
+    });
   }
   if (ownerWindow && previousWindowTitle) {
     ownerWindow.setTitle(previousWindowTitle);
@@ -216,6 +229,23 @@ async function safeInvoke(operation, allowLocked = false) {
     return { ok: false, error: appError };
   }
 }
+
+function handleFatalStartupError(error) {
+  logger.error('Η εκκίνηση της εφαρμογής απέτυχε.', error);
+  dialog.showErrorBox(
+    'Αποτυχία εκκίνησης',
+    'Η εφαρμογή δεν μπόρεσε να ξεκινήσει με ασφάλεια και θα κλείσει.'
+  );
+  app.exit(1);
+}
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Μη διαχειρισμένη απόρριψη promise στην κύρια διεργασία.', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Μη διαχειρισμένη εξαίρεση στην κύρια διεργασία.', error);
+});
 
 app.whenReady().then(async () => {
   configureOfflineMode();
@@ -301,7 +331,7 @@ app.whenReady().then(async () => {
       createWindow();
     }
   });
-});
+}).catch(handleFatalStartupError);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

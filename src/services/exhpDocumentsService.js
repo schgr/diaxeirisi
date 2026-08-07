@@ -1,5 +1,6 @@
 const { createExhpDocumentsRepository, DOCUMENT_TYPES } = require('../db/exhpDocumentsRepository');
 const { AppError } = require('../core/errorHandler');
+const { parseStoredJson } = require('../utils/safeJson');
 const { optionalText, requirePositiveId } = require('../core/validation');
 
 const AMMO_ITEM_TYPES = ['consumed', 'empty'];
@@ -124,13 +125,8 @@ function createExhpDocumentsService(db) {
       return withErrors(() => {
         const id = requirePositiveId(exhpId, 'exhpId');
         if (!repository.getExhp(id)) throw new AppError('Η ΕΧΠ δεν βρέθηκε.', 'NOT_FOUND');
-        return Object.fromEntries(repository.getUselessStatements(id).map((row) => {
-          try {
-            return [row.form_key, JSON.parse(row.data_json || '{}')];
-          } catch (_error) {
-            return [row.form_key, {}];
-          }
-        }));
+        return Object.fromEntries(repository.getUselessStatements(id).map((row) =>
+          [row.form_key, parseStoredJson(row.data_json, {}, `useless statement ${row.form_key}`)]));
       });
     },
 
