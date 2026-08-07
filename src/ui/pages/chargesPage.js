@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { formatDate, formatQuantity } from '../components/format.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 
 const internalMovementDraftState = {
@@ -233,7 +234,7 @@ function renderDraftRows(drafts) {
       <td>${index + 1}</td><td>${formatDate(item.documentDate)}</td><td>${escapeHtml(item.departmentName)}</td>
       <td>${escapeHtml(item.movementType)}</td><td>${escapeHtml(item.shareNumber)}</td><td>${escapeHtml(item.nominalNumber)}</td>
       <td class="material-description-cell">${escapeHtml(item.description)}</td><td>${escapeHtml(item.measurementUnit)}</td>
-      <td class="number-cell">${formatQuantity(item.quantity)}</td>
+      <td class="number-cell">${formatQuantity(item.quantity || 0)}</td>
       <td><button class="icon-button danger-button" data-remove-draft="${index}" type="button" title="ΔΙΑΓΡΑΦΗ">×</button></td>
     </tr>
   `).join('');
@@ -513,7 +514,7 @@ function renderBalanceRows(balances) {
     <tr>
       <td>${index + 1}</td><td>${escapeHtml(balance.shareNumber)}</td><td>${escapeHtml(balance.nominalNumber)}</td>
       <td class="material-description-cell">${escapeHtml(balance.description)}</td><td>${escapeHtml(balance.measurementUnit)}</td>
-      <td class="number-cell">${formatQuantity(balance.finalQuantity)}</td>
+      <td class="number-cell">${formatQuantity(balance.finalQuantity || 0)}</td>
     </tr>
   `).join('');
 }
@@ -535,12 +536,3 @@ function findShareByNumber(shares, value) {
   );
 }
 
-function formatQuantity(value) {
-  return Number(value || 0).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
-}
-
-function formatDate(value) {
-  if (!value) return '';
-  const [year, month, day] = String(value).split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}

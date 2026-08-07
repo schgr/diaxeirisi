@@ -1,4 +1,5 @@
 import { escapeHtml } from './components/forms.js';
+import { formatDate } from './components/format.js';
 import { splitOfficerSignature } from './officerSignature.js';
 
 export function renderOfficialHandoverProtocol(settings, handover) {
@@ -93,8 +94,3 @@ function identity(value) {
   return `<strong>${escapeHtml(officer.name)}</strong><em>${escapeHtml(officer.rank)}</em>`;
 }
 
-function formatDate(value) {
-  if (!value) return '';
-  const [year, month, day] = value.slice(0, 10).split('-');
-  return `${day}/${month}/${year}`;
-}

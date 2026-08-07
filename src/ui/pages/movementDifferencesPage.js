@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { formatDate, formatQuantity } from '../components/format.js';
 
 export async function renderMovementDifferencesPage(container, api, showToast) {
   container.innerHTML = `
@@ -374,12 +375,3 @@ async function printProtocolDocument(backdrop) {
   }
 }
 
-function formatQuantity(value) {
-  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
-}
-
-function formatDate(value) {
-  if (!value) return '';
-  const [year, month, day] = String(value).split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}

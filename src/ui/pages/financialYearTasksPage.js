@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { formatDate, formatQuantity } from '../components/format.js';
 import { openArchivedSharesPreview, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 import { splitOfficerSignature } from '../officerSignature.js';
@@ -583,7 +584,7 @@ function renderRenumberingTable(shares) {
           <td>${escapeHtml(share.shareNumber)}</td>
           <td><input class="table-input" data-new-share-number type="text" autocomplete="off" aria-label="Νέος αριθμός μερίδας ${escapeHtml(share.shareNumber)}" /></td>
           <td>${escapeHtml(share.description)}</td>
-          <td>${escapeHtml(formatQuantity(share.quantity))}</td>
+          <td>${escapeHtml(formatQuantity(share.quantity || 0))}</td>
         </tr>
       `).join('')
     : '<tr><td colspan="5" class="empty-table">Δεν υπάρχουν ενεργές μερίδες.</td></tr>';
@@ -610,7 +611,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
           <td>${escapeHtml(row.description)}</td>
           <td>${escapeHtml(row.transactionKind)}</td>
           <td>${escapeHtml(formatDate(row.date))}</td>
-          <td>${escapeHtml(formatQuantity(row.quantity))}</td>
+          <td>${escapeHtml(formatQuantity(row.quantity || 0))}</td>
           ${source === 'addy' ? `<td>${escapeHtml(row.transactionUnit)}</td>` : ''}
         </tr>
       `).join('')
@@ -632,14 +633,6 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
   `;
 }
 
-function formatDate(value) {
-  const [year, month, day] = String(value || '').split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value || '';
-}
-
-function formatQuantity(value) {
-  return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3, useGrouping: false }).format(Number(value || 0));
-}
 
 export function renderMovedShareCardsTable(cards) {
   const sortedCards = sortMovedShareCards(cards);

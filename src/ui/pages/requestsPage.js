@@ -1,4 +1,5 @@
 import { escapeHtml, field } from '../components/forms.js';
+import { normalizeText as normalize } from '../components/format.js';
 import { listRequestPriorityOptionGroups } from '../requestPriorities.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderRequestItemBarcode } from '../barcode/code128.js';
@@ -671,10 +672,6 @@ function toDocumentMeasurementUnit(value) {
     ['λιτρα', 'lit']
   ]);
   return map.get(normalized) || value;
-}
-
-function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
 }
 
 function clearRequestLine(controls) {

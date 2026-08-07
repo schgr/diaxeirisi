@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { formatDate, formatQuantity, formatSignedQuantity } from '../components/format.js';
 import { renderInventoryStatement } from './printsPage.js';
 
 export async function renderInventoryPage(
@@ -253,7 +254,7 @@ function bindInventoryPage(container, inventoryApi, settingsApi, referenceData, 
         secondCount: container.querySelector('#inventory-second-count').value,
         notes: container.querySelector('#inventory-count-notes').value
       });
-      showToast(`${result.message} ${result.differenceStatus}: ${formatSigned(result.difference)}.`);
+      showToast(`${result.message} ${result.differenceStatus}: ${formatSignedQuantity(result.difference)}.`);
       await renderInventoryPage(container, inventoryApi, settingsApi, showToast, selectedSession.id);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η καταχώριση.', 'error');
@@ -366,7 +367,7 @@ function renderInventoryItemRows(items) {
       <td class="number-cell">${formatQuantity(item.firstCount)}</td>
       <td class="number-cell">${item.secondCount === null ? '' : formatQuantity(item.secondCount)}</td>
       <td class="number-cell">${formatQuantity(item.finalCount)}</td>
-      <td class="number-cell ${differenceTone(item.difference)}">${formatSigned(item.difference)}</td>
+      <td class="number-cell ${differenceTone(item.difference)}">${formatSignedQuantity(item.difference)}</td>
       <td>${escapeHtml(item.differenceStatus)}</td>
     </tr>
   `).join('');
@@ -376,17 +377,3 @@ function differenceTone(value) {
   return Number(value) > 0 ? 'surplus' : Number(value) < 0 ? 'deficit' : 'balanced';
 }
 
-function formatQuantity(value) {
-  return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
-}
-
-function formatSigned(value) {
-  const number = Number(value);
-  return `${number > 0 ? '+' : ''}${formatQuantity(number)}`;
-}
-
-function formatDate(value) {
-  if (!value) return '';
-  const [year, month, day] = String(value).split('-');
-  return year && month && day ? `${day}/${month}/${year}` : value;
-}

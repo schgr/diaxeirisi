@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { formatDate, formatQuantity } from '../components/format.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../handoverProtocol.js';
 import { renderControlledMaterialsBook, renderWeaponRegistry, bindControlledMaterialEvents } from '../administration/controlledMaterials.js';
@@ -405,7 +406,7 @@ export function renderArchivePanel(data) {
         <table class="index-table administration-table archive-selection-table">
           <thead><tr><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Α/Ο</th><th>Περιγραφή</th><th>Ποσότητα</th><th>Αρχείο</th></tr></thead>
           <tbody>${eligible.length ? eligible.map((share, index) => `
-            <tr><td>${index + 1}</td><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(share.description)}</td><td>${escapeHtml(formatQuantity(share.accountingBalance))}</td><td><label class="checkbox-field"><input data-archive-share="${share.id}" type="checkbox" /><span>Αρχείο</span></label></td></tr>
+            <tr><td>${index + 1}</td><td>${escapeHtml(share.shareNumber)}</td><td>${escapeHtml(share.nominalNumber)}</td><td class="material-description-cell">${escapeHtml(share.description)}</td><td>${escapeHtml(formatQuantity(share.accountingBalance || 0))}</td><td><label class="checkbox-field"><input data-archive-share="${share.id}" type="checkbox" /><span>Αρχείο</span></label></td></tr>
           `).join('') : '<tr><td colspan="6" class="empty-table">Δεν υπάρχουν Μερίδες που πληρούν τις προϋποθέσεις.</td></tr>'}</tbody>
         </table>
       </div>
@@ -969,12 +970,3 @@ function value(container, selector) {
   return container.querySelector(selector)?.value || '';
 }
 
-function formatDate(value) {
-  if (!value) return '';
-  const [year, month, day] = value.slice(0, 10).split('-');
-  return `${day}/${month}/${year}`;
-}
-
-function formatQuantity(value) {
-  return new Intl.NumberFormat('el-GR', { maximumFractionDigits: 3, useGrouping: false }).format(Number(value || 0));
-}

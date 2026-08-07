@@ -1,3 +1,4 @@
+import { escapeHtml } from './components/forms.js';
 const HOME_TILE_META = {
   shares: { code: '§ 01-Α', icon: 'ΜΕ' },
   'share-compositions': { code: '§ 01-Ζ', icon: 'ΣΜ' },
@@ -67,11 +68,3 @@ function homeTileMeta(item) {
   return HOME_TILE_META[item.id] || { code: '§ 00-Α', icon: 'ΜΝ' };
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
