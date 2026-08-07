@@ -91,6 +91,28 @@ function runSecurityTests(root) {
   assert.ok(!stored.includes(recovery.recoveryCode));
   assert.ok(stored.includes('ανακτημένος'));
 
+  security.lock();
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    expectCode(() => security.answerSecurityQuestions(['λάθος', 'λάθος', 'λάθος']), 'SECURITY_ANSWERS_INVALID');
+  }
+  expectCode(() => security.answerSecurityQuestions(['αλφα', 'μπλε', 'αθήνα']), 'AUTH_RATE_LIMITED');
+  expectCode(() => security.login('ανακτημένος', 'κωδικός-ανάκτησης'), 'AUTH_RATE_LIMITED');
+  currentTime += 10 * 60_000;
+  const throttledRecovery = security.answerSecurityQuestions(['αλφα', 'μπλε', 'αθήνα']);
+  assert.strictEqual(security.status().lockedUntil, 0);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    expectCode(
+      () => security.recover('0000-0000-0000-0000-0000-0000', 'χρήστης', 'κωδικός-δοκιμής', 'κωδικός-δοκιμής'),
+      'RECOVERY_CODE_INVALID'
+    );
+  }
+  expectCode(
+    () => security.recover(throttledRecovery.recoveryCode, 'χρήστης', 'κωδικός-δοκιμής', 'κωδικός-δοκιμής'),
+    'AUTH_RATE_LIMITED'
+  );
+  currentTime += 10 * 60_000;
+  security.recover(throttledRecovery.recoveryCode, 'ανακτημένος', 'κωδικός-ανάκτησης', 'κωδικός-ανάκτησης');
+
   const legacyPath = path.join(root, 'legacy-security');
   const legacyWriter = createSecurityService(legacyPath, () => currentTime);
   legacyWriter.setup('admin', 'παλιός-κωδικός', 'παλιός-κωδικός', securityQuestions);
