@@ -157,8 +157,7 @@ function renderAmmunitionBatchRegistry(registry) {
         </div>
         <div class="row-actions">
           <button class="primary-button" data-save-ammunition-batches type="button">Αποθήκευση</button>
-          <button class="secondary-button" data-print-ammunition-batches
-            data-export-title="Βιβλίο Μερίδων Β.Φ" type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-preview-ammunition-batches type="button">Προβολή</button>
         </div>
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">
@@ -603,9 +602,12 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'ammunition-batches', sharesApi);
   }, showToast));
 
-  container.querySelector('[data-print-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
-    await printAmmunitionBatchTable(container.querySelector('[data-ammunition-batch-table]'));
-  }, showToast));
+  container.querySelector('[data-preview-ammunition-batches]')?.addEventListener('click', () => {
+    openAmmunitionBatchPreview(
+      container.querySelector('[data-ammunition-batch-table]'),
+      'Βιβλίο Μερίδων Β.Φ.'
+    );
+  });
 
   container.querySelector('[data-ammunition-batch-table]')?.addEventListener('click', (event) => {
     const add = event.target.closest('[data-add-ammunition-batch]');
@@ -930,9 +932,13 @@ async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδ
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
   const printableTable = table.cloneNode(true);
-  printableTable.querySelectorAll('input').forEach((input) => {
+  printableTable.querySelectorAll('.no-print').forEach((cell) => cell.remove());
+  printableTable.querySelectorAll('[colspan="9"]').forEach((cell) => cell.setAttribute('colspan', '8'));
+  printableTable.querySelectorAll('input, select').forEach((input) => {
     const text = document.createElement('span');
-    text.textContent = input.value;
+    text.textContent = input.tagName === 'SELECT'
+      ? input.selectedOptions[0]?.textContent || ''
+      : input.value;
     input.replaceWith(text);
   });
   printRoot.innerHTML = `
@@ -960,6 +966,8 @@ function openAmmunitionBatchPreview(table, title) {
   if (!table) return;
   document.querySelector('.ammunition-batch-preview-backdrop')?.remove();
   const printableTable = table.cloneNode(true);
+  printableTable.querySelectorAll('.no-print').forEach((cell) => cell.remove());
+  printableTable.querySelectorAll('[colspan="9"]').forEach((cell) => cell.setAttribute('colspan', '8'));
   printableTable.querySelectorAll('input, select').forEach((control) => {
     const text = document.createElement('span');
     text.textContent = control.tagName === 'SELECT'

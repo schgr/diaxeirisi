@@ -12,8 +12,9 @@ async function run() {
   );
   assert.match(
     administrationSource,
-    /data-print-ammunition-batches\s+data-export-title="Βιβλίο Μερίδων Β\.Φ"/u
+    /data-preview-ammunition-batches/u
   );
+  assert.match(administrationSource, /data-print-training-ammunition-preview/u);
 
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-ammunition-batches-'));
   try {
