@@ -84,7 +84,7 @@ const currentApi = Array.from(
 );
 assert.deepStrictEqual(currentApi, publicApi, 'Public API or method order changed.');
 for (const name of publicApi) {
-  if (['updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
+  if (['saveAddy', 'updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
   assert.strictEqual(extractMethod(modules, name), extractMethod(baseline, name), `${name} changed.`);
 }
 
@@ -93,6 +93,7 @@ const helperNames = Array.from(
   (match) => match[1]
 ).filter((name) => name !== 'createTransactionsService');
 for (const name of helperNames) {
+  if (name === 'saveNominalNumberTransfer') continue;
   assert.strictEqual(extractFunction(modules, name), extractFunction(baseline, name), `${name} changed.`);
 }
 

@@ -16,6 +16,7 @@ function createYearEndRepository(db) {
         SELECT id, share_number, nominal_number, description, measurement_unit,
                accounting_balance, charged_quantity, archive_status
         FROM shares
+        WHERE archive_reason <> 'EXCLUDE_FROM_INVENTORY'
         ORDER BY CASE WHEN share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
                  CAST(share_number AS INTEGER), share_number COLLATE NOCASE, id
       `).all();

@@ -106,7 +106,7 @@ async function run() {
           quantity: 10, transferGroup: 'pair-1'
         },
         {
-          shareNumber: '110', sourceShareNumber: '10', nominalNumber: '1005000001',
+          shareNumber: '110', sourceShareNumber: '10', nominalNumber: '1005000099',
           description: 'Δοκιμαστικό Υλικό', measurementUnit: 'Τεμάχια', materialType: 'Υλικό',
           transactionType: 'Χρέωση', quantity: 10, transferGroup: 'pair-1'
         }
@@ -114,12 +114,17 @@ async function run() {
     });
 
     assert.strictEqual(result.document.items.length, 2);
+    assert.strictEqual(
+      result.document.items.find((item) => item.transactionType === 'Χρέωση').nominalNumber,
+      '1005000099'
+    );
     const oldShare = db.prepare("SELECT * FROM shares WHERE share_number = '10'").get();
     const newShare = db.prepare("SELECT * FROM shares WHERE share_number = '110'").get();
     assert.strictEqual(oldShare.archive_status, 'Αρχειοθετημένη');
     assert.strictEqual(Number(oldShare.accounting_balance), 0);
     assert.strictEqual(Number(oldShare.charged_quantity), 0);
     assert.strictEqual(newShare.archive_status, 'Ενεργή');
+    assert.strictEqual(newShare.nominal_number, '1005000099');
     assert.strictEqual(Number(newShare.accounting_balance), 10);
     assert.strictEqual(Number(newShare.charged_quantity), 4);
     assert.strictEqual(Boolean(newShare.requires_ammunition_batch_book), true);
@@ -127,6 +132,7 @@ async function run() {
     const movedInternal = db.prepare('SELECT * FROM internal_items WHERE id = 1').get();
     assert.strictEqual(movedInternal.share_id, newShare.id);
     assert.strictEqual(movedInternal.share_number, '110');
+    assert.strictEqual(movedInternal.nominal_number, '1005000099');
     assert.strictEqual(db.prepare('SELECT share_id FROM share_composition_items').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_change_sheet_entries').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_serial_numbers').get().share_id, newShare.id);

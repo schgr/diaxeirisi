@@ -30,6 +30,7 @@ import {
   openAddyCompositionDialog,
   openToolCollectionCreditDialog,
   renderExhpEntryState,
+  renderSavedAddyRows,
   renderState,
   updateAddButton
 } from './entryHelpers.js';
@@ -182,11 +183,19 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   const inputHandler = (event) => {
     const transferInput = event.target.closest('[data-exhp-transfer-share-number]');
-    if (!transferInput) return;
-    const item = state.exhpItems[Number(transferInput.dataset.exhpTransferShareNumber)];
-    if (item) item.shareNumber = transferInput.value.trim();
+    const nominalInput = event.target.closest('[data-exhp-transfer-nominal-number]');
+    if (!transferInput && !nominalInput) return;
+    const itemIndex = Number(
+      transferInput?.dataset.exhpTransferShareNumber
+      ?? nominalInput.dataset.exhpTransferNominalNumber
+    );
+    const item = state.exhpItems[itemIndex];
+    if (item && transferInput) item.shareNumber = transferInput.value.trim();
+    if (item && nominalInput) item.nominalNumber = nominalInput.value.trim();
     container.querySelector('#exhp-save').disabled = state.exhpItems.some((entry) =>
-      entry.sourceShareNumber && !String(entry.shareNumber || '').trim()
+      entry.sourceShareNumber && (
+        !String(entry.shareNumber || '').trim() || !String(entry.nominalNumber || '').trim()
+      )
     );
   };
   container.addEventListener('input', inputHandler);
@@ -286,6 +295,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       state.exhpItems.push({
         ...baseItem,
         shareNumber: '',
+        nominalNumber: '',
         sourceShareNumber: share.shareNumber,
         transactionType: 'Χρέωση'
       });
@@ -448,7 +458,13 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           Number(deleteAddy.dataset.deleteAddyDocument)
         );
         showToast(result.message);
-        await rerender(container, transactionsApi, settingsApi, showToast);
+        state.documents = state.documents.filter(
+          (documentItem) => Number(documentItem.id) !== Number(deleteAddy.dataset.deleteAddyDocument)
+        );
+        deleteAddy.closest('tbody').innerHTML = renderSavedAddyRows(state.documents);
+        void transactionsApi.getAddyReferenceData().then((nextReferenceData) => {
+          Object.assign(referenceData, nextReferenceData);
+        }).catch(() => {});
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή του ΑΔΔΥ.', 'error');
       }
@@ -635,7 +651,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           openAddyDocument(result.document);
         }
         state.items.length = 0;
-        await rerender(container, transactionsApi, settingsApi, showToast);
+        await rerender(container, transactionsApi, settingsApi, showToast, 'addy');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση ΑΔΔΥ.', 'error');
     }

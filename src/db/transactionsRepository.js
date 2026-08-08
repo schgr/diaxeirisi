@@ -158,9 +158,10 @@ function createTransactionsRepository(db) {
               measurement_unit,
               projected_quantity,
               accounting_balance,
-              charged_quantity
+              charged_quantity,
+              archive_reason
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
         )
         .run(
@@ -172,12 +173,13 @@ function createTransactionsRepository(db) {
           payload.measurementUnit || '',
           payload.projectedQuantity || 0,
           payload.accountingBalance,
-          payload.chargedQuantity
+          payload.chargedQuantity,
+          payload.excludeFromInventory ? 'EXCLUDE_FROM_INVENTORY' : ''
         );
       return db.prepare('SELECT * FROM shares WHERE id = ?').get(result.lastInsertRowid);
     },
 
-    createTransferredShare(sourceShareId, newShareNumber) {
+    createTransferredShare(sourceShareId, newShareNumber, newNominalNumber) {
       const result = db.prepare(`
         INSERT INTO shares (
           share_number, nominal_number, description, material_type, material_code,
@@ -188,7 +190,7 @@ function createTransactionsRepository(db) {
           requires_ammunition_batch_book, requires_training_ammunition_batch_book,
           previous_share_number
         )
-        SELECT ?, nominal_number, description, material_type, material_code,
+        SELECT ?, ?, description, material_type, material_code,
                main_material_number, measurement_unit, projected_quantity,
                0, charged_quantity, unit_price, photo_path,
                'Ενεργή', NULL, '', requires_composition,
@@ -197,7 +199,7 @@ function createTransactionsRepository(db) {
                ''
         FROM shares
         WHERE id = ?
-      `).run(newShareNumber, sourceShareId);
+      `).run(newShareNumber, newNominalNumber, sourceShareId);
       return db.prepare('SELECT * FROM shares WHERE id = ?').get(result.lastInsertRowid);
     },
 

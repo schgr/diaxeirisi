@@ -100,6 +100,9 @@ function validateNominalTransferItems(items) {
     if (charge.shareNumber === credit.shareNumber) {
       throw new AppError('Ο νέος Αριθμός Μερίδας πρέπει να διαφέρει από τον παλιό.', 'VALIDATION_ERROR');
     }
+    if (charge.nominalNumber === credit.nominalNumber) {
+      throw new AppError('Ο νέος Αριθμός Ονομαστικού πρέπει να διαφέρει από τον παλιό.', 'VALIDATION_ERROR');
+    }
     if (Math.abs(charge.quantity - credit.quantity) > 0.000001) {
       throw new AppError('Η ποσότητα πίστωσης και χρέωσης πρέπει να είναι ίδια.', 'VALIDATION_ERROR');
     }

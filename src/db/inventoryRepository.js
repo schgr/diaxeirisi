@@ -142,7 +142,9 @@ function createInventoryRepository(db) {
       const futureChangeByShareId = new Map(
         futureMovements.map((row) => [Number(row.share_id), Number(row.balance_change || 0)])
       );
-      return listActiveShares(db).map((share) => ({
+      return listActiveShares(db)
+        .filter((share) => share.archive_reason !== 'EXCLUDE_FROM_INVENTORY')
+        .map((share) => ({
         id: share.id,
         share_number: share.share_number,
         nominal_number: share.nominal_number,
@@ -151,7 +153,7 @@ function createInventoryRepository(db) {
         accounting_balance: Number(share.accounting_balance || 0)
           - (futureChangeByShareId.get(Number(share.id)) || 0),
         charged_quantity: share.charged_quantity
-      }));
+        }));
     },
 
     getShare(id) {

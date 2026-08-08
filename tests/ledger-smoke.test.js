@@ -937,7 +937,15 @@ async function run() {
         materialType: 'ΑΝΑΛΩΣΙΜΑ'
       }]
     });
-    assert.strictEqual(shares.listShares().length, sharesBeforeExternalConsumable);
+    assert.strictEqual(shares.listShares().length, sharesBeforeExternalConsumable + 1);
+    assert.strictEqual(
+      shares.listShares().some((share) => share.shareNumber === '777'),
+      true
+    );
+    assert.strictEqual(
+      inventory.getReferenceData('2026-06-12').shares.some((share) => share.shareNumber === '777'),
+      false
+    );
     assert.strictEqual(
       transactions.listExternalTransactionIndexRows(2026)
         .some((row) => row.id === externalConsumableAddy.documentId),

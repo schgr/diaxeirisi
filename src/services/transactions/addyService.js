@@ -28,10 +28,8 @@ function createAddyService(dependencies) {
 
         for (const item of addy.items) {
           let share = repository.findShareByNumber(item.shareNumber);
-          const externalConsumableCharge =
-            !share && item.transactionType === 'Χρέωση' && isConsumableMaterial(item.materialType);
 
-          if (!share && !externalConsumableCharge) {
+          if (!share) {
             if (item.transactionType === 'Πίστωση') {
               throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
             }
@@ -43,7 +41,8 @@ function createAddyService(dependencies) {
               materialType: item.materialType,
               measurementUnit: item.measurementUnit,
               accountingBalance: 0,
-              chargedQuantity: 0
+              chargedQuantity: 0,
+              excludeFromInventory: isConsumableMaterial(item.materialType)
             });
           }
 

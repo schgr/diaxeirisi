@@ -13,6 +13,7 @@ function listActiveShares(db) {
           projected_quantity,
           accounting_balance,
           charged_quantity,
+          archive_reason,
           requires_composition,
           requires_change_sheet
         FROM shares

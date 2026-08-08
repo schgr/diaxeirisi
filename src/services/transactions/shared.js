@@ -211,11 +211,16 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
     repository.createExhpItem(documentId, credit, sourceShare.id, creditTransactionId);
     documentItems.push({ ...credit, ledgerSerial: creditSerial });
 
-    const targetShare = repository.createTransferredShare(sourceShare.id, chargeInput.shareNumber);
+    const targetShare = repository.createTransferredShare(
+      sourceShare.id,
+      chargeInput.shareNumber,
+      chargeInput.nominalNumber
+    );
     repository.moveCurrentShareState(sourceShare.id, targetShare);
     const charge = {
       ...sharedFields,
       shareNumber: targetShare.share_number,
+      nominalNumber: targetShare.nominal_number,
       transactionType: 'Χρέωση',
       sourceShareNumber: sourceShare.share_number
     };

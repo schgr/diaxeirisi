@@ -167,7 +167,9 @@ export function renderExhpEntryState(container, state) {
   container.querySelector('#exhp-items-view').innerHTML = renderExhpEntryTables(state.exhpItems);
   container.querySelector('#exhp-limit-text').textContent = `${state.exhpItems.length} καταχωρήσεις`;
   container.querySelector('#exhp-save').disabled = !state.exhpItems.length || state.exhpItems.some((item) =>
-    item.sourceShareNumber && !String(item.shareNumber || '').trim()
+    item.sourceShareNumber && (
+      !String(item.shareNumber || '').trim() || !String(item.nominalNumber || '').trim()
+    )
   );
 }
 
@@ -202,7 +204,9 @@ export function renderExhpEntryTables(items) {
                               <td>${item.sourceShareNumber
                                 ? `<input class="table-input exhp-transfer-share-input" data-exhp-transfer-share-number="${index}" value="${escapeHtml(item.shareNumber)}" autocomplete="off" placeholder="Νέα μερίδα" aria-label="Νέος Αριθμός Μερίδας για ${escapeHtml(item.sourceShareNumber)}" />`
                                 : escapeHtml(item.shareNumber)}</td>
-                              <td>${escapeHtml(item.nominalNumber)}</td>
+                              <td>${item.sourceShareNumber
+                                ? `<input class="table-input exhp-transfer-nominal-input" data-exhp-transfer-nominal-number="${index}" value="${escapeHtml(item.nominalNumber)}" autocomplete="off" placeholder="Νέος αριθμός ονομαστικού" aria-label="Νέος Αριθμός Ονομαστικού για ${escapeHtml(item.sourceShareNumber)}" />`
+                                : escapeHtml(item.nominalNumber)}</td>
                               <td class="material-description-cell">${escapeHtml(item.description)}</td>
                               <td>${escapeHtml(item.measurementUnit)}</td>
                               <td>${formatQuantity(item.quantity)}</td>
