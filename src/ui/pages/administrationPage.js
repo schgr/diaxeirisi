@@ -28,7 +28,7 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
     <section class="transaction-flow-home contextual-tile-menu administration-tile-menu" data-administration-menu>
       <button class="home-tile transaction-flow-tile" data-administration-tab="handover" type="button"><span class="home-tile-icon">ΠΠ</span><span class="home-tile-title">Παράδοση - Παραλαβή</span><span class="home-tile-code">§ ΔΧ-Α</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="management-report" type="button"><span class="home-tile-icon">ΑΔ</span><span class="home-tile-title">Αναφορά Διαχείρισης</span><span class="home-tile-code">§ ΔΧ-Β</span></button>
-      <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΣΕ</span><span class="home-tile-title">Συγκεντρωτικές Εκτυπώσεις</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
+      <button class="home-tile transaction-flow-tile" data-administration-tab="aggregate-prints" type="button"><span class="home-tile-icon">ΕΚ</span><span class="home-tile-title">ΕΚΤΥΠΩΣΕΙΣ</span><span class="home-tile-code">§ ΔΧ-Γ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="serial-numbers" type="button"><span class="home-tile-icon">SN</span><span class="home-tile-title">Σειριακοί Αριθμοί</span><span class="home-tile-code">§ ΔΧ-Δ</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="ammunition-batches" type="button"><span class="home-tile-icon">ΒΦ</span><span class="home-tile-title">Βιβλίο Μερίδων Β.Φ.</span><span class="home-tile-code">§ ΔΧ-Ε</span></button>
       <button class="home-tile transaction-flow-tile" data-administration-tab="training-ammunition-batches" type="button"><span class="home-tile-icon">ΠΕ</span><span class="home-tile-title">Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως</span><span class="home-tile-code">§ ΔΧ-ΣΤ</span></button>
@@ -213,8 +213,7 @@ function renderTrainingAmmunitionBatchRegistry(registry) {
         </div>
         <div class="row-actions">
           <button class="primary-button" data-save-training-ammunition-batches type="button">Αποθήκευση</button>
-          <button class="secondary-button" data-print-training-ammunition-batches
-            data-export-title="Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως" type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-preview-training-ammunition-batches type="button">Προβολή</button>
         </div>
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">
@@ -647,12 +646,12 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'training-ammunition-batches', sharesApi);
   }, showToast));
 
-  container.querySelector('[data-print-training-ammunition-batches]')?.addEventListener('click', async () => run(async () => {
-    await printAmmunitionBatchTable(
+  container.querySelector('[data-preview-training-ammunition-batches]')?.addEventListener('click', () => {
+    openAmmunitionBatchPreview(
       container.querySelector('[data-training-ammunition-batch-table]'),
       'Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως'
     );
-  }, showToast));
+  });
 
   container.querySelector('[data-training-ammunition-batch-table]')?.addEventListener('click', (event) => {
     const add = event.target.closest('[data-add-training-ammunition-batch]');
@@ -955,6 +954,51 @@ async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδ
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }
+}
+
+function openAmmunitionBatchPreview(table, title) {
+  if (!table) return;
+  document.querySelector('.ammunition-batch-preview-backdrop')?.remove();
+  const printableTable = table.cloneNode(true);
+  printableTable.querySelectorAll('input, select').forEach((control) => {
+    const text = document.createElement('span');
+    text.textContent = control.tagName === 'SELECT'
+      ? control.selectedOptions[0]?.textContent || ''
+      : control.value;
+    control.replaceWith(text);
+  });
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop ammunition-batch-preview-backdrop';
+  backdrop.innerHTML = `
+    <section class="request-document-modal archived-shares-preview-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΠΡΟΕΠΙΣΚΟΠΗΣΗ</p><h2>${escapeHtml(title)}</h2></div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-training-ammunition-preview
+            data-export-title="${escapeHtml(title)}" data-export-orientation="landscape" type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-ammunition-preview type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="request-document-preview archived-shares-preview-content">
+        <section class="ammunition-batch-print print-document-area">
+          <h2>${escapeHtml(title)}</h2>
+          ${printableTable.outerHTML}
+        </section>
+      </div>
+    </section>`;
+  backdrop.addEventListener('click', async (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-ammunition-preview]')) {
+      backdrop.remove();
+      return;
+    }
+    if (event.target.closest('[data-print-training-ammunition-preview]')) {
+      await printAmmunitionBatchTable(
+        backdrop.querySelector('.ammunition-batch-registry-table'),
+        title
+      );
+    }
+  });
+  document.body.appendChild(backdrop);
 }
 
 async function run(operation, showToast) {

@@ -112,7 +112,7 @@ const homeGroups = [
     items: [
       { id: 'administration-handover', sectionId: 'administration', tab: 'handover', title: 'Παράδοση - Παραλαβή' },
       { id: 'administration-report', sectionId: 'administration', tab: 'management-report', title: 'Αναφορά Διαχείρισης' },
-      { id: 'administration-aggregate-prints', sectionId: 'prints', title: 'Συγκεντρωτικές Εκτυπώσεις' },
+      { id: 'administration-aggregate-prints', sectionId: 'prints', title: 'ΕΚΤΥΠΩΣΕΙΣ' },
       { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' },
       { id: 'administration-ammunition-batches', sectionId: 'administration', tab: 'ammunition-batches', title: 'Βιβλίο Μερίδων Β.Φ.' },
       { id: 'administration-training-ammunition-batches', sectionId: 'administration', tab: 'training-ammunition-batches', title: 'Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως' },

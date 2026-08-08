@@ -78,7 +78,7 @@ function createAddyService(dependencies) {
                   : buildCompositionSnapshot(repository, share.id, item.quantity)
               }
             : item;
-          repository.createAddyItem(documentId, savedItem, share?.id || null, transactionId);
+          const addyItemId = repository.createAddyItem(documentId, savedItem, share?.id || null, transactionId);
           documentItems.push(
             mapAddyDocumentItem({
               item: savedItem,
@@ -88,6 +88,7 @@ function createAddyService(dependencies) {
               serviceName
             })
           );
+          documentItems[documentItems.length - 1].addyItemId = Number(addyItemId);
           documentItems[documentItems.length - 1].composition = savedItem.composition || [];
         }
       });
@@ -105,6 +106,75 @@ function createAddyService(dependencies) {
         },
         message: `Το ΑΔΔΥ ${documentId} αποθηκεύτηκε.`
       };
+    },
+
+    saveAddyDepartmentAllocations(idValue, payload = {}) {
+      const documentId = requirePositiveId(idValue);
+      const document = repository.getAddyDocument(documentId);
+      if (!document) throw new Error('Το ΑΔΔΥ δεν βρέθηκε.');
+      const fiscalYear = Number(document.document_date.slice(0, 4));
+      if (repository.isFiscalYearClosed(fiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${fiscalYear} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
+      }
+      const savedItems = new Map(repository.listAddyDocumentItems(documentId)
+        .map((item) => [Number(item.id), item]));
+      const entries = Array.isArray(payload.entries) ? payload.entries : [];
+
+      repository.transaction(() => {
+        for (const entry of entries) {
+          const item = savedItems.get(requirePositiveId(entry.addyItemId));
+          if (!item) throw new Error('Το υλικό του ΑΔΔΥ δεν βρέθηκε.');
+          const allocations = Array.isArray(entry.allocations) ? entry.allocations : [];
+          const total = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
+          if (!allocations.length || Math.abs(total - Number(item.quantity)) >= 0.000001) {
+            throw new Error('Η κατανομή στα τμήματα δεν συμφωνεί με την ποσότητα του ΑΔΔΥ.');
+          }
+          const share = repository.findShareByNumber(item.current_share_number || item.share_number);
+          if (!share) throw new Error('Η μερίδα του ΑΔΔΥ δεν βρέθηκε.');
+          const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';
+
+          for (const allocation of allocations) {
+            const departmentId = requirePositiveId(allocation.departmentManagerId);
+            const quantity = Number(allocation.quantity);
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+              throw new Error('Η κατανομή στα τμήματα περιέχει μη έγκυρη ποσότητα.');
+            }
+            const department = repository.listDepartmentManagers()
+              .find((candidate) => Number(candidate.id) === departmentId);
+            if (!department) throw new Error('Το επιλεγμένο τμήμα δεν βρέθηκε.');
+            if (movementType === 'Επιστροφή' && quantity > repository.getDepartmentShareBalance(department.id, share.id)) {
+              throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή χρεωμένη ποσότητα.`);
+            }
+            const internalDocumentId = repository.createInternalDocument({
+              fiscalYear,
+              serialNumber: repository.getNextInternalSerial(fiscalYear),
+              documentDate: document.document_date,
+              departmentManagerId: department.id,
+              departmentName: department.department_name,
+              departmentHead: department.department_head,
+              movementType,
+              notes: `ΑΔΔΥ ${documentId}`
+            });
+            repository.createInternalItem(internalDocumentId, {
+              shareId: share.id,
+              shareNumber: share.share_number,
+              nominalNumber: share.nominal_number,
+              description: share.description,
+              measurementUnit: share.measurement_unit,
+              quantity,
+              composition: buildCompositionSnapshot(repository, share.id, quantity)
+                .map((component) => ({
+                  componentNominalNumber: component.componentNominalNumber,
+                  componentDescription: component.componentDescription,
+                  measurementUnit: component.measurementUnit,
+                  quantity: component.projectedQuantity - component.notIssuedQuantity
+                }))
+            });
+            repository.adjustChargedQuantity(share.id, movementType === 'Χορήγηση' ? quantity : -quantity);
+          }
+        }
+      });
+      return { message: 'Οι χρεώσεις και πιστώσεις των τμημάτων αποθηκεύτηκαν.' };
     },
 
     listAddyDocuments() {

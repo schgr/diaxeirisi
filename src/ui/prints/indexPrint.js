@@ -7,7 +7,7 @@ const ROWS_PER_INDEX_PAGE = 34;
 
 function renderFiscalYearControls(state) {
   return `
-    <div class="registry-controls">
+    <div class="registry-controls" style="width: fit-content; grid-template-columns: 170px 170px;">
       <label class="field">
         <span>Οικονομικό Έτος</span>
         <select id="prints-fiscal-year">${renderFiscalYearOptions(state.fiscalYear)}</select>

@@ -9,7 +9,9 @@ async function run() {
   const administrationSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'administrationPage.js'), 'utf8');
   const settingsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'settingsPage.js'), 'utf8');
   assert.match(administrationSource, /Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως/u);
-  assert.match(administrationSource, /data-print-training-ammunition-batches/u);
+  assert.match(administrationSource, /data-preview-training-ammunition-batches/u);
+  assert.match(administrationSource, /data-print-training-ammunition-preview/u);
+  assert.match(administrationSource, /ammunition-batch-preview-backdrop/u);
   assert.match(settingsSource, /requiresTrainingAmmunitionBatchBook/u);
 
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-training-ammunition-'));

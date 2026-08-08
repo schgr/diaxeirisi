@@ -136,7 +136,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         composition = await openInternalCompositionDialog(share, quantity);
         if (!composition) return;
       }
-      state.drafts.push({
+      const draft = {
         documentDate: container.querySelector('#internal-date').value,
         departmentManagerId: departmentId,
         departmentName: department.departmentName,
@@ -148,7 +148,32 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         measurementUnit: share.measurementUnit,
         quantity,
         composition
-      });
+      };
+      if (movementType === 'Επιστροφή') {
+        const allocations = await openInternalRedistributionDialog(
+          internalApi,
+          referenceData.departmentManagers,
+          departmentId,
+          share,
+          quantity
+        );
+        if (!allocations) return;
+        const redistributionGroup = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        state.drafts.push({ ...draft, redistributionGroup });
+        allocations.forEach((allocation) => {
+          state.drafts.push({
+            ...draft,
+            departmentManagerId: allocation.department.id,
+            departmentName: allocation.department.departmentName,
+            movementType: 'Χορήγηση',
+            quantity: allocation.quantity,
+            composition: scaleComposition(composition, allocation.quantity, quantity),
+            redistributionGroup
+          });
+        });
+      } else {
+        state.drafts.push(draft);
+      }
       state.drafts.sort(compareShareNumbers);
       renderDraftList(container, state);
       shareSelect.value = '';
@@ -162,7 +187,12 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
   container.querySelector('#internal-drafts-body').addEventListener('click', (event) => {
     const button = event.target.closest('[data-remove-draft]');
     if (!button) return;
-    state.drafts.splice(Number(button.dataset.removeDraft), 1);
+    const draft = state.drafts[Number(button.dataset.removeDraft)];
+    if (draft?.redistributionGroup) {
+      state.drafts = state.drafts.filter((item) => item.redistributionGroup !== draft.redistributionGroup);
+    } else {
+      state.drafts.splice(Number(button.dataset.removeDraft), 1);
+    }
     renderDraftList(container, state);
   });
 
@@ -501,6 +531,91 @@ function openInternalCompositionDialog(share, defaultQuantity = '') {
     });
     document.body.appendChild(modal);
   });
+}
+
+async function openInternalRedistributionDialog(internalApi, departments, sourceDepartmentId, share, returnQuantity) {
+  const balancesByDepartment = await Promise.all(departments.map(async (department) => {
+    const balances = await internalApi.listDepartmentBalances(department.id);
+    const balance = balances.find((item) => Number(item.shareId) === Number(share.id));
+    return { department, quantity: Number(balance?.finalQuantity || 0) };
+  }));
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <section class="material-card-modal addy-composition-modal" role="dialog" aria-modal="true">
+        <header class="material-card-header">
+          <div>
+            <p class="eyebrow">ΑΝΑΚΑΤΑΝΟΜΗ ΕΠΙΣΤΡΟΦΗΣ</p>
+            <h2>${escapeHtml(share.shareNumber)} — ${escapeHtml(share.description)}</h2>
+            <p class="muted">Κατανείμετε την ποσότητα επιστροφής ${formatQuantity(returnQuantity)} σε άλλα τμήματα. Οι κινήσεις θα καταχωρηθούν μόνο με την τελική Αποθήκευση.</p>
+          </div>
+        </header>
+        <div class="card-table-wrap">
+          <table class="editable-records-table">
+            <thead><tr><th>Τμήμα Μονάδος</th><th>Χρεωμένη ποσότητα</th><th>Ποσότητα χρέωσης</th></tr></thead>
+            <tbody>
+              ${balancesByDepartment.map(({ department, quantity }) => {
+                const isSource = Number(department.id) === Number(sourceDepartmentId);
+                return `
+                  <tr data-redistribution-row data-department-id="${department.id}">
+                    <td>${escapeHtml(department.departmentName)}${isSource ? ' (επιστρέφει)' : ''}</td>
+                    <td class="number-cell">${formatQuantity(quantity)}</td>
+                    <td><input data-redistribution-quantity type="number" min="0" step="0.001" value="0" ${isSource ? 'disabled' : ''} /></td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="addy-save-row">
+          <strong data-redistribution-total>Σύνολο: 0 / ${formatQuantity(returnQuantity)}</strong>
+          <span class="form-error" data-redistribution-mismatch></span>
+          <button class="secondary-button" data-cancel-redistribution type="button">Ακύρωση</button>
+          <button class="primary-button" data-confirm-redistribution type="button" disabled>Προσθήκη κινήσεων</button>
+        </div>
+      </section>`;
+    const updateAgreement = () => {
+      const total = [...modal.querySelectorAll('[data-redistribution-quantity]:not(:disabled)')]
+        .reduce((sum, input) => sum + (Number(input.value) || 0), 0);
+      const difference = total - returnQuantity;
+      modal.querySelector('[data-redistribution-total]').textContent = `Σύνολο: ${formatQuantity(total)} / ${formatQuantity(returnQuantity)}`;
+      modal.querySelector('[data-redistribution-mismatch]').textContent = Math.abs(difference) < 0.000001
+        ? ''
+        : difference < 0
+          ? `Μη συμφωνία: υπολείπονται ${formatQuantity(-difference)}.`
+          : `Μη συμφωνία: η χρέωση υπερβαίνει κατά ${formatQuantity(difference)}.`;
+      modal.querySelector('[data-confirm-redistribution]').disabled = Math.abs(difference) >= 0.000001;
+    };
+    const close = (result) => {
+      modal.remove();
+      resolve(result);
+    };
+    modal.addEventListener('input', (event) => {
+      if (event.target.matches('[data-redistribution-quantity]')) updateAgreement();
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-cancel-redistribution]')) {
+        close(null);
+        return;
+      }
+      if (!event.target.closest('[data-confirm-redistribution]')) return;
+      const allocations = [...modal.querySelectorAll('[data-redistribution-row]')]
+        .map((row) => ({
+          department: departments.find((item) => Number(item.id) === Number(row.dataset.departmentId)),
+          quantity: Number(row.querySelector('[data-redistribution-quantity]')?.value || 0)
+        }))
+        .filter((item) => item.department && item.quantity > 0);
+      close(allocations);
+    });
+    document.body.appendChild(modal);
+    updateAgreement();
+  });
+}
+
+function scaleComposition(composition, allocatedQuantity, returnQuantity) {
+  if (!composition.length) return [];
+  const ratio = allocatedQuantity / returnQuantity;
+  return composition.map((item) => ({ ...item, quantity: Number(item.quantity || 0) * ratio }));
 }
 
 function applyShare(container, share) {

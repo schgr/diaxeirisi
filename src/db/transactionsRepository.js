@@ -72,6 +72,76 @@ function createTransactionsRepository(db) {
       `).all();
     },
 
+    listDepartmentManagers() {
+      return db.prepare(`
+        SELECT id, department_name, department_head
+        FROM department_managers
+        ORDER BY sort_order, id
+      `).all();
+    },
+
+    getDepartmentShareBalance(departmentManagerId, shareId) {
+      const row = db.prepare(`
+        SELECT COALESCE(SUM(
+          CASE WHEN document.movement_type = 'Χορήγηση' THEN item.quantity ELSE -item.quantity END
+        ), 0) AS balance
+        FROM internal_items item
+        JOIN internal_documents document ON document.id = item.internal_document_id
+        WHERE document.department_manager_id = ? AND item.share_id = ?
+      `).get(departmentManagerId, shareId);
+      return Number(row?.balance || 0);
+    },
+
+    getNextInternalSerial(fiscalYear) {
+      const row = db.prepare(`
+        SELECT COALESCE(MAX(serial_number), 0) + 1 AS next_serial
+        FROM internal_documents
+        WHERE fiscal_year = ?
+      `).get(fiscalYear);
+      return Number(row?.next_serial || 1);
+    },
+
+    createInternalDocument(payload) {
+      return db.prepare(`
+        INSERT INTO internal_documents (
+          fiscal_year, serial_number, document_date, department_manager_id,
+          department_name, department_head, movement_type, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        payload.fiscalYear,
+        payload.serialNumber,
+        payload.documentDate,
+        payload.departmentManagerId,
+        payload.departmentName,
+        payload.departmentHead,
+        payload.movementType,
+        payload.notes
+      ).lastInsertRowid;
+    },
+
+    createInternalItem(documentId, payload) {
+      db.prepare(`
+        INSERT INTO internal_items (
+          internal_document_id, share_id, share_number, nominal_number,
+          description, measurement_unit, quantity, composition_snapshot
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        documentId,
+        payload.shareId,
+        payload.shareNumber,
+        payload.nominalNumber,
+        payload.description,
+        payload.measurementUnit,
+        payload.quantity,
+        payload.composition?.length ? JSON.stringify(payload.composition) : ''
+      );
+    },
+
+    adjustChargedQuantity(shareId, delta) {
+      db.prepare('UPDATE shares SET charged_quantity = charged_quantity + ? WHERE id = ?')
+        .run(delta, shareId);
+    },
+
     listCompositionChangeSheetEntries() {
       return db.prepare(`
         SELECT entry.share_id,
@@ -693,7 +763,7 @@ function createTransactionsRepository(db) {
     },
 
     createAddyItem(documentId, item, shareId, shareTransactionId) {
-      db.prepare(
+      return db.prepare(
         `
           INSERT INTO addy_items (
             addy_document_id,
@@ -724,7 +794,7 @@ function createTransactionsRepository(db) {
         item.quantity,
         shareTransactionId,
         item.composition && item.composition.length ? JSON.stringify(item.composition) : ''
-      );
+      ).lastInsertRowid;
     },
 
     createShareTransaction(payload) {

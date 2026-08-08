@@ -76,6 +76,7 @@ const IPC_CHANNELS = Object.freeze([
   "transactions:addy-reference-data",
   "transactions:suggest-share-number",
   "transactions:save-addy",
+  "transactions:save-addy-department-allocations",
   "transactions:external-index-rows",
   "transactions:update-addy-index-fields",
   "transactions:addy-documents",

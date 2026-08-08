@@ -82,7 +82,9 @@ const currentApi = Array.from(
   facade.matchAll(/^    ([A-Za-z][A-Za-z0-9_]*): /gm),
   (match) => match[1]
 );
-assert.deepStrictEqual(currentApi, publicApi, 'Public API or method order changed.');
+const expectedApi = [...publicApi];
+expectedApi.splice(expectedApi.indexOf('saveAddy') + 1, 0, 'saveAddyDepartmentAllocations');
+assert.deepStrictEqual(currentApi, expectedApi, 'Public API or method order changed.');
 for (const name of publicApi) {
   if (['saveAddy', 'updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
   assert.strictEqual(extractMethod(modules, name), extractMethod(baseline, name), `${name} changed.`);

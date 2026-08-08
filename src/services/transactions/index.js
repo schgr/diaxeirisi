@@ -31,6 +31,7 @@ function createTransactionsService(db, settingsService) {
     getAddyReferenceData: query.getAddyReferenceData,
     suggestShareNumber: query.suggestShareNumber,
     saveAddy: addy.saveAddy,
+    saveAddyDepartmentAllocations: addy.saveAddyDepartmentAllocations,
     saveExhp: exhp.saveExhp,
     listExhpDocuments: exhp.listExhpDocuments,
     getExhpDocument: exhp.getExhpDocument,

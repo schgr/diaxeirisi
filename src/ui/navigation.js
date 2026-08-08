@@ -1,6 +1,6 @@
 const HOME_TILE_META = {
   shares: { code: '§ 01-Α', icon: 'ΜΕ' },
-  'share-compositions': { code: '§ 01-Ζ', icon: 'ΣΜ' },
+  'share-compositions': { code: '§ 01-ΣΤ', icon: 'ΣΜ' },
   transactions: { code: '§ 01-Β', icon: 'ΔΣ' },
   indexes: { code: '§ 01-Γ', icon: 'ΕΥ' },
   charges: { code: '§ 01-Δ', icon: 'ΧΡ' },
@@ -11,7 +11,7 @@ const HOME_TILE_META = {
   'administration-handover': { code: '§ 03-Α', icon: 'ΠΠ' },
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
   'administration-report': { code: '§ 03-Β', icon: 'ΑΔ' },
-  'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΣΕ' },
+  'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΕΚ' },
   'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
   'administration-ammunition-batches': { code: '§ 03-Ε', icon: 'ΒΜ' },
   'administration-training-ammunition-batches': { code: '§ 03-ΣΤ', icon: 'ΠΕ' },

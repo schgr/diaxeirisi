@@ -145,6 +145,8 @@ contextBridge.exposeInMainWorld('appApi', {
     getAddyReferenceData: () => invoke('transactions:addy-reference-data'),
     suggestShareNumber: (materialType) => invoke('transactions:suggest-share-number', materialType),
     saveAddy: (payload) => invoke('transactions:save-addy', payload),
+    saveAddyDepartmentAllocations: (documentId, payload) =>
+      invoke('transactions:save-addy-department-allocations', documentId, payload),
     listExternalIndexRows: (year) => invoke('transactions:external-index-rows', year),
     updateAddyIndexFields: (documentId, payload) =>
       invoke('transactions:update-addy-index-fields', documentId, payload),

@@ -665,6 +665,30 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         items: state.items
       });
       showToast(result.message || 'Το ΑΔΔΥ αποθηκεύτηκε.');
+        try {
+          for (const item of result.document?.items || []) {
+            const share = findShareByNumber(referenceData.shares, item.shareNumber);
+            const allocations = await openAddyDepartmentAllocationDialog({
+              departments: referenceData.departmentManagers || [],
+              share,
+              shareNumber: item.shareNumber,
+              description: item.description,
+              transactionType: item.transactionType,
+              quantity: Number(item.column22)
+            });
+            if (allocations === null) break;
+            const allocationResult = await transactionsApi.saveAddyDepartmentAllocations(
+              result.documentId,
+              { entries: [{ addyItemId: item.addyItemId, allocations }] }
+            );
+            showToast(allocationResult.message);
+          }
+        } catch (error) {
+          showToast(
+            error.message || 'Το ΑΔΔΥ αποθηκεύτηκε, αλλά δεν αποθηκεύτηκαν οι κινήσεις των τμημάτων.',
+            'error'
+          );
+        }
         if (result.document && shouldOpenAddyDocument(result.document)) {
           openAddyDocument(result.document);
         }
@@ -921,6 +945,102 @@ function openAddyShareSelectionDialog(shares) {
     window.requestAnimationFrame(() => {
       modal.querySelector('[data-select-addy-share]')?.focus({ preventScroll: true });
     });
+  });
+}
+
+async function openAddyDepartmentAllocationDialog({ departments, share, shareNumber, description, transactionType, quantity }) {
+  const availableDepartments = departments.length
+    ? departments
+    : (await window.appApi.internal.getReferenceData()).departmentManagers;
+  const balances = await Promise.all(availableDepartments.map(async (department) => {
+    if (!share?.id) return { department, quantity: 0 };
+    const rows = await window.appApi.internal.listDepartmentBalances(department.id);
+    const balance = rows.find((item) => Number(item.shareId) === Number(share.id));
+    return { department, quantity: Number(balance?.finalQuantity || 0) };
+  }));
+  return new Promise((resolve) => {
+    const isCharge = transactionType === 'Χρέωση';
+    const modal = window.document.createElement('div');
+    modal.className = 'modal-backdrop request-document-backdrop';
+    modal.innerHTML = `
+      <section class="request-document-modal" role="dialog" aria-modal="true" aria-labelledby="addy-department-allocation-title">
+        <header class="material-card-header">
+          <div>
+            <p class="eyebrow">${isCharge ? 'ΧΡΕΩΣΗ ΤΜΗΜΑΤΩΝ' : 'ΠΙΣΤΩΣΗ ΤΜΗΜΑΤΩΝ'}</p>
+            <h2 id="addy-department-allocation-title">${escapeAddyEditHtml(shareNumber)} — ${escapeAddyEditHtml(description)}</h2>
+            <p class="muted">${isCharge
+              ? 'Κατανείμετε την ποσότητα του ΑΔΔΥ στα τμήματα.'
+              : 'Επιλέξτε από ποια τμήματα θα αφαιρεθεί η ποσότητα του ΑΔΔΥ.'}
+              Οι κινήσεις θα γίνουν μόνο αν πατήσετε Αποθήκευση.</p>
+            ${share?.requiresComposition ? '<p class="muted">Η σύνθεση θα κατανεμηθεί αναλογικά σε κάθε τμηματική κίνηση.</p>' : ''}
+          </div>
+        </header>
+        <div class="table-wrap">
+          <table class="editable-records-table">
+            <thead><tr><th>Τμήμα Μονάδος</th><th>Χρεωμένη ποσότητα</th><th>${isCharge ? 'Ποσότητα χρέωσης' : 'Ποσότητα πίστωσης'}</th></tr></thead>
+            <tbody>
+              ${balances.length ? balances.map(({ department, quantity: currentQuantity }) => `
+                <tr data-addy-department-allocation-row data-department-id="${department.id}">
+                  <td>${escapeAddyEditHtml(department.departmentName)}</td>
+                  <td class="number-cell">${formatAddyShareBalance(currentQuantity)}</td>
+                  <td><input data-addy-department-allocation-quantity type="number" min="0"
+                    ${isCharge ? '' : `max="${currentQuantity}"`}
+                    step="0.001" value="0" ${!isCharge && currentQuantity <= 0 ? 'disabled' : ''} /></td>
+                </tr>
+              `).join('') : '<tr><td colspan="3" class="empty-table">Δεν έχουν καταχωρηθεί τμήματα Μονάδος.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        <div class="addy-save-row">
+          <strong data-addy-allocation-total>Σύνολο: 0 / ${formatAddyShareBalance(quantity)}</strong>
+          <span class="form-error" data-addy-allocation-mismatch></span>
+          <button class="secondary-button" data-close-addy-allocation type="button">Κλείσιμο</button>
+          <button class="primary-button" data-confirm-addy-allocation type="button" disabled>Αποθήκευση</button>
+        </div>
+      </section>`;
+    const updateAgreement = () => {
+      const inputs = [...modal.querySelectorAll('[data-addy-department-allocation-quantity]:not(:disabled)')];
+      const invalidCredit = !isCharge && inputs.some((input) => Number(input.value || 0) > Number(input.max));
+      const total = inputs.reduce((sum, input) => sum + (Number(input.value) || 0), 0);
+      const difference = total - quantity;
+      modal.querySelector('[data-addy-allocation-total]').textContent = `Σύνολο: ${formatAddyShareBalance(total)} / ${formatAddyShareBalance(quantity)}`;
+      modal.querySelector('[data-addy-allocation-mismatch]').textContent = invalidCredit
+        ? 'Μη συμφωνία: κάποιο τμήμα δεν έχει επαρκή χρεωμένη ποσότητα.'
+        : Math.abs(difference) < 0.000001
+          ? ''
+          : difference < 0
+            ? `Μη συμφωνία: υπολείπονται ${formatAddyShareBalance(-difference)}.`
+            : `Μη συμφωνία: η κατανομή υπερβαίνει κατά ${formatAddyShareBalance(difference)}.`;
+      modal.querySelector('[data-confirm-addy-allocation]').disabled = invalidCredit || Math.abs(difference) >= 0.000001;
+    };
+    const finish = (result) => {
+      window.document.removeEventListener('keydown', onKeyDown);
+      modal.remove();
+      resolve(result);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') finish(null);
+    };
+    modal.addEventListener('input', (event) => {
+      if (event.target.matches('[data-addy-department-allocation-quantity]')) updateAgreement();
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-close-addy-allocation]')) {
+        finish(null);
+        return;
+      }
+      if (!event.target.closest('[data-confirm-addy-allocation]')) return;
+      const allocations = [...modal.querySelectorAll('[data-addy-department-allocation-row]')]
+        .map((row) => ({
+          departmentManagerId: Number(row.dataset.departmentId),
+          quantity: Number(row.querySelector('[data-addy-department-allocation-quantity]')?.value || 0)
+        }))
+        .filter((allocation) => allocation.quantity > 0);
+      finish(allocations);
+    });
+    window.document.addEventListener('keydown', onKeyDown);
+    window.document.body.appendChild(modal);
+    updateAgreement();
   });
 }
 
