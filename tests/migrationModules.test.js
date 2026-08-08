@@ -38,7 +38,13 @@ function applyMigrations(db, items) {
   let executed = 0;
   for (const migration of items) {
     if (applied.has(migration.version)) continue;
-    if (migration.foreignKeysOff) db.exec('PRAGMA foreign_keys = OFF');
+    let existingForeignKeyViolations = new Set();
+    if (migration.foreignKeysOff) {
+      db.exec('PRAGMA foreign_keys = OFF');
+      existingForeignKeyViolations = new Set(
+        queryRows(db, 'PRAGMA foreign_key_check').map(foreignKeyViolationKey)
+      );
+    }
     db.exec('BEGIN');
     try {
       db.exec(migration.up);
@@ -48,7 +54,10 @@ function applyMigrations(db, items) {
       statement.run([migration.version, migration.name]);
       statement.free();
       if (migration.foreignKeysOff) {
-        assert.deepStrictEqual(queryRows(db, 'PRAGMA foreign_key_check'), []);
+        const newViolations = queryRows(db, 'PRAGMA foreign_key_check').filter(
+          (row) => !existingForeignKeyViolations.has(foreignKeyViolationKey(row))
+        );
+        assert.deepStrictEqual(newViolations, []);
       }
       db.exec('COMMIT');
       executed += 1;
@@ -68,6 +77,10 @@ function queryRows(db, sql) {
   return result.values.map((values) =>
     Object.fromEntries(result.columns.map((column, index) => [column, values[index]]))
   );
+}
+
+function foreignKeyViolationKey(row) {
+  return [row.table, row.rowid, row.parent, row.fkid].join('\u0000');
 }
 
 function schemaSnapshot(db) {
@@ -136,11 +149,23 @@ function schemaSnapshot(db) {
       addy_document_id, share_id, share_number, nominal_number,
       material_type, transaction_type, quantity
     ) VALUES (42, 1, '1', 'N-1', 'TEST', 'ΧΡΕΩΣΗ', 1);
+    PRAGMA foreign_keys = OFF;
+    INSERT INTO addy_items (
+      addy_document_id, share_id, share_number, nominal_number,
+      material_type, transaction_type, quantity
+    ) VALUES (999, 1, '1', 'N-2', 'TEST', 'ΧΡΕΩΣΗ', 1);
+    PRAGMA foreign_keys = ON;
   `);
+  const violationsBeforeAddyMigration = queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check');
+  assert.strictEqual(violationsBeforeAddyMigration.length, 1);
   assert.strictEqual(applyMigrations(addyUpgradeDb, migrations), 1);
   assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT id FROM addy_documents')[0].id, 42);
   assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT addy_document_id FROM addy_items')[0].addy_document_id, 42);
-  assert.deepStrictEqual(queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check'), []);
+  assert.deepStrictEqual(
+    queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check'),
+    violationsBeforeAddyMigration,
+    'Migration 66 must preserve existing violations without creating new ones.'
+  );
   addyUpgradeDb.close();
 
   currentDb.exec(`

@@ -258,6 +258,10 @@ function flattenParams(params) {
   return params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
 }
 
+function foreignKeyViolationKey(row) {
+  return [row.table, row.rowid, row.parent, row.fkid].join('\u0000');
+}
+
 function runMigrations(db) {
   const applied = new Set(
     db.prepare('SELECT version FROM schema_migrations').all().map((row) => row.version)
@@ -268,7 +272,13 @@ function runMigrations(db) {
       continue;
     }
 
-    if (migration.foreignKeysOff) db.pragma('foreign_keys = OFF');
+    let existingForeignKeyViolations = new Set();
+    if (migration.foreignKeysOff) {
+      db.pragma('foreign_keys = OFF');
+      existingForeignKeyViolations = new Set(
+        db.prepare('PRAGMA foreign_key_check').all().map(foreignKeyViolationKey)
+      );
+    }
     try {
       const transaction = db.transaction(() => {
         db.exec(migration.up);
@@ -277,8 +287,10 @@ function runMigrations(db) {
           migration.name
         );
         if (migration.foreignKeysOff) {
-          const violations = db.prepare('PRAGMA foreign_key_check').all();
-          if (violations.length > 0) {
+          const newViolations = db.prepare('PRAGMA foreign_key_check').all().filter(
+            (row) => !existingForeignKeyViolations.has(foreignKeyViolationKey(row))
+          );
+          if (newViolations.length > 0) {
             throw new Error(`Migration ${migration.version} created foreign key violations.`);
           }
         }
