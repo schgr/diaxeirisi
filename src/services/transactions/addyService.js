@@ -226,7 +226,16 @@ function createAddyService(dependencies) {
         repository.deleteShareTransactions(transactionIds);
       });
 
+      const affectedShares = [...new Set(
+        items.filter((item) => item.share_id).map((item) => Number(item.share_id))
+      )].map((shareId) => repository.getShareById(shareId)).filter(Boolean);
+
       return {
+        affectedShares: affectedShares.map((share) => ({
+          id: Number(share.id),
+          accountingBalance: Number(share.accounting_balance || 0),
+          chargedQuantity: Number(share.charged_quantity || 0)
+        })),
         message: `Το ΑΔΔΥ ${id} διαγράφηκε από το Ευρετήριο και τις κινήσεις των μερίδων.`
       };
     },

@@ -1052,7 +1052,12 @@ async function run() {
     assert.strictEqual(updatedAddy.document.notes, 'Ενημερωμένες πληροφορίες ΑΔΔΥ');
     assert.strictEqual(updatedAddy.document.items[0].quantity, 2);
     assert.strictEqual(shares.getShareCard(importedShare.id, 2026).share.accountingBalance, 8);
-    transactions.deleteAddyDocument(creditedAddy.documentId);
+    const deletedAddy = transactions.deleteAddyDocument(creditedAddy.documentId);
+    assert.deepStrictEqual(deletedAddy.affectedShares, [{
+      id: importedShare.id,
+      accountingBalance: 10,
+      chargedQuantity: 0
+    }]);
     assert.strictEqual(
       transactions.listAddyDocuments().some((item) => item.id === creditedAddy.documentId),
       false

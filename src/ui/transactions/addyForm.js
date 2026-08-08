@@ -462,9 +462,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           (documentItem) => Number(documentItem.id) !== Number(deleteAddy.dataset.deleteAddyDocument)
         );
         deleteAddy.closest('tbody').innerHTML = renderSavedAddyRows(state.documents);
-        void transactionsApi.getAddyReferenceData().then((nextReferenceData) => {
-          Object.assign(referenceData, nextReferenceData);
-        }).catch(() => {});
+        for (const affectedShare of result.affectedShares || []) {
+          const share = referenceData.shares.find((item) => Number(item.id) === Number(affectedShare.id));
+          if (!share) continue;
+          share.accountingBalance = affectedShare.accountingBalance;
+          share.chargedQuantity = affectedShare.chargedQuantity;
+        }
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή του ΑΔΔΥ.', 'error');
       }
