@@ -3,6 +3,7 @@ const { AppError } = require('../core/errorHandler');
 const { requirePositiveId } = require('../core/validation');
 const { mapShare } = require('../shares/shareMapper');
 const { validateShare } = require('../shares/shareValidation');
+const { safeJsonParse } = require('../utils/safeJson');
 
 function createSharesService(db) {
   const repository = createSharesRepository(db);
@@ -708,22 +709,14 @@ function buildDocumentChangeEntries(movements, compositionItems) {
 }
 
 function parseCompositionSnapshot(value) {
-  try {
-    const parsed = JSON.parse(value || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_error) {
-    return [];
-  }
+  const parsed = safeJsonParse(value || '[]', [], 'σύνθεση μερίδας');
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function readFiscalYearArchive(repository, year) {
   const row = repository.getFiscalYearArchive(year);
   if (!row) return null;
-  try {
-    return JSON.parse(row.archive_snapshot || '{}');
-  } catch (_error) {
-    return null;
-  }
+  return safeJsonParse(row.archive_snapshot || '{}', null, 'αρχειοθετημένο οικονομικό έτος');
 }
 
 module.exports = {

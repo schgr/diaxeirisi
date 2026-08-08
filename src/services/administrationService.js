@@ -1,6 +1,7 @@
 const { AppError } = require('../core/errorHandler');
 const { optionalText, requirePositiveId } = require('../core/validation');
 const { createAdministrationRepository } = require('../db/administrationRepository');
+const { safeJsonParse } = require('../utils/safeJson');
 const {
   OFFICER_ROLES,
   requireDate,
@@ -346,11 +347,7 @@ function normalizeHandoverProtocol(payload = {}) {
 }
 
 function parseProtocolData(value) {
-  try {
-    return value ? JSON.parse(value) : {};
-  } catch {
-    return {};
-  }
+  return value ? safeJsonParse(value, {}, 'δεδομένα πρωτοκόλλου παράδοσης') : {};
 }
 
 function mapCheck(row) {
@@ -391,12 +388,11 @@ function mapShare(row) {
 function aggregateInternalComposition(rows) {
   const totals = new Map();
   rows.forEach((row) => {
-    let snapshot;
-    try {
-      snapshot = JSON.parse(row.composition_snapshot || '[]');
-    } catch (_error) {
-      snapshot = [];
-    }
+    const snapshot = safeJsonParse(
+      row.composition_snapshot || '[]',
+      [],
+      'σύνθεση εσωτερικής κίνησης διαχείρισης'
+    );
     if (!Array.isArray(snapshot)) return;
     snapshot.forEach((item) => {
       const key = compositionKey(

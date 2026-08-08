@@ -332,7 +332,9 @@ async function previousHashes(root) {
         }
       }
       return result;
-    } catch (_error) {}
+    } catch (_error) {
+      console.error('Σφάλμα κατά την ανάγνωση προηγούμενου backup manifest.', _error);
+    }
   }
   return new Map();
 }

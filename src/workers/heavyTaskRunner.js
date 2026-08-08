@@ -36,7 +36,9 @@ function createHeavyTaskRunner(options = {}) {
     if (record.onStateChange) {
       try {
         record.onStateChange({ id: record.id, state });
-      } catch (_error) {}
+      } catch (_error) {
+        console.error('Σφάλμα σε callback heavy task.', _error);
+      }
     }
   }
 
@@ -164,7 +166,9 @@ function createHeavyTaskRunner(options = {}) {
       if (record.onProgress && record.state === 'running') {
         try {
           record.onProgress({ id: record.id, ...message });
-        } catch (_error) {}
+        } catch (_error) {
+          console.error('Σφάλμα σε callback heavy task.', _error);
+        }
       }
       return;
     }

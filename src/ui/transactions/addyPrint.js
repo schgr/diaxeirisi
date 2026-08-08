@@ -167,7 +167,7 @@ export function renderAddyDocument(documentData) {
           </tr>
           <tr>
             <td colspan="2">${addyTopCell('ΜΟΝΑΔΑ', firstValue(rows, 'column1'), '1')}</td>
-            <td colspan="2">${addyTopCell('ΑΡΙΘΜΟΣ -<br />ΗΜΕΡΟΜΗΝΙΑ', hasOnlyCredit || hasCommerceCharge ? '' : leftDocumentReference, '2')}</td>
+            <td colspan="2">${addyTopCell('ΑΡΙΘΜΟΣ -<br />ΗΜΕΡΟΜΗΝΙΑ', hasOnlyCredit || hasCommerceChargeDocument ? '' : leftDocumentReference, '2')}</td>
             <td colspan="1" class="addy-doc-reason-cell addy-doc-field-3">${addyTopCell('ΔΙΚΑΙΟΛΟΓΙΑ', '', '3')}</td>
             <td colspan="1" class="addy-doc-field-4">${addyTopCell('ΠΡΟΤΕΡΑΙΟΤΗΤΑ', '', '4')}</td>
             <td colspan="2" rowspan="2">${addyTopCell('ΥΠΟΓΡΑΦΗ<br />ΑΙΤΟΥΝΤΟΣ', '', '5')}</td>

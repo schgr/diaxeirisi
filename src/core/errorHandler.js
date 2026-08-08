@@ -7,6 +7,8 @@ class AppError extends Error {
   }
 }
 
+const SAFE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{2,63}$/;
+
 function toAppError(error) {
   if (error instanceof AppError) {
     return {
@@ -16,9 +18,13 @@ function toAppError(error) {
     };
   }
 
+  const code = typeof error?.code === 'string' && SAFE_CODE_PATTERN.test(error.code)
+    ? error.code
+    : 'UNEXPECTED_ERROR';
+
   return {
     message: 'Παρουσιάστηκε απρόβλεπτο σφάλμα.',
-    code: 'UNEXPECTED_ERROR',
+    code,
     details: null
   };
 }

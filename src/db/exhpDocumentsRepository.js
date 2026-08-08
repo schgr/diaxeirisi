@@ -1,4 +1,5 @@
 const DOCUMENT_TYPES = ['useless_material_a', 'useless_material_b', 'ammo_consumption', 'transformation_materials', 'clothing_monthly_summary'];
+const { safeJsonParse } = require('../utils/safeJson');
 
 const ALLOWED_TABLE_NAMES = new Set([
   'exhp_document_useless_a',
@@ -229,12 +230,7 @@ function getGeneric(db, documentId) {
     WHERE document_id = ?
   `).get(documentId);
   if (!row) return null;
-  let data = {};
-  try {
-    data = JSON.parse(row.data_json || '{}');
-  } catch (_error) {
-    data = {};
-  }
+  const data = safeJsonParse(row.data_json || '{}', {}, 'έγγραφο υποστήριξης ΕΧΠ');
   return {
     documentId: row.document_id,
     data,

@@ -1,6 +1,7 @@
 const { createExhpDocumentsRepository, DOCUMENT_TYPES } = require('../db/exhpDocumentsRepository');
 const { AppError } = require('../core/errorHandler');
 const { optionalText, requirePositiveId } = require('../core/validation');
+const { safeJsonParse } = require('../utils/safeJson');
 
 const AMMO_ITEM_TYPES = ['consumed', 'empty'];
 
@@ -124,13 +125,10 @@ function createExhpDocumentsService(db) {
       return withErrors(() => {
         const id = requirePositiveId(exhpId, 'exhpId');
         if (!repository.getExhp(id)) throw new AppError('Η ΕΧΠ δεν βρέθηκε.', 'NOT_FOUND');
-        return Object.fromEntries(repository.getUselessStatements(id).map((row) => {
-          try {
-            return [row.form_key, JSON.parse(row.data_json || '{}')];
-          } catch (_error) {
-            return [row.form_key, {}];
-          }
-        }));
+        return Object.fromEntries(repository.getUselessStatements(id).map((row) => [
+          row.form_key,
+          safeJsonParse(row.data_json || '{}', {}, 'δήλωση άχρηστου υλικού ΕΧΠ')
+        ]));
       });
     },
 

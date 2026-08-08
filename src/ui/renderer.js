@@ -18,6 +18,18 @@ import { initializeLocalizedQuantities } from './localizedQuantities.js';
 const THEME_STORAGE_KEY = 'diaxeirisi-theme';
 const DEFAULT_THEME = 'blueprint';
 
+function registerGlobalErrorReporting() {
+  window.addEventListener('error', (event) => {
+    console.error('Μη διαχειρισμένο σφάλμα.', event.error || event.message);
+    showToast('Παρουσιάστηκε απρόβλεπτο σφάλμα.', 'error');
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Μη διαχειρισμένη απόρριψη υπόσχεσης.', event.reason);
+    showToast('Παρουσιάστηκε απρόβλεπτο σφάλμα.', 'error');
+  });
+}
+
+registerGlobalErrorReporting();
 applyStoredTheme();
 initializeDocumentExports(showToast);
 initializeLocalizedQuantities();

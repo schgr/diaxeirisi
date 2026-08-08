@@ -438,8 +438,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         const documentData = await transactionsApi.getAddyDocument(
           Number(editAddy.dataset.editAddyDocument)
         );
+        const savedAddyBody = editAddy.closest('tbody');
         openAddyEditDialog(documentData, transactionsApi, showToast, async () => {
-          await rerender(container, transactionsApi, settingsApi, showToast);
+          state.documents = await transactionsApi.listAddyDocuments();
+          savedAddyBody.innerHTML = renderSavedAddyRows(state.documents);
+          restoreAddyEntryFocus(controls);
         });
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση του ΑΔΔΥ.', 'error');
@@ -468,6 +471,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           share.accountingBalance = affectedShare.accountingBalance;
           share.chargedQuantity = affectedShare.chargedQuantity;
         }
+        restoreAddyEntryFocus(controls);
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή του ΑΔΔΥ.', 'error');
       }
@@ -658,6 +662,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση ΑΔΔΥ.', 'error');
     }
+  });
+}
+
+function restoreAddyEntryFocus(controls) {
+  window.requestAnimationFrame(() => {
+    controls.unit.focus({ preventScroll: true });
   });
 }
 

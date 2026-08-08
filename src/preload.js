@@ -1,7 +1,23 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 async function invoke(channel, ...args) {
-  const result = await ipcRenderer.invoke(channel, ...args);
+  let result;
+  try {
+    result = await ipcRenderer.invoke(channel, ...args);
+  } catch (error) {
+    throw {
+      message: 'Αποτυχία επικοινωνίας με την εφαρμογή.',
+      code: 'IPC_INVOKE_FAILED',
+      details: null
+    };
+  }
+  if (!result || typeof result !== 'object' || typeof result.ok !== 'boolean') {
+    throw {
+      message: 'Μη έγκυρη απόκριση από την εφαρμογή.',
+      code: 'IPC_INVALID_RESPONSE',
+      details: null
+    };
+  }
   if (!result.ok) {
     throw result.error;
   }

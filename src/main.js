@@ -43,6 +43,24 @@ const {
 applyOfflineCommandLine(app.commandLine);
 
 const logger = createLogger('main');
+
+function handleFatalStartupError(error) {
+  logger.error('Αποτυχία εκκίνησης εφαρμογής.', error);
+  dialog.showErrorBox(
+    'Σφάλμα εκκίνησης',
+    'Η εφαρμογή δεν μπόρεσε να ξεκινήσει. Κλείστε την και δοκιμάστε ξανά.'
+  );
+  app.exit(1);
+}
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled rejection στην κύρια διεργασία.', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception στην κύρια διεργασία.', error);
+});
+
 const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
   && packageMetadata.legacyWindows7 === true;
 
@@ -108,7 +126,7 @@ function createWindow() {
       else window.webContents.openDevTools({ mode: 'detach', activate: true });
     });
   }
-  window.loadFile(path.join(__dirname, 'ui', 'index.html'));
+  window.loadFile(path.join(__dirname, 'ui', 'index.html')).catch(handleFatalStartupError);
 }
 
 function configureOfflineMode() {
@@ -300,7 +318,7 @@ app.whenReady().then(async () => {
       createWindow();
     }
   });
-});
+}).catch(handleFatalStartupError);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

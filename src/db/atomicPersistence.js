@@ -118,8 +118,14 @@ function atomicPersist(dbPath, contents, options = {}) {
   } catch (error) {
     try {
       if (movedPreviousBackup && !io.existsSync(backupPath)) io.renameSync(previousBackupPath, backupPath);
-    } catch (_restoreError) {}
-    try { safeUnlink(stagedPath, io); } catch (_cleanupError) {}
+    } catch (restoreError) {
+      error.suppressed = [...(error.suppressed || []), restoreError];
+    }
+    try {
+      safeUnlink(stagedPath, io);
+    } catch (cleanupError) {
+      error.suppressed = [...(error.suppressed || []), cleanupError];
+    }
     throw error;
   }
 }
@@ -146,7 +152,11 @@ function restoreBackup(dbPath, backupContents, options = {}) {
     }
     if (displacedMain) safeUnlink(displacedPath, io);
   } catch (error) {
-    try { safeUnlink(stagedPath, io); } catch (_cleanupError) {}
+    try {
+      safeUnlink(stagedPath, io);
+    } catch (cleanupError) {
+      error.suppressed = [...(error.suppressed || []), cleanupError];
+    }
     throw error;
   }
 }

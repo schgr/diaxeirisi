@@ -1,4 +1,8 @@
 export function showToast(message, type = 'success') {
+  if (type === 'error') {
+    console.error('Σφάλμα εφαρμογής.', message);
+  }
+
   const root = document.querySelector('#toast-root');
   if (!root) {
     return;
