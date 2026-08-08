@@ -452,10 +452,9 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
     const deleteAddy = event.target.closest('[data-delete-addy-document]');
     if (deleteAddy) {
-      const accepted = window.confirm(
+      const accepted = await confirmAddyAction(
         'Αυτή η ενέργεια θα διαγράψει το ΑΔΔΥ από το Ευρετήριο Εξωτερικών Δοσοληψιών και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
       );
-      window.focus();
       if (!accepted) return;
       try {
         const result = await transactionsApi.deleteAddy(
@@ -748,7 +747,7 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
   modal.querySelectorAll('[data-close-addy-edit]').forEach((button) => {
     button.addEventListener('click', close);
   });
-  modal.addEventListener('click', (event) => {
+  modal.addEventListener('click', async (event) => {
     if (event.target === modal) close();
     const removeButton = event.target.closest('[data-remove-addy-edit-item]');
     if (!removeButton) return;
@@ -757,8 +756,7 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
       showToast('Το ΑΔΔΥ πρέπει να περιέχει τουλάχιστον ένα υλικό.', 'error');
       return;
     }
-    const accepted = window.confirm('Να διαγραφεί μόνο αυτό το υλικό από το ΑΔΔΥ και από την αντίστοιχη Μερίδα Υλικού;');
-    window.focus();
+    const accepted = await confirmAddyAction('Να διαγραφεί μόνο αυτό το υλικό από το ΑΔΔΥ και από την αντίστοιχη Μερίδα Υλικού;');
     if (!accepted) return;
     removedItemIds.add(Number(removeButton.dataset.removeAddyEditItem));
     removeButton.closest('tr')?.remove();
@@ -775,20 +773,17 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
     const dateChanged = newDate !== documentData.documentDate;
 
     if (quantityChanged) {
-      const accepted = window.confirm(
+      const accepted = await confirmAddyAction(
         'Αυτή η ενέργεια θα αλλάξει την Ποσότητα από το ΑΔΔΥ και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
       );
-      window.focus();
       if (!accepted) return;
     }
     if (idChanged) {
-      const accepted = window.confirm('Αυτή η ενέργεια θα αλλάξει τον αριθμό του ΑΔΔΥ. Να προχωρήσω;');
-      window.focus();
+      const accepted = await confirmAddyAction('Αυτή η ενέργεια θα αλλάξει τον αριθμό του ΑΔΔΥ. Να προχωρήσω;');
       if (!accepted) return;
     }
     if (dateChanged) {
-      const accepted = window.confirm('Αυτή η ενέργεια θα αλλάξει την ημερομηνία του ΑΔΔΥ. Να προχωρήσω;');
-      window.focus();
+      const accepted = await confirmAddyAction('Αυτή η ενέργεια θα αλλάξει την ημερομηνία του ΑΔΔΥ. Να προχωρήσω;');
       if (!accepted) return;
     }
     try {
@@ -810,6 +805,46 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
     }
   });
   window.document.body.appendChild(modal);
+}
+
+function confirmAddyAction(message) {
+  return new Promise((resolve) => {
+    const modal = window.document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <section class="request-document-modal" role="dialog" aria-modal="true" aria-labelledby="addy-confirm-title">
+        <header class="material-card-header">
+          <h2 id="addy-confirm-title">Επιβεβαίωση</h2>
+        </header>
+        <p data-addy-confirm-message></p>
+        <div class="row-actions">
+          <button class="secondary-button" data-addy-confirm-cancel type="button">Ακύρωση</button>
+          <button class="danger-button" data-addy-confirm-accept type="button">Συνέχεια</button>
+        </div>
+      </section>
+    `;
+    modal.querySelector('[data-addy-confirm-message]').textContent = message;
+
+    const finish = (accepted) => {
+      window.document.removeEventListener('keydown', onKeyDown);
+      modal.remove();
+      resolve(accepted);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') finish(false);
+    };
+
+    modal.querySelector('[data-addy-confirm-cancel]').addEventListener('click', () => finish(false));
+    modal.querySelector('[data-addy-confirm-accept]').addEventListener('click', () => finish(true));
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) finish(false);
+    });
+    window.document.addEventListener('keydown', onKeyDown);
+    window.document.body.appendChild(modal);
+    window.requestAnimationFrame(() => {
+      modal.querySelector('[data-addy-confirm-cancel]').focus({ preventScroll: true });
+    });
+  });
 }
 
 function escapeAddyEditHtml(value) {

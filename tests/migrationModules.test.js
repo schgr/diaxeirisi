@@ -109,11 +109,12 @@ function schemaSnapshot(db) {
     snapshot(baseline),
     'Published migration SQL hashes changed.'
   );
-  assert.strictEqual(migrations.length, 66);
+  assert.strictEqual(migrations.length, 67);
   assert.strictEqual(migrations[62].name, 'training_ammunition_batch_book');
   assert.strictEqual(migrations[63].name, 'weapon_registry_entries');
   assert.strictEqual(migrations[64].name, 'weapon_registry_nine_fields');
   assert.strictEqual(migrations[65].name, 'addy_documents_without_autoincrement');
+  assert.strictEqual(migrations[66].name, 'cleanup_orphaned_addy_items');
   assert.throws(
     () => validateMigrations([migrations[0], migrations[0]]),
     /Duplicate or invalid migration version/
@@ -129,7 +130,7 @@ function schemaSnapshot(db) {
   const baselineDb = new SQL.Database();
   const currentDb = new SQL.Database();
   assert.strictEqual(applyMigrations(baselineDb, baseline), 61);
-  assert.strictEqual(applyMigrations(currentDb, migrations), 66);
+  assert.strictEqual(applyMigrations(currentDb, migrations), 67);
   const addyTableSql = queryRows(
     currentDb,
     "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'addy_documents'"
@@ -158,7 +159,10 @@ function schemaSnapshot(db) {
   `);
   const violationsBeforeAddyMigration = queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check');
   assert.strictEqual(violationsBeforeAddyMigration.length, 1);
-  assert.strictEqual(applyMigrations(addyUpgradeDb, migrations), 1);
+  assert.strictEqual(
+    applyMigrations(addyUpgradeDb, migrations.filter(({ version }) => version <= 66)),
+    1
+  );
   assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT id FROM addy_documents')[0].id, 42);
   assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT addy_document_id FROM addy_items')[0].addy_document_id, 42);
   assert.deepStrictEqual(
@@ -166,6 +170,13 @@ function schemaSnapshot(db) {
     violationsBeforeAddyMigration,
     'Migration 66 must preserve existing violations without creating new ones.'
   );
+  assert.strictEqual(applyMigrations(addyUpgradeDb, migrations), 1);
+  assert.deepStrictEqual(
+    queryRows(addyUpgradeDb, 'SELECT addy_document_id FROM addy_items'),
+    [{ addy_document_id: 42 }],
+    'Migration 67 must remove ADDY items whose parent document no longer exists.'
+  );
+  assert.deepStrictEqual(queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check'), []);
   addyUpgradeDb.close();
 
   currentDb.exec(`
@@ -196,14 +207,14 @@ function schemaSnapshot(db) {
   for (const version of [10, 30, 50]) {
     const upgradeDb = new SQL.Database();
     applyMigrations(upgradeDb, baseline.filter((migration) => migration.version <= version));
-    assert.strictEqual(applyMigrations(upgradeDb, migrations), 66 - version);
+    assert.strictEqual(applyMigrations(upgradeDb, migrations), 67 - version);
     assert.deepStrictEqual(schemaSnapshot(upgradeDb), schemaSnapshot(currentDb));
     upgradeDb.close();
   }
 
   baselineDb.close();
   currentDb.close();
-  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migrations 62-66, fresh/upgrade/idempotent parity)');
+  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migrations 62-67, fresh/upgrade/idempotent parity)');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

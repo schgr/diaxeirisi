@@ -967,6 +967,7 @@ function createTransactionsRepository(db) {
     },
 
     deleteAddyDocument(documentId) {
+      db.prepare('DELETE FROM addy_items WHERE addy_document_id = ?').run(documentId);
       db.prepare('DELETE FROM addy_documents WHERE id = ?').run(documentId);
     },
 

@@ -62,6 +62,9 @@ assert.deepEqual(
 );
 
 const addyStyles = await readFile(new URL('../src/ui/styles/transactions-settings.css', import.meta.url), 'utf8');
+const addyFormSource = await readFile(new URL('../src/ui/transactions/addyForm.js', import.meta.url), 'utf8');
+assert.doesNotMatch(addyFormSource, /window\.confirm/u);
+assert.match(addyFormSource, /function confirmAddyAction\(message\)/u);
 assert.match(addyStyles, /\.addy-table\s*\{\s*min-width:\s*1240px;/);
 assert.match(addyStyles, /\.addy-table th:nth-child\(10\)[\s\S]*?width:\s*15%;/);
 assert.match(addyStyles, /\.addy-table td:nth-child\(10\)\.row-actions[\s\S]*?flex-wrap:\s*nowrap;/);

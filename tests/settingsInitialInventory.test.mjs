@@ -23,7 +23,7 @@ assert.match(compositionHtml, /Προβλεπόμενη − Υπάρχουσα/)
 const informationHtml = renderAppInformation('0.13.170');
 assert.match(informationHtml, /Έκδοση/);
 assert.match(informationHtml, /v0\.13\.170/);
-assert.match(informationHtml, /Λγος \(ΦΠΒ\) Αλεξανδρής Ιωάννης/);
+assert.doesNotMatch(informationHtml, /Αλεξανδρής Ιωάννης/);
 assert.match(informationHtml, /Με επιφύλαξη παντός δικαιώματος/);
 
 console.log('settingsInitialInventory.test.mjs: OK');

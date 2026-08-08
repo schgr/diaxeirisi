@@ -178,10 +178,9 @@ export function renderAppInformation(version) {
           <h3>Πληροφορίες εφαρμογής</h3>
           <dl class="app-information-list">
             <div><dt>Έκδοση</dt><dd>${escapeHtml(version ? `v${version}` : 'Μη διαθέσιμη')}</dd></div>
-            <div><dt>Δημιουργός</dt><dd>Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης</dd></div>
           </dl>
           <div class="copyright-notice">
-            <strong>© 2026 Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης.</strong>
+            <strong>© 2026.</strong>
             <p>Με επιφύλαξη παντός δικαιώματος. Απαγορεύεται η μη εξουσιοδοτημένη αντιγραφή, τροποποίηση ή διανομή της εφαρμογής και του περιεχομένου της.</p>
           </div>
         </div>
