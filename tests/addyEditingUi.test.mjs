@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { canAddItem, renderAddyRows } from '../src/ui/transactions/entryHelpers.js';
+import { findSharesByNominal } from '../src/ui/transactions/shared.js';
 
 const require = createRequire(import.meta.url);
 const { mapAddyDocumentItem } = require('../src/services/transactions/shared.js');
@@ -38,6 +39,13 @@ assert.equal(
   'Editing an existing row must remain possible when the draft already has ten rows.'
 );
 
+const duplicateNominalShares = findSharesByNominal([
+  { shareNumber: '10', nominalNumber: 'N-100' },
+  { shareNumber: '11', nominalNumber: 'N-100' },
+  { shareNumber: '12', nominalNumber: 'N-200' }
+], 'n-100');
+assert.deepEqual(duplicateNominalShares.map((share) => share.shareNumber), ['10', '11']);
+
 const mapped = mapAddyDocumentItem({
   item: {
     shareNumber: '152',
@@ -65,6 +73,8 @@ const addyStyles = await readFile(new URL('../src/ui/styles/transactions-setting
 const addyFormSource = await readFile(new URL('../src/ui/transactions/addyForm.js', import.meta.url), 'utf8');
 assert.doesNotMatch(addyFormSource, /window\.confirm/u);
 assert.match(addyFormSource, /function confirmAddyAction\(message\)/u);
+assert.match(addyFormSource, /Μερίδες με τον ίδιο Αριθμό Ονομαστικού/u);
+assert.match(addyFormSource, /Υπόλοιπο Μερίδας/u);
 assert.match(addyStyles, /\.addy-table\s*\{\s*min-width:\s*1240px;/);
 assert.match(addyStyles, /\.addy-table th:nth-child\(10\)[\s\S]*?width:\s*15%;/);
 assert.match(addyStyles, /\.addy-table td:nth-child\(10\)\.row-actions[\s\S]*?flex-wrap:\s*nowrap;/);

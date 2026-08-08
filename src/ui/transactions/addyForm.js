@@ -38,6 +38,7 @@ import {
   compareShareNumbers,
   findShareByNominal,
   findShareByNumber,
+  findSharesByNominal,
   isCommerceUnit
 } from './shared.js';
 import { captureNewSupportModuleDraft, loadExhpDocumentsEditor } from './exhpDocumentsWizard.js';
@@ -318,15 +319,25 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     updateAddButton(controls, state);
   });
 
-  controls.nominalNumber.addEventListener('input', () => {
+  controls.nominalNumber.addEventListener('input', async () => {
     if (controls.shareNumber.value.trim()) {
       updateAddButton(controls, state);
       return;
     }
-    const share = findShareByNominal(referenceData.shares, controls.nominalNumber.value);
-    if (share) {
-      controls.shareNumber.value = share.shareNumber;
-      applyShareDefaults(controls, share);
+    const nominalNumber = controls.nominalNumber.value.trim();
+    const matchingShares = findSharesByNominal(referenceData.shares, nominalNumber);
+    if (matchingShares.length === 1) {
+      controls.shareNumber.value = matchingShares[0].shareNumber;
+      applyShareDefaults(controls, matchingShares[0]);
+    } else if (matchingShares.length > 1) {
+      if (controls.nominalNumber.dataset.shareSelectionOpen === 'true') return;
+      controls.nominalNumber.dataset.shareSelectionOpen = 'true';
+      const selectedShare = await openAddyShareSelectionDialog(matchingShares);
+      delete controls.nominalNumber.dataset.shareSelectionOpen;
+      if (selectedShare && !controls.shareNumber.value.trim() && controls.nominalNumber.value.trim() === nominalNumber) {
+        controls.shareNumber.value = selectedShare.shareNumber;
+        applyShareDefaults(controls, selectedShare);
+      }
     } else if (!controls.nominalNumber.value.trim()) {
       clearShareDefaults(controls, { clearShareNumber: true });
     }
@@ -845,6 +856,79 @@ function confirmAddyAction(message) {
       modal.querySelector('[data-addy-confirm-cancel]').focus({ preventScroll: true });
     });
   });
+}
+
+function openAddyShareSelectionDialog(shares) {
+  return new Promise((resolve) => {
+    const sortedShares = [...shares].sort(compareShareNumbers);
+    const modal = window.document.createElement('div');
+    modal.className = 'modal-backdrop request-document-backdrop';
+    modal.innerHTML = `
+      <section class="request-document-modal" role="dialog" aria-modal="true" aria-labelledby="addy-share-selection-title">
+        <header class="material-card-header">
+          <div>
+            <p class="eyebrow">ΕΠΙΛΟΓΗ ΜΕΡΙΔΑΣ</p>
+            <h2 id="addy-share-selection-title">Μερίδες με τον ίδιο Αριθμό Ονομαστικού</h2>
+          </div>
+          <button class="secondary-button" data-close-addy-share-selection type="button">Κλείσιμο</button>
+        </header>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Α/Α Μερίδας</th>
+                <th>Αριθμός Ονομαστικού</th>
+                <th>Περιγραφή</th>
+                <th>Υπόλοιπο Μερίδας</th>
+                <th>Επιλογή</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedShares.map((share, index) => `
+                <tr>
+                  <td>${escapeAddyEditHtml(share.shareNumber)}</td>
+                  <td>${escapeAddyEditHtml(share.nominalNumber)}</td>
+                  <td>${escapeAddyEditHtml(share.description)}</td>
+                  <td>${escapeAddyEditHtml(formatAddyShareBalance(share.accountingBalance))}</td>
+                  <td><button class="primary-button" data-select-addy-share="${index}" type="button">Επιλογή</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+
+    const finish = (share = null) => {
+      window.document.removeEventListener('keydown', onKeyDown);
+      modal.remove();
+      resolve(share);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') finish();
+    };
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-close-addy-share-selection]')) {
+        finish();
+        return;
+      }
+      const selectButton = event.target.closest('[data-select-addy-share]');
+      if (selectButton) finish(sortedShares[Number(selectButton.dataset.selectAddyShare)] || null);
+    });
+    window.document.addEventListener('keydown', onKeyDown);
+    window.document.body.appendChild(modal);
+    window.requestAnimationFrame(() => {
+      modal.querySelector('[data-select-addy-share]')?.focus({ preventScroll: true });
+    });
+  });
+}
+
+function formatAddyShareBalance(value) {
+  const balance = Number(value || 0);
+  return Number.isFinite(balance)
+    ? balance.toLocaleString('el-GR', { maximumFractionDigits: 3 })
+    : '0';
 }
 
 function escapeAddyEditHtml(value) {

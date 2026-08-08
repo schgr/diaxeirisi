@@ -45,8 +45,13 @@ export function findShareByNumber(shares, value) {
 }
 
 export function findShareByNominal(shares, value) {
+  return findSharesByNominal(shares, value)[0];
+}
+
+export function findSharesByNominal(shares, value) {
   const normalized = normalize(value);
-  return shares.find((share) => normalize(share.nominalNumber) === normalized);
+  if (!normalized) return [];
+  return shares.filter((share) => normalize(share.nominalNumber) === normalized);
 }
 
 export function compareShareNumbers(left, right) {
