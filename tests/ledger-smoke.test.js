@@ -1052,6 +1052,37 @@ async function run() {
     assert.strictEqual(shares.getShareCard(importedShare.id, 2026).share.accountingBalance, 10);
     assert.strictEqual(shares.getShareCard(importedShare.id, 2026).transactions.length, 0);
 
+    const orphanedAddy = transactions.saveAddy({
+      documentDate: '2026-06-14',
+      transactionUnit: 'TEST UNIT',
+      notes: '',
+      items: [{
+        shareNumber: '99',
+        nominalNumber: 'INITIAL-099',
+        description: 'TEST MATERIAL',
+        quantity: 1,
+        unitPrice: 1,
+        measurementUnit: 'Τεμάχια',
+        transactionType: 'Πίστωση',
+        materialType: 'Αναλώσιμα'
+      }]
+    });
+    const orphanedItem = db.prepare(
+      'SELECT share_id, share_transaction_id FROM addy_items WHERE addy_document_id = ?'
+    ).get(orphanedAddy.documentId);
+    db.pragma('foreign_keys = OFF');
+    db.prepare('DELETE FROM share_transactions WHERE id = ?').run(orphanedItem.share_transaction_id);
+    db.prepare('UPDATE shares SET accounting_balance = accounting_balance + 1 WHERE id = ?')
+      .run(orphanedItem.share_id);
+    db.pragma('foreign_keys = ON');
+    transactions.deleteAddyDocument(orphanedAddy.documentId);
+    assert.strictEqual(
+      transactions.listAddyDocuments().some((item) => item.id === orphanedAddy.documentId),
+      false,
+      'An ADDY with an already-removed share transaction must still be deletable.'
+    );
+    assert.strictEqual(shares.getShareCard(importedShare.id, 2026).share.accountingBalance, 10);
+
     console.log('Ledger smoke test passed.');
   } finally {
     fs.rmSync(testDirectory, { recursive: true, force: true });

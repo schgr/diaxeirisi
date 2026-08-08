@@ -918,10 +918,12 @@ function createTransactionsRepository(db) {
               item.transaction_type,
               item.quantity,
               item.share_transaction_id,
+              share_transaction.id AS existing_share_transaction_id,
               item.composition_snapshot,
               share.share_number AS current_share_number
             FROM addy_items item
             LEFT JOIN shares share ON share.id = item.share_id
+            LEFT JOIN share_transactions share_transaction ON share_transaction.id = item.share_transaction_id
             WHERE item.addy_document_id = ?
             ORDER BY item.id ASC
           `

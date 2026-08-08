@@ -84,7 +84,7 @@ const currentApi = Array.from(
 );
 assert.deepStrictEqual(currentApi, publicApi, 'Public API or method order changed.');
 for (const name of publicApi) {
-  if (name === 'updateAddyDocument') continue;
+  if (['updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
   assert.strictEqual(extractMethod(modules, name), extractMethod(baseline, name), `${name} changed.`);
 }
 

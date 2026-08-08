@@ -125,6 +125,10 @@ function createAddyService(dependencies) {
       const id = requirePositiveId(idValue);
       const document = repository.getAddyDocument(id);
       if (!document) throw new Error('Το ΑΔΔΥ δεν βρέθηκε.');
+      const currentFiscalYear = Number(document.document_date.slice(0, 4));
+      if (repository.isFiscalYearClosed(currentFiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${currentFiscalYear} έχει κλείσει και το ΑΔΔΥ δεν μπορεί να τροποποιηθεί.`);
+      }
       const items = repository.listAddyDocumentItems(id);
       const quantities = Array.isArray(payload.items) ? payload.items : [];
       const quantityById = new Map(
@@ -194,14 +198,20 @@ function createAddyService(dependencies) {
       const id = requirePositiveId(idValue);
       const document = repository.getAddyDocument(id);
       if (!document) throw new Error('Το ΑΔΔΥ δεν βρέθηκε.');
+      const currentFiscalYear = Number(document.document_date.slice(0, 4));
+      if (repository.isFiscalYearClosed(currentFiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${currentFiscalYear} έχει κλείσει και το ΑΔΔΥ δεν μπορεί να διαγραφεί.`);
+      }
       const items = repository.listAddyDocumentItems(id);
       const transactionIds = items
-        .map((item) => Number(item.share_transaction_id))
+        .map((item) => item.existing_share_transaction_id)
+        .filter((transactionId) => transactionId != null)
+        .map(Number)
         .filter(Number.isInteger);
 
       repository.transaction(() => {
         for (const item of items) {
-          if (!item.share_id) continue;
+          if (!item.share_id || item.existing_share_transaction_id == null) continue;
           const balanceDelta = item.transaction_type === 'Χρέωση'
             ? -Number(item.quantity)
             : Number(item.quantity);
