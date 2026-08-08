@@ -3,6 +3,8 @@ import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../
 import { printIsolatedPreview } from './printPreview.js';
 import { formatDate } from './shared.js';
 
+const ROWS_PER_INDEX_PAGE = 34;
+
 function renderFiscalYearControls(state) {
   return `
     <div class="registry-controls">

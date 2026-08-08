@@ -35,13 +35,23 @@ function openMaterialFormPreview(title, documentHtml, landscape = false) {
 }
 
 async function printMaterialFormDocument(landscape) {
+  const preview = document.querySelector('.material-form-preview-backdrop .request-document-preview');
+  if (!preview) return;
+
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root material-form-isolated-print-root';
+  printRoot.innerHTML = preview.innerHTML;
   const pageStyle = document.createElement('style');
   pageStyle.dataset.materialFormPageStyle = 'true';
   pageStyle.textContent = `@page { size: A4 ${landscape ? 'landscape' : 'portrait'} !important; margin: 0; }`;
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
   document.head.appendChild(pageStyle);
   try {
     await window.appApi.print.currentDocument({ landscape });
   } finally {
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
     pageStyle.remove();
   }
 }

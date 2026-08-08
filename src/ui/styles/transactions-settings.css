@@ -853,7 +853,31 @@ table.administration-table td {
 }
 
 .addy-table {
-  min-width: 1480px;
+  min-width: 1240px;
+}
+
+.addy-table th,
+.addy-table td {
+  padding-inline: 5px;
+}
+
+.addy-table th:nth-child(1), .addy-table td:nth-child(1) { width: 4%; }
+.addy-table th:nth-child(2), .addy-table td:nth-child(2) { width: 8%; }
+.addy-table th:nth-child(3), .addy-table td:nth-child(3) { width: 11%; }
+.addy-table th:nth-child(4), .addy-table td:nth-child(4) { width: 17%; }
+.addy-table th:nth-child(5), .addy-table td:nth-child(5) { width: 6%; }
+.addy-table th:nth-child(6), .addy-table td:nth-child(6) { width: 6%; }
+.addy-table th:nth-child(7), .addy-table td:nth-child(7) { width: 8%; }
+.addy-table th:nth-child(8), .addy-table td:nth-child(8) { width: 9%; }
+.addy-table th:nth-child(9), .addy-table td:nth-child(9) { width: 10%; }
+.addy-table th:nth-child(10), .addy-table td:nth-child(10) { width: 15%; }
+.addy-table th:nth-child(11), .addy-table td:nth-child(11) { width: 6%; }
+
+.addy-table td:nth-child(10).row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow: visible;
 }
 
 .addy-table-wrap {

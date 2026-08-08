@@ -38,6 +38,7 @@ function applyMigrations(db, items) {
   let executed = 0;
   for (const migration of items) {
     if (applied.has(migration.version)) continue;
+    if (migration.foreignKeysOff) db.exec('PRAGMA foreign_keys = OFF');
     db.exec('BEGIN');
     try {
       db.exec(migration.up);
@@ -46,11 +47,16 @@ function applyMigrations(db, items) {
       );
       statement.run([migration.version, migration.name]);
       statement.free();
+      if (migration.foreignKeysOff) {
+        assert.deepStrictEqual(queryRows(db, 'PRAGMA foreign_key_check'), []);
+      }
       db.exec('COMMIT');
       executed += 1;
     } catch (error) {
       db.exec('ROLLBACK');
       throw error;
+    } finally {
+      if (migration.foreignKeysOff) db.exec('PRAGMA foreign_keys = ON');
     }
   }
   return executed;
@@ -90,10 +96,11 @@ function schemaSnapshot(db) {
     snapshot(baseline),
     'Published migration SQL hashes changed.'
   );
-  assert.strictEqual(migrations.length, 65);
+  assert.strictEqual(migrations.length, 66);
   assert.strictEqual(migrations[62].name, 'training_ammunition_batch_book');
   assert.strictEqual(migrations[63].name, 'weapon_registry_entries');
   assert.strictEqual(migrations[64].name, 'weapon_registry_nine_fields');
+  assert.strictEqual(migrations[65].name, 'addy_documents_without_autoincrement');
   assert.throws(
     () => validateMigrations([migrations[0], migrations[0]]),
     /Duplicate or invalid migration version/
@@ -109,7 +116,45 @@ function schemaSnapshot(db) {
   const baselineDb = new SQL.Database();
   const currentDb = new SQL.Database();
   assert.strictEqual(applyMigrations(baselineDb, baseline), 61);
-  assert.strictEqual(applyMigrations(currentDb, migrations), 65);
+  assert.strictEqual(applyMigrations(currentDb, migrations), 66);
+  const addyTableSql = queryRows(
+    currentDb,
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'addy_documents'"
+  )[0].sql;
+  assert.match(addyTableSql, /id INTEGER PRIMARY KEY/u);
+  assert.doesNotMatch(addyTableSql, /AUTOINCREMENT/iu);
+
+  const addyUpgradeDb = new SQL.Database();
+  applyMigrations(addyUpgradeDb, migrations.filter(({ version }) => version <= 65));
+  addyUpgradeDb.exec(`
+    PRAGMA foreign_keys = ON;
+    INSERT INTO shares (id, share_number, description, material_type)
+    VALUES (1, '1', 'TEST MATERIAL', 'TEST');
+    INSERT INTO addy_documents (id, document_date, transaction_unit)
+    VALUES (42, '2025-12-31', 'TEST UNIT');
+    INSERT INTO addy_items (
+      addy_document_id, share_id, share_number, nominal_number,
+      material_type, transaction_type, quantity
+    ) VALUES (42, 1, '1', 'N-1', 'TEST', 'ΧΡΕΩΣΗ', 1);
+  `);
+  assert.strictEqual(applyMigrations(addyUpgradeDb, migrations), 1);
+  assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT id FROM addy_documents')[0].id, 42);
+  assert.strictEqual(queryRows(addyUpgradeDb, 'SELECT addy_document_id FROM addy_items')[0].addy_document_id, 42);
+  assert.deepStrictEqual(queryRows(addyUpgradeDb, 'PRAGMA foreign_key_check'), []);
+  addyUpgradeDb.close();
+
+  currentDb.exec(`
+    INSERT INTO addy_documents (document_date, transaction_unit) VALUES ('2026-01-01', 'A');
+    INSERT INTO addy_documents (document_date, transaction_unit) VALUES ('2026-01-02', 'B');
+  `);
+  const latestAddyId = queryRows(currentDb, 'SELECT MAX(id) AS id FROM addy_documents')[0].id;
+  currentDb.exec(`DELETE FROM addy_documents WHERE id = ${latestAddyId}`);
+  currentDb.exec("INSERT INTO addy_documents (document_date, transaction_unit) VALUES ('2026-01-03', 'C')");
+  assert.strictEqual(
+    queryRows(currentDb, 'SELECT MAX(id) AS id FROM addy_documents')[0].id,
+    latestAddyId,
+    'Deleting the greatest ADDY id must make that id available to the next insert.'
+  );
   const currentIndexes = queryRows(
     currentDb,
     `SELECT name FROM sqlite_master
@@ -126,14 +171,14 @@ function schemaSnapshot(db) {
   for (const version of [10, 30, 50]) {
     const upgradeDb = new SQL.Database();
     applyMigrations(upgradeDb, baseline.filter((migration) => migration.version <= version));
-    assert.strictEqual(applyMigrations(upgradeDb, migrations), 65 - version);
+    assert.strictEqual(applyMigrations(upgradeDb, migrations), 66 - version);
     assert.deepStrictEqual(schemaSnapshot(upgradeDb), schemaSnapshot(currentDb));
     upgradeDb.close();
   }
 
   baselineDb.close();
   currentDb.close();
-  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migrations 62-65, fresh/upgrade/idempotent parity)');
+  console.log('migrationModules.test.js: OK (61 immutable SQL hashes + migrations 62-66, fresh/upgrade/idempotent parity)');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

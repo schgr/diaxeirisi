@@ -137,6 +137,8 @@ function createAddyService(dependencies) {
         throw new Error('Το ΑΔΔΥ πρέπει να περιέχει τουλάχιστον ένα υλικό.');
       }
       const notes = String(payload.notes || '').trim();
+      const newId = payload.id ? requirePositiveId(payload.id) : id;
+      const newDate = payload.documentDate || document.document_date;
 
       repository.transaction(() => {
         for (const item of items) {
@@ -177,11 +179,14 @@ function createAddyService(dependencies) {
           repository.updateAddyItemQuantity(item.id, item.share_transaction_id, nextQuantity);
         }
         repository.updateAddyDocumentNotes(id, notes);
+        if (newId !== id || newDate !== document.document_date) {
+          repository.updateAddyDocumentIdAndDate(id, newId, newDate);
+        }
       });
 
       return {
-        document: this.getAddyDocument(id),
-        message: `Το ΑΔΔΥ ${id} ενημερώθηκε.`
+        document: this.getAddyDocument(newId),
+        message: `Το ΑΔΔΥ ${newId} ενημερώθηκε.`
       };
     },
 

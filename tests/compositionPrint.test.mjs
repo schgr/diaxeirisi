@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   renderCompositionDocument,
   renderCompositionDocumentFooter,
@@ -140,6 +141,13 @@ assert.strictEqual(
 );
 assert.match(paginatedChangeSheet, /1005-14/);
 assert.match(paginatedChangeSheet, /1005-15/);
+
+const sharePrintSource = await readFile(new URL('../src/ui/shares/sharePrint.js', import.meta.url), 'utf8');
+const officialPrintStyles = await readFile(new URL('../src/ui/styles/official-prints.css', import.meta.url), 'utf8');
+assert.match(sharePrintSource, /material-form-preview-backdrop \.request-document-preview/);
+assert.match(sharePrintSource, /isolated-print-root material-form-isolated-print-root/);
+assert.match(officialPrintStyles, /\.change-sheet-document-page\.print-document-area\s*\{[\s\S]*?position:\s*relative;/);
+assert.match(officialPrintStyles, /\.change-sheet-document-page\.print-document-area:last-child\s*\{[\s\S]*?page-break-after:\s*auto;/);
 
 const openingInventoryChangeSheet = renderChangeSheetDocument({
   share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },

@@ -944,6 +944,11 @@ function createTransactionsRepository(db) {
       `).run(notes, documentId);
     },
 
+    updateAddyDocumentIdAndDate(documentId, newId, newDate) {
+      db.prepare('UPDATE addy_documents SET id = ?, document_date = ? WHERE id = ?')
+        .run(newId, newDate, documentId);
+    },
+
     updateAddyItemQuantity(itemId, shareTransactionId, quantity) {
       db.prepare('UPDATE addy_items SET quantity = ? WHERE id = ?')
         .run(quantity, itemId);

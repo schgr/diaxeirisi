@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { renderIndexPages } from '../src/ui/prints/indexPrint.js';
 
 const {
   renderChargeCreditOrdersIndex,
@@ -30,6 +31,20 @@ assert.equal((externalHtml.match(/official-index-page print-document-area/g) || 
 const ordersHtml = renderChargeCreditOrdersIndex(settings, ordersRows);
 assert.match(ordersHtml, /Σελίδα 1 από Σελίδα 2/);
 assert.match(ordersHtml, /Σελίδα 2 από Σελίδα 2/);
+
+const defaultPageHtml = renderIndexPages({
+  unit: 'UNIT',
+  code: 'CODE',
+  title: 'TITLE',
+  columns: ['COLUMN'],
+  numbers: ['1'],
+  rows: Array.from({ length: 35 }, (_unused, index) => [`ROW ${index + 1}`])
+});
+assert.equal(
+  (defaultPageHtml.match(/index-page print-document-area/g) || []).length,
+  2,
+  'The default index pagination must remain available to every index renderer.'
+);
 
 const signaturesHtml = renderIndexAnnualSignatures({
   commander: 'ΑΝΘΛΓΟΣ ΙΩΑΝΝΗΣ ΔΟΚΙΜΗ',

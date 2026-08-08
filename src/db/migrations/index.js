@@ -8,6 +8,7 @@ const { migrations062 } = require('./062');
 const { migrations063 } = require('./063');
 const { migrations064 } = require('./064');
 const { migrations065 } = require('./065');
+const { migrations066 } = require('./066');
 
 function validateMigrations(items) {
   let previousVersion = 0;
@@ -35,7 +36,8 @@ const migrations = validateMigrations([
   ...migrations062,
   ...migrations063,
   ...migrations064,
-  ...migrations065
+  ...migrations065,
+  ...migrations066
 ]);
 
 module.exports = {

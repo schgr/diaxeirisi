@@ -82,6 +82,7 @@ const intentionallyChanged = new Set([
   'bindShareCardOpen',
   'descriptionMatchRank',
   'filterAndRankShares',
+  'printMaterialFormDocument',
   'renderCompositionDocument',
   'renderCompositionDocumentFooter',
   'renderRows',

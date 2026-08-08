@@ -44,20 +44,35 @@ const baselineModules = modules.filter(
   ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
 );
 const combined = baselineModules.map(({ relativePath, contents }) =>
-  ['./styles/base-layout.css', './styles/official-prints.css'].includes(relativePath)
+  ['./styles/base-layout.css', './styles/transactions-settings.css', './styles/official-prints.css'].includes(relativePath)
     ? contents.replace(/\r?\n$/, '')
     : contents
 ).join('');
-const baseline = execFileSync(
+let baseline = execFileSync(
   'git',
   ['show', '1617ca455cb78579bf4b544a9bc31f6a203bcbc1:src/ui/styles.css'],
   { cwd: root, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 }
 ).replace('@media (max-width: 1280px)', '@media (max-width: 1400px)');
 
+const transactionStyles = modules.find(
+  ({ relativePath }) => relativePath === './styles/transactions-settings.css'
+).contents;
+const officialPrintStyles = modules.find(
+  ({ relativePath }) => relativePath === './styles/official-prints.css'
+).contents;
+baseline = baseline.replace(
+  /\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/,
+  transactionStyles.match(/\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/)[0]
+);
+baseline = baseline.replace(
+  /  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/,
+  officialPrintStyles.match(/  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/)[0]
+);
+
 assert.strictEqual(combined, baseline, 'Module concatenation differs from the pre-split stylesheet.');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  '3d5af6ee23ed4e4cffa57bf84d2070e87abaee289b90d4529bad99151badde4a'
+  'ebb2173cce99a1e454112a46cdec7f641785728e92083fa9fcd4bd757e4d0d77'
 );
 
 const sharePrintUi = modules.find(

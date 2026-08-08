@@ -2490,8 +2490,22 @@
 
   .change-sheet-document-page.print-document-area {
     page: landscape;
+    position: relative;
+    left: auto;
+    top: auto;
+    display: block;
     width: 297mm;
+    height: 210mm;
     min-height: 210mm;
+    margin: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .change-sheet-document-page.print-document-area:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .no-print {

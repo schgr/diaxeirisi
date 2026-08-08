@@ -309,6 +309,10 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   });
 
   controls.nominalNumber.addEventListener('input', () => {
+    if (controls.shareNumber.value.trim()) {
+      updateAddButton(controls, state);
+      return;
+    }
     const share = findShareByNominal(referenceData.shares, controls.nominalNumber.value);
     if (share) {
       controls.shareNumber.value = share.shareNumber;
@@ -403,22 +407,6 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       controls.addItem.textContent = 'Αποθήκευση αλλαγών';
       updateAddButton(controls, state);
       controls.shareNumber.focus();
-      return;
-    }
-
-    const button = event.target.closest('[data-remove-addy-item]');
-    if (button) {
-      const removeIndex = Number(button.dataset.removeAddyItem);
-      state.items.splice(removeIndex, 1);
-      if (state.addyEditingIndex === removeIndex) {
-        state.addyEditingIndex = null;
-        clearLineControls(controls);
-        controls.addItem.textContent = 'Προσθήκη';
-      } else if (Number.isInteger(state.addyEditingIndex) && state.addyEditingIndex > removeIndex) {
-        state.addyEditingIndex -= 1;
-      }
-      renderState(container, state);
-      updateAddButton(controls, state);
       return;
     }
 
@@ -662,11 +650,22 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
       <header class="material-card-header">
         <div>
           <p class="eyebrow">ΚΑΤΑΧΩΡΗΜΕΝΟ ΑΔΔΥ</p>
-          <h2>Επεξεργασία ΑΔΔΥ ${Number(documentData.id)}</h2>
+          <h2>Επεξεργασία ΑΔΔΥ</h2>
         </div>
         <button class="secondary-button" data-close-addy-edit type="button">Κλείσιμο</button>
       </header>
       <form data-addy-edit-form class="stacked-form">
+        <div class="inline-form">
+          <label class="field">
+            <span>Αριθμός ΑΔΔΥ</span>
+            <input data-addy-edit-id type="number" min="1" step="1" value="${Number(documentData.id)}" required />
+          </label>
+          <label class="field">
+            <span>Ημερομηνία</span>
+            <input data-addy-edit-date type="date" value="${documentData.documentDate}" required />
+          </label>
+          <button class="primary-button" type="submit">Αποθήκευση</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -709,7 +708,6 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
         </label>
         <div class="row-actions">
           <button class="secondary-button" data-close-addy-edit type="button">Ακύρωση</button>
-          <button class="primary-button" type="submit">Αποθήκευση αλλαγών</button>
         </div>
       </form>
     </section>
@@ -739,6 +737,11 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
     const quantityChanged = quantityInputs.some(
       (input) => Number(input.value) !== Number(input.dataset.originalQuantity)
     );
+    const newId = Number(modal.querySelector('[data-addy-edit-id]').value);
+    const newDate = modal.querySelector('[data-addy-edit-date]').value;
+    const idChanged = newId !== Number(documentData.id);
+    const dateChanged = newDate !== documentData.documentDate;
+
     if (
       quantityChanged &&
       !window.confirm(
@@ -747,8 +750,16 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
     ) {
       return;
     }
+    if (idChanged && !window.confirm('Αυτή η ενέργεια θα αλλάξει τον αριθμό του ΑΔΔΥ. Να προχωρήσω;')) {
+      return;
+    }
+    if (dateChanged && !window.confirm('Αυτή η ενέργεια θα αλλάξει την ημερομηνία του ΑΔΔΥ. Να προχωρήσω;')) {
+      return;
+    }
     try {
       const result = await transactionsApi.updateAddy(documentData.id, {
+        id: newId,
+        documentDate: newDate,
         notes: modal.querySelector('[data-addy-edit-notes]').value,
         items: quantityInputs.map((input) => ({
           id: Number(input.dataset.addyEditQuantity),

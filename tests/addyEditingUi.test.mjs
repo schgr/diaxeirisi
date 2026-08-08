@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFile } from 'node:fs/promises';
 import { canAddItem, renderAddyRows } from '../src/ui/transactions/entryHelpers.js';
 
 const require = createRequire(import.meta.url);
@@ -16,12 +17,8 @@ const rows = renderAddyRows([{
   transactionUnit: '104 Α/Κ ΜΜΠ/ΔΥ',
   materialType: 'Υλικό'
 }]);
-assert.match(rows, /data-edit-addy-item="0"/u);
-assert.match(rows, /data-remove-addy-item="0"/u);
-assert.ok(
-  rows.indexOf('data-edit-addy-item') < rows.indexOf('data-remove-addy-item'),
-  'Edit must appear before delete in the draft material actions.'
-);
+assert.doesNotMatch(rows, /data-edit-addy-item/u);
+assert.doesNotMatch(rows, /data-remove-addy-item/u);
 
 const valueControl = (value) => ({ value });
 const controls = {
@@ -63,5 +60,10 @@ assert.deepEqual(
   [mapped.shareNumber, mapped.nominalNumber, mapped.description],
   ['152', '1315231129037', 'ΓΕΜΙΣΜΑΤΑ ΑΥΤΟΚΑΤΑΣΕΞΕΩΣ']
 );
+
+const addyStyles = await readFile(new URL('../src/ui/styles/transactions-settings.css', import.meta.url), 'utf8');
+assert.match(addyStyles, /\.addy-table\s*\{\s*min-width:\s*1240px;/);
+assert.match(addyStyles, /\.addy-table th:nth-child\(10\)[\s\S]*?width:\s*15%;/);
+assert.match(addyStyles, /\.addy-table td:nth-child\(10\)\.row-actions[\s\S]*?flex-wrap:\s*nowrap;/);
 
 console.log('ADDY draft editing and saved identity mapping tests passed.');

@@ -306,7 +306,7 @@ export function renderSavedAddyRows(documents) {
           <td>${escapeHtml(documentItem.nominalNumber)}</td>
           <td>${escapeHtml(documentItem.description)}</td>
           <td class="number-cell">${formatQuantity(documentItem.quantity)}</td>
-          <td class="row-actions">
+          <td>
             <button class="secondary-button" data-view-addy-document="${documentItem.id}" type="button" ${documentItem.canPrint ? '' : 'disabled'}>Προβολή</button>
             <button class="secondary-button" data-edit-addy-document="${documentItem.id}" type="button">Επεξεργασία</button>
             <button class="danger-button" data-delete-addy-document="${documentItem.id}" type="button">Διαγραφή</button>
@@ -351,7 +351,7 @@ export function renderState(container, state) {
 
 export function renderAddyRows(items) {
   if (!items.length) {
-    return '<tr><td colspan="11" class="empty-table">Δεν έχουν προστεθεί υλικά.</td></tr>';
+    return '<tr><td colspan="10" class="empty-table">Δεν έχουν προστεθεί υλικά.</td></tr>';
   }
 
   return items
@@ -367,7 +367,6 @@ export function renderAddyRows(items) {
           <td>${escapeHtml(item.measurementUnit)}</td>
           <td>${escapeHtml(item.transactionType)}</td>
           <td>${escapeHtml(item.transactionUnit)}</td>
-          <td class="row-actions"><button class="secondary-button" data-edit-addy-item="${index}" type="button">Επεξεργασία</button><button class="danger-button" data-remove-addy-item="${index}" type="button">Διαγραφή</button></td>
           <td>${escapeHtml(item.materialType)}</td>
         </tr>
       `

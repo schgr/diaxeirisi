@@ -268,15 +268,26 @@ function runMigrations(db) {
       continue;
     }
 
-    const transaction = db.transaction(() => {
-      db.exec(migration.up);
-      db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(
-        migration.version,
-        migration.name
-      );
-    });
+    if (migration.foreignKeysOff) db.pragma('foreign_keys = OFF');
+    try {
+      const transaction = db.transaction(() => {
+        db.exec(migration.up);
+        db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(
+          migration.version,
+          migration.name
+        );
+        if (migration.foreignKeysOff) {
+          const violations = db.prepare('PRAGMA foreign_key_check').all();
+          if (violations.length > 0) {
+            throw new Error(`Migration ${migration.version} created foreign key violations.`);
+          }
+        }
+      });
 
-    transaction();
+      transaction();
+    } finally {
+      if (migration.foreignKeysOff) db.pragma('foreign_keys = ON');
+    }
     logger.info(`Applied migration ${migration.version}: ${migration.name}`);
   }
 }
