@@ -94,14 +94,14 @@ export async function renderPrintsPage(
   };
 
   container.innerHTML = `
-    <section class="page-header no-print">
+    <section class="page-header no-print" ${options.directPreview ? 'hidden' : ''}>
       <div>
         <p class="eyebrow">ΕΚΤΥΠΩΣΕΙΣ</p>
         <h2 id="prints-title">${escapeHtml(options.title || 'Εργασίες Οικονομικού Έτους')}</h2>
       </div>
     </section>
 
-    <section class="page-panel no-print" ${options.tileMenu ? 'hidden' : ''} data-print-standard-menu>
+    <section class="page-panel no-print" ${options.tileMenu || options.directPreview ? 'hidden' : ''} data-print-standard-menu>
       <details class="print-menu" open>
         <summary>${escapeHtml(options.menuTitle || 'Εργασίες Οικονομικού Έτους')}</summary>
         ${visiblePrintTabGroups.length > 1 ? `
@@ -263,6 +263,7 @@ export async function renderPrintsPage(
       controls.innerHTML = renderFiscalYearControls(state);
       preview.innerHTML = renderMovementDifferencesIndex(settings, protocols);
       bindFiscalYearControls(container, state, renderActiveTab);
+      preview.style.display = 'none';
       return;
     }
 
@@ -320,16 +321,17 @@ export async function renderPrintsPage(
     }
 
     if (event.target.closest('#print-current-document')) {
-      if (['registry', 'share-card', 'balance-differences'].includes(state.activeTab)) {
+      if (['registry', 'share-card', 'movement-differences', 'balance-differences'].includes(state.activeTab)) {
         const titleByTab = {
           registry: 'Μητρώο Μερίδων',
           'share-card': 'Μερίδες Υλικού',
+          'movement-differences': 'Ευρετήριο Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού',
           'balance-differences': 'Πλεονάσματα - Ελλείμματα'
         };
         openPrintDocumentPreview(
           titleByTab[state.activeTab],
           preview.innerHTML,
-          state.activeTab === 'balance-differences',
+          ['movement-differences', 'balance-differences'].includes(state.activeTab),
           state.activeTab === 'share-card'
             ? () => printPreparedShareCards(container, preview, settings, state)
             : null,
@@ -355,7 +357,7 @@ export async function renderPrintsPage(
         void printPreparedShareCards(container, preview, settings, state);
         return;
       }
-      if (['external', 'orders', 'movement-differences', 'balance-differences'].includes(state.activeTab)) {
+      if (['external', 'orders', 'balance-differences'].includes(state.activeTab)) {
         void printIsolatedPreview(preview, true);
         return;
       }

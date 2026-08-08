@@ -12,7 +12,7 @@ function renderFiscalYearControls(state) {
         <span>Οικονομικό Έτος</span>
         <select id="prints-fiscal-year">${renderFiscalYearOptions(state.fiscalYear)}</select>
       </label>
-      <button id="print-current-document" class="primary-button compact-print-button" type="button">Εκτύπωση</button>
+      <button id="print-current-document" class="primary-button compact-print-button" type="button">Προβολή</button>
     </div>
   `;
 }

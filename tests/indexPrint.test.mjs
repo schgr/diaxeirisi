@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { renderIndexPages } from '../src/ui/prints/indexPrint.js';
+import { renderFiscalYearControls, renderIndexPages } from '../src/ui/prints/indexPrint.js';
 
 const {
   renderChargeCreditOrdersIndex,
@@ -9,6 +9,9 @@ const {
 } = await import('../src/ui/pages/printsPage.js');
 
 const settings = { serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' } };
+const movementControls = renderFiscalYearControls({ fiscalYear: 2026 });
+assert.match(movementControls, />Προβολή<\/button>/u);
+assert.doesNotMatch(movementControls, />Εκτύπωση<\/button>/u);
 const externalRows = Array.from({ length: 23 }, (_unused, index) => ({
   serial: index + 1,
   date: '2026-01-01',

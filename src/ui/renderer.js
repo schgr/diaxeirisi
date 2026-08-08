@@ -80,7 +80,8 @@ const sections = [
       title: 'Ευρετήριο Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού',
       menuTitle: 'Ευρετήρια Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού',
       visibleGroups: ['management'],
-      initialGroup: 'management'
+      initialGroup: 'management',
+      directPreview: true
     }
   },
   { id: 'settings', title: 'ΡΥΘΜΙΣΕΙΣ', type: 'settings' }
