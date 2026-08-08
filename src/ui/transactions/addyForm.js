@@ -455,6 +455,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       const accepted = window.confirm(
         'Αυτή η ενέργεια θα διαγράψει το ΑΔΔΥ από το Ευρετήριο Εξωτερικών Δοσοληψιών και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
       );
+      window.focus();
       if (!accepted) return;
       try {
         const result = await transactionsApi.deleteAddy(
@@ -756,7 +757,9 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
       showToast('Το ΑΔΔΥ πρέπει να περιέχει τουλάχιστον ένα υλικό.', 'error');
       return;
     }
-    if (!window.confirm('Να διαγραφεί μόνο αυτό το υλικό από το ΑΔΔΥ και από την αντίστοιχη Μερίδα Υλικού;')) return;
+    const accepted = window.confirm('Να διαγραφεί μόνο αυτό το υλικό από το ΑΔΔΥ και από την αντίστοιχη Μερίδα Υλικού;');
+    window.focus();
+    if (!accepted) return;
     removedItemIds.add(Number(removeButton.dataset.removeAddyEditItem));
     removeButton.closest('tr')?.remove();
   });
@@ -771,19 +774,22 @@ function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
     const idChanged = newId !== Number(documentData.id);
     const dateChanged = newDate !== documentData.documentDate;
 
-    if (
-      quantityChanged &&
-      !window.confirm(
+    if (quantityChanged) {
+      const accepted = window.confirm(
         'Αυτή η ενέργεια θα αλλάξει την Ποσότητα από το ΑΔΔΥ και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
-      )
-    ) {
-      return;
+      );
+      window.focus();
+      if (!accepted) return;
     }
-    if (idChanged && !window.confirm('Αυτή η ενέργεια θα αλλάξει τον αριθμό του ΑΔΔΥ. Να προχωρήσω;')) {
-      return;
+    if (idChanged) {
+      const accepted = window.confirm('Αυτή η ενέργεια θα αλλάξει τον αριθμό του ΑΔΔΥ. Να προχωρήσω;');
+      window.focus();
+      if (!accepted) return;
     }
-    if (dateChanged && !window.confirm('Αυτή η ενέργεια θα αλλάξει την ημερομηνία του ΑΔΔΥ. Να προχωρήσω;')) {
-      return;
+    if (dateChanged) {
+      const accepted = window.confirm('Αυτή η ενέργεια θα αλλάξει την ημερομηνία του ΑΔΔΥ. Να προχωρήσω;');
+      window.focus();
+      if (!accepted) return;
     }
     try {
       const result = await transactionsApi.updateAddy(documentData.id, {
