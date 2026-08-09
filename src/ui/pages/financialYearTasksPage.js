@@ -26,7 +26,7 @@ export async function renderFinancialYearTasksPage(
     <section class="page-header">
       <div>
         <p class="eyebrow">ΕΛΕΓΧΟΣ ΥΛΙΚΩΝ</p>
-        <h2>Εργασίες Οικονομικού Έτους</h2>
+        <h2 data-financial-page-title>Εργασίες Οικονομικού Έτους</h2>
       </div>
     </section>
 
@@ -71,7 +71,7 @@ export async function renderFinancialYearTasksPage(
     <div data-financial-detail hidden>
       <div class="page-toolbar no-print">
         <button class="secondary-button" data-financial-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
-        <button class="primary-button" data-financial-print type="button">Εκτύπωση Κατάστασης</button>
+        <button class="primary-button" data-financial-preview type="button">Προβολή</button>
       </div>
       <section class="page-panel">
         <div class="inline-form">
@@ -205,6 +205,7 @@ export async function renderFinancialYearTasksPage(
   const yearPrintsResults = container.querySelector('[data-year-prints-results]');
   const annualInventoryDetail = container.querySelector('[data-annual-inventory-detail]');
   const closeYearDetail = container.querySelector('[data-close-year-detail]');
+  const pageTitle = container.querySelector('[data-financial-page-title]');
 
   function showMenu() {
     state.source = null;
@@ -216,6 +217,7 @@ export async function renderFinancialYearTasksPage(
     closeYearDetail.hidden = true;
     menu.classList.remove('is-hidden');
     menu.hidden = false;
+    pageTitle.textContent = 'Εργασίες Οικονομικού Έτους';
   }
 
   async function loadYearPrints() {
@@ -315,6 +317,9 @@ export async function renderFinancialYearTasksPage(
       } else if (state.source === 'close-year') {
         annualInventoryDetail.hidden = false;
       } else {
+        pageTitle.textContent = state.source === 'addy'
+          ? 'Έλεγχος Κινήσεων ΑΔΔΥ'
+          : 'Έλεγχος Κινήσεων ΕΧΠ';
         detail.hidden = false;
         void refresh();
       }
@@ -461,15 +466,8 @@ export async function renderFinancialYearTasksPage(
       showToast(error.message || 'Η αποθήκευση απέτυχε.', 'error');
     }
   });
-  container.querySelector('[data-financial-print]').addEventListener('click', async () => {
-    try {
-      const result = await printFinancialYearResults(results);
-      if (result && result.printed === false && result.failureReason) {
-        showToast(`Η εκτύπωση δεν ολοκληρώθηκε: ${result.failureReason}`, 'error');
-      }
-    } catch (error) {
-      showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση της κατάστασης.', 'error');
-    }
+  container.querySelector('[data-financial-preview]').addEventListener('click', () => {
+    openFinancialYearResultsPreview(results, state, showToast);
   });
   container.querySelector('[data-financial-year]').addEventListener('change', (event) => {
     state.fiscalYear = Number(event.target.value) || new Date().getFullYear();
@@ -764,6 +762,55 @@ async function printAnnualDocumentGroup(html, landscape, title, mixedOrientation
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }
+}
+
+function openFinancialYearResultsPreview(results, state, showToast) {
+  document.querySelector('.financial-year-preview-backdrop')?.remove();
+  const sourceLabel = state.source === 'addy' ? 'ΑΔΔΥ' : 'ΕΧΠ';
+  const title = `Έλεγχος Κινήσεων ${sourceLabel}`;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop request-document-backdrop financial-year-preview-backdrop';
+  backdrop.innerHTML = `
+    <section class="request-document-modal financial-year-preview-modal">
+      <header class="material-card-header no-print">
+        <div><p class="eyebrow">ΠΡΟΕΠΙΣΚΟΠΗΣΗ</p><h2>${title}</h2></div>
+        <div class="row-actions">
+          <button class="primary-button" data-print-financial-preview
+            data-export-title="${title}" data-export-orientation="landscape" type="button">Εκτύπωση</button>
+          <button class="secondary-button" data-close-financial-preview type="button">Κλείσιμο</button>
+        </div>
+      </header>
+      <div class="request-document-preview financial-year-preview-content">
+        <style>
+          .financial-year-preview-modal { width: min(1280px, 96vw); max-height: 96vh; }
+          .financial-year-preview-content { max-height: calc(96vh - 100px); overflow: auto; }
+          .financial-year-preview-content .financial-year-print-sheet { box-sizing: border-box; width: min(100%, 297mm); min-height: 210mm; padding: 12mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
+          .financial-year-preview-content .financial-year-print-sheet h3 { margin: 0 0 3mm; font-size: 16pt; }
+          .financial-year-preview-content .financial-year-print-sheet .muted { margin: 0 0 5mm; color: #333; }
+          .financial-year-preview-content .financial-year-print-sheet table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+          .financial-year-preview-content .financial-year-print-sheet th, .financial-year-preview-content .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: left; }
+          .financial-year-preview-content .financial-year-print-sheet th { background: #e8eef5; font-size: 8pt; }
+        </style>
+        <section class="financial-year-print-sheet print-document-area">${results.innerHTML}</section>
+      </div>
+    </section>`;
+  backdrop.addEventListener('click', async (event) => {
+    if (event.target === backdrop || event.target.closest('[data-close-financial-preview]')) {
+      backdrop.remove();
+      return;
+    }
+    if (event.target.closest('[data-print-financial-preview]')) {
+      try {
+        const result = await printFinancialYearResults(results);
+        if (result && result.printed === false && result.failureReason) {
+          showToast(`Η εκτύπωση δεν ολοκληρώθηκε: ${result.failureReason}`, 'error');
+        }
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση της κατάστασης.', 'error');
+      }
+    }
+  });
+  document.body.appendChild(backdrop);
 }
 
 async function printFinancialYearResults(results) {

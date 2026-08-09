@@ -55,7 +55,7 @@ function renderExternalIndexTable(rows) {
       indexTableInput(row, 7, row.indexField7),
       indexTableInput(row, 8, row.indexField8),
       indexTableInput(row, 9, row.indexField9),
-      escapeHtml(row.notes)
+      `<span style="display:block;text-align:left">${escapeHtml(row.notes)}</span>`
     ]
   });
 }
@@ -75,10 +75,10 @@ function renderOrdersIndexTable(rows) {
     cells: (row) => [
       escapeHtml(row.serial),
       escapeHtml(formatDate(row.date)),
-      escapeHtml(row.reason),
+      `<span style="display:block;text-align:left">${escapeHtml(row.reason)}</span>`,
       escapeHtml(formatDate(row.date)),
       indexTableInput(row, 6, row.indexField6),
-      indexTableInput(row, 7, row.indexField7)
+      indexTableInput(row, 7, row.indexField7, true)
     ]
   });
 }
@@ -100,8 +100,8 @@ function renderEditableIndexTable({ className, headers, rows, cells }) {
   `;
 }
 
-function indexTableInput(row, field, value) {
-  return `<input class="index-cell-input" data-index-id="${row.id}" data-index-field="${field}" value="${escapeHtml(value || '')}" />`;
+function indexTableInput(row, field, value, leftAligned = false) {
+  return `<input class="index-cell-input"${leftAligned ? ' style="text-align:left"' : ''} data-index-id="${row.id}" data-index-field="${field}" value="${escapeHtml(value || '')}" />`;
 }
 
 function bindExternalIndexControls(

@@ -975,6 +975,23 @@ function openAmmunitionBatchPreview(table, title) {
       : control.value;
     control.replaceWith(text);
   });
+  const rowsPerPage = 20;
+  const tableHead = printableTable.querySelector('thead')?.outerHTML || '';
+  const rows = [...printableTable.querySelectorAll('tbody > tr')];
+  const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage));
+  const pages = Array.from({ length: pageCount }, (_, pageIndex) => {
+    const pageNumber = pageIndex + 1;
+    const pageRows = rows
+      .slice(pageIndex * rowsPerPage, pageNumber * rowsPerPage)
+      .map((row) => row.outerHTML)
+      .join('');
+    return `
+      <article class="ammunition-batch-preview-page">
+        <h2>${escapeHtml(title)}</h2>
+        <table class="ammunition-batch-registry-table">${tableHead}<tbody>${pageRows}</tbody></table>
+        <footer>Σελίδα ${pageNumber} από Σελίδες ${pageCount}</footer>
+      </article>`;
+  }).join('');
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop request-document-backdrop ammunition-batch-preview-backdrop';
   backdrop.innerHTML = `
@@ -988,10 +1005,16 @@ function openAmmunitionBatchPreview(table, title) {
         </div>
       </header>
       <div class="request-document-preview archived-shares-preview-content">
-        <section class="ammunition-batch-print print-document-area">
-          <h2>${escapeHtml(title)}</h2>
-          ${printableTable.outerHTML}
-        </section>
+        <style>
+          .ammunition-batch-preview-pages { display: grid; gap: 18px; }
+          .ammunition-batch-preview-page { position: relative; box-sizing: border-box; width: min(100%, 297mm); min-height: 210mm; padding: 12mm 12mm 15mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
+          .ammunition-batch-preview-page h2 { margin: 0 0 8mm; font-size: 18pt; }
+          .ammunition-batch-preview-page table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; }
+          .ammunition-batch-preview-page th, .ammunition-batch-preview-page td { padding: 2mm; border: 1px solid #555; color: #000; text-align: left; }
+          .ammunition-batch-preview-page th { background: #e8eef5; }
+          .ammunition-batch-preview-page footer { position: absolute; right: 12mm; bottom: 7mm; font-size: 9pt; }
+        </style>
+        <section class="ammunition-batch-preview-pages print-document-area">${pages}</section>
       </div>
     </section>`;
   backdrop.addEventListener('click', async (event) => {
@@ -1000,10 +1023,7 @@ function openAmmunitionBatchPreview(table, title) {
       return;
     }
     if (event.target.closest('[data-print-training-ammunition-preview]')) {
-      await printAmmunitionBatchTable(
-        backdrop.querySelector('.ammunition-batch-registry-table'),
-        title
-      );
+      await printAmmunitionBatchTable(table, title);
     }
   });
   document.body.appendChild(backdrop);

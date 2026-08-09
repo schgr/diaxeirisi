@@ -115,7 +115,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
 
     <section class="page-panel no-print">
       <div class="requests-status-header">
-        <h3>Κατάσταση αιτήσεων</h3>
+        <h3>Κατάσταση Αιτήσεων</h3>
         <label class="field compact-year-field">
           <span>Έτος</span>
           <select id="requests-year">
