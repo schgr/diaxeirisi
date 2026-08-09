@@ -19,12 +19,12 @@ export async function renderMovementDifferencesPage(container, api, showToast) {
           <button class="home-tile panel corner" data-md-open-protocols type="button">
             <span class="home-tile-icon" aria-hidden="true">ΠΔ</span>
             <span class="home-tile-title">Πρωτόκολλα Διαφορών από Διακίνηση Υλικού</span>
-            <span class="home-tile-code">§ ΔΥ-Α</span>
+            <span class="home-tile-code">§ ΔΥ-1</span>
           </button>
           <button class="home-tile panel corner" data-md-open-indexes type="button">
             <span class="home-tile-icon" aria-hidden="true">ΕΔ</span>
             <span class="home-tile-title">Ευρετήρια Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού</span>
-            <span class="home-tile-code">§ ΔΥ-Β</span>
+            <span class="home-tile-code">§ ΔΥ-2</span>
           </button>
         </div>
       </div>

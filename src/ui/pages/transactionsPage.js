@@ -74,12 +74,12 @@ export async function renderTransactionsPage(
       <button class="home-tile transaction-flow-tile" data-transaction-flow="addy" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΑΔ</span>
         <span class="home-tile-title">ΑΔΔΥ</span>
-        <span class="home-tile-code">§ ΔΣ-Α</span>
+        <span class="home-tile-code">§ ΔΣ-1</span>
       </button>
       <button class="home-tile transaction-flow-tile" data-transaction-flow="exhp" type="button">
         <span class="home-tile-icon" aria-hidden="true">ΕΧ</span>
         <span class="home-tile-title">ΕΧΠ</span>
-        <span class="home-tile-code">§ ΔΣ-Β</span>
+        <span class="home-tile-code">§ ΔΣ-2</span>
       </button>
     </section>
 

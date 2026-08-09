@@ -32,8 +32,8 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
     </section>
 
     <nav class="transaction-flow-home contextual-tile-menu requests-tile-menu" data-requests-menu aria-label="Ενότητες αιτήσεων">
-      <button class="home-tile transaction-flow-tile" data-requests-tab="requests" type="button"><span class="home-tile-icon">ΑΙ</span><span class="home-tile-title">Αιτήσεις</span><span class="home-tile-code">§ ΑΙ-Α</span></button>
-      <button class="home-tile transaction-flow-tile" data-requests-tab="settings" type="button"><span class="home-tile-icon">ΡΥ</span><span class="home-tile-title">Ρυθμίσεις</span><span class="home-tile-code">§ ΑΙ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-requests-tab="requests" type="button"><span class="home-tile-icon">ΑΙ</span><span class="home-tile-title">Αιτήσεις</span><span class="home-tile-code">§ ΑΙ-1</span></button>
+      <button class="home-tile transaction-flow-tile" data-requests-tab="settings" type="button"><span class="home-tile-icon">ΡΥ</span><span class="home-tile-title">Ρυθμίσεις</span><span class="home-tile-code">§ ΑΙ-2</span></button>
     </nav>
     <div class="transaction-tab-panel" data-requests-panel="requests" hidden>
     <section class="page-panel request-panel no-print">

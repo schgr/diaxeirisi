@@ -16,12 +16,12 @@ export { renderChargeCreditOrdersIndex, renderExternalTransactionsIndex, renderI
 export { renderMaterialRegistryPages, renderSharesByCategoryPages };
 
 const PRINT_TILE_META = {
-  registry: { icon: 'ΜΜ', code: '§ ΣΕ-Α' },
-  'share-card': { icon: 'ΜΥ', code: '§ ΣΕ-Β' },
-  'shares-by-category': { icon: 'ΚΥ', code: '§ ΣΕ-Γ' },
-  external: { icon: 'ΕΔ', code: '§ ΕΥ-Α' },
-  orders: { icon: 'ΕΧ', code: '§ ΕΥ-Β' },
-  'balance-differences': { icon: 'ΠΕ', code: '§ ΣΕ-Γ' }
+  registry: { icon: 'ΜΜ', code: '§ Ε-1' },
+  'share-card': { icon: 'ΜΥ', code: '§ Ε-2' },
+  'shares-by-category': { icon: 'ΚΥ', code: '§ Ε-3' },
+  external: { icon: 'ΕΔ', code: '§ ΕΥ-1' },
+  orders: { icon: 'ΕΧ', code: '§ ΕΥ-2' },
+  'balance-differences': { icon: 'ΠΕ', code: '§ Ε-4' }
 };
 const printTabGroups = [
   {

@@ -50,7 +50,7 @@ const sections = [
     type: 'prints',
     hidden: true,
     printOptions: {
-      title: 'Συγκεντρωτικές Εκτυπώσεις',
+      title: 'Εκτυπώσεις',
       menuTitle: 'Μερίδες Υλικού',
       visibleGroups: ['shares'],
       initialGroup: 'shares',
