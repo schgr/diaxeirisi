@@ -27,8 +27,8 @@ export function renderControlledMaterialsBook(cards) {
         </div>
       </div>
       <div class="transaction-flow-home contextual-tile-menu controlled-material-tabs no-print" data-controlled-material-menu>
-        <button class="home-tile transaction-flow-tile" data-controlled-material-tab="materials" type="button"><span class="home-tile-icon">ΕΥ</span><span class="home-tile-title">Ελεγχόμενα Υλικά</span><span class="home-tile-code">Βιβλίο Ελεγχομένων Υλικών</span></button>
-        <button class="home-tile transaction-flow-tile" data-controlled-material-tab="settings" type="button"><span class="home-tile-icon">ΡΥ</span><span class="home-tile-title">Ρυθμίσεις</span><span class="home-tile-code">Ομάδες Ελεγχομένων Υλικών</span></button>
+        <button class="home-tile transaction-flow-tile" data-controlled-material-tab="materials" type="button"><span class="home-tile-icon">ΕΥ</span><span class="home-tile-title">Ελεγχόμενα Υλικά</span><span class="home-tile-code">§ ΕΥ-1</span></button>
+        <button class="home-tile transaction-flow-tile" data-controlled-material-tab="settings" type="button"><span class="home-tile-icon">ΡΥ</span><span class="home-tile-title">Ρυθμίσεις</span><span class="home-tile-code">§ ΕΥ-2</span></button>
       </div>
       <div data-controlled-material-panel="materials" hidden>
         <div class="row-actions controlled-material-actions no-print">

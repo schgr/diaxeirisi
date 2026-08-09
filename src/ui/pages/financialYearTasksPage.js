@@ -301,6 +301,8 @@ export async function renderFinancialYearTasksPage(
   container.querySelectorAll('[data-financial-source]').forEach((button) => {
     button.addEventListener('click', () => {
       state.source = button.dataset.financialSource;
+      pageTitle.textContent = button.querySelector('.home-tile-title')?.textContent.trim()
+        || 'Εργασίες Οικονομικού Έτους';
       menu.classList.add('is-hidden');
       menu.hidden = true;
       if (state.source === 'renumber') {
@@ -317,9 +319,6 @@ export async function renderFinancialYearTasksPage(
       } else if (state.source === 'close-year') {
         annualInventoryDetail.hidden = false;
       } else {
-        pageTitle.textContent = state.source === 'addy'
-          ? 'Έλεγχος Κινήσεων ΑΔΔΥ'
-          : 'Έλεγχος Κινήσεων ΕΧΠ';
         detail.hidden = false;
         void refresh();
       }
