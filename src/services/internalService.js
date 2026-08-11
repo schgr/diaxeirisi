@@ -61,6 +61,31 @@ function createInternalService(db) {
         }));
       }
 
+      if (movement.quantity === 0) {
+        if (!share.requires_composition) {
+          throw new AppError('Η μηδενική ποσότητα επιτρέπεται μόνο για κίνηση υλικών σύνθεσης.', 'VALIDATION_ERROR');
+        }
+        if (!composition.some((component) => Number(component.quantity || 0) > 0)) {
+          throw new AppError('Συμπλήρωσε ποσότητα σε τουλάχιστον ένα υλικό της σύνθεσης.', 'VALIDATION_ERROR');
+        }
+      }
+
+      if (movement.movementType === '\u0395\u03C0\u03B9\u03C3\u03C4\u03C1\u03BF\u03C6\u03AE') {
+        const insufficient = composition.find((component) =>
+          Number(component.quantity || 0) > getDepartmentComponentBalance(
+            repository,
+            department.id,
+            component
+          ) + 0.000001
+        );
+        if (insufficient) {
+          throw new AppError(
+            `Το τμήμα δεν έχει επαρκή ποσότητα για το υλικό σύνθεσης ${insufficient.componentDescription}.`,
+            'VALIDATION_ERROR'
+          );
+        }
+      }
+
       const departmentBalance = repository.getDepartmentShareBalance(department.id, share.id);
 
       if (movement.movementType === 'Επιστροφή' && movement.quantity > departmentBalance) {
@@ -149,10 +174,12 @@ function createInternalService(db) {
         composition: compositionByShare.get(Number(row.share_id)) || []
       }));
       mergeCompositionIntoExistingBalances(balances);
-      return balances.map((balance, index) => ({
+      return balances
+        .filter((balance) => balance.finalQuantity > 0.000001 || balance.composition.length > 0)
+        .map((balance, index) => ({
         ...balance,
         serialNumber: index + 1
-      }));
+        }));
     }
   };
 }
@@ -231,10 +258,38 @@ function mergeCompositionIntoExistingBalances(balances) {
 
       existingBalance.issuedQuantity += Number(component.issuedQuantity || 0);
       existingBalance.returnedQuantity += Number(component.returnedQuantity || 0);
-      existingBalance.finalQuantity += Number(component.finalQuantity || 0);
+      existingBalance.finalQuantity = Math.max(
+        0,
+        existingBalance.finalQuantity + Number(component.finalQuantity || 0)
+      );
+      existingBalance.returnedQuantity = Math.min(
+        existingBalance.returnedQuantity,
+        existingBalance.issuedQuantity
+      );
       return false;
     });
   });
+}
+
+function getDepartmentComponentBalance(repository, departmentId, component) {
+  const directBalance = repository.listDepartmentBalances(departmentId)
+    .filter((row) => compositionMatchesBalance(component, {
+      nominalNumber: row.nominal_number,
+      description: row.description,
+      measurementUnit: row.measurement_unit
+    }))
+    .reduce((total, row) => total + Number(row.final_quantity || 0), 0);
+  const compositionBalance = [...aggregateCompositionMovements(
+    repository.listDepartmentCompositionMovements(departmentId)
+  ).values()]
+    .flatMap((items) => items)
+    .filter((item) => compositionMatchesBalance(component, {
+      nominalNumber: item.componentNominalNumber,
+      description: item.componentDescription,
+      measurementUnit: item.measurementUnit
+    }))
+    .reduce((total, item) => total + Number(item.finalQuantity || 0), 0);
+  return Math.max(0, directBalance + compositionBalance);
 }
 
 function compositionMatchesBalance(component, balance) {

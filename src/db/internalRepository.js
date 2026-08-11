@@ -204,6 +204,7 @@ function createInternalRepository(db) {
           item.description, item.measurement_unit, document.department_name,
           share.projected_quantity
         HAVING final_quantity > 0
+          OR SUM(CASE WHEN TRIM(COALESCE(item.composition_snapshot, '')) <> '' THEN 1 ELSE 0 END) > 0
         ORDER BY
           CASE WHEN item.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
           CAST(item.share_number AS INTEGER),

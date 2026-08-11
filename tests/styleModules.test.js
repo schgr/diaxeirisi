@@ -44,7 +44,7 @@ const baselineModules = modules.filter(
   ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
 );
 const combined = baselineModules.map(({ relativePath, contents }) =>
-  ['./styles/base-layout.css', './styles/transactions-settings.css', './styles/modals-tables.css', './styles/official-prints.css'].includes(relativePath)
+  ['./styles/base-layout.css', './styles/transactions-settings.css', './styles/print-indexes.css', './styles/modals-tables.css', './styles/official-prints.css'].includes(relativePath)
     ? contents.replace(/\r?\n$/, '')
     : contents
 ).join('');

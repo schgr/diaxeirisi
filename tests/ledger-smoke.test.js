@@ -20,7 +20,7 @@ async function run() {
   const testDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-ledger-'));
 
   try {
-    const { formatOfficerName, formatOfficerRank } = await import('../src/ui/officerSignature.js');
+    const { splitOfficerSignature, formatOfficerName, formatOfficerRank } = await import('../src/ui/officerSignature.js');
     const {
       renderChargeCreditOrdersIndex,
       renderExternalTransactionsIndex,
@@ -31,6 +31,16 @@ async function run() {
     const { renderOfficialHandoverProtocol } = await import('../src/ui/handoverProtocol.js');
     assert.strictEqual(formatOfficerName('δΕΛΗΣ γΕΩΡΓΙΟΣ'), 'Δελης Γεωργιος');
     assert.strictEqual(formatOfficerRank('ΣΧΗΣ (ΠΒ)'), 'Σχης (ΠΒ)');
+    assert.deepStrictEqual(
+      splitOfficerSignature('ΟΝΟΜΑ ΕΠΩΝΥΜΟ - Υπλγός'),
+      { name: 'Ονομα Επωνυμο', rank: 'Υπλγός' }
+    );
+    assert.deepStrictEqual(
+      splitOfficerSignature('Υπλγός - Όνομα Επώνυμο'),
+      { name: 'Ονομα Επώνυμο', rank: 'Υπλγός' }
+    );
+    assert.strictEqual(formatOfficerRank('Υπευθυνη ΥΛΙΚΟΥ'), 'Υπευθυνη Υλικου');
+    assert.strictEqual(formatOfficerRank('Ανθστής (ΕΜΘ)'), 'Ανθστής (ΕΜΘ)');
 
     const printSettings = { serviceInfo: { serviceName: '108 Α/Κ ΠΒ' } };
     const externalIndexHtml = renderExternalTransactionsIndex(

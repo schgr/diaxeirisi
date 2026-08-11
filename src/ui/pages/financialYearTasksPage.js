@@ -606,7 +606,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
           <td>${escapeHtml(row.registryNumber)}</td>
           <td>${escapeHtml(row.shareNumber)}</td>
           <td>${escapeHtml(row.ledgerSerial)}</td>
-          <td>${escapeHtml(row.description)}</td>
+          <td class="material-description-cell">${escapeHtml(row.description)}</td>
           <td>${escapeHtml(row.transactionKind)}</td>
           <td>${escapeHtml(formatDate(row.date))}</td>
           <td>${escapeHtml(formatQuantity(row.quantity))}</td>
@@ -620,7 +620,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
       <div><h3>Έλεγχος Κινήσεων ${sourceLabel}</h3><p class="muted">${typeLabel} κινήσεις · ${rows.length} εγγραφές</p></div>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="financial-year-movement-table">
         <thead><tr>
           <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>Α/Α ΔΟΣΟΛΗΨΙΑΣ</th>
           <th>ΠΕΡΙΓΡΑΦΗ</th><th>ΕΙΔΟΣ ΔΟΣΟΛΗΨΙΑΣ</th><th>ΗΜΕΡΟΜΗΝΙΑ</th><th>ΠΟΣΟΤΗΤΑ</th>${unitHeader}

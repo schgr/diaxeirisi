@@ -97,7 +97,7 @@ function renderMovementForm(referenceData) {
         <label class="field"><span>ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</span><input id="internal-nominal" readonly /></label>
         <label class="field"><span>ΠΕΡΙΓΡΑΦΗ</span><input id="internal-description" readonly /></label>
         <label class="field"><span>ΜΟΝΑΔΑ ΜΕΤΡΗΣΗΣ</span><input id="internal-measurement" readonly /></label>
-        <label class="field"><span>ΠΟΣΟΤΗΤΑ</span><input id="internal-quantity" type="number" min="0.001" step="0.001" /></label>
+        <label class="field"><span>ΠΟΣΟΤΗΤΑ</span><input id="internal-quantity" type="number" min="0" step="0.001" /></label>
         <button id="internal-add" class="primary-button" type="button">ΠΡΟΣΘΗΚΗ</button>
       </div>
     </div>
@@ -126,10 +126,15 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
       const department = referenceData.departmentManagers.find((item) => item.id === departmentId);
       const share = findShareByNumber(referenceData.shares, shareSelect.value);
       const shareId = share ? share.id : 0;
-      const quantity = Number(container.querySelector('#internal-quantity').value);
+      const quantityValue = container.querySelector('#internal-quantity').value.trim();
+      const quantity = Number(quantityValue);
       const movementType = container.querySelector('#internal-type').value;
-      if (!department || !share || !movementType || !Number.isFinite(quantity) || quantity <= 0) {
+      if (!department || !share || !movementType || quantityValue === '' || !Number.isFinite(quantity) || quantity < 0) {
         showToast('ΣΥΜΠΛΗΡΩΣΕ ΜΕΡΙΚΗ ΔΙΑΧΕΙΡΙΣΗ, ΚΙΝΗΣΗ, ΜΕΡΙΔΑ ΚΑΙ ΠΟΣΟΤΗΤΑ.', 'error');
+        return;
+      }
+      if (quantity === 0 && !share.requiresComposition) {
+        showToast('Η ΜΗΔΕΝΙΚΗ ΠΟΣΟΤΗΤΑ ΕΠΙΤΡΕΠΕΤΑΙ ΜΟΝΟ ΓΙΑ ΚΙΝΗΣΗ ΥΛΙΚΩΝ ΣΥΝΘΕΣΗΣ.', 'error');
         return;
       }
       if (movementType === 'Επιστροφή') {
@@ -157,6 +162,10 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         composition = await openInternalCompositionDialog(share, quantity);
         if (!composition) return;
       }
+      if (quantity === 0 && !composition.some((component) => Number(component.quantity || 0) > 0)) {
+        showToast('ΣΥΜΠΛΗΡΩΣΕ ΠΟΣΟΤΗΤΑ ΣΕ ΤΟΥΛΑΧΙΣΤΟΝ ΕΝΑ ΥΛΙΚΟ ΤΗΣ ΣΥΝΘΕΣΗΣ.', 'error');
+        return;
+      }
       const draft = {
         documentDate: container.querySelector('#internal-date').value,
         departmentManagerId: departmentId,
@@ -170,7 +179,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         quantity,
         composition
       };
-      if (movementType === 'Επιστροφή') {
+      if (movementType === 'Επιστροφή' && quantity > 0) {
         let allocations = await openInternalRedistributionDialog(
           internalApi,
           referenceData.departmentManagers,

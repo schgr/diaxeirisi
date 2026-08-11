@@ -482,6 +482,19 @@ function getDepartmentCompositionBalances(repository, departmentManagerId, share
       balances.set(key, Number(balances.get(key) || 0) + direction * Number(component.quantity || 0));
     }
   }
+  for (const share of repository.listShares()) {
+    if (Number(share.id) === Number(shareId)) continue;
+    const directBalance = Number(
+      repository.getDepartmentShareBalance(departmentManagerId, share.id) || 0
+    );
+    if (directBalance <= 0.000001) continue;
+    const key = compositionKey({
+      componentNominalNumber: share.nominal_number,
+      componentDescription: share.description,
+      measurementUnit: share.measurement_unit
+    });
+    balances.set(key, Number(balances.get(key) || 0) + directBalance);
+  }
   return balances;
 }
 

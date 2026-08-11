@@ -471,6 +471,17 @@
   }
 }
 
+.charge-credit-orders-index-page > img,
+.charge-credit-orders-index-page > .official-index-cleanup,
+.charge-credit-orders-index-page > .official-index-page-counter,
+.charge-credit-orders-index-page > .official-index-overlay {
+  transform: translateY(-7mm);
+}
+
+.charge-credit-orders-index-page > .official-index-annual-signatures {
+  transform: translateY(3mm);
+}
+
 .controlled-material-print {
   box-sizing: border-box;
   width: 210mm;
@@ -506,10 +517,56 @@
 .controlled-material-print .controlled-materials-table th:nth-child(n+5) { width: 8%; }
 .controlled-material-print .controlled-materials-table .material-description-cell { min-width: 0; }
 
+.controlled-material-print .controlled-materials-table tbody .material-description-cell {
+  text-align: left;
+}
+
+.financial-year-movement-table th,
+.financial-year-movement-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.financial-year-movement-table .material-description-cell {
+  text-align: left;
+}
+
+.serial-registry-print-page {
+  display: flex;
+  flex-direction: column;
+  padding: 7mm 8mm 10mm;
+}
+
+.serial-registry-print-page h2 {
+  margin-bottom: 4mm;
+}
+
+.serial-number-registry-print-table {
+  flex: 1 1 auto;
+  height: 100%;
+  margin-bottom: 5mm;
+}
+
+.serial-registry-print-page footer {
+  right: 8mm;
+  bottom: 4mm;
+}
+
 .controlled-material-print th,
 .controlled-material-print td {
   padding: 1.5mm;
   border: 1px solid #000;
+}
+
+.controlled-material-print .controlled-materials-table th {
+  height: 12mm;
+  padding: 1mm 0.5mm;
+  font-size: 7pt;
+  line-height: 1.05;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .controlled-material-print footer {

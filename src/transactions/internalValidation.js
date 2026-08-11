@@ -3,8 +3,8 @@ const { optionalText, requirePositiveId, requireText } = require('../core/valida
 
 function validateInternalMovement(payload) {
   const quantity = Number(payload && payload.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+  if (!Number.isFinite(quantity) || quantity < 0) {
+    throw new AppError('Η ποσότητα δεν μπορεί να είναι αρνητική.', 'VALIDATION_ERROR');
   }
 
   const movementType = requireText(payload && payload.movementType, 'Είδος Κίνησης');

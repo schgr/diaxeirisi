@@ -82,11 +82,14 @@ const intentionallyChanged = new Set([
   'bindShareCardOpen',
   'descriptionMatchRank',
   'filterAndRankShares',
+  'openShareCard',
   'printMaterialFormDocument',
+  'renderCompositionRows',
   'renderCompositionDocument',
   'renderCompositionDocumentFooter',
   'renderRows',
-  'renderSharesPage'
+  'renderSharesPage',
+  'setCompositionLocked'
 ]);
 assert.strictEqual(new Set(functionNames).size, functionNames.length, 'Baseline has duplicate function names.');
 
@@ -120,6 +123,8 @@ const pageModule = await import(
 assert.deepStrictEqual(Object.keys(pageModule).sort(), expectedExports, 'Public shares page API changed.');
 
 assert.match(combined, /removeEventListener/u, 'Intentional listeners must provide cleanup.');
+assert.match(combined, /<select data-field="measurementUnit"/u, 'Composition measurement units must use a select.');
+assert.match(combined, /settings\.measurementUnits/u, 'Composition measurement units must come from Settings.');
 assert.ok(
   fs.readFileSync(path.join(root, 'src/ui/pages/sharesPage.js'), 'utf8').split(/\r?\n/u).length < 200,
   'sharesPage.js is no longer a small page coordinator.'

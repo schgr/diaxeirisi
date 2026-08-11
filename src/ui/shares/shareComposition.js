@@ -2,7 +2,16 @@ import { escapeHtml } from '../components/forms.js';
 import { formatQuantity } from './shared.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 
-function renderCompositionRows(items, locked = false) {
+function renderMeasurementUnitOptions(measurementUnits, selectedValue) {
+  const selected = String(selectedValue || '');
+  const values = (measurementUnits || []).map((unit) => String(unit.name || unit)).filter(Boolean);
+  if (selected && !values.includes(selected)) values.unshift(selected);
+  return ['<option value="">Επιλογή</option>', ...values.map((value) =>
+    `<option value="${escapeHtml(value)}"${value === selected ? ' selected' : ''}>${escapeHtml(value)}</option>`
+  )].join('');
+}
+
+function renderCompositionRows(items, locked = false, measurementUnits = []) {
   if (!items.length) return '<tr class="empty-record-row"><td colspan="8" class="empty-table">Δεν έχει καταχωρηθεί σύνθεση.</td></tr>';
   const lockedAttribute = locked ? ' readonly' : '';
   const disabledAttribute = locked ? ' disabled' : '';
@@ -10,7 +19,7 @@ function renderCompositionRows(items, locked = false) {
     <tr data-composition-row>
       <td><input data-field="componentNominalNumber" value="${escapeHtml(item.componentNominalNumber || '')}"${lockedAttribute} /></td>
       <td><input data-field="componentDescription" value="${escapeHtml(item.componentDescription || '')}"${lockedAttribute} /></td>
-      <td><input data-field="measurementUnit" value="${escapeHtml(item.measurementUnit || '')}"${lockedAttribute} /></td>
+      <td><select data-field="measurementUnit"${disabledAttribute}>${renderMeasurementUnitOptions(measurementUnits, item.measurementUnit)}</select></td>
       <td><input data-field="projectedQuantity" type="number" min="0.001" step="0.001" value="${escapeHtml(item.quantityPerMaterial ?? item.quantity ?? item.projectedQuantity ?? '')}"${lockedAttribute} /></td>
       <td><span class="record-derived-value">${formatQuantity(item.projectedQuantity ?? '')}</span></td>
       <td><input data-field="notIssuedQuantity" type="number" min="0" step="0.001" value="${escapeHtml(item.notIssuedQuantity ?? '')}"${lockedAttribute} /></td>
@@ -23,6 +32,9 @@ function renderCompositionRows(items, locked = false) {
 function setCompositionLocked(modal, locked) {
   modal.querySelectorAll('[data-composition-row] input').forEach((input) => {
     input.readOnly = locked;
+  });
+  modal.querySelectorAll('[data-composition-row] select').forEach((select) => {
+    select.disabled = locked;
   });
   modal.querySelectorAll('[data-composition-row] [data-remove-record-row]').forEach((button) => {
     button.disabled = locked;

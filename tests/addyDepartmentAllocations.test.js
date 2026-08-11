@@ -189,6 +189,46 @@ async function run() {
     assert.equal(componentBalance.finalQuantity, 10 + compositionBeforeMerge);
     assert.equal(componentBalance.issuedQuantity, 10 + compositionBeforeMerge + 8);
     assert.equal(componentBalance.returnedQuantity, 8);
+    internal.saveMovement({
+      documentDate: '2026-08-10', departmentManagerId: departments[0].id,
+      shareId: share.id,
+      movementType: '\u03A7\u03BF\u03C1\u03AE\u03B3\u03B7\u03C3\u03B7', quantity: 0,
+      notes: '', composition: [{ quantity: 2 }]
+    });
+    assert.equal(
+      internal.listDepartmentBalances(departments[0].id)
+        .find((item) => item.shareNumber === '501').finalQuantity,
+      componentBalance.finalQuantity + 2
+    );
+    internal.saveMovement({
+      documentDate: '2026-08-10', departmentManagerId: departments[0].id,
+      shareId: share.id,
+      movementType: '\u0395\u03C0\u03B9\u03C3\u03C4\u03C1\u03BF\u03C6\u03AE', quantity: 0,
+      notes: '', composition: [{ quantity: 1 }]
+    });
+    assert.equal(
+      internal.listDepartmentBalances(departments[0].id)
+        .find((item) => item.shareNumber === '501').finalQuantity,
+      componentBalance.finalQuantity + 1
+    );
+    assert.throws(() => internal.saveMovement({
+      documentDate: '2026-08-10', departmentManagerId: departments[0].id,
+      shareId: share.id,
+      movementType: '\u03A7\u03BF\u03C1\u03AE\u03B3\u03B7\u03C3\u03B7', quantity: 0,
+      notes: '', composition: [{ quantity: 0 }]
+    }), /τουλάχιστον ένα υλικό της σύνθεσης/u);
+    assert.throws(() => internal.saveMovement({
+      documentDate: '2026-08-10', departmentManagerId: departments[0].id,
+      shareId: componentShare.id,
+      movementType: '\u03A7\u03BF\u03C1\u03AE\u03B3\u03B7\u03C3\u03B7', quantity: 0,
+      notes: '', composition: []
+    }), /μόνο για κίνηση υλικών σύνθεσης/u);
+    assert.throws(() => internal.saveMovement({
+      documentDate: '2026-08-10', departmentManagerId: departments[0].id,
+      shareId: share.id,
+      movementType: '\u0395\u03C0\u03B9\u03C3\u03C4\u03C1\u03BF\u03C6\u03AE', quantity: 1,
+      notes: '', composition: [{ quantity: componentBalance.finalQuantity + 2 }]
+    }), /δεν έχει επαρκή ποσότητα για το υλικό σύνθεσης/u);
     console.log('ADDY department allocation and composition tests passed.');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
