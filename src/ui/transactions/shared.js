@@ -92,7 +92,9 @@ export function isSameIssueReason(left, right) {
 }
 
 export function isCommerceUnit(value) {
-  return normalize(value) === 'εμπόριο';
+  return normalize(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '') === 'εμποριο';
 }
 
 export function displaySupportStatus(value) {

@@ -527,7 +527,29 @@
   vertical-align: middle;
 }
 
+.financial-year-movement-table th {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.15;
+}
+
 .financial-year-movement-table .material-description-cell {
+  text-align: left;
+}
+
+.archived-shares-preview-content .administration-table th,
+.archived-shares-preview-content .administration-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.archived-shares-preview-content .administration-table th {
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.archived-shares-preview-content .administration-table .material-description-cell {
   text-align: left;
 }
 

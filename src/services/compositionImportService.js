@@ -71,12 +71,17 @@ function createCompositionImportService(db) {
       let importedRows = 0;
       for (const { share, rows: groupRows } of groups.values()) {
         const card = sharesService.getShareCard(share.id, Number(openingDate.slice(0, 4)) + 1);
-        const existingByNominal = new Map(
-          card.compositionItems.map((item) => [normalizeKey(item.componentNominalNumber), item])
-        );
+        const existingByNominal = new Map();
+        card.compositionItems.forEach((item) => {
+          const key = normalizeKey(item.componentNominalNumber);
+          if (!existingByNominal.has(key)) existingByNominal.set(key, []);
+          existingByNominal.get(key).push(item);
+        });
         const balance = Number(card.share.accountingBalance || 0);
         const items = groupRows.map((row) => {
-          const existing = row.nominalNumber ? existingByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
+          const existing = row.nominalNumber
+            ? existingByNominal.get(normalizeKey(row.nominalNumber))?.shift()
+            : undefined;
           const componentShare = row.nominalNumber ? sharesByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
           const projectedTotal = row.projectedQuantity * balance;
           return {
@@ -138,7 +143,6 @@ function parseCompositionRows(matrix) {
     COMPOSITION_HEADERS.map((header) => [header, headers.indexOf(normalizeHeader(header))])
   );
   const errors = [];
-  const seen = new Set();
   const rows = [];
 
   matrix.slice(1).forEach((row, offset) => {
@@ -162,10 +166,6 @@ function parseCompositionRows(matrix) {
       errors.push(`Γραμμή ${excelRow}: η Υπάρχουσα Ποσότητα πρέπει να είναι μη αρνητική.`);
       return;
     }
-    const componentKey = nominalNumber || `${description}|${measurementUnit}`;
-    const key = `${normalizeKey(shareNumber)}|${normalizeKey(componentKey)}`;
-    if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${componentKey}.`);
-    seen.add(key);
     rows.push({ shareNumber, nominalNumber, description, measurementUnit, projectedQuantity, existingQuantity });
   });
   if (errors.length) {

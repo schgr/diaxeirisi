@@ -4,11 +4,14 @@ import { readFile } from 'node:fs/promises';
 import { canAddItem, renderAddyRows } from '../src/ui/transactions/entryHelpers.js';
 import { validateSupportDocumentCreditBalances } from '../src/ui/transactions/exhpFormModuleBridge.js';
 import { validateSharedMaterialPayload } from '../src/ui/transactions/exhpOfficialDocuments.js';
-import { findSharesByNominal } from '../src/ui/transactions/shared.js';
+import { findSharesByNominal, isCommerceUnit } from '../src/ui/transactions/shared.js';
 
 const require = createRequire(import.meta.url);
 const { mapAddyDocumentItem } = require('../src/services/transactions/shared.js');
 const { validateAddy } = require('../src/transactions/addyValidation.js');
+
+assert.equal(isCommerceUnit('ΕΜΠΟΡΙΟ'), true);
+assert.equal(isCommerceUnit('Εμπόριο'), true);
 
 const rows = renderAddyRows([{
   shareNumber: '152',
@@ -97,7 +100,7 @@ const mapped = mapAddyDocumentItem({
     transactionType: 'Πίστωση',
     measurementUnit: 'Τεμάχια',
     quantity: 1,
-    unitPrice: null
+    unitPrice: 12.5
   },
   share: {
     share_number: '152',
@@ -111,6 +114,7 @@ assert.deepEqual(
   [mapped.shareNumber, mapped.nominalNumber, mapped.description],
   ['152', '1315231129037', 'ΓΕΜΙΣΜΑΤΑ ΑΥΤΟΚΑΤΑΣΕΞΕΩΣ']
 );
+assert.equal(mapped.column26, 12.5, 'The ADDY unit price must populate field 26.');
 
 const addyStyles = await readFile(new URL('../src/ui/styles/transactions-settings.css', import.meta.url), 'utf8');
 const addyFormSource = await readFile(new URL('../src/ui/transactions/addyForm.js', import.meta.url), 'utf8');

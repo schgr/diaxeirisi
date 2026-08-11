@@ -228,7 +228,7 @@ function renderTrainingAmmunitionBatchRow(share, departments = [], entry = {}, s
   const selectedDepartment = entry.department || (departments.length === 1 ? departments[0].department : '');
   const departmentOptions = [
     '<option value="">Επιλογή</option>',
-    ...departments.map((item) => `<option value="${escapeHtml(item.department)}" ${item.department === selectedDepartment ? 'selected' : ''}>${escapeHtml(item.department)} (${escapeHtml(item.quantity)})</option>`)
+    ...departments.map((item) => `<option value="${escapeHtml(item.department)}" ${item.department === selectedDepartment ? 'selected' : ''}>${escapeHtml(item.department)}</option>`)
   ].join('');
   return `
     <tr data-training-ammunition-batch-row data-training-ammunition-share="${share.id}" data-share-index="${shareIndex}">
@@ -879,8 +879,9 @@ export async function printArchivedSharesTable(table) {
       .archived-shares-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
       .archived-shares-print h2 { margin: 0 0 8mm; font-size: 18pt; }
       .archived-shares-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-      .archived-shares-print th, .archived-shares-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
-      .archived-shares-print th { background: #e8eef5; }
+      .archived-shares-print th, .archived-shares-print td { border: 1px solid #555; padding: 2mm; text-align: center; vertical-align: middle; }
+      .archived-shares-print th { background: #e8eef5; white-space: normal; line-height: 1.15; }
+      .archived-shares-print .material-description-cell { text-align: left; }
       .archived-shares-print .no-print { display: none !important; }
     </style>
     <section class="archived-shares-print print-document-area">
@@ -945,10 +946,12 @@ async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδ
     <style>
       @page { size: A4 landscape; margin: 10mm; }
       .ammunition-batch-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
-      .ammunition-batch-print h2 { margin: 0 0 8mm; font-size: 18pt; }
+      .ammunition-batch-print { break-after: auto !important; page-break-after: auto !important; min-height: 0 !important; }
+      .ammunition-batch-print h2 { margin: 0 0 8mm; font-size: 18pt; text-align: center; }
       .ammunition-batch-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-      .ammunition-batch-print th, .ammunition-batch-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
-      .ammunition-batch-print th { background: #e8eef5; }
+      .ammunition-batch-print th, .ammunition-batch-print td { border: 1px solid #555; padding: 2mm; text-align: center; vertical-align: middle; }
+      .ammunition-batch-print th { background: #e8eef5; white-space: normal; overflow-wrap: normal; line-height: 1.15; }
+      .ammunition-batch-print .material-description-cell { text-align: left; }
       .ammunition-batch-print .no-print { display: none !important; }
     </style>
     <section class="ammunition-batch-print print-document-area"><h2>${escapeHtml(title)}</h2>${printableTable.outerHTML}</section>`;
@@ -1008,10 +1011,11 @@ function openAmmunitionBatchPreview(table, title) {
         <style>
           .ammunition-batch-preview-pages { display: grid; gap: 18px; }
           .ammunition-batch-preview-page { position: relative; box-sizing: border-box; width: min(100%, 297mm); min-height: 210mm; padding: 12mm 12mm 15mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
-          .ammunition-batch-preview-page h2 { margin: 0 0 8mm; font-size: 18pt; }
+          .ammunition-batch-preview-page h2 { margin: 0 0 8mm; font-size: 18pt; text-align: center; }
           .ammunition-batch-preview-page table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; }
-          .ammunition-batch-preview-page th, .ammunition-batch-preview-page td { padding: 2mm; border: 1px solid #555; color: #000; text-align: left; }
-          .ammunition-batch-preview-page th { background: #e8eef5; }
+          .ammunition-batch-preview-page th, .ammunition-batch-preview-page td { padding: 2mm; border: 1px solid #555; color: #000; text-align: center; vertical-align: middle; }
+          .ammunition-batch-preview-page th { background: #e8eef5; white-space: normal; overflow-wrap: normal; line-height: 1.15; }
+          .ammunition-batch-preview-page .material-description-cell { text-align: left; }
           .ammunition-batch-preview-page footer { position: absolute; right: 12mm; bottom: 7mm; font-size: 9pt; }
         </style>
         <section class="ammunition-batch-preview-pages print-document-area">${pages}</section>

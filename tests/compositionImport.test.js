@@ -32,21 +32,24 @@ async function run() {
     const sheet = workbook.addWorksheet('Συνθέσεις');
     sheet.addRow(COMPOSITION_HEADERS);
     sheet.addRow(['13', 'COMP-1', 'Εξάρτημα', 'Τεμάχια', 15, 100]);
+    sheet.addRow(['13', 'COMP-1', 'Δεύτερο εξάρτημα με ίδιο Α/Ο', 'Τεμάχια', 3, 20]);
     sheet.addRow(['13', '', 'Εξάρτημα χωρίς αριθμό ονομαστικού', 'Τεμάχια', 2, 5]);
     await workbook.xlsx.writeFile(input);
 
     const inventoryDate = `${new Date().getFullYear() - 1}-12-31`;
     const result = await importer.importWorkbook(input, inventoryDate);
     assert.strictEqual(result.updatedShares, 1);
-    assert.strictEqual(result.importedRows, 2);
+    assert.strictEqual(result.importedRows, 3);
     const card = shares.getShareCard(share.id, new Date().getFullYear());
     assert.strictEqual(card.share.requiresComposition, true);
     assert.strictEqual(card.compositionItems[0].projectedQuantity, 150);
     assert.strictEqual(card.compositionItems[0].quantityPerMaterial, 15);
     assert.strictEqual(card.compositionItems[0].measurementUnit, 'Τεμάχια');
     assert.strictEqual(card.compositionItems[0].notIssuedQuantity, 50);
-    assert.strictEqual(card.compositionItems[1].componentNominalNumber, '');
-    assert.strictEqual(card.changeSheetEntries.length, 2);
+    assert.strictEqual(card.compositionItems[1].componentNominalNumber, 'COMP-1');
+    assert.strictEqual(card.compositionItems[1].componentDescription, 'Δεύτερο εξάρτημα με ίδιο Α/Ο');
+    assert.strictEqual(card.compositionItems[2].componentNominalNumber, '');
+    assert.strictEqual(card.changeSheetEntries.length, 3);
     assert.strictEqual(card.changeSheetEntries[0].changeDate, `${new Date().getFullYear() - 1}-12-31`);
     assert.strictEqual(card.changeSheetEntries[0].orderReference, 'Απογραφή');
     assert.strictEqual(card.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
