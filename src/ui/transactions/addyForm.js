@@ -254,8 +254,17 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       return;
     }
 
-    if (transactionType === 'Πίστωση' && quantity > Number(share.accountingBalance || 0)) {
-      showToast('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.', 'error');
+    const pendingCredit = state.exhpItems
+      .filter((item) => item.transactionType === 'Πίστωση' && item.shareNumber === share?.shareNumber)
+      .reduce((total, item) => total + Number(item.quantity || 0), 0);
+    if (
+      transactionType === 'Πίστωση' &&
+      pendingCredit + quantity > Number(share.accountingBalance || 0) + 0.000001
+    ) {
+      showToast(
+        `Η ποσότητα πίστωσης υπερβαίνει το υπόλοιπο της μερίδας (διαθέσιμο: ${Number(share.accountingBalance || 0)}).`,
+        'error'
+      );
       return;
     }
 
@@ -368,6 +377,29 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     }
 
     const selectedShare = findShareByNumber(referenceData.shares, controls.shareNumber.value);
+    const nextTransactionType = controls.transactionType.value;
+    const nextShareNumber = controls.shareNumber.value.trim();
+    const nextQuantity = Number(controls.quantity.value);
+    const otherDraftItems = state.items.filter((_item, index) => index !== state.addyEditingIndex);
+    if (otherDraftItems.some((item) => item.transactionType !== nextTransactionType)) {
+      showToast('Στο ίδιο ΑΔΔΥ δεν μπορούν να συνυπάρχουν υλικά Χρέωσης και Πίστωσης.', 'error');
+      return;
+    }
+    if (nextTransactionType === 'Πίστωση') {
+      const availableBalance = Number(
+        selectedShare?.accountingBalance ?? selectedShare?.accounting_balance ?? 0
+      );
+      const pendingCredit = otherDraftItems
+        .filter((item) => item.transactionType === 'Πίστωση' && item.shareNumber === nextShareNumber)
+        .reduce((total, item) => total + Number(item.quantity || 0), 0);
+      if (!selectedShare || pendingCredit + nextQuantity > availableBalance + 0.000001) {
+        showToast(
+          `Η ποσότητα πίστωσης υπερβαίνει το υπόλοιπο της μερίδας (διαθέσιμο: ${availableBalance}).`,
+          'error'
+        );
+        return;
+      }
+    }
     let composition = [];
     if (
       controls.transactionType.value === 'Πίστωση' &&
@@ -676,7 +708,10 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
               transactionType: item.transactionType,
               quantity: Number(item.column22)
             });
-            if (allocations === null) break;
+            if (allocations === null) {
+              showToast('Το ΑΔΔΥ αποθηκεύτηκε χωρίς μεταβολή στις χρεώσεις ή πιστώσεις των τμημάτων.');
+              break;
+            }
             const allocationResult = await transactionsApi.saveAddyDepartmentAllocations(
               result.documentId,
               { entries: [{ addyItemId: item.addyItemId, allocations }] }
@@ -980,7 +1015,7 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
             <thead><tr><th>Τμήμα Μονάδος</th><th>Χρεωμένη ποσότητα</th><th>${isCharge ? 'Ποσότητα χρέωσης' : 'Ποσότητα πίστωσης'}</th></tr></thead>
             <tbody>
               ${balances.length ? balances.map(({ department, quantity: currentQuantity }) => `
-                <tr data-addy-department-allocation-row data-department-id="${department.id}">
+                <tr data-addy-department-allocation-row data-department-id="${department.id}" data-current-quantity="${currentQuantity}">
                   <td>${escapeAddyEditHtml(department.departmentName)}</td>
                   <td class="number-cell">${formatAddyShareBalance(currentQuantity)}</td>
                   <td><input data-addy-department-allocation-quantity type="number" min="0"
@@ -1000,7 +1035,11 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
       </section>`;
     const updateAgreement = () => {
       const inputs = [...modal.querySelectorAll('[data-addy-department-allocation-quantity]:not(:disabled)')];
-      const invalidCredit = !isCharge && inputs.some((input) => Number(input.value || 0) > Number(input.max));
+      const invalidCredit = !isCharge && inputs.some((input) => {
+        const enteredQuantity = Number(input.value || 0);
+        const currentQuantity = Number(input.closest('[data-addy-department-allocation-row]')?.dataset.currentQuantity || 0);
+        return enteredQuantity > 0 && exceedsAddyDepartmentBalance(enteredQuantity, currentQuantity);
+      });
       const total = inputs.reduce((sum, input) => sum + (Number(input.value) || 0), 0);
       const difference = total - quantity;
       modal.querySelector('[data-addy-allocation-total]').textContent = `Σύνολο: ${formatAddyShareBalance(total)} / ${formatAddyShareBalance(quantity)}`;
@@ -1042,6 +1081,10 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
     window.document.body.appendChild(modal);
     updateAgreement();
   });
+}
+
+export function exceedsAddyDepartmentBalance(requestedQuantity, currentQuantity) {
+  return Number(requestedQuantity || 0) > Number(currentQuantity || 0) + 0.000001;
 }
 
 function formatAddyShareBalance(value) {

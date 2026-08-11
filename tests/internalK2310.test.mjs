@@ -1,5 +1,25 @@
 import assert from 'node:assert/strict';
-import { renderK2310Pages } from '../src/ui/pages/chargesPage.js';
+import {
+  exceedsInternalDepartmentBalance,
+  getInternalRedistributionShortfalls,
+  renderK2310Pages
+} from '../src/ui/pages/chargesPage.js';
+import { exceedsAddyDepartmentBalance } from '../src/ui/transactions/addyForm.js';
+
+assert.equal(exceedsAddyDepartmentBalance(0, 0), false);
+assert.equal(exceedsAddyDepartmentBalance(2, 2), false);
+assert.equal(exceedsAddyDepartmentBalance(2.001, 2), true);
+assert.equal(exceedsInternalDepartmentBalance(2, 5, 3), false);
+assert.equal(exceedsInternalDepartmentBalance(2.001, 5, 3), true);
+assert.deepEqual(getInternalRedistributionShortfalls([
+  { redistributionGroup: 'a', movementType: 'Επιστροφή', quantity: 10 },
+  { redistributionGroup: 'a', movementType: 'Χορήγηση', quantity: 4 },
+  { redistributionGroup: 'b', movementType: 'Επιστροφή', quantity: 3 },
+  { redistributionGroup: 'b', movementType: 'Χορήγηση', quantity: 3 }
+]), [{ redistributionGroup: 'a', unallocatedQuantity: 6 }]);
+assert.deepEqual(getInternalRedistributionShortfalls([
+  { redistributionGroup: 'zero', movementType: 'Επιστροφή', quantity: 5 }
+]), [{ redistributionGroup: 'zero', unallocatedQuantity: 5 }]);
 
 const department = {
   departmentName: '1ο Τμήμα',

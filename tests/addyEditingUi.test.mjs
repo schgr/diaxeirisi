@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { canAddItem, renderAddyRows } from '../src/ui/transactions/entryHelpers.js';
+import { validateSupportDocumentCreditBalances } from '../src/ui/transactions/exhpFormModuleBridge.js';
+import { validateSharedMaterialPayload } from '../src/ui/transactions/exhpOfficialDocuments.js';
 import { findSharesByNominal } from '../src/ui/transactions/shared.js';
 
 const require = createRequire(import.meta.url);
 const { mapAddyDocumentItem } = require('../src/services/transactions/shared.js');
+const { validateAddy } = require('../src/transactions/addyValidation.js');
 
 const rows = renderAddyRows([{
   shareNumber: '152',
@@ -38,6 +41,46 @@ assert.equal(
   true,
   'Editing an existing row must remain possible when the draft already has ten rows.'
 );
+
+const validAddyItem = {
+  shareNumber: '152',
+  nominalNumber: 'N-152',
+  description: 'Υλικό δοκιμής',
+  quantity: 1,
+  transactionType: 'Χρέωση',
+  measurementUnit: 'Τεμάχια',
+  materialType: 'Υλικό'
+};
+assert.throws(
+  () => validateAddy({
+    transactionUnit: '104 Α/Κ ΜΜΠ/ΔΥ',
+    items: [validAddyItem, { ...validAddyItem, shareNumber: '153', transactionType: 'Πίστωση' }]
+  }),
+  /δεν μπορούν να συνυπάρχουν υλικά Χρέωσης και Πίστωσης/u
+);
+
+const supportData = {
+  aitiologiaCode: 'z',
+  materials: [{ shareNumber: '152', quantity: 6 }]
+};
+const supportReferenceData = { shares: [{ shareNumber: '152', accountingBalance: 5 }] };
+assert.equal(
+  validateSupportDocumentCreditBalances(supportData, supportReferenceData).valid,
+  false,
+  'An EXHP support document must reject a credit above the share balance.'
+);
+supportData.materials[0].quantity = 5;
+assert.equal(validateSupportDocumentCreditBalances(supportData, supportReferenceData).valid, true);
+
+const toastMessages = [];
+const officialPayload = {
+  items: [{ shareNumber: '152', quantity: 6, _availableQuantity: '5' }]
+};
+assert.equal(
+  validateSharedMaterialPayload(officialPayload, (message) => toastMessages.push(message)),
+  false
+);
+assert.match(toastMessages[0], /υπερβαίνει το διαθέσιμο υπόλοιπο/u);
 
 const duplicateNominalShares = findSharesByNominal([
   { shareNumber: '10', nominalNumber: 'N-100' },

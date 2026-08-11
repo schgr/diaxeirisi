@@ -131,6 +131,26 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         showToast('ΣΥΜΠΛΗΡΩΣΕ ΜΕΡΙΚΗ ΔΙΑΧΕΙΡΙΣΗ, ΚΙΝΗΣΗ, ΜΕΡΙΔΑ ΚΑΙ ΠΟΣΟΤΗΤΑ.', 'error');
         return;
       }
+      if (movementType === 'Επιστροφή') {
+        const balances = await internalApi.listDepartmentBalances(departmentId);
+        const currentBalance = Number(
+          balances.find((item) => Number(item.shareId) === Number(shareId))?.finalQuantity || 0
+        );
+        const pendingReturns = state.drafts
+          .filter((item) =>
+            item.movementType === 'Επιστροφή' &&
+            Number(item.departmentManagerId) === departmentId &&
+            Number(item.shareId) === shareId
+          )
+          .reduce((total, item) => total + Number(item.quantity || 0), 0);
+        if (exceedsInternalDepartmentBalance(quantity, currentBalance, pendingReturns)) {
+          showToast(
+            `Η ποσότητα επιστροφής υπερβαίνει τη χρεωμένη ποσότητα της Μερικής Διαχείρισης (διαθέσιμο: ${formatQuantity(Math.max(0, currentBalance - pendingReturns))}).`,
+            'error'
+          );
+          return;
+        }
+      }
       let composition = state.pendingComposition || [];
       if (share.requiresComposition && (!composition.length || state.pendingCompositionShareId !== share.id)) {
         composition = await openInternalCompositionDialog(share, quantity);
@@ -198,6 +218,18 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
 
   container.querySelector('#internal-save-list').addEventListener('click', async () => {
     if (!state.drafts.length) return;
+    const redistributionShortfalls = getInternalRedistributionShortfalls(state.drafts);
+    if (redistributionShortfalls.length) {
+      const totalUnallocated = redistributionShortfalls
+        .reduce((total, item) => total + item.unallocatedQuantity, 0);
+      const confirmed = window.confirm(
+        `Δεν έχει χρεωθεί σε άλλο τμήμα ολόκληρη η ποσότητα επιστροφής. ` +
+        `Ποσότητα χωρίς νέα χρέωση: ${formatQuantity(totalUnallocated)}.\n\n` +
+        `Θέλετε να συνεχίσετε; Η επιστροφή θα αφαιρεθεί ολόκληρη από το αρχικό τμήμα ` +
+        `και στα άλλα τμήματα θα χρεωθούν μόνο οι ποσότητες που συμπληρώσατε.`
+      );
+      if (!confirmed) return;
+    }
     const button = container.querySelector('#internal-save-list');
     button.disabled = true;
     try {
@@ -582,9 +614,9 @@ async function openInternalRedistributionDialog(internalApi, departments, source
       modal.querySelector('[data-redistribution-mismatch]').textContent = Math.abs(difference) < 0.000001
         ? ''
         : difference < 0
-          ? `Μη συμφωνία: υπολείπονται ${formatQuantity(-difference)}.`
+          ? `Δεν θα χρεωθούν αλλού ${formatQuantity(-difference)}. Θα ζητηθεί επιβεβαίωση κατά την Αποθήκευση.`
           : `Μη συμφωνία: η χρέωση υπερβαίνει κατά ${formatQuantity(difference)}.`;
-      modal.querySelector('[data-confirm-redistribution]').disabled = Math.abs(difference) >= 0.000001;
+      modal.querySelector('[data-confirm-redistribution]').disabled = difference > 0.000001;
     };
     const close = (result) => {
       modal.remove();
@@ -616,6 +648,32 @@ function scaleComposition(composition, allocatedQuantity, returnQuantity) {
   if (!composition.length) return [];
   const ratio = allocatedQuantity / returnQuantity;
   return composition.map((item) => ({ ...item, quantity: Number(item.quantity || 0) * ratio }));
+}
+
+export function getInternalRedistributionShortfalls(drafts) {
+  const groups = new Map();
+  (Array.isArray(drafts) ? drafts : []).forEach((draft) => {
+    if (!draft.redistributionGroup) return;
+    if (!groups.has(draft.redistributionGroup)) {
+      groups.set(draft.redistributionGroup, { returnedQuantity: 0, allocatedQuantity: 0 });
+    }
+    const group = groups.get(draft.redistributionGroup);
+    if (draft.movementType === 'Επιστροφή') {
+      group.returnedQuantity += Number(draft.quantity || 0);
+    } else if (draft.movementType === 'Χορήγηση') {
+      group.allocatedQuantity += Number(draft.quantity || 0);
+    }
+  });
+  return [...groups.entries()]
+    .map(([redistributionGroup, group]) => ({
+      redistributionGroup,
+      unallocatedQuantity: group.returnedQuantity - group.allocatedQuantity
+    }))
+    .filter((item) => item.unallocatedQuantity > 0.000001);
+}
+
+export function exceedsInternalDepartmentBalance(requestedQuantity, currentQuantity, pendingReturns = 0) {
+  return Number(requestedQuantity || 0) + Number(pendingReturns || 0) > Number(currentQuantity || 0) + 0.000001;
 }
 
 function applyShare(container, share) {

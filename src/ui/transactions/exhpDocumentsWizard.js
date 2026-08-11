@@ -32,7 +32,8 @@ import {
   shouldShowOfficialExhpForms,
   syncSupportDocumentMaterialsToExhpItems,
   toLegacyPreviewPayload,
-  validateNewSupportDocumentData
+  validateNewSupportDocumentData,
+  validateSupportDocumentCreditBalances
 } from './exhpFormModuleBridge.js';
 import { getGreekWeekday } from '../../exhpForm/supportingDocs/docIA_pyromaxika.js';
 import { renderDocSTRow } from '../../exhpForm/supportingDocs/docST_clothingSummary.js';
@@ -157,6 +158,15 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
           showToast(validation.errors[0]?.message || 'Συμπλήρωσε τα υποχρεωτικά πεδία.', 'error');
           return;
         }
+        const balanceValidation = validateSupportDocumentCreditBalances(
+          data,
+          state.referenceData,
+          documentsState.currentItems
+        );
+        if (!balanceValidation.valid) {
+          showToast(balanceValidation.message, 'error');
+          return;
+        }
         openNewSupportPreview(renderNewSupportDocumentPrint(data));
       } catch (error) {
         console.error(`Νέο module αιτιολογίας '${reasonCode}' απέτυχε, fallback σε legacy render`, error);
@@ -199,6 +209,15 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         const validation = validateNewSupportDocumentData(data);
         if (!validation.valid) {
           showToast(validation.errors[0]?.message || 'Συμπλήρωσε τα υποχρεωτικά πεδία.', 'error');
+          return;
+        }
+        const balanceValidation = validateSupportDocumentCreditBalances(
+          data,
+          state.referenceData,
+          documentsState.currentItems
+        );
+        if (!balanceValidation.valid) {
+          showToast(balanceValidation.message, 'error');
           return;
         }
         const result = await saveNewSupportDocument(exhpDocsApi, documentsState, documentsState.selectedExhp, data);

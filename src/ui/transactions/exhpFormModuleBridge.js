@@ -611,6 +611,32 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
 }
 
+export function validateSupportDocumentCreditBalances(data, referenceData = {}, existingItems = []) {
+  const items = syncSupportDocumentMaterialsToExhpItems(existingItems, data);
+  const shares = Array.isArray(referenceData?.shares) ? referenceData.shares : [];
+  const creditTotals = new Map();
+  items
+    .filter((item) => item.transactionType === 'Πίστωση' && String(item.shareNumber || '').trim())
+    .forEach((item) => {
+      const shareNumber = String(item.shareNumber).trim();
+      creditTotals.set(shareNumber, (creditTotals.get(shareNumber) || 0) + Number(item.quantity || 0));
+    });
+
+  for (const [shareNumber, quantity] of creditTotals) {
+    const share = shares.find((item) =>
+      String(item.shareNumber || item.share_number || '').trim() === shareNumber
+    );
+    const availableBalance = Number(share?.accountingBalance ?? share?.accounting_balance ?? 0);
+    if (!share || quantity > availableBalance + 0.000001) {
+      return {
+        valid: false,
+        message: `Η ποσότητα πίστωσης για τη μερίδα ${shareNumber} υπερβαίνει το υπόλοιπό της (διαθέσιμο: ${availableBalance}).`
+      };
+    }
+  }
+  return { valid: true, message: '' };
+}
+
 function copyPrimaryMaterialsToSecondary(documentsState, data) {
   const formKey = data.formKey || 'a';
   const secondaryKey = `secondary_${formKey}`;

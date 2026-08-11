@@ -714,7 +714,30 @@ export function bindShareRows(root, prefix, showToast) {
 
 export function validateSharedMaterialPayload(payload, showToast) {
   payload.items = (payload.items || []).filter((item) => String(item.shareNumber || '').trim());
-  if (payload.items.length) return true;
+  if (payload.items.length) {
+    const totals = new Map();
+    payload.items.forEach((item) => {
+      const shareNumber = String(item.shareNumber).trim();
+      const current = totals.get(shareNumber) || {
+        quantity: 0,
+        available: Number(item._availableQuantity)
+      };
+      current.quantity += Number(item.quantity ?? item.qtyPrimary ?? item.qtySecondary ?? 0);
+      if (!Number.isFinite(current.available)) current.available = Number(item._availableQuantity);
+      totals.set(shareNumber, current);
+    });
+    for (const [shareNumber, total] of totals) {
+      if (Number.isFinite(total.available) && total.quantity > total.available + 0.000001) {
+        showToast(
+          `Η ποσότητα για τη μερίδα ${shareNumber} υπερβαίνει το διαθέσιμο υπόλοιπο (διαθέσιμο: ${total.available}).`,
+          'error'
+        );
+        return false;
+      }
+    }
+    payload.items.forEach((item) => { delete item._availableQuantity; });
+    return true;
+  }
   showToast('Προσθέστε τουλάχιστον ένα υλικό με αριθμό μερίδας', 'error');
   return false;
 }
@@ -740,12 +763,13 @@ function collectOfficialExhpDataForm(form, type) {
 }
 
 function collectOfficialFormRows(root, selector) {
-  return [...root.querySelectorAll(selector)].map((row) => Object.fromEntries(
-    [...row.querySelectorAll('[data-official-item-field]')].map((input) => [
+  return [...root.querySelectorAll(selector)].map((row) => ({
+    ...Object.fromEntries([...row.querySelectorAll('[data-official-item-field]')].map((input) => [
       input.dataset.officialItemField,
       input.type === 'number' ? readOptionalNumber(input.value) : input.value.trim()
-    ])
-  )).filter((item) => Object.values(item).some((value) => value !== '' && value !== null));
+    ])),
+    _availableQuantity: row.dataset.availableQuantity
+  })).filter((item) => Object.values(item).some((value) => value !== '' && value !== null));
 }
 
 export function openUselessMaterialFormModal(definition, exhp, data, settings, showToast, onSave) {

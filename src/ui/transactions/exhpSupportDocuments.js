@@ -498,10 +498,13 @@ function bindSupportEditableMaterials(formPanel, showToast) {
 function collectSupportMaterialRows(formPanel, fallbackItems = []) {
   const rows = [...formPanel.querySelectorAll('[data-support-material-items] tr')];
   if (!rows.length) return fallbackItems;
-  return rows.map((row) => Object.fromEntries([...row.querySelectorAll('[data-support-item-field]')].map((input) => [
-    input.dataset.supportItemField,
-    input.type === 'number' ? readOptionalNumber(input.value) : input.value.trim()
-  ]))).filter((item) => Object.values(item).some((value) => value !== '' && value !== null));
+  return rows.map((row) => ({
+    ...Object.fromEntries([...row.querySelectorAll('[data-support-item-field]')].map((input) => [
+      input.dataset.supportItemField,
+      input.type === 'number' ? readOptionalNumber(input.value) : input.value.trim()
+    ])),
+    _availableQuantity: row.dataset.availableQuantity
+  })).filter((item) => Object.values(item).some((value) => value !== '' && value !== null));
 }
 
 function collectSupportTemplateFormData(formPanel) {
