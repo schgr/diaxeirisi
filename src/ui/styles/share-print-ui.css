@@ -633,6 +633,45 @@
 .k2310-document-modal [data-k2310-pages] {
   gap: 24px;
 }
+
+/* Requested +2px typography for the official indexes and K2310 form. */
+.official-index-overlay {
+  font-size: clamp(8px, 0.72vw, 10px);
+}
+
+.official-index-unit,
+.official-index-page-counter {
+  font-size: clamp(9px, 0.88vw, 12px);
+}
+
+.official-index-annual-signatures {
+  font-size: clamp(9px, 0.9vw, 13px);
+}
+
+.k2310-table {
+  font-size: 10px;
+}
+
+.k2310-date-row td {
+  font-size: 9px;
+}
+
+.k2310-horizontal-signatures {
+  font-size: 11px;
+}
+
+.k2310-horizontal-signatures strong {
+  font-size: 12px;
+}
+
+/* Enlarge the fixed share-card fields but preserve movement-row typography. */
+.official-share-overlay:not(.share-movement-overlay) {
+  font-size: clamp(11px, 1vw, 14px);
+}
+
+.official-share-overlay.material-description-overlay:not(.share-movement-overlay) {
+  font-size: clamp(11px, 0.95vw, 13px);
+}
 .app-dialog-backdrop {
   z-index: 100;
 }

@@ -87,6 +87,7 @@ const intentionallyChanged = new Set([
   'renderCompositionRows',
   'renderCompositionDocument',
   'renderCompositionDocumentFooter',
+  'renderOfficialShareRows',
   'renderRows',
   'renderSharesPage',
   'setCompositionLocked'

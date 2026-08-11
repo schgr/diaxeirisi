@@ -431,7 +431,7 @@ function renderOfficialShareRows(rows) {
     66.15 + rowIndex * 1.72,
     column.width,
     1.72,
-    column === columns[7] ? 'material-description-overlay' : ''
+    column === columns[7] ? 'share-movement-overlay material-description-overlay' : 'share-movement-overlay'
   )).join('')).join('');
 }
 
