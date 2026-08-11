@@ -125,8 +125,8 @@ function createInternalService(db) {
       const compositionByShare = aggregateCompositionMovements(
         repository.listDepartmentCompositionMovements(departmentId)
       );
-      return repository.listDepartmentBalances(departmentId).map((row, index) => ({
-        serialNumber: index + 1,
+      const balances = repository.listDepartmentBalances(departmentId).map((row) => ({
+        serialNumber: 0,
         shareId: row.share_id,
         shareNumber: row.share_number,
         nominalNumber: row.nominal_number,
@@ -147,6 +147,11 @@ function createInternalService(db) {
           .map((entry) => String(entry.batch_number || '').trim())
           .filter(Boolean),
         composition: compositionByShare.get(Number(row.share_id)) || []
+      }));
+      mergeCompositionIntoExistingBalances(balances);
+      return balances.map((balance, index) => ({
+        ...balance,
+        serialNumber: index + 1
       }));
     }
   };
@@ -213,6 +218,37 @@ function aggregateCompositionMovements(rows) {
       [...components.values()]
     ])
   );
+}
+
+function mergeCompositionIntoExistingBalances(balances) {
+  balances.forEach((parentBalance) => {
+    parentBalance.composition = parentBalance.composition.filter((component) => {
+      if (Math.abs(Number(component.finalQuantity || 0)) <= 0.000001) return false;
+      const existingBalance = balances.find((candidate) =>
+        candidate !== parentBalance && compositionMatchesBalance(component, candidate)
+      );
+      if (!existingBalance) return true;
+
+      existingBalance.issuedQuantity += Number(component.issuedQuantity || 0);
+      existingBalance.returnedQuantity += Number(component.returnedQuantity || 0);
+      existingBalance.finalQuantity += Number(component.finalQuantity || 0);
+      return false;
+    });
+  });
+}
+
+function compositionMatchesBalance(component, balance) {
+  const componentNominal = normalizeMaterialIdentity(component.componentNominalNumber);
+  const balanceNominal = normalizeMaterialIdentity(balance.nominalNumber);
+  if (componentNominal && balanceNominal) return componentNominal === balanceNominal;
+  return normalizeMaterialIdentity(component.componentDescription) ===
+      normalizeMaterialIdentity(balance.description) &&
+    normalizeMaterialIdentity(component.measurementUnit) ===
+      normalizeMaterialIdentity(balance.measurementUnit);
+}
+
+function normalizeMaterialIdentity(value) {
+  return String(value || '').trim().toLocaleUpperCase('el-GR');
 }
 
 module.exports = {

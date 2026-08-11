@@ -167,6 +167,28 @@ async function run() {
       }] }]
     }] });
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].finalQuantity, 3);
+
+    const compositionBeforeMerge = internal
+      .listDepartmentBalances(departments[0].id)[0].composition[0].finalQuantity;
+    shares.addShare({
+      shareNumber: '501', nominalNumber: 'COMP-1', description: 'Ξ£Ο…ΟƒΟ„Ξ±Ο„ΞΉΞΊΟ',
+      materialType: 'Ξ¥Ξ»ΞΉΞΊΟ', measurementUnit: 'Ξ¤ΞµΞΌΞ¬Ο‡ΞΉΞ±', projectedQuantity: 0,
+      accountingBalance: 20, chargedQuantity: 0
+    });
+    const componentShare = shares.listShares().find((item) => item.shareNumber === '501');
+    internal.saveMovement({
+      documentDate: '2026-08-09', departmentManagerId: departments[0].id,
+      shareId: componentShare.id,
+      movementType: '\u03A7\u03BF\u03C1\u03AE\u03B3\u03B7\u03C3\u03B7', quantity: 10,
+      notes: '', composition: []
+    });
+    const mergedBalances = internal.listDepartmentBalances(departments[0].id);
+    const parentBalance = mergedBalances.find((item) => item.shareNumber === '500');
+    const componentBalance = mergedBalances.find((item) => item.shareNumber === '501');
+    assert.equal(parentBalance.composition.length, 0);
+    assert.equal(componentBalance.finalQuantity, 10 + compositionBeforeMerge);
+    assert.equal(componentBalance.issuedQuantity, 10 + compositionBeforeMerge + 8);
+    assert.equal(componentBalance.returnedQuantity, 8);
     console.log('ADDY department allocation and composition tests passed.');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
