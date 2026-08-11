@@ -246,24 +246,26 @@ export function renderExhpSupportingDocuments(documents = []) {
     .split(/\r?\n|\s*[;|·•]\s*/gu)
     .map((entry) => entry.trim())
     .filter(Boolean));
-  const visibleDocuments = normalizedDocuments.slice(0, 6);
-  if (normalizedDocuments.length > 6) {
-    visibleDocuments[5] = normalizedDocuments.slice(5).join(' · ');
+  const visibleDocuments = normalizedDocuments.slice(0, 8);
+  if (normalizedDocuments.length > 8) {
+    visibleDocuments[7] = normalizedDocuments.slice(7).join(' · ');
   }
   const positions = [
     [50.8, 81.0],
-    [50.8, 82.65],
-    [50.8, 84.3],
+    [50.8, 82.25],
+    [50.8, 83.5],
+    [50.8, 84.75],
     [73.8, 81.0],
-    [73.8, 82.65],
-    [73.8, 84.3]
+    [73.8, 82.25],
+    [73.8, 83.5],
+    [73.8, 84.75]
   ];
   return visibleDocuments.map((document, index) => exhpStaticOverlay(
     document,
     positions[index][0],
     positions[index][1],
     22.5,
-    1.55,
+    1.15,
     `material-description-overlay exhp-supporting-document exhp-supporting-document-${index + 1}`
   )).join('');
 }

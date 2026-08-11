@@ -718,6 +718,51 @@
   font-size: clamp(7px, 0.64vw, 10px);
   line-height: 1.05;
 }
+
+@media screen {
+  .exhp-document-backdrop .exhp-field-18-signature {
+    height: 4.2% !important;
+    overflow: visible;
+  }
+
+  .exhp-document-backdrop .exhp-field-18-signature .exhp-officer-signature strong {
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .exhp-document-backdrop .exhp-field-18-signature .exhp-officer-signature em {
+    font-size: 6px;
+    line-height: 1;
+  }
+}
+
+@media print {
+  .exhp-faithful-page .exhp-static-overlay {
+    font-size: clamp(12px, calc(1vw + 2px), 17px);
+  }
+
+  .exhp-faithful-page .exhp-row-overlay {
+    font-size: clamp(9px, calc(0.72vw + 2px), 13px);
+  }
+
+  .exhp-faithful-page .exhp-supporting-document,
+  .exhp-faithful-page .exhp-front-footer-label {
+    font-size: clamp(9px, calc(0.66vw + 2px), 12px);
+  }
+
+  .exhp-faithful-page .exhp-front-signature .exhp-officer-signature strong {
+    font-size: clamp(10px, calc(0.72vw + 2px), 13px);
+  }
+
+  .exhp-faithful-page .exhp-front-signature .exhp-officer-signature em {
+    font-size: clamp(9px, calc(0.64vw + 2px), 12px);
+  }
+
+  .exhp-faithful-page .exhp-field-15-signature,
+  .exhp-faithful-page .exhp-field-18-signature {
+    transform: translateX(-5px);
+  }
+}
 .exhp-front-footer-label-mask {
   z-index: 2;
   background: #fff;

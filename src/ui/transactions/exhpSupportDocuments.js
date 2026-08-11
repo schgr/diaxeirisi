@@ -221,8 +221,8 @@ export function renderExhpOtherSupportInputs(value = '') {
     .split(/\r?\n|\s*[;|·•]\s*/gu)
     .map((entry) => entry.trim())
     .filter(Boolean)
-    .slice(0, 6);
-  return Array.from({ length: 6 }, (_unused, index) => `
+    .slice(0, 8);
+  return Array.from({ length: 8 }, (_unused, index) => `
     <input data-exhp-other-support value="${escapeHtml(entries[index] || '')}"
       placeholder="Δικαιολογητικό ${index + 1}: τίτλος / αριθμός / ημερομηνία" />
   `).join('');

@@ -19,18 +19,18 @@ assert.match(html, /exhp-field-18-signature exhp-top-line-signature" style="left
 
 const documentsHtml = renderExhpSupportingDocuments([
   'Document 1', 'Document 2', 'Document 3', 'Document 4',
-  'Document 5', 'Document 6', 'Document 7'
+  'Document 5', 'Document 6', 'Document 7', 'Document 8', 'Document 9'
 ]);
-assert.equal((documentsHtml.match(/exhp-supporting-document-/gu) || []).length, 6);
+assert.equal((documentsHtml.match(/exhp-supporting-document-/gu) || []).length, 8);
 assert.match(documentsHtml, /exhp-supporting-document-1" style="left:50\.8%;top:81%;/u);
-assert.match(documentsHtml, /exhp-supporting-document-3" style="left:50\.8%;top:84\.3%;/u);
-assert.match(documentsHtml, /exhp-supporting-document-4" style="left:73\.8%;top:81%;/u);
-assert.match(documentsHtml, /Document 6 · Document 7/u);
+assert.match(documentsHtml, /exhp-supporting-document-4" style="left:50\.8%;top:84\.75%;/u);
+assert.match(documentsHtml, /exhp-supporting-document-5" style="left:73\.8%;top:81%;/u);
+assert.match(documentsHtml, /Document 8 · Document 9/u);
 
 const delimitedDocumentsHtml = renderExhpSupportingDocuments([
-  'Document 1; Document 2\nDocument 3 · Document 4|Document 5•Document 6'
+  'Document 1; Document 2\nDocument 3 · Document 4|Document 5•Document 6;Document 7;Document 8'
 ]);
-assert.equal((delimitedDocumentsHtml.match(/exhp-supporting-document-/gu) || []).length, 6);
-assert.match(delimitedDocumentsHtml, /exhp-supporting-document-6/u);
+assert.equal((delimitedDocumentsHtml.match(/exhp-supporting-document-/gu) || []).length, 8);
+assert.match(delimitedDocumentsHtml, /exhp-supporting-document-8/u);
 
 console.log('EXHP supporting-document grid and signature alignment test passed.');
