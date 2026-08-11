@@ -718,3 +718,24 @@
   font-size: clamp(7px, 0.64vw, 10px);
   line-height: 1.05;
 }
+.exhp-front-footer-label {
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  padding: 1px 2px 0;
+  background: #fff;
+  font-size: clamp(7px, 0.66vw, 10px);
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.exhp-footer-label-left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.exhp-footer-label-right {
+  justify-content: center;
+  text-align: center;
+}

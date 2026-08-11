@@ -110,6 +110,7 @@ export function renderExhpDocument(documentData) {
           ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
+          ${renderExhpFrontFooterLabels()}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 75.35, 11.5, 2.7, 'exhp-field-18-signature exhp-top-line-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
@@ -204,6 +205,26 @@ export function renderExhpFrontSignature(value, left, top, width, height, classN
     `exhp-front-signature ${className}`.trim(),
     true
   );
+}
+
+
+
+export function renderExhpFrontFooterLabels() {
+  const labels = [
+    ['(15) Ο ΔΙΑΧΕΙΡ.', 1.75, 8.5, 'exhp-footer-label-left'],
+    ['(16) Ο ΒΟΗΘΟΣ ΓΕΝ ΔΙΑΧ', 12.55, 13.4, 'exhp-footer-label-left'],
+    ['(18) ΤΟ ΛΟΓΙΣΤΗΡΙΟ', 47.35, 9.8, 'exhp-footer-label-left'],
+    ['(15) Ο ΔΙΑΧΕΙΡ.', 79.15, 8.4, 'exhp-footer-label-right'],
+    ['(16) Ο ΒΟΗΘΟΣ ΓΕΝ ΔΙΑΧ', 87.65, 10.65, 'exhp-footer-label-right']
+  ];
+  return labels.map(([label, left, width, className]) => exhpStaticOverlay(
+    label,
+    left,
+    73.25,
+    width,
+    1.65,
+    `exhp-front-footer-label ${className}`
+  )).join('');
 }
 
 
