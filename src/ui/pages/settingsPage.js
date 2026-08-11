@@ -1,4 +1,5 @@
 import { escapeHtml, field, getFormData } from '../components/forms.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import { requestPriorityColumns, requestPriorityRows } from '../requestPriorities.js';
 
 const materialCategorySection = {
@@ -645,7 +646,10 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
   });
 
   container.querySelector('[data-backup-restore]')?.addEventListener('click', async () => {
-    if (!window.confirm('Η εφαρμογή θα επανεκκινηθεί και τα τρέχοντα δεδομένα θα αντικατασταθούν. Θα δημιουργηθεί πρώτα αντίγραφο ασφαλείας. Συνέχεια;')) return;
+    if (!await showConfirmDialog(
+      'Η εφαρμογή θα επανεκκινηθεί και τα τρέχοντα δεδομένα θα αντικατασταθούν. Θα δημιουργηθεί πρώτα αντίγραφο ασφαλείας. Συνέχεια;',
+      { title: 'Επαναφορά αντιγράφου ασφαλείας', confirmLabel: 'Επαναφορά', danger: true }
+    )) return;
     try {
       const result = await runBackupAction((taskId) => window.appApi.backup.restore(taskId));
       if (result) showToast('Το αντίγραφο ετοιμάστηκε. Η εφαρμογή επανεκκινείται.');
@@ -707,7 +711,10 @@ function bindInitialInventoryEvents(container, settingsApi, showToast) {
       showToast(status.textContent, 'error');
       return;
     }
-    if (!window.confirm('Η εισαγωγή θα δημιουργήσει νέες μερίδες και θα ενημερώσει τις υπάρχουσες βάσει του αριθμού μερίδας. Να συνεχιστεί;')) return;
+    if (!await showConfirmDialog(
+      'Η εισαγωγή θα δημιουργήσει νέες μερίδες και θα ενημερώσει τις υπάρχουσες βάσει του αριθμού μερίδας. Να συνεχιστεί;',
+      { title: 'Εισαγωγή αρχικής απογραφής', confirmLabel: 'Εισαγωγή' }
+    )) return;
 
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
@@ -766,7 +773,10 @@ function bindCompositionImportEvents(container, settingsApi, showToast) {
       showToast(status.textContent, 'error');
       return;
     }
-    if (!window.confirm('Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;')) return;
+    if (!await showConfirmDialog(
+      'Οι συνθέσεις των μερίδων που περιλαμβάνονται στο Excel θα αντικατασταθούν. Να συνεχιστεί;',
+      { title: 'Αντικατάσταση συνθέσεων', confirmLabel: 'Αντικατάσταση', danger: true }
+    )) return;
     importButton.disabled = true;
     const taskId = crypto.randomUUID();
     const stopProgress = window.appApi.heavyTasks.onProgress((progress) => {
@@ -831,7 +841,10 @@ function bindClothingSettings(container, clothingApi, showToast, initialItems) {
     const itemIndex = items.findIndex((item) => item.id === itemId);
 
     if (event.target.closest('[data-delete-clothing]')) {
-      if (!window.confirm('Να διαγραφεί το είδος ιματισμού;')) return;
+      if (!await showConfirmDialog(
+        'Να διαγραφεί το είδος ιματισμού;',
+        { title: 'Διαγραφή είδους ιματισμού', confirmLabel: 'Διαγραφή', danger: true }
+      )) return;
       try {
         await clothingApi.deleteItem(itemId);
         await refreshSection();

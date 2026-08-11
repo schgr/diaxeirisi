@@ -1,3 +1,10 @@
+const {
+  readAddyComposition,
+  compositionKey,
+  validateDepartmentCompositionAllocations,
+  getDepartmentCompositionBalances
+} = require('./addyService');
+
 function createExhpService(dependencies) {
   const { repository, settingsService, validateExhp, isNominalNumberTransferReason, requirePositiveId } = dependencies;
   const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, compareShareNumbers } = dependencies.shared;
@@ -69,6 +76,84 @@ function createExhpService(dependencies) {
         },
         message: `Η ΕΧΠ ${registryNumber}/${exhp.fiscalYear} αποθηκεύτηκε.`
       };
+    },
+
+    saveExhpDepartmentAllocations(idValue, payload = {}) {
+      const documentId = requirePositiveId(idValue);
+      const document = repository.getExhpDocument(documentId);
+      if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');
+      if (repository.isFiscalYearClosed(Number(document.fiscal_year))) {
+        throw new Error(`Το οικονομικό έτος ${document.fiscal_year} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
+      }
+      const savedItems = new Map(repository.listExhpDocumentItems(documentId)
+        .map((item) => [Number(item.id), item]));
+      const entries = Array.isArray(payload.entries) ? payload.entries : [];
+
+      repository.transaction(() => {
+        for (const entry of entries) {
+          const item = savedItems.get(requirePositiveId(entry.exhpItemId));
+          if (!item) throw new Error('Το υλικό της ΕΧΠ δεν βρέθηκε.');
+          const allocations = Array.isArray(entry.allocations) ? entry.allocations : [];
+          const total = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
+          if (!allocations.length || Math.abs(total - Number(item.quantity)) >= 0.000001) {
+            throw new Error('Η κατανομή στα τμήματα δεν συμφωνεί με την ποσότητα της ΕΧΠ.');
+          }
+          const share = repository.findShareByNumber(item.share_number);
+          if (!share) throw new Error('Η μερίδα της ΕΧΠ δεν βρέθηκε.');
+          const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';
+          const expectedComposition = readAddyComposition(item.composition_snapshot);
+          const validatedComposition = validateDepartmentCompositionAllocations(
+            allocations,
+            expectedComposition,
+            Number(item.quantity)
+          );
+
+          for (const [allocationIndex, allocation] of allocations.entries()) {
+            const departmentId = requirePositiveId(allocation.departmentManagerId);
+            const quantity = Number(allocation.quantity);
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+              throw new Error('Η κατανομή στα τμήματα περιέχει μη έγκυρη ποσότητα.');
+            }
+            const department = repository.listDepartmentManagers()
+              .find((candidate) => Number(candidate.id) === departmentId);
+            if (!department) throw new Error('Το επιλεγμένο τμήμα δεν βρέθηκε.');
+            if (movementType === 'Επιστροφή' && quantity > repository.getDepartmentShareBalance(department.id, share.id)) {
+              throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή χρεωμένη ποσότητα.`);
+            }
+            const composition = validatedComposition[allocationIndex] || [];
+            if (movementType === 'Επιστροφή' && composition.length) {
+              const balances = getDepartmentCompositionBalances(repository, department.id, share.id);
+              const insufficient = composition.find((component) =>
+                component.quantity > Number(balances.get(compositionKey(component)) || 0) + 0.000001
+              );
+              if (insufficient) {
+                throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή ποσότητα για το υλικό σύνθεσης ${insufficient.componentDescription}.`);
+              }
+            }
+            const internalDocumentId = repository.createInternalDocument({
+              fiscalYear: Number(document.fiscal_year),
+              serialNumber: repository.getNextInternalSerial(Number(document.fiscal_year)),
+              documentDate: document.document_date,
+              departmentManagerId: department.id,
+              departmentName: department.department_name,
+              departmentHead: department.department_head,
+              movementType,
+              notes: `ΕΧΠ ${document.registry_number}/${document.fiscal_year}`
+            });
+            repository.createInternalItem(internalDocumentId, {
+              shareId: share.id,
+              shareNumber: share.share_number,
+              nominalNumber: share.nominal_number,
+              description: share.description,
+              measurementUnit: share.measurement_unit,
+              quantity,
+              composition
+            });
+            repository.adjustChargedQuantity(share.id, movementType === 'Χορήγηση' ? quantity : -quantity);
+          }
+        }
+      });
+      return { message: 'Οι χρεώσεις και πιστώσεις των τμημάτων από την ΕΧΠ αποθηκεύτηκαν.' };
     },
 
     listExhpDocuments() {

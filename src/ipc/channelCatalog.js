@@ -84,6 +84,7 @@ const IPC_CHANNELS = Object.freeze([
   "transactions:update-addy",
   "transactions:delete-addy",
   "transactions:save-exhp",
+  "transactions:save-exhp-department-allocations",
   "transactions:exhp-documents",
   "transactions:get-exhp-document",
   "transactions:update-exhp-metadata",

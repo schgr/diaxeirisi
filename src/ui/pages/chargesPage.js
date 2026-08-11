@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 
 const internalMovementDraftState = {
@@ -222,11 +223,12 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
     if (redistributionShortfalls.length) {
       const totalUnallocated = redistributionShortfalls
         .reduce((total, item) => total + item.unallocatedQuantity, 0);
-      const confirmed = window.confirm(
+      const confirmed = await showConfirmDialog(
         `Δεν έχει χρεωθεί σε άλλο τμήμα ολόκληρη η ποσότητα επιστροφής. ` +
         `Ποσότητα χωρίς νέα χρέωση: ${formatQuantity(totalUnallocated)}.\n\n` +
         `Θέλετε να συνεχίσετε; Η επιστροφή θα αφαιρεθεί ολόκληρη από το αρχικό τμήμα ` +
-        `και στα άλλα τμήματα θα χρεωθούν μόνο οι ποσότητες που συμπληρώσατε.`
+        `και στα άλλα τμήματα θα χρεωθούν μόνο οι ποσότητες που συμπληρώσατε.`,
+        { title: 'Μερική ανακατανομή επιστροφής' }
       );
       if (!confirmed) return;
     }

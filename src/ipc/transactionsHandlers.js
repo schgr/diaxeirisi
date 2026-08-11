@@ -13,6 +13,7 @@ const CHANNELS = Object.freeze([
   "transactions:update-addy",
   "transactions:delete-addy",
   "transactions:save-exhp",
+  "transactions:save-exhp-department-allocations",
   "transactions:exhp-documents",
   "transactions:get-exhp-document",
   "transactions:update-exhp-metadata",
@@ -86,6 +87,9 @@ function registerTransactionsHandlers({
     );
   register('transactions:save-exhp', async (_event, payload) =>
       safeInvoke(() => services.transactions.saveExhp(payload))
+    );
+  register('transactions:save-exhp-department-allocations', async (_event, documentId, payload) =>
+      safeInvoke(() => services.transactions.saveExhpDepartmentAllocations(documentId, payload))
     );
   register('transactions:exhp-documents', async () =>
       safeInvoke(() => services.transactions.listExhpDocuments())

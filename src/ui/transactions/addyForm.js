@@ -13,6 +13,7 @@ import {
 } from './exhpSupportDocuments.js';
 import { saveDraftExhpDocuments } from './exhpOfficialDocuments.js';
 import { openAddyDocument, shouldOpenAddyDocument } from './addyPrint.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import { openExhpDocument } from './exhpPrint.js';
 import {
   applyExhpShareDefaults,
@@ -526,7 +527,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
       try {
         const exhpDate = container.querySelector('#exhp-date').value;
-        if (!confirmFutureTransactionDate(exhpDate)) return;
+    if (!await confirmFutureTransactionDate(exhpDate)) return;
         captureExhpDraftSupports(container, state.exhpDraftSupports);
         state.exhpDocumentsState.currentItems = state.exhpItems;
         let saveExhpItems = state.exhpItems;
@@ -573,6 +574,45 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           supports,
           items: saveExhpItems
         });
+        for (const transactionType of ['Πίστωση', 'Χρέωση']) {
+          const savedItems = (result.document?.items || []).filter((item) =>
+            item.transactionType === transactionType && item.exhpItemId
+          );
+          if (!savedItems.length) continue;
+          const updateDepartments = await showConfirmDialog(
+            `Θέλετε να γίνει ${transactionType === 'Χρέωση' ? 'χρέωση' : 'πίστωση'} των υλικών της ΕΧΠ στις Μερικές Διαχειρίσεις;`,
+            { title: `${transactionType} ΕΧΠ στις Μερικές Διαχειρίσεις`, confirmLabel: 'Ναι', cancelLabel: 'Όχι' }
+          );
+          if (!updateDepartments) continue;
+          for (const item of savedItems) {
+            const share = findShareByNumber(referenceData.shares, item.shareNumber);
+            const allocations = await openAddyDepartmentAllocationDialog({
+              departments: referenceData.departmentManagers || [],
+              share,
+              shareNumber: item.shareNumber,
+              description: item.description,
+              transactionType: item.transactionType,
+              quantity: Number(item.quantity),
+              documentLabel: 'ΕΧΠ'
+            });
+            if (allocations === null) break;
+            const finalAllocations = share?.requiresComposition && item.composition?.length
+              ? await openAddyCompositionAllocationDialog({
+                  departments: referenceData.departmentManagers || [],
+                  share,
+                  allocations,
+                  composition: item.composition,
+                  transactionType: item.transactionType
+                })
+              : allocations;
+            if (finalAllocations === null) break;
+            const allocationResult = await transactionsApi.saveExhpDepartmentAllocations(
+              result.documentId,
+              { entries: [{ exhpItemId: item.exhpItemId, allocations: finalAllocations }] }
+            );
+            showToast(allocationResult.message);
+          }
+        }
         state.exhpItems = saveExhpItems;
         state.exhpDocumentsState.currentItems = state.exhpItems;
         renderExhpEntryState(container, state);
@@ -688,7 +728,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   controls.save.addEventListener('click', async () => {
     try {
-      if (!confirmFutureTransactionDate(controls.date.value)) return;
+      if (!await confirmFutureTransactionDate(controls.date.value)) return;
       const result = await transactionsApi.saveAddy({
         documentDate: controls.date.value,
         transactionUnit: controls.unit.value.trim(),
@@ -697,6 +737,16 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         items: state.items
       });
       showToast(result.message || 'Το ΑΔΔΥ αποθηκεύτηκε.');
+      const transactionType = result.document?.items?.[0]?.transactionType || '';
+      const updateDepartments = await showConfirmDialog(
+        `Θέλετε να γίνει ${transactionType === 'Χρέωση' ? 'χρέωση' : 'πίστωση'} των υλικών στις Μερικές Διαχειρίσεις;`,
+        {
+          title: `${transactionType || 'Ενημέρωση'} Μερικών Διαχειρίσεων`,
+          confirmLabel: 'Ναι',
+          cancelLabel: 'Όχι'
+        }
+      );
+      if (updateDepartments) {
         try {
           for (const item of result.document?.items || []) {
             const share = findShareByNumber(referenceData.shares, item.shareNumber);
@@ -712,9 +762,22 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
               showToast('Το ΑΔΔΥ αποθηκεύτηκε χωρίς μεταβολή στις χρεώσεις ή πιστώσεις των τμημάτων.');
               break;
             }
+            const finalAllocations = share?.requiresComposition && item.composition?.length
+              ? await openAddyCompositionAllocationDialog({
+                  departments: referenceData.departmentManagers || [],
+                  share,
+                  allocations,
+                  composition: item.composition,
+                  transactionType: item.transactionType
+                })
+              : allocations;
+            if (finalAllocations === null) {
+              showToast('Το ΑΔΔΥ αποθηκεύτηκε χωρίς μεταβολή στις χρεώσεις ή πιστώσεις των τμημάτων.');
+              break;
+            }
             const allocationResult = await transactionsApi.saveAddyDepartmentAllocations(
               result.documentId,
-              { entries: [{ addyItemId: item.addyItemId, allocations }] }
+              { entries: [{ addyItemId: item.addyItemId, allocations: finalAllocations }] }
             );
             showToast(allocationResult.message);
           }
@@ -724,6 +787,9 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
             'error'
           );
         }
+      } else {
+        showToast('Το ΑΔΔΥ αποθηκεύτηκε χωρίς μεταβολή στις Μερικές Διαχειρίσεις.');
+      }
         if (result.document && shouldOpenAddyDocument(result.document)) {
           openAddyDocument(result.document);
         }
@@ -983,7 +1049,7 @@ function openAddyShareSelectionDialog(shares) {
   });
 }
 
-async function openAddyDepartmentAllocationDialog({ departments, share, shareNumber, description, transactionType, quantity }) {
+async function openAddyDepartmentAllocationDialog({ departments, share, shareNumber, description, transactionType, quantity, documentLabel = 'ΑΔΔΥ' }) {
   const availableDepartments = departments.length
     ? departments
     : (await window.appApi.internal.getReferenceData()).departmentManagers;
@@ -1004,8 +1070,8 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
             <p class="eyebrow">${isCharge ? 'ΧΡΕΩΣΗ ΤΜΗΜΑΤΩΝ' : 'ΠΙΣΤΩΣΗ ΤΜΗΜΑΤΩΝ'}</p>
             <h2 id="addy-department-allocation-title">${escapeAddyEditHtml(shareNumber)} — ${escapeAddyEditHtml(description)}</h2>
             <p class="muted">${isCharge
-              ? 'Κατανείμετε την ποσότητα του ΑΔΔΥ στα τμήματα.'
-              : 'Επιλέξτε από ποια τμήματα θα αφαιρεθεί η ποσότητα του ΑΔΔΥ.'}
+              ? `Κατανείμετε την ποσότητα του ${escapeAddyEditHtml(documentLabel)} στα τμήματα.`
+              : `Επιλέξτε από ποια τμήματα θα αφαιρεθεί η ποσότητα του ${escapeAddyEditHtml(documentLabel)}.`}
               Οι κινήσεις θα γίνουν μόνο αν πατήσετε Αποθήκευση.</p>
             ${share?.requiresComposition ? '<p class="muted">Η σύνθεση θα κατανεμηθεί αναλογικά σε κάθε τμηματική κίνηση.</p>' : ''}
           </div>
@@ -1080,6 +1146,120 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
     window.document.addEventListener('keydown', onKeyDown);
     window.document.body.appendChild(modal);
     updateAgreement();
+  });
+}
+
+async function openAddyCompositionAllocationDialog({ departments, share, allocations, composition, transactionType }) {
+  const availableDepartments = departments.length
+    ? departments
+    : (await window.appApi.internal.getReferenceData()).departmentManagers;
+  const selectedDepartments = availableDepartments.filter((department) =>
+    allocations.some((allocation) => Number(allocation.departmentManagerId) === Number(department.id))
+  );
+  const balances = await Promise.all(selectedDepartments.map(async (department) => {
+    const rows = await window.appApi.internal.listDepartmentBalances(department.id);
+    const shareBalance = rows.find((item) => Number(item.shareId) === Number(share.id));
+    return { department, components: shareBalance?.composition || [] };
+  }));
+  const components = composition.map((component) => ({
+    componentNominalNumber: component.componentNominalNumber || '',
+    componentDescription: component.componentDescription || '',
+    measurementUnit: component.measurementUnit || '',
+    quantity: Math.max(0, Number(component.projectedQuantity || 0) - Number(component.notIssuedQuantity || 0))
+  }));
+  const isCharge = transactionType === 'Χρέωση';
+
+  return new Promise((resolve) => {
+    const modal = window.document.createElement('div');
+    modal.className = 'modal-backdrop request-document-backdrop';
+    modal.innerHTML = `
+      <section class="request-document-modal" role="dialog" aria-modal="true" aria-labelledby="addy-composition-allocation-title">
+        <header class="material-card-header">
+          <div>
+            <p class="eyebrow">${isCharge ? 'ΧΡΕΩΣΗ' : 'ΠΙΣΤΩΣΗ'} ΥΛΙΚΩΝ ΣΥΝΘΕΣΗΣ</p>
+            <h2 id="addy-composition-allocation-title">${escapeAddyEditHtml(share.shareNumber)} — ${escapeAddyEditHtml(share.description)}</h2>
+            <p class="muted">Κατανείμετε κάθε υλικό σύνθεσης στα τμήματα. Ισχύουν οι ίδιοι έλεγχοι συμφωνίας και διαθέσιμης ποσότητας.</p>
+          </div>
+        </header>
+        <div class="table-wrap addy-composition-allocation-scroll">
+          <table class="editable-records-table">
+            <thead><tr><th>Α/Ο</th><th>Υλικό σύνθεσης</th><th>Τμήμα</th><th>Χρεωμένη ποσότητα</th><th>${isCharge ? 'Ποσότητα χρέωσης' : 'Ποσότητα πίστωσης'}</th></tr></thead>
+            <tbody>${components.flatMap((component, componentIndex) =>
+              balances.map(({ department, components: departmentComponents }) => {
+                const current = Number(departmentComponents.find((candidate) =>
+                  candidate.componentNominalNumber === component.componentNominalNumber &&
+                  candidate.componentDescription === component.componentDescription &&
+                  candidate.measurementUnit === component.measurementUnit
+                )?.finalQuantity || 0);
+                return `<tr data-addy-composition-allocation-row data-component-index="${componentIndex}" data-department-id="${department.id}" data-current-quantity="${current}">
+                  <td>${escapeAddyEditHtml(component.componentNominalNumber)}</td>
+                  <td>${escapeAddyEditHtml(component.componentDescription)}</td>
+                  <td>${escapeAddyEditHtml(department.departmentName)}</td>
+                  <td class="number-cell">${formatAddyShareBalance(current)}</td>
+                  <td><input data-addy-composition-allocation-quantity type="number" min="0" step="0.001" value="0" ${!isCharge && current <= 0 ? 'disabled' : ''}></td>
+                </tr>`;
+              })
+            ).join('')}</tbody>
+          </table>
+        </div>
+        <div class="addy-save-row">
+          <span class="form-error" data-addy-composition-allocation-error></span>
+          <button class="secondary-button" data-close-addy-composition-allocation type="button">Κλείσιμο</button>
+          <button class="primary-button" data-confirm-addy-composition-allocation type="button" disabled>Αποθήκευση</button>
+        </div>
+      </section>`;
+
+    const validate = () => {
+      let message = '';
+      components.some((component, componentIndex) => {
+        const rows = [...modal.querySelectorAll(`[data-component-index="${componentIndex}"]`)];
+        const invalidBalance = !isCharge && rows.some((row) =>
+          exceedsAddyDepartmentBalance(
+            Number(row.querySelector('[data-addy-composition-allocation-quantity]')?.value || 0),
+            Number(row.dataset.currentQuantity || 0)
+          )
+        );
+        const total = rows.reduce((sum, row) =>
+          sum + Number(row.querySelector('[data-addy-composition-allocation-quantity]')?.value || 0), 0);
+        if (invalidBalance) message = `${component.componentDescription}: κάποιο τμήμα δεν έχει επαρκή ποσότητα.`;
+        else if (Math.abs(total - component.quantity) >= 0.000001) {
+          message = `${component.componentDescription}: σύνολο ${formatAddyShareBalance(total)} / ${formatAddyShareBalance(component.quantity)}.`;
+        }
+        return Boolean(message);
+      });
+      modal.querySelector('[data-addy-composition-allocation-error]').textContent = message;
+      modal.querySelector('[data-confirm-addy-composition-allocation]').disabled = Boolean(message);
+    };
+    const finish = (value) => {
+      window.document.removeEventListener('keydown', onKeyDown);
+      modal.remove();
+      resolve(value);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') finish(null);
+    };
+    modal.addEventListener('input', validate);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-close-addy-composition-allocation]')) return finish(null);
+      if (!event.target.closest('[data-confirm-addy-composition-allocation]')) return;
+      finish(allocations.map((allocation) => ({
+        ...allocation,
+        composition: components.map((component, componentIndex) => {
+          const row = modal.querySelector(
+            `[data-component-index="${componentIndex}"][data-department-id="${allocation.departmentManagerId}"]`
+          );
+          return {
+            componentNominalNumber: component.componentNominalNumber,
+            componentDescription: component.componentDescription,
+            measurementUnit: component.measurementUnit,
+            quantity: Number(row?.querySelector('[data-addy-composition-allocation-quantity]')?.value || 0)
+          };
+        })
+      })));
+    });
+    window.document.addEventListener('keydown', onKeyDown);
+    window.document.body.appendChild(modal);
+    validate();
   });
 }
 

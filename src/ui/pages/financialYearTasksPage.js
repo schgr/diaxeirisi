@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import { openArchivedSharesPreview, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 import { splitOfficerSignature } from '../officerSignature.js';
@@ -452,8 +453,9 @@ export async function renderFinancialYearTasksPage(
     try {
       const payload = collectRenumberingPayload();
       await yearEndApi.validateRenumbering(payload);
-      const accepted = window.confirm(
-        'Η αλλαγή αρίθμησης θα εφαρμοστεί σε όλες τις καρτέλες υλικού και είναι μη αναστρέψιμη. Θέλετε να συνεχίσετε;'
+      const accepted = await showConfirmDialog(
+        'Η αλλαγή αρίθμησης θα εφαρμοστεί σε όλες τις καρτέλες υλικού και είναι μη αναστρέψιμη. Θέλετε να συνεχίσετε;',
+        { title: 'Αλλαγή αρίθμησης μερίδων', confirmLabel: 'Εφαρμογή αλλαγής', danger: true }
       );
       if (!accepted) return;
       const result = await yearEndApi.applyRenumbering(payload);

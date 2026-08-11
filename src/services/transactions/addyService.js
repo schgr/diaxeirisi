@@ -132,8 +132,14 @@ function createAddyService(dependencies) {
           const share = repository.findShareByNumber(item.current_share_number || item.share_number);
           if (!share) throw new Error('Η μερίδα του ΑΔΔΥ δεν βρέθηκε.');
           const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';
+          const expectedComposition = readAddyComposition(item.composition_snapshot);
+          const validatedComposition = validateDepartmentCompositionAllocations(
+            allocations,
+            expectedComposition,
+            Number(item.quantity)
+          );
 
-          for (const allocation of allocations) {
+          for (const [allocationIndex, allocation] of allocations.entries()) {
             const departmentId = requirePositiveId(allocation.departmentManagerId);
             const quantity = Number(allocation.quantity);
             if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -144,6 +150,18 @@ function createAddyService(dependencies) {
             if (!department) throw new Error('Το επιλεγμένο τμήμα δεν βρέθηκε.');
             if (movementType === 'Επιστροφή' && quantity > repository.getDepartmentShareBalance(department.id, share.id)) {
               throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή χρεωμένη ποσότητα.`);
+            }
+            const composition = validatedComposition[allocationIndex] || [];
+            if (movementType === 'Επιστροφή' && composition.length) {
+              const componentBalances = getDepartmentCompositionBalances(repository, department.id, share.id);
+              const insufficient = composition.find((component) =>
+                component.quantity > Number(componentBalances.get(compositionKey(component)) || 0) + 0.000001
+              );
+              if (insufficient) {
+                throw new Error(
+                  `Το τμήμα ${department.department_name} δεν έχει επαρκή ποσότητα για το υλικό σύνθεσης ${insufficient.componentDescription}.`
+                );
+              }
             }
             const internalDocumentId = repository.createInternalDocument({
               fiscalYear,
@@ -162,13 +180,14 @@ function createAddyService(dependencies) {
               description: share.description,
               measurementUnit: share.measurement_unit,
               quantity,
-              composition: buildCompositionSnapshot(repository, share.id, quantity)
-                .map((component) => ({
-                  componentNominalNumber: component.componentNominalNumber,
-                  componentDescription: component.componentDescription,
-                  measurementUnit: component.measurementUnit,
-                  quantity: component.projectedQuantity - component.notIssuedQuantity
-                }))
+              composition: composition.length
+                ? composition
+                : buildCompositionSnapshot(repository, share.id, quantity).map((component) => ({
+                    componentNominalNumber: component.componentNominalNumber,
+                    componentDescription: component.componentDescription,
+                    measurementUnit: component.measurementUnit,
+                    quantity: component.projectedQuantity - component.notIssuedQuantity
+                  }))
             });
             repository.adjustChargedQuantity(share.id, movementType === 'Χορήγηση' ? quantity : -quantity);
           }
@@ -384,4 +403,93 @@ function createAddyService(dependencies) {
   };
 }
 
-module.exports = { createAddyService };
+function readAddyComposition(snapshot) {
+  if (!snapshot) return [];
+  try {
+    const parsed = JSON.parse(snapshot);
+    return Array.isArray(parsed) ? parsed.map((component) => ({
+      componentNominalNumber: component.componentNominalNumber || '',
+      componentDescription: component.componentDescription || '',
+      measurementUnit: component.measurementUnit || '',
+      quantity: Math.max(
+        0,
+        Number(component.projectedQuantity || 0) - Number(component.notIssuedQuantity || 0)
+      )
+    })) : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function compositionKey(component) {
+  return [
+    component.componentNominalNumber || '',
+    component.componentDescription || '',
+    component.measurementUnit || ''
+  ].join('\u0000');
+}
+
+function validateDepartmentCompositionAllocations(allocations, expectedComposition, itemQuantity) {
+  if (!expectedComposition.length) return allocations.map(() => []);
+  const hasSubmittedComposition = allocations.some((allocation) =>
+    Array.isArray(allocation.composition) && allocation.composition.length
+  );
+  if (!hasSubmittedComposition) {
+    return allocations.map((allocation) => expectedComposition.map((component) => ({
+      ...component,
+      quantity: component.quantity * Number(allocation.quantity || 0) / Number(itemQuantity || 1)
+    })));
+  }
+  const expectedByKey = new Map(expectedComposition.map((component) => [compositionKey(component), component]));
+  const totals = new Map([...expectedByKey.keys()].map((key) => [key, 0]));
+  const validated = allocations.map((allocation) => {
+    const submitted = Array.isArray(allocation.composition) ? allocation.composition : [];
+    if (submitted.length !== expectedComposition.length) {
+      throw new Error('Συμπλήρωσε την κατανομή για όλα τα υλικά της σύνθεσης.');
+    }
+    const seen = new Set();
+    return submitted.map((component) => {
+      const key = compositionKey(component);
+      const expected = expectedByKey.get(key);
+      const quantity = Number(component.quantity);
+      if (!expected || seen.has(key) || !Number.isFinite(quantity) || quantity < 0) {
+        throw new Error('Η κατανομή των υλικών σύνθεσης δεν είναι έγκυρη.');
+      }
+      seen.add(key);
+      totals.set(key, totals.get(key) + quantity);
+      return { ...expected, quantity };
+    });
+  });
+  for (const [key, expected] of expectedByKey) {
+    if (Math.abs(Number(totals.get(key) || 0) - expected.quantity) >= 0.000001) {
+      throw new Error(`Η κατανομή του υλικού σύνθεσης ${expected.componentDescription} δεν συμφωνεί με το ΑΔΔΥ.`);
+    }
+  }
+  return validated;
+}
+
+function getDepartmentCompositionBalances(repository, departmentManagerId, shareId) {
+  const balances = new Map();
+  for (const row of repository.listDepartmentCompositionMovements(departmentManagerId, shareId)) {
+    let components = [];
+    try {
+      components = JSON.parse(row.composition_snapshot || '[]');
+    } catch (_error) {
+      components = [];
+    }
+    for (const component of Array.isArray(components) ? components : []) {
+      const key = compositionKey(component);
+      const direction = row.movement_type === 'Χορήγηση' ? 1 : -1;
+      balances.set(key, Number(balances.get(key) || 0) + direction * Number(component.quantity || 0));
+    }
+  }
+  return balances;
+}
+
+module.exports = {
+  createAddyService,
+  readAddyComposition,
+  compositionKey,
+  validateDepartmentCompositionAllocations,
+  getDepartmentCompositionBalances
+};

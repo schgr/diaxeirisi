@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { showAlertDialog } from '../components/dialogs.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { numberToGreekWords, renderCompositionDocumentFooter } from '../pages/sharesPage.js';
 import { formatDate, formatQuantity, isCommerceUnit } from './shared.js';
@@ -43,9 +44,12 @@ export function openAddyDocument(documentData) {
 
     const printButton = event.target.closest('[data-print-addy-document]');
     if (printButton) {
-      printAddyDocument(printButton.dataset.printAddyDocument).catch((error) => {
+      printAddyDocument(printButton.dataset.printAddyDocument).catch(async (error) => {
         console.error('ADDY print failed:', error);
-        window.alert('Η εκτύπωση δεν ξεκίνησε. Δοκιμάστε ξανά ή ελέγξτε τον εκτυπωτή.');
+        await showAlertDialog(
+          'Η εκτύπωση δεν ξεκίνησε. Δοκιμάστε ξανά ή ελέγξτε τον εκτυπωτή.',
+          { title: 'Αποτυχία εκτύπωσης' }
+        );
       });
     }
   });

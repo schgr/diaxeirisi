@@ -37,8 +37,8 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
     ...item,
     composition: buildCompositionSnapshot(repository, share.id, item.quantity)
   };
-  repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
-  documentItems.push({ ...savedItem, ledgerSerial });
+  const exhpItemId = repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
+  documentItems.push({ ...savedItem, ledgerSerial, exhpItemId });
 }
 
 function saveToolCollectionTransfers(repository, exhp, documentId, registryNumber, documentItems) {

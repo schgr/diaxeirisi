@@ -72,6 +72,18 @@ function createTransactionsRepository(db) {
       `).all();
     },
 
+    listDepartmentCompositionMovements(departmentManagerId, shareId) {
+      return db.prepare(`
+        SELECT document.movement_type, item.composition_snapshot
+        FROM internal_items item
+        JOIN internal_documents document ON document.id = item.internal_document_id
+        WHERE document.department_manager_id = ?
+          AND item.share_id = ?
+          AND TRIM(COALESCE(item.composition_snapshot, '')) <> ''
+        ORDER BY document.document_date, document.id, item.id
+      `).all(departmentManagerId, shareId);
+    },
+
     listDepartmentManagers() {
       return db.prepare(`
         SELECT id, department_name, department_head
@@ -379,7 +391,7 @@ function createTransactionsRepository(db) {
     },
 
     createExhpItem(documentId, item, shareId, shareTransactionId) {
-      db.prepare(
+      return Number(db.prepare(
         `
           INSERT INTO exhp_items (
             exhp_document_id,
@@ -412,7 +424,7 @@ function createTransactionsRepository(db) {
         item.supportingDocuments || '',
         shareTransactionId,
         item.composition && item.composition.length ? JSON.stringify(item.composition) : ''
-      );
+      ).lastInsertRowid);
     },
 
     listExhpDocuments() {

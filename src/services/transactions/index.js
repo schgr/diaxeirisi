@@ -33,6 +33,7 @@ function createTransactionsService(db, settingsService) {
     saveAddy: addy.saveAddy,
     saveAddyDepartmentAllocations: addy.saveAddyDepartmentAllocations,
     saveExhp: exhp.saveExhp,
+    saveExhpDepartmentAllocations: exhp.saveExhpDepartmentAllocations,
     listExhpDocuments: exhp.listExhpDocuments,
     getExhpDocument: exhp.getExhpDocument,
     updateExhpMetadata: exhp.updateExhpMetadata,

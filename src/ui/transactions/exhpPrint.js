@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { showAlertDialog } from '../components/dialogs.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { formatDate, formatQuantity } from './shared.js';
 import { printLandscapeDocument } from './addyPrint.js';
@@ -46,7 +47,10 @@ export function openExhpDocument(documentData) {
       await printLandscapeDocument();
     } catch (error) {
       console.error('EXHP print failed:', error);
-      window.alert('Η εκτύπωση δεν ξεκίνησε. Δοκιμάστε ξανά ή ελέγξτε τον εκτυπωτή.');
+      await showAlertDialog(
+        'Η εκτύπωση δεν ξεκίνησε. Δοκιμάστε ξανά ή ελέγξτε τον εκτυπωτή.',
+        { title: 'Αποτυχία εκτύπωσης' }
+      );
     }
   });
 

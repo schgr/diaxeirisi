@@ -84,6 +84,7 @@ const currentApi = Array.from(
 );
 const expectedApi = [...publicApi];
 expectedApi.splice(expectedApi.indexOf('saveAddy') + 1, 0, 'saveAddyDepartmentAllocations');
+expectedApi.splice(expectedApi.indexOf('saveExhp') + 1, 0, 'saveExhpDepartmentAllocations');
 assert.deepStrictEqual(currentApi, expectedApi, 'Public API or method order changed.');
 for (const name of publicApi) {
   if (['saveAddy', 'updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
@@ -95,7 +96,7 @@ const helperNames = Array.from(
   (match) => match[1]
 ).filter((name) => name !== 'createTransactionsService');
 for (const name of helperNames) {
-  if (name === 'saveNominalNumberTransfer') continue;
+  if (['saveNominalNumberTransfer', 'saveRegularExhpItem'].includes(name)) continue;
   assert.strictEqual(extractFunction(modules, name), extractFunction(baseline, name), `${name} changed.`);
 }
 

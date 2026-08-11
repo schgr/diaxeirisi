@@ -1,4 +1,5 @@
 import { escapeHtml, field } from '../components/forms.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import { EXP_AITIOLOGIES } from '../../exhpForm/aitiologies.js';
 import {
   bindTransactionSettings,
@@ -554,8 +555,9 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
 
   container.querySelectorAll('[data-delete-exhp-document]').forEach((button) => {
     button.addEventListener('click', async () => {
-      const accepted = window.confirm(
-        'Αυτή η ενέργεια θα διαγράψει την ΕΧΠ από το Ευρετήριο Εντολών Χρεωπιστώσεως και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;'
+      const accepted = await showConfirmDialog(
+        'Αυτή η ενέργεια θα διαγράψει την ΕΧΠ από το Ευρετήριο Εντολών Χρεωπιστώσεως και τις κινήσεις από τις Μερίδες Υλικού. Να προχωρήσω;',
+        { title: 'Διαγραφή ΕΧΠ', confirmLabel: 'Διαγραφή', danger: true }
       );
       if (!accepted) return;
       try {

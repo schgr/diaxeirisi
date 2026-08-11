@@ -1,4 +1,5 @@
 import { escapeHtml } from '../components/forms.js';
+import { showConfirmDialog } from '../components/dialogs.js';
 import {
   compareShareNumbers,
   displaySupportStatus,
@@ -26,7 +27,7 @@ export async function maybeSuggestShareNumber(transactionsApi, referenceData, co
 
   controls.shareNumber.dataset.suggestionAsked = 'true';
   const suggestion = await transactionsApi.suggestShareNumber(controls.materialType.value);
-  const accepted = window.confirm(
+  const accepted = await showConfirmDialog(
     `Δεν βρέθηκε αντιστοιχία μερίδας. Προτείνεται ο αριθμός ${suggestion.shareNumber}. Θέλεις να χρησιμοποιηθεί;`
   );
 
@@ -39,11 +40,11 @@ export async function maybeSuggestShareNumber(transactionsApi, referenceData, co
   showToast('Μπορείς να πληκτρολογήσεις δικό σου αριθμό μερίδας.', 'error');
 }
 
-export function confirmFutureTransactionDate(documentDate) {
+export async function confirmFutureTransactionDate(documentDate) {
   const selectedYear = Number(String(documentDate || '').slice(0, 4));
   const currentYear = new Date().getFullYear();
   if (!selectedYear || selectedYear <= currentYear) return true;
-  return window.confirm(
+  return showConfirmDialog(
     `Η κίνηση αυτή θα καταχωρηθεί στο επόμενο οικονομικό έτος (${selectedYear}). Θέλετε να συνεχίσετε;`
   );
 }
