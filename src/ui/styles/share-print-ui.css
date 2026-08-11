@@ -707,3 +707,14 @@
   max-height: min(58vh, 620px);
   overflow: auto;
 }
+.exhp-top-line-signature {
+  align-items: start;
+}
+
+.exhp-supporting-document {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 3px;
+  font-size: clamp(7px, 0.64vw, 10px);
+  line-height: 1.05;
+}

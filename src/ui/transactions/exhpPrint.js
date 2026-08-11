@@ -111,10 +111,10 @@ export function renderExhpDocument(documentData) {
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 76.1, 11.5, 2.7)}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 75.35, 11.5, 2.7, 'exhp-field-18-signature exhp-top-line-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
-          ${exhpStaticOverlay(supportingDocuments.join(' · '), 50.8, 81.0, 46.0, 5.1, 'material-description-overlay')}
+          ${renderExhpSupportingDocuments(supportingDocuments)}
           ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.approvalReference || '', 51.0, 89.0, 23.0, 4.3)}
           ${showCommanderInField23
@@ -204,6 +204,31 @@ export function renderExhpFrontSignature(value, left, top, width, height, classN
     `exhp-front-signature ${className}`.trim(),
     true
   );
+}
+
+
+
+export function renderExhpSupportingDocuments(documents = []) {
+  const visibleDocuments = documents.slice(0, 6);
+  if (documents.length > 6) {
+    visibleDocuments[5] = documents.slice(5).join(' · ');
+  }
+  const positions = [
+    [50.8, 81.0],
+    [50.8, 82.65],
+    [50.8, 84.3],
+    [73.8, 81.0],
+    [73.8, 82.65],
+    [73.8, 84.3]
+  ];
+  return visibleDocuments.map((document, index) => exhpStaticOverlay(
+    document,
+    positions[index][0],
+    positions[index][1],
+    22.5,
+    1.55,
+    `material-description-overlay exhp-supporting-document exhp-supporting-document-${index + 1}`
+  )).join('');
 }
 
 
