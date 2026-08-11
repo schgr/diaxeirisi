@@ -473,8 +473,8 @@
 
 .controlled-material-print {
   box-sizing: border-box;
-  width: 297mm;
-  min-height: 210mm;
+  width: 210mm;
+  min-height: 297mm;
   padding: 10mm;
   color: #000;
   background: #fff;
@@ -498,6 +498,13 @@
   border-collapse: collapse;
   font-size: 9pt;
 }
+
+.controlled-material-print .controlled-materials-table th:nth-child(1) { width: 4%; }
+.controlled-material-print .controlled-materials-table th:nth-child(2) { width: 8%; }
+.controlled-material-print .controlled-materials-table th:nth-child(3) { width: 10%; }
+.controlled-material-print .controlled-materials-table th:nth-child(4) { width: 38%; }
+.controlled-material-print .controlled-materials-table th:nth-child(n+5) { width: 8%; }
+.controlled-material-print .controlled-materials-table .material-description-cell { min-width: 0; }
 
 .controlled-material-print th,
 .controlled-material-print td {
@@ -531,9 +538,10 @@
   }
 
   .controlled-material-print.print-document-area {
-    page: landscape;
-    width: 297mm;
-    min-height: 210mm;
+    page: portrait;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
     break-after: page;
     page-break-after: always;
   }

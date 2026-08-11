@@ -524,7 +524,7 @@ async function printSerialRegistryPreview(preview) {
     await new Promise((resolve) => {
       window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
     });
-    await window.appApi.print.currentDocument({ landscape: true });
+    await window.appApi.print.currentDocument({ landscape: false });
   } finally {
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;

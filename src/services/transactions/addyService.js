@@ -125,10 +125,7 @@ function createAddyService(dependencies) {
           const item = savedItems.get(requirePositiveId(entry.addyItemId));
           if (!item) throw new Error('Το υλικό του ΑΔΔΥ δεν βρέθηκε.');
           const allocations = Array.isArray(entry.allocations) ? entry.allocations : [];
-          const total = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
-          if (!allocations.length || Math.abs(total - Number(item.quantity)) >= 0.000001) {
-            throw new Error('Η κατανομή στα τμήματα δεν συμφωνεί με την ποσότητα του ΑΔΔΥ.');
-          }
+          if (!allocations.length) throw new Error('Δεν καταχωρήθηκε ποσότητα σε τμήμα.');
           const share = repository.findShareByNumber(item.current_share_number || item.share_number);
           if (!share) throw new Error('Η μερίδα του ΑΔΔΥ δεν βρέθηκε.');
           const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';
@@ -441,6 +438,8 @@ function validateDepartmentCompositionAllocations(allocations, expectedCompositi
     })));
   }
   const expectedByKey = new Map(expectedComposition.map((component) => [compositionKey(component), component]));
+  const allocationTotal = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
+  const allocationRatio = Number(itemQuantity) > 0 ? allocationTotal / Number(itemQuantity) : 1;
   const totals = new Map([...expectedByKey.keys()].map((key) => [key, 0]));
   const validated = allocations.map((allocation) => {
     const submitted = Array.isArray(allocation.composition) ? allocation.composition : [];
@@ -461,7 +460,7 @@ function validateDepartmentCompositionAllocations(allocations, expectedCompositi
     });
   });
   for (const [key, expected] of expectedByKey) {
-    if (Math.abs(Number(totals.get(key) || 0) - expected.quantity) >= 0.000001) {
+    if (Math.abs(Number(totals.get(key) || 0) - (expected.quantity * allocationRatio)) >= 0.000001) {
       throw new Error(`Η κατανομή του υλικού σύνθεσης ${expected.componentDescription} δεν συμφωνεί με το ΑΔΔΥ.`);
     }
   }

@@ -960,7 +960,7 @@ async function run() {
       savedAddyDocuments.map((item) => item.id),
       [1, sortedAddy.documentId, externalConsumableAddy.documentId]
     );
-    assert.strictEqual(savedAddyDocuments[1].quantity, 6);
+    assert.strictEqual(savedAddyDocuments[1].quantity, 2);
 
     const sortedExhp = transactions.saveExhp({
       documentDate: '2026-06-12',

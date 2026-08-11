@@ -118,6 +118,55 @@ async function run() {
     }] });
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].finalQuantity, 2);
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].composition[0].finalQuantity, 4);
+
+    const partialAddy = transactions.saveAddy({
+      documentDate: '2026-08-08', transactionUnit: 'Εμπόριο', notes: '', items: [{
+        shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
+        materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 4,
+        unitPrice: 1, transactionType: 'Χρέωση', composition: []
+      }]
+    });
+    transactions.saveAddyDepartmentAllocations(partialAddy.documentId, { entries: [{
+      addyItemId: partialAddy.document.items[0].addyItemId,
+      allocations: [{ departmentManagerId: departments[0].id, quantity: 2, composition: [{
+        componentNominalNumber: 'COMP-1', componentDescription: 'Συστατικό',
+        measurementUnit: 'Τεμάχια', quantity: 4
+      }] }]
+    }] });
+    assert.equal(internal.listDepartmentBalances(departments[0].id)[0].finalQuantity, 4);
+
+    const partialExhp = transactions.saveExhp({
+      documentDate: '2026-08-08', serviceUnit: 'Μονάδα Δοκιμής',
+      issueReason: 'Διάφορες Χρεώσεις', approvalReference: '', supports: [], items: [{
+        shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
+        materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 2,
+        transactionType: 'Χρέωση'
+      }]
+    });
+    transactions.saveExhpDepartmentAllocations(partialExhp.documentId, { entries: [{
+      exhpItemId: partialExhp.document.items[0].exhpItemId,
+      allocations: [{ departmentManagerId: departments[1].id, quantity: 1, composition: [{
+        componentNominalNumber: 'COMP-1', componentDescription: 'Συστατικό',
+        measurementUnit: 'Τεμάχια', quantity: 2
+      }] }]
+    }] });
+    assert.equal(internal.listDepartmentBalances(departments[1].id)[0].finalQuantity, 4);
+
+    const partialCredit = transactions.saveAddy({
+      documentDate: '2026-08-08', transactionUnit: 'Εμπόριο', notes: '', items: [{
+        shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
+        materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 2,
+        unitPrice: 1, transactionType: 'Πίστωση', composition: []
+      }]
+    });
+    transactions.saveAddyDepartmentAllocations(partialCredit.documentId, { entries: [{
+      addyItemId: partialCredit.document.items[0].addyItemId,
+      allocations: [{ departmentManagerId: departments[0].id, quantity: 1, composition: [{
+        componentNominalNumber: 'COMP-1', componentDescription: 'Συστατικό',
+        measurementUnit: 'Τεμάχια', quantity: 2
+      }] }]
+    }] });
+    assert.equal(internal.listDepartmentBalances(departments[0].id)[0].finalQuantity, 3);
     console.log('ADDY department allocation and composition tests passed.');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

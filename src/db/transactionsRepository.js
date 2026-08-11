@@ -962,11 +962,7 @@ function createTransactionsRepository(db) {
               first_item.nominal_number,
               first_item.description,
               first_item.transaction_type,
-              (
-                SELECT COALESCE(SUM(quantity), 0)
-                FROM addy_items
-                WHERE addy_document_id = d.id
-              ) AS total_quantity
+              COALESCE(first_item.quantity, 0) AS total_quantity
             FROM addy_documents d
             LEFT JOIN addy_items first_item
               ON first_item.id = (

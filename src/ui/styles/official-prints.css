@@ -2398,6 +2398,14 @@
     page-break-after: always;
   }
 
+  .charge-credit-orders-index-page.official-index-page.print-document-area {
+    box-sizing: border-box;
+    width: 289mm;
+    height: 202mm;
+    min-height: 202mm;
+    margin: 4mm;
+  }
+
   .index-page.print-document-area:last-child,
   .official-index-page.print-document-area:last-child {
     break-after: auto;

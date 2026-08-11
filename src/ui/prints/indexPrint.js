@@ -412,6 +412,7 @@ function renderOfficialIndexPages(config) {
 }
 
 function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns, pageNumber, pageCount }) {
+  const pageClassName = image === 'te34-254-page-228.png' ? 'charge-credit-orders-index-page' : '';
   const overlays = [
     officialIndexOverlay(unit, 13.2, 11.75, 16, 2.7, 'official-index-unit')
   ];
@@ -430,7 +431,7 @@ function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowSt
     });
   });
   return `
-    <article class="official-index-page print-document-area">
+    <article class="official-index-page${pageClassName ? ` ${pageClassName}` : ''} print-document-area">
       <img src="./assets/official-forms/${image}" alt="Επίσημο ευρετήριο ΤΕ 34-254" />
       <div class="official-index-cleanup official-index-page-number-mask"></div>
       <div class="official-index-cleanup official-index-footer-mask"></div>

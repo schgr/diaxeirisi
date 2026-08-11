@@ -4,11 +4,13 @@ import {
   getInternalRedistributionShortfalls,
   renderK2310Pages
 } from '../src/ui/pages/chargesPage.js';
-import { exceedsAddyDepartmentBalance } from '../src/ui/transactions/addyForm.js';
+import { buildDepartmentImbalanceMessage, exceedsAddyDepartmentBalance } from '../src/ui/transactions/addyForm.js';
 
 assert.equal(exceedsAddyDepartmentBalance(0, 0), false);
 assert.equal(exceedsAddyDepartmentBalance(2, 2), false);
 assert.equal(exceedsAddyDepartmentBalance(2.001, 2), true);
+assert.equal(buildDepartmentImbalanceMessage('Χρέωση', -2), 'Η παραπάνω πράξη θα δημιουργήσει έλλειμμα 2. Να συνεχίσω;');
+assert.equal(buildDepartmentImbalanceMessage('Πίστωση', -2), 'Η παραπάνω πράξη θα δημιουργήσει πλεόνασμα 2. Να συνεχίσω;');
 assert.equal(exceedsInternalDepartmentBalance(2, 5, 3), false);
 assert.equal(exceedsInternalDepartmentBalance(2.001, 5, 3), true);
 assert.deepEqual(getInternalRedistributionShortfalls([
@@ -20,6 +22,10 @@ assert.deepEqual(getInternalRedistributionShortfalls([
 assert.deepEqual(getInternalRedistributionShortfalls([
   { redistributionGroup: 'zero', movementType: 'Επιστροφή', quantity: 5 }
 ]), [{ redistributionGroup: 'zero', unallocatedQuantity: 5 }]);
+assert.deepEqual(getInternalRedistributionShortfalls([
+  { redistributionGroup: 'surplus', movementType: 'Επιστροφή', quantity: 5 },
+  { redistributionGroup: 'surplus', movementType: 'Χορήγηση', quantity: 7 }
+]), [{ redistributionGroup: 'surplus', unallocatedQuantity: -2 }]);
 
 const department = {
   departmentName: '1ο Τμήμα',

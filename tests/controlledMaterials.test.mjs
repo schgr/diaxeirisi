@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   CONTROLLED_MATERIAL_CATEGORIES,
   buildCategoryPageGroups,
@@ -37,5 +38,18 @@ const categoryPages = buildCategoryPageGroups(printGroups);
 assert.equal(categoryPages.length, 2, 'per-category mode must start each category on a new page');
 assert.equal(categoryPages[0].sections[0].rows.length, 12);
 assert.equal(categoryPages[1].sections[0].rows.length, 10);
+
+const controlledSource = fs.readFileSync(new URL('../src/ui/administration/controlledMaterials.js', import.meta.url), 'utf8');
+const administrationSource = fs.readFileSync(new URL('../src/ui/pages/administrationPage.js', import.meta.url), 'utf8');
+const printStyles = fs.readFileSync(new URL('../src/ui/styles/share-print-ui.css', import.meta.url), 'utf8');
+const registryStyles = fs.readFileSync(new URL('../src/ui/styles/registries-legacy.css', import.meta.url), 'utf8');
+const annualStyles = fs.readFileSync(new URL('../src/ui/styles/transactions-settings.css', import.meta.url), 'utf8');
+assert.match(controlledSource, /print\.currentDocument\(\{ landscape: false \}\)/u);
+assert.match(administrationSource, /print\.currentDocument\(\{ landscape: false \}\)/u);
+assert.match(printStyles, /\.controlled-material-print\.print-document-area\s*\{[\s\S]*page:\s*portrait;[\s\S]*width:\s*210mm;[\s\S]*height:\s*297mm;/u);
+assert.match(registryStyles, /\.serial-registry-print-root \.serial-registry-print-page\s*\{[\s\S]*page:\s*portrait;[\s\S]*width:\s*210mm;[\s\S]*height:\s*297mm;/u);
+assert.match(printStyles, /nth-child\(4\)\s*\{\s*width:\s*38%/u);
+assert.match(registryStyles, /nth-child\(4\)\s*\{\s*width:\s*34%/u);
+assert.match(annualStyles, /\[data-annual-document-pages\]\s*\{[\s\S]*flex-direction:\s*column;[\s\S]*gap:\s*18px;/u);
 
 console.log('controlledMaterials.test.mjs: OK');

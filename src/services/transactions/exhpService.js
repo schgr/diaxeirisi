@@ -94,10 +94,7 @@ function createExhpService(dependencies) {
           const item = savedItems.get(requirePositiveId(entry.exhpItemId));
           if (!item) throw new Error('Το υλικό της ΕΧΠ δεν βρέθηκε.');
           const allocations = Array.isArray(entry.allocations) ? entry.allocations : [];
-          const total = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
-          if (!allocations.length || Math.abs(total - Number(item.quantity)) >= 0.000001) {
-            throw new Error('Η κατανομή στα τμήματα δεν συμφωνεί με την ποσότητα της ΕΧΠ.');
-          }
+          if (!allocations.length) throw new Error('Δεν καταχωρήθηκε ποσότητα σε τμήμα.');
           const share = repository.findShareByNumber(item.share_number);
           if (!share) throw new Error('Η μερίδα της ΕΧΠ δεν βρέθηκε.');
           const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';

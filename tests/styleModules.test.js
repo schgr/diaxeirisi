@@ -60,19 +60,34 @@ const transactionStyles = modules.find(
 const officialPrintStyles = modules.find(
   ({ relativePath }) => relativePath === './styles/official-prints.css'
 ).contents;
+const registryStyles = modules.find(
+  ({ relativePath }) => relativePath === './styles/registries-legacy.css'
+).contents;
 baseline = baseline.replace(
   /\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/,
   transactionStyles.match(/\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/)[0]
 );
 baseline = baseline.replace(
-  /  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/,
-  officialPrintStyles.match(/  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/)[0]
+  /\.annual-share-print-modal \{[\s\S]*?(?=table\.administration-table th,)/,
+  transactionStyles.match(/\.annual-share-print-modal \{[\s\S]*?(?=table\.administration-table th,)/)[0]
+);
+baseline = baseline.replace(
+  /\.serial-registry-preview-modal \{[\s\S]*?(?=\.management-report-grid \{)/,
+  registryStyles.match(/\.serial-registry-preview-modal \{[\s\S]*?(?=\.management-report-grid \{)/)[0]
+);
+baseline = baseline.replace(
+  /@media print \{\s*\.serial-registry-print-root \.serial-registry-print-page \{[\s\S]*?\n\}/,
+  registryStyles.match(/@media print \{\s*\.serial-registry-print-root \.serial-registry-print-page \{[\s\S]*?\n\}/)[0]
+);
+baseline = baseline.replace(
+  /  \.official-index-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/,
+  officialPrintStyles.match(/  \.official-index-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/)[0]
 );
 
 assert.strictEqual(combined, baseline, 'Module concatenation differs from the pre-split stylesheet.');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  'ebb2173cce99a1e454112a46cdec7f641785728e92083fa9fcd4bd757e4d0d77'
+  '6a58c904285d552585eb9155ee03e243c445631393e4a8b2a194c69f278d731a'
 );
 
 const sharePrintUi = modules.find(

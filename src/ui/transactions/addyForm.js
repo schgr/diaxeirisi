@@ -602,6 +602,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
                   share,
                   allocations,
                   composition: item.composition,
+                  itemQuantity: Number(item.quantity),
                   transactionType: item.transactionType
                 })
               : allocations;
@@ -768,6 +769,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
                   share,
                   allocations,
                   composition: item.composition,
+                  itemQuantity: Number(item.column22),
                   transactionType: item.transactionType
                 })
               : allocations;
@@ -1116,7 +1118,7 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
           : difference < 0
             ? `Μη συμφωνία: υπολείπονται ${formatAddyShareBalance(-difference)}.`
             : `Μη συμφωνία: η κατανομή υπερβαίνει κατά ${formatAddyShareBalance(difference)}.`;
-      modal.querySelector('[data-confirm-addy-allocation]').disabled = invalidCredit || Math.abs(difference) >= 0.000001;
+      modal.querySelector('[data-confirm-addy-allocation]').disabled = invalidCredit || !balances.length;
     };
     const finish = (result) => {
       window.document.removeEventListener('keydown', onKeyDown);
@@ -1129,7 +1131,7 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
     modal.addEventListener('input', (event) => {
       if (event.target.matches('[data-addy-department-allocation-quantity]')) updateAgreement();
     });
-    modal.addEventListener('click', (event) => {
+    modal.addEventListener('click', async (event) => {
       if (event.target === modal || event.target.closest('[data-close-addy-allocation]')) {
         finish(null);
         return;
@@ -1141,6 +1143,15 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
           quantity: Number(row.querySelector('[data-addy-department-allocation-quantity]')?.value || 0)
         }))
         .filter((allocation) => allocation.quantity > 0);
+      const allocatedTotal = allocations.reduce((sum, allocation) => sum + allocation.quantity, 0);
+      const difference = allocatedTotal - quantity;
+      if (Math.abs(difference) >= 0.000001) {
+        const accepted = await showConfirmDialog(
+          buildDepartmentImbalanceMessage(transactionType, difference),
+          { title: 'Μη συμφωνία ποσότητας', confirmLabel: 'Ναι', cancelLabel: 'Όχι' }
+        );
+        if (!accepted) return;
+      }
       finish(allocations);
     });
     window.document.addEventListener('keydown', onKeyDown);
@@ -1149,7 +1160,7 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
   });
 }
 
-async function openAddyCompositionAllocationDialog({ departments, share, allocations, composition, transactionType }) {
+async function openAddyCompositionAllocationDialog({ departments, share, allocations, composition, itemQuantity, transactionType }) {
   const availableDepartments = departments.length
     ? departments
     : (await window.appApi.internal.getReferenceData()).departmentManagers;
@@ -1161,11 +1172,13 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
     const shareBalance = rows.find((item) => Number(item.shareId) === Number(share.id));
     return { department, components: shareBalance?.composition || [] };
   }));
+  const allocationTotal = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
+  const submittedRatio = itemQuantity > 0 ? allocationTotal / itemQuantity : 1;
   const components = composition.map((component) => ({
     componentNominalNumber: component.componentNominalNumber || '',
     componentDescription: component.componentDescription || '',
     measurementUnit: component.measurementUnit || '',
-    quantity: Math.max(0, Number(component.projectedQuantity || 0) - Number(component.notIssuedQuantity || 0))
+    quantity: Math.max(0, Number(component.projectedQuantity || 0) - Number(component.notIssuedQuantity || 0)) * submittedRatio
   }));
   const isCharge = transactionType === 'Χρέωση';
 
@@ -1178,23 +1191,23 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
           <div>
             <p class="eyebrow">${isCharge ? 'ΧΡΕΩΣΗ' : 'ΠΙΣΤΩΣΗ'} ΥΛΙΚΩΝ ΣΥΝΘΕΣΗΣ</p>
             <h2 id="addy-composition-allocation-title">${escapeAddyEditHtml(share.shareNumber)} — ${escapeAddyEditHtml(share.description)}</h2>
-            <p class="muted">Κατανείμετε κάθε υλικό σύνθεσης στα τμήματα. Ισχύουν οι ίδιοι έλεγχοι συμφωνίας και διαθέσιμης ποσότητας.</p>
+            <p class="muted">Τα τμήματα εμφανίζονται διαδοχικά. Ισχύουν οι ίδιοι έλεγχοι συμφωνίας και διαθέσιμης ποσότητας.</p>
+            <strong data-composition-department-title></strong>
           </div>
         </header>
         <div class="table-wrap addy-composition-allocation-scroll">
           <table class="editable-records-table">
-            <thead><tr><th>Α/Ο</th><th>Υλικό σύνθεσης</th><th>Τμήμα</th><th>Χρεωμένη ποσότητα</th><th>${isCharge ? 'Ποσότητα χρέωσης' : 'Ποσότητα πίστωσης'}</th></tr></thead>
-            <tbody>${components.flatMap((component, componentIndex) =>
-              balances.map(({ department, components: departmentComponents }) => {
+            <thead><tr><th>Α/Ο</th><th>Υλικό σύνθεσης</th><th>Χρεωμένη ποσότητα</th><th>${isCharge ? 'Ποσότητα χρέωσης' : 'Ποσότητα πίστωσης'}</th></tr></thead>
+            <tbody>${balances.flatMap(({ department, components: departmentComponents }, departmentIndex) =>
+              components.map((component, componentIndex) => {
                 const current = Number(departmentComponents.find((candidate) =>
                   candidate.componentNominalNumber === component.componentNominalNumber &&
                   candidate.componentDescription === component.componentDescription &&
                   candidate.measurementUnit === component.measurementUnit
                 )?.finalQuantity || 0);
-                return `<tr data-addy-composition-allocation-row data-component-index="${componentIndex}" data-department-id="${department.id}" data-current-quantity="${current}">
+                return `<tr data-addy-composition-allocation-row data-department-step="${departmentIndex}" data-component-index="${componentIndex}" data-department-id="${department.id}" data-current-quantity="${current}" ${departmentIndex ? 'hidden' : ''}>
                   <td>${escapeAddyEditHtml(component.componentNominalNumber)}</td>
                   <td>${escapeAddyEditHtml(component.componentDescription)}</td>
-                  <td>${escapeAddyEditHtml(department.departmentName)}</td>
                   <td class="number-cell">${formatAddyShareBalance(current)}</td>
                   <td><input data-addy-composition-allocation-quantity type="number" min="0" step="0.001" value="0" ${!isCharge && current <= 0 ? 'disabled' : ''}></td>
                 </tr>`;
@@ -1205,10 +1218,13 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
         <div class="addy-save-row">
           <span class="form-error" data-addy-composition-allocation-error></span>
           <button class="secondary-button" data-close-addy-composition-allocation type="button">Κλείσιμο</button>
-          <button class="primary-button" data-confirm-addy-composition-allocation type="button" disabled>Αποθήκευση</button>
+          <button class="secondary-button" data-previous-composition-department type="button" hidden>Προηγούμενο τμήμα</button>
+          <button class="primary-button" data-next-composition-department type="button">Επόμενο τμήμα</button>
+          <button class="primary-button" data-confirm-addy-composition-allocation type="button" hidden disabled>Αποθήκευση</button>
         </div>
       </section>`;
 
+    let departmentStep = 0;
     const validate = () => {
       let message = '';
       components.some((component, componentIndex) => {
@@ -1229,6 +1245,32 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
       });
       modal.querySelector('[data-addy-composition-allocation-error]').textContent = message;
       modal.querySelector('[data-confirm-addy-composition-allocation]').disabled = Boolean(message);
+      return !message;
+    };
+    const renderDepartmentStep = () => {
+      modal.querySelectorAll('[data-department-step]').forEach((row) => {
+        row.hidden = Number(row.dataset.departmentStep) !== departmentStep;
+      });
+      modal.querySelector('[data-composition-department-title]').textContent =
+        `Τμήμα ${departmentStep + 1}/${balances.length}: ${balances[departmentStep]?.department.departmentName || ''}`;
+      modal.querySelector('[data-previous-composition-department]').hidden = departmentStep === 0;
+      modal.querySelector('[data-next-composition-department]').hidden = departmentStep >= balances.length - 1;
+      modal.querySelector('[data-confirm-addy-composition-allocation]').hidden = departmentStep < balances.length - 1;
+      modal.querySelector('[data-addy-composition-allocation-error]').textContent = '';
+      modal.querySelector('.addy-composition-allocation-scroll').scrollTop = 0;
+    };
+    const validateCurrentDepartment = () => {
+      if (isCharge) return true;
+      const invalidRow = [...modal.querySelectorAll(`[data-department-step="${departmentStep}"]`)].find((row) =>
+        exceedsAddyDepartmentBalance(
+          Number(row.querySelector('[data-addy-composition-allocation-quantity]')?.value || 0),
+          Number(row.dataset.currentQuantity || 0)
+        )
+      );
+      modal.querySelector('[data-addy-composition-allocation-error]').textContent = invalidRow
+        ? 'Το τμήμα δεν έχει επαρκή χρεωμένη ποσότητα για κάποιο υλικό σύνθεσης.'
+        : '';
+      return !invalidRow;
     };
     const finish = (value) => {
       window.document.removeEventListener('keydown', onKeyDown);
@@ -1238,9 +1280,24 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
     const onKeyDown = (event) => {
       if (event.key === 'Escape') finish(null);
     };
-    modal.addEventListener('input', validate);
+    modal.addEventListener('input', () => {
+      if (departmentStep >= balances.length - 1) validate();
+      else validateCurrentDepartment();
+    });
     modal.addEventListener('click', (event) => {
       if (event.target === modal || event.target.closest('[data-close-addy-composition-allocation]')) return finish(null);
+      if (event.target.closest('[data-previous-composition-department]')) {
+        departmentStep = Math.max(0, departmentStep - 1);
+        renderDepartmentStep();
+        return;
+      }
+      if (event.target.closest('[data-next-composition-department]')) {
+        if (!validateCurrentDepartment()) return;
+        departmentStep = Math.min(balances.length - 1, departmentStep + 1);
+        renderDepartmentStep();
+        if (departmentStep >= balances.length - 1) validate();
+        return;
+      }
       if (!event.target.closest('[data-confirm-addy-composition-allocation]')) return;
       finish(allocations.map((allocation) => ({
         ...allocation,
@@ -1259,12 +1316,20 @@ async function openAddyCompositionAllocationDialog({ departments, share, allocat
     });
     window.document.addEventListener('keydown', onKeyDown);
     window.document.body.appendChild(modal);
-    validate();
+    renderDepartmentStep();
+    if (balances.length === 1) validate();
+    else validateCurrentDepartment();
   });
 }
 
 export function exceedsAddyDepartmentBalance(requestedQuantity, currentQuantity) {
   return Number(requestedQuantity || 0) > Number(currentQuantity || 0) + 0.000001;
+}
+
+export function buildDepartmentImbalanceMessage(transactionType, difference) {
+  const amount = Math.abs(Number(difference || 0));
+  const createsDeficit = transactionType === 'Χρέωση' ? difference < 0 : difference > 0;
+  return `Η παραπάνω πράξη θα δημιουργήσει ${createsDeficit ? 'έλλειμμα' : 'πλεόνασμα'} ${formatAddyShareBalance(amount)}. Να συνεχίσω;`;
 }
 
 function formatAddyShareBalance(value) {

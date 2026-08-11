@@ -32,6 +32,11 @@ assert.match(externalHtml, /Σελίδα 2 από Σελίδα 2/);
 assert.equal((externalHtml.match(/official-index-page print-document-area/g) || []).length, 2);
 
 const ordersHtml = renderChargeCreditOrdersIndex(settings, ordersRows);
+assert.equal(
+  (ordersHtml.match(/charge-credit-orders-index-page/g) || []).length,
+  2,
+  'Every charge-credit order index page must use the centered print-safe position.'
+);
 assert.match(ordersHtml, /Σελίδα 1 από Σελίδα 2/);
 assert.match(ordersHtml, /Σελίδα 2 από Σελίδα 2/);
 

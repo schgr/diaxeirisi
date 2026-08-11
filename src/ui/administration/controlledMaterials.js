@@ -371,7 +371,7 @@ async function printControlledMaterialPages(pages, showToast) {
   document.body.dataset.isolatedDocumentPrint = 'true';
   try {
     await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
-    await window.appApi.print.currentDocument({ landscape: true });
+    await window.appApi.print.currentDocument({ landscape: false });
   } catch (error) {
     showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση του Βιβλίου Ελεγχομένων Υλικών.', 'error');
   } finally {
