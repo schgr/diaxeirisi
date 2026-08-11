@@ -27,4 +27,10 @@ assert.match(documentsHtml, /exhp-supporting-document-3" style="left:50\.8%;top:
 assert.match(documentsHtml, /exhp-supporting-document-4" style="left:73\.8%;top:81%;/u);
 assert.match(documentsHtml, /Document 6 · Document 7/u);
 
+const delimitedDocumentsHtml = renderExhpSupportingDocuments([
+  'Document 1; Document 2\nDocument 3 · Document 4|Document 5•Document 6'
+]);
+assert.equal((delimitedDocumentsHtml.match(/exhp-supporting-document-/gu) || []).length, 6);
+assert.match(delimitedDocumentsHtml, /exhp-supporting-document-6/u);
+
 console.log('EXHP supporting-document grid and signature alignment test passed.');

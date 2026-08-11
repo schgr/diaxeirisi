@@ -155,7 +155,9 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
         `).join('') : '<p class="empty-table">Δεν έχουν αντιστοιχιστεί δικαιολογητικά στην αιτιολογία.</p>'}
         <label class="exhp-support-row exhp-other-support-row">
           <span><strong>Άλλο δικαιολογητικό</strong>Πρόσθεσε οποιοδήποτε άλλο δικαιολογητικό απαιτείται.</span>
-          <input data-exhp-other-support value="${escapeHtml(documentData.otherSupportDocument || '')}" placeholder="Τίτλος / αριθμός / ημερομηνία / στοιχεία" />
+          <span class="exhp-other-support-inputs">
+            ${renderExhpOtherSupportInputs(documentData.otherSupportDocument)}
+          </span>
           <button class="secondary-button" data-save-other-support type="button">Αποθήκευση</button>
         </label>
       </div>
@@ -184,7 +186,10 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
     }
     if (saveOther) {
       try {
-        const value = modal.querySelector('[data-exhp-other-support]').value;
+        const value = Array.from(modal.querySelectorAll('[data-exhp-other-support]'))
+          .map((input) => input.value.trim())
+          .filter(Boolean)
+          .join('\n');
         const result = await api.updateExhpOtherSupport(documentData.id, value);
         documentData.otherSupportDocument = value.trim();
         showToast(result.message);
@@ -209,6 +214,18 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
     }
   });
   document.body.appendChild(modal);
+}
+
+export function renderExhpOtherSupportInputs(value = '') {
+  const entries = String(value || '')
+    .split(/\r?\n|\s*[;|·•]\s*/gu)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  return Array.from({ length: 6 }, (_unused, index) => `
+    <input data-exhp-other-support value="${escapeHtml(entries[index] || '')}"
+      placeholder="Δικαιολογητικό ${index + 1}: τίτλος / αριθμός / ημερομηνία" />
+  `).join('');
 }
 
 export function openExhpSupportTemplate(documentData, support, api, showToast, options = {}) {

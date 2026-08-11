@@ -718,6 +718,11 @@
   font-size: clamp(7px, 0.64vw, 10px);
   line-height: 1.05;
 }
+.exhp-front-footer-label-mask {
+  z-index: 2;
+  background: #fff;
+}
+
 .exhp-front-footer-label {
   z-index: 3;
   display: flex;
@@ -728,6 +733,18 @@
   line-height: 1.05;
   white-space: nowrap;
   overflow: visible;
+}
+
+.exhp-other-support-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.exhp-other-support-inputs input {
+  min-width: 0;
+  width: 100%;
 }
 
 .exhp-footer-label-left {

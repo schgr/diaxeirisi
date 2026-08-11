@@ -210,6 +210,18 @@ export function renderExhpFrontSignature(value, left, top, width, height, classN
 
 
 export function renderExhpFrontFooterLabels() {
+  const masks = [
+    [1.75, 24.65],
+    [47.45, 9.65],
+    [78.15, 20.1]
+  ].map(([left, width]) => exhpStaticOverlay(
+    '',
+    left,
+    73.05,
+    width,
+    5.55,
+    'exhp-front-footer-label-mask'
+  )).join('');
   const labels = [
     ['(15) Ο ΔΙΑΧΕΙΡ.', 1.75, 8.5, 'exhp-footer-label-left'],
     ['(16) Ο ΒΟΗΘΟΣ ΓΕΝ ΔΙΑΧ', 12.55, 13.4, 'exhp-footer-label-left'],
@@ -217,7 +229,7 @@ export function renderExhpFrontFooterLabels() {
     ['(15) Ο ΔΙΑΧΕΙΡ.', 79.15, 8.4, 'exhp-footer-label-right'],
     ['(16) Ο ΒΟΗΘΟΣ ΓΕΝ ΔΙΑΧ', 87.65, 10.65, 'exhp-footer-label-right']
   ];
-  return labels.map(([label, left, width, className]) => exhpStaticOverlay(
+  return masks + labels.map(([label, left, width, className]) => exhpStaticOverlay(
     label,
     left,
     73.25,
@@ -230,9 +242,13 @@ export function renderExhpFrontFooterLabels() {
 
 
 export function renderExhpSupportingDocuments(documents = []) {
-  const visibleDocuments = documents.slice(0, 6);
-  if (documents.length > 6) {
-    visibleDocuments[5] = documents.slice(5).join(' · ');
+  const normalizedDocuments = documents.flatMap((document) => String(document || '')
+    .split(/\r?\n|\s*[;|·•]\s*/gu)
+    .map((entry) => entry.trim())
+    .filter(Boolean));
+  const visibleDocuments = normalizedDocuments.slice(0, 6);
+  if (normalizedDocuments.length > 6) {
+    visibleDocuments[5] = normalizedDocuments.slice(5).join(' · ');
   }
   const positions = [
     [50.8, 81.0],

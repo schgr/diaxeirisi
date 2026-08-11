@@ -5,7 +5,8 @@ import {
 } from '../src/ui/transactions/exhpPrint.js';
 
 const labelsHtml = renderExhpFrontFooterLabels();
-assert.equal((labelsHtml.match(/exhp-front-footer-label/gu) || []).length, 5);
+assert.equal((labelsHtml.match(/exhp-front-footer-label exhp-footer-label-/gu) || []).length, 5);
+assert.equal((labelsHtml.match(/exhp-front-footer-label-mask/gu) || []).length, 3);
 assert.equal((labelsHtml.match(/\(15\) Ο ΔΙΑΧΕΙΡ\./gu) || []).length, 2);
 assert.equal((labelsHtml.match(/\(16\) Ο ΒΟΗΘΟΣ ΓΕΝ ΔΙΑΧ/gu) || []).length, 2);
 assert.equal((labelsHtml.match(/\(18\) ΤΟ ΛΟΓΙΣΤΗΡΙΟ/gu) || []).length, 1);
