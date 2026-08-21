@@ -344,6 +344,48 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
     updateAddButton(controls, state);
   });
 
+  const openCommerceDialog = () => new Promise((resolve) => {
+    const cancelButtons = [...controls.commerceModal.querySelectorAll('[data-cancel-addy-commerce]')];
+    const confirmButton = controls.commerceModal.querySelector('[data-confirm-addy-commerce]');
+    const finish = (confirmed) => {
+      controls.commerceModal.hidden = true;
+      cancelButtons.forEach((button) => button.removeEventListener('click', cancel));
+      confirmButton.removeEventListener('click', confirm);
+      controls.commerceModal.removeEventListener('click', backdropClick);
+      controls.commerceModal.removeEventListener('keydown', keydown);
+      controls.save.focus();
+      resolve(confirmed);
+    };
+    const cancel = () => finish(false);
+    const confirm = () => {
+      const companyMissing = !controls.commerceCompany.value || controls.commerceCompany.value === '__new__';
+      if (!controls.invoiceNumber.value.trim() || !controls.invoiceDate.value || companyMissing) {
+        showToast(
+          'Για ΑΔΔΥ Εμπορίου απαιτούνται Αριθμός Τιμολογίου, Ημερομηνία Τιμολογίου και Επιχείρηση.',
+          'error'
+        );
+        if (!controls.invoiceNumber.value.trim()) controls.invoiceNumber.focus();
+        else if (!controls.invoiceDate.value) controls.invoiceDate.focus();
+        else controls.commerceCompany.focus();
+        return;
+      }
+      finish(true);
+    };
+    const backdropClick = (event) => {
+      if (event.target === controls.commerceModal) cancel();
+    };
+    const keydown = (event) => {
+      if (event.key === 'Escape') cancel();
+    };
+
+    cancelButtons.forEach((button) => button.addEventListener('click', cancel));
+    confirmButton.addEventListener('click', confirm);
+    controls.commerceModal.addEventListener('click', backdropClick);
+    controls.commerceModal.addEventListener('keydown', keydown);
+    controls.commerceModal.hidden = false;
+    window.requestAnimationFrame(() => controls.invoiceNumber.focus());
+  });
+
   for (const control of [
     controls.unit,
     controls.description,
@@ -359,6 +401,44 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       updateAddButton(controls, state);
     });
   }
+
+  controls.commerceCompany.addEventListener('change', () => {
+    const creatingCompany = controls.commerceCompany.value === '__new__';
+    controls.newCompanyForm.hidden = !creatingCompany;
+    if (creatingCompany) controls.newCompanyName.focus();
+  });
+
+  controls.newCompanySave.addEventListener('click', async () => {
+    const name = controls.newCompanyName.value.trim();
+    if (!name) {
+      showToast('Συμπλήρωσε την επωνυμία της επιχείρησης.', 'error');
+      controls.newCompanyName.focus();
+      return;
+    }
+    try {
+      const company = await transactionsApi.addCommerceCompany({
+        name,
+        taxNumber: controls.newCompanyTaxNumber.value.trim(),
+        address: controls.newCompanyAddress.value.trim()
+      });
+      const option = window.document.createElement('option');
+      option.value = String(company.id);
+      option.textContent = company.name;
+      const newCompanyOption = [...controls.commerceCompany.options]
+        .find((candidate) => candidate.value === '__new__');
+      controls.commerceCompany.insertBefore(option, newCompanyOption || null);
+      controls.commerceCompany.value = String(company.id);
+      referenceData.commerceCompanies = referenceData.commerceCompanies || [];
+      referenceData.commerceCompanies.push(company);
+      controls.newCompanyForm.hidden = true;
+      controls.newCompanyName.value = '';
+      controls.newCompanyTaxNumber.value = '';
+      controls.newCompanyAddress.value = '';
+      showToast('Η επιχείρηση προστέθηκε.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η προσθήκη της επιχείρησης.', 'error');
+    }
+  });
 
   controls.addItem.addEventListener('click', async () => {
     await maybeSuggestShareNumber(transactionsApi, referenceData, controls, showToast);
@@ -656,12 +736,18 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   controls.save.addEventListener('click', async () => {
     try {
+      if (isCommerceUnit(controls.unit.value) && !(await openCommerceDialog())) return;
       if (!confirmFutureTransactionDate(controls.date.value)) return;
       const result = await transactionsApi.saveAddy({
         documentDate: controls.date.value,
         transactionUnit: controls.unit.value.trim(),
         justificationReference: '',
         notes: controls.notes.value.trim(),
+        invoiceNumber: controls.invoiceNumber.value.trim(),
+        invoiceDate: controls.invoiceDate.value,
+        commerceCompanyId: controls.commerceCompany.value && controls.commerceCompany.value !== '__new__'
+          ? controls.commerceCompany.value
+          : null,
         items: state.items
       });
       showToast(result.message || 'Το ΑΔΔΥ αποθηκεύτηκε.');
@@ -984,6 +1070,7 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
                   <td>${escapeAddyEditHtml(department.departmentName)}</td>
                   <td class="number-cell">${formatAddyShareBalance(currentQuantity)}</td>
                   <td><input data-addy-department-allocation-quantity type="number" min="0"
+                    data-available-quantity="${currentQuantity}"
                     ${isCharge ? '' : `max="${currentQuantity}"`}
                     step="0.001" value="0" ${!isCharge && currentQuantity <= 0 ? 'disabled' : ''} /></td>
                 </tr>
@@ -1000,7 +1087,10 @@ async function openAddyDepartmentAllocationDialog({ departments, share, shareNum
       </section>`;
     const updateAgreement = () => {
       const inputs = [...modal.querySelectorAll('[data-addy-department-allocation-quantity]:not(:disabled)')];
-      const invalidCredit = !isCharge && inputs.some((input) => Number(input.value || 0) > Number(input.max));
+      const invalidCredit = !isCharge && inputs.some((input) => exceedsDepartmentCreditBalance(
+        input.value,
+        input.dataset.availableQuantity
+      ));
       const total = inputs.reduce((sum, input) => sum + (Number(input.value) || 0), 0);
       const difference = total - quantity;
       modal.querySelector('[data-addy-allocation-total]').textContent = `Σύνολο: ${formatAddyShareBalance(total)} / ${formatAddyShareBalance(quantity)}`;
@@ -1049,6 +1139,13 @@ function formatAddyShareBalance(value) {
   return Number.isFinite(balance)
     ? balance.toLocaleString('el-GR', { maximumFractionDigits: 3 })
     : '0';
+}
+
+export function exceedsDepartmentCreditBalance(requestedQuantity, availableQuantity) {
+  const requested = Number(requestedQuantity || 0);
+  const available = Number(availableQuantity || 0);
+  if (!Number.isFinite(requested) || !Number.isFinite(available)) return true;
+  return requested - available > 0.000001;
 }
 
 function escapeAddyEditHtml(value) {

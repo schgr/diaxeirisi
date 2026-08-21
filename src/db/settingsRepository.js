@@ -3,6 +3,7 @@ const ALLOWED_TABLE_NAMES = new Set([
   'ranks',
   'measurement_units',
   'transaction_units',
+  'commerce_businesses',
   'material_categories',
   'request_issuing_units',
   'exhp_issue_reasons'
@@ -172,6 +173,18 @@ function createSettingsRepository(db) {
 
     deleteTransactionUnit(id) {
       db.prepare('DELETE FROM transaction_units WHERE id = ?').run(id);
+    },
+
+    listCommerceBusinesses() {
+      return listNamedRecords(db, 'commerce_businesses');
+    },
+
+    createCommerceBusiness(name) {
+      return createNamedRecord(db, 'commerce_businesses', name);
+    },
+
+    deleteCommerceBusiness(id) {
+      db.prepare('DELETE FROM commerce_businesses WHERE id = ?').run(id);
     },
 
     listMaterialCategories() {

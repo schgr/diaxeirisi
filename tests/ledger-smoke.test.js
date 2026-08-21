@@ -168,7 +168,7 @@ async function run() {
     assert.match(overflowingShareHtml, /official-share-back-page/);
     assert.match(overflowingShareHtml, /ΓΙΑ ΜΕΤΑΦΟΡΑ/);
     assert.match(overflowingShareHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ/);
-    assert.match(overflowingShareHtml, />8<\/td><td><\/td>/);
+assert.match(overflowingShareHtml, />8<\/td>\s*<td><\/td>/u);
     assert.doesNotMatch(overflowingShareHtml, /Πίσω πλευρά|ΣΥΔΑ/);
     const blankShareBackHtml = renderShareBackTemplate();
     assert.strictEqual((blankShareBackHtml.match(/official-share-back-page/g) || []).length, 1);
@@ -374,7 +374,7 @@ async function run() {
 
     const addy = transactions.saveAddy({
       documentDate: '2026-06-06',
-      transactionUnit: 'ΕΜΠΟΡΙΟ',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       justificationReference: '',
       notes: '',
       items: [{
@@ -432,7 +432,7 @@ async function run() {
       .find((item) => Number(item.id) === Number(share.id));
     assert.strictEqual(collectionShareAfterChangeSheet.composition[0].chargedQuantity, 2);
     const materialCard = shares.getShareCard(share.id, 2026);
-    assert.strictEqual(materialCard.transactions[0].transactionUnit, 'ΕΜΠΟΡΙΟ');
+    assert.strictEqual(materialCard.transactions[0].transactionUnit, '104 Α/Κ ΠΜΠ/ΓΔΥ');
     assert.strictEqual(materialCard.transactions[0].registryNumber, 'Χ-1');
     assert.strictEqual(materialCard.compositionItems.length, 1);
     assert.strictEqual(materialCard.compositionItems[0].quantityPerMaterial, 5);
@@ -625,7 +625,7 @@ async function run() {
     const protocol = movementDifferences.createProtocol({
       protocolDate: '2026-06-07',
       addyDocumentId: addy.documentId,
-      counterpartyUnit: 'ΕΜΠΟΡΙΟ',
+      counterpartyUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       movementDirection: 'Παραλαβή',
       shareId: internalReferences.shares[0].id,
       documentQuantity: 10,
@@ -908,7 +908,7 @@ async function run() {
 
     const sortedAddy = transactions.saveAddy({
       documentDate: '2026-06-12',
-      transactionUnit: 'ΕΜΠΟΡΙΟ',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       notes: '',
       items: [
         { shareNumber: '15', nominalNumber: 'SORT-015', description: 'Υλικό 15', quantity: 1, unitPrice: 1, measurementUnit: 'Τεμάχια', transactionType: 'Χρέωση', materialType: 'Κύριο Υλικό' },
@@ -923,7 +923,7 @@ async function run() {
     const sharesBeforeExternalConsumable = shares.listShares().length;
     const externalConsumableAddy = transactions.saveAddy({
       documentDate: '2026-06-12',
-      transactionUnit: 'ΕΜΠΟΡΙΟ',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       justificationReference: 'ΔΙΚ-ΑΝΑΛ/2026',
       notes: '',
       items: [{
@@ -1010,7 +1010,7 @@ async function run() {
 
     const creditedAddy = transactions.saveAddy({
       documentDate: '2026-06-13',
-      transactionUnit: 'ΕΜΠΟΡΙΟ',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       notes: '',
       items: [{
         shareNumber: '99',

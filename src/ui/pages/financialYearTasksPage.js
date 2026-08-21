@@ -124,7 +124,7 @@ export async function renderFinancialYearTasksPage(
       <div class="page-toolbar no-print">
         <button class="secondary-button" data-year-prints-back type="button">Πίσω στις Εργασίες Οικονομικού Έτους</button>
       </div>
-      <section class="page-panel">
+      <section class="page-panel" data-year-prints-start>
         <div class="section-heading annual-prints-heading">
           <div>
             <h3>Εκτυπώσεις Μερίδων Οικονομικού Έτους</h3>
@@ -135,10 +135,13 @@ export async function renderFinancialYearTasksPage(
             <select data-year-prints-year>${renderFiscalYearOptions(state.fiscalYear)}</select>
           </label>
         </div>
-        <div data-year-prints-results><p class="muted">Φόρτωση Μερίδων...</p></div>
         <div class="form-actions annual-prints-actions no-print">
           <button class="secondary-button" data-year-prints-toggle type="button">Αποεπιλογή Όλων</button>
           <button class="primary-button" data-year-prints-open type="button" disabled>Προεπισκόπηση / Εκτύπωση</button>
+        </div>
+        <div data-year-prints-results><p class="muted">Φόρτωση Μερίδων...</p></div>
+        <div class="form-actions annual-prints-return-actions no-print">
+          <button class="secondary-button" data-year-prints-scroll-top type="button">Επιστροφή στην αρχή</button>
         </div>
       </section>
     </div>
@@ -408,6 +411,9 @@ export async function renderFinancialYearTasksPage(
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η προεπισκόπηση.', 'error');
     }
+  });
+  container.querySelector('[data-year-prints-scroll-top]').addEventListener('click', () => {
+    yearPrintsDetail.querySelector('[data-year-prints-start]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   archiveDetail.addEventListener('click', async (event) => {
     const submit = event.target.closest('#archive-submit');

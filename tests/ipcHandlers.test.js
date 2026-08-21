@@ -59,7 +59,7 @@ async function run() {
 
   assert.deepStrictEqual(registered, IPC_CHANNELS);
   assert.deepStrictEqual([...handlers.keys()], IPC_CHANNELS);
-  assert.strictEqual(IPC_CHANNELS.length, 164);
+  assert.strictEqual(IPC_CHANNELS.length, 169);
 
   const registrar = createIpcRegistrar({ handle() {} });
   registrar.register('test:duplicate', () => undefined);

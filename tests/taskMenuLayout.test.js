@@ -29,4 +29,8 @@ const layoutCss = read('src/ui/styles/share-print-ui.css');
 assert.match(layoutCss, /\.uniform-task-menu\s*\{[\s\S]*?grid-template-columns:\s*repeat\(5,/);
 assert.match(layoutCss, /@media \(max-width:\s*950px\)[\s\S]*?\.uniform-task-menu/);
 
+const baseLayoutCss = read('src/ui/styles/base-layout.css');
+assert.match(baseLayoutCss, /\.settings-subtab-menu\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,/);
+assert.match(baseLayoutCss, /\.administration-subtab-menu\s*\{[\s\S]*?grid-template-columns:\s*repeat\(5,/);
+
 console.log('taskMenuLayout.test.js: OK');

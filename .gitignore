@@ -12,3 +12,12 @@ tmp/
 tmp-*/
 .codex-remote-attachments/
 benchmarks/results/
+
+# Local editor and machine-specific files
+.vscode/
+package-ULTRAPC.json
+package-lock-ULTRAPC.json
+
+# Local third-party and temporary publishing worktrees
+external-program/
+.publish-site-*/

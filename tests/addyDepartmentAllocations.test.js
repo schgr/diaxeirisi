@@ -34,7 +34,7 @@ async function run() {
     const departments = internal.getReferenceData().departmentManagers;
     const transactions = createTransactionsService(db, settings);
     const chargedAddy = transactions.saveAddy({
-      documentDate: '2026-08-08', transactionUnit: 'Εμπόριο', notes: '', items: [{
+      documentDate: '2026-08-08', transactionUnit: 'Μονάδα', notes: '', items: [{
         shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
         materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 6,
         unitPrice: 1, transactionType: 'Χρέωση', composition: []
@@ -53,7 +53,7 @@ async function run() {
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].composition[0].finalQuantity, 8);
 
     const creditedAddy = transactions.saveAddy({
-      documentDate: '2026-08-08', transactionUnit: 'Εμπόριο', notes: '', items: [{
+      documentDate: '2026-08-08', transactionUnit: 'Μονάδα', notes: '', items: [{
         shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
         materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 3,
         unitPrice: 1, transactionType: 'Πίστωση',

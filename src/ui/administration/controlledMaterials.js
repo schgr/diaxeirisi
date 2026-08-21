@@ -290,7 +290,6 @@ function buildControlledMaterialPages(container) {
     : buildContinuousPageGroups(groups);
   return pageGroups.map(({ sections }, index) => `
     <article class="controlled-material-print print-document-area">
-      <h2>ΒΙΒΛΙΟ ΕΛΕΓΧΟΜΕΝΩΝ ΥΛΙΚΩΝ</h2>
       <table class="index-table controlled-materials-table">
         ${table.querySelector('thead').outerHTML}
         <tbody>${sections.map(({ category, rows }) => `

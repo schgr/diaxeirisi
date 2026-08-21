@@ -1,6 +1,6 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "0.13.278",
+  "version": "0.13.308",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης",
   "main": "src/main.js",
@@ -52,6 +52,12 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32"
+          ]
         }
       ]
     },
@@ -62,7 +68,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "diaxeirisi Ylikoy",
       "include": "build/installer.nsh",
-      "artifactName": "diaxeirisi-Ylikoy-Setup-${version}.${ext}"
+      "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-${arch}-Setup-${version}.${ext}"
     }
   },
   "dependencies": {

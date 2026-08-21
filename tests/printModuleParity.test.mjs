@@ -66,6 +66,27 @@ const criticalFunctions = [
   'renderIndexAnnualSignatures'
 ];
 
+function expectedCurrentFunction(name) {
+  let expected = extractFunction(previousSource, name);
+  if (name === 'renderExternalTransactionsIndex') {
+    expected = expected
+      .replace('return renderOfficialIndexPages({\n', "return renderOfficialIndexPages({\n    pageClassName: 'external-official-index-page',\n")
+      .replace('formatDate(entry.date)', 'formatAddyDate(entry.date)');
+  }
+  if (name === 'renderChargeCreditOrdersIndex') {
+    expected = expected
+      .replace(
+        'return renderOfficialIndexPages({\n',
+        "return renderOfficialIndexPages({\n    pageClassName: 'orders-official-index-page',\n"
+      )
+      .replace(
+        '{ left: 21.85, width: 28.6 }',
+        "{ left: 21.85, width: 28.6, className: 'official-index-left-cell' }"
+      );
+  }
+  return expected;
+}
+
 for (const name of criticalFunctions) {
   const currentSource = currentSources.find((source) =>
     new RegExp(`function\\s+${name}\\s*\\(`, 'u').test(source)
@@ -73,7 +94,7 @@ for (const name of criticalFunctions) {
   assert.ok(currentSource, `Current module missing ${name}`);
   assert.strictEqual(
     extractFunction(currentSource, name),
-    extractFunction(previousSource, name),
+    expectedCurrentFunction(name),
     `${name} changed during the module split`
   );
 }

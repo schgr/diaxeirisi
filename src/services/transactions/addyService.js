@@ -1,10 +1,21 @@
+const { AppError } = require('../../core/errorHandler');
+
 function createAddyService(dependencies) {
   const { repository, settingsService, validateAddy, requirePositiveId } = dependencies;
-  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, compareShareNumbers } = dependencies.shared;
+  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatAddyDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
 
   return {
     saveAddy(payload) {
       const addy = validateAddy(payload);
+      if (
+        normalize(addy.transactionUnit) === 'εμποριο' &&
+        (!addy.invoiceNumber || !addy.invoiceDate || !addy.commerceCompanyId)
+      ) {
+        throw new AppError(
+          'Για ΑΔΔΥ Εμπορίου απαιτούνται Αριθμός Τιμολογίου, Ημερομηνία Τιμολογίου και Επιχείρηση.',
+          'ADDY_COMMERCE_INVOICE_REQUIRED'
+        );
+      }
       const addyFiscalYear = Number(addy.documentDate.slice(0, 4));
       if (repository.isFiscalYearClosed(addyFiscalYear)) {
         throw new Error(`Το οικονομικό έτος ${addyFiscalYear} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
@@ -21,6 +32,10 @@ function createAddyService(dependencies) {
       const financialOfficers = settings
         ? settings.financialOfficers
         : { ped: '', manager: '' };
+      const commerceCompany = addy.commerceCompanyId
+        ? repository.listCommerceCompanies()
+          .find((company) => Number(company.id) === Number(addy.commerceCompanyId)) || null
+        : null;
 
       repository.transaction(() => {
         repository.ensureTransactionUnit(addy.transactionUnit);
@@ -60,7 +75,7 @@ function createAddyService(dependencies) {
               transactionDate: addy.documentDate,
               transactionUnit: addy.transactionUnit,
               transactionType: item.transactionType,
-              documentReference: `ΑΔΔΥ ${documentId} / ${formatDate(addy.documentDate)}`,
+              documentReference: `ΑΔΔΥ ${documentId} / ${formatAddyDate(addy.documentDate)}`,
               quantity: item.quantity,
               notes: addy.notes
             });
@@ -75,7 +90,7 @@ function createAddyService(dependencies) {
                 ...item,
                 composition: item.composition && item.composition.length
                   ? item.composition
-                  : buildCompositionSnapshot(repository, share.id, item.quantity)
+                  : buildCompositionSnapshot(repository, share.id, item.quantity, share.material_type)
               }
             : item;
           const addyItemId = repository.createAddyItem(documentId, savedItem, share?.id || null, transactionId);
@@ -102,6 +117,10 @@ function createAddyService(dependencies) {
           serviceName,
           financialOfficers,
           notes: addy.notes,
+          invoiceNumber: addy.invoiceNumber,
+          invoiceDate: addy.invoiceDate,
+          commerceCompanyId: addy.commerceCompanyId,
+          commerceCompany,
           items: documentItems
         },
         message: `Το ΑΔΔΥ ${documentId} αποθηκεύτηκε.`
@@ -142,7 +161,8 @@ function createAddyService(dependencies) {
             const department = repository.listDepartmentManagers()
               .find((candidate) => Number(candidate.id) === departmentId);
             if (!department) throw new Error('Το επιλεγμένο τμήμα δεν βρέθηκε.');
-            if (movementType === 'Επιστροφή' && quantity > repository.getDepartmentShareBalance(department.id, share.id)) {
+            const departmentBalance = repository.getDepartmentShareBalance(department.id, share.id);
+            if (movementType === 'Επιστροφή' && quantity - departmentBalance > 0.000001) {
               throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή χρεωμένη ποσότητα.`);
             }
             const internalDocumentId = repository.createInternalDocument({
@@ -162,7 +182,7 @@ function createAddyService(dependencies) {
               description: share.description,
               measurementUnit: share.measurement_unit,
               quantity,
-              composition: buildCompositionSnapshot(repository, share.id, quantity)
+              composition: buildCompositionSnapshot(repository, share.id, quantity, share.material_type)
                 .map((component) => ({
                   componentNominalNumber: component.componentNominalNumber,
                   componentDescription: component.componentDescription,
@@ -186,7 +206,16 @@ function createAddyService(dependencies) {
         nominalNumber: row.nominal_number || '',
         description: row.description || '',
         quantity: Number(row.total_quantity || 0),
-        canPrint: row.transaction_type === 'Πίστωση' || (row.transaction_type === 'Χρέωση' && normalize(row.transaction_unit) === 'εμπόριο')
+        invoiceNumber: row.invoice_number || '',
+        invoiceDate: row.invoice_date || '',
+        commerceCompanyId: row.commerce_company_id == null ? null : Number(row.commerce_company_id),
+        commerceCompany: row.commerce_company_id == null ? null : {
+          id: Number(row.commerce_company_id),
+          name: row.commerce_company_name || '',
+          taxNumber: row.commerce_company_tax_number || '',
+          address: row.commerce_company_address || ''
+        },
+        canPrint: row.transaction_type === 'Πίστωση' || (row.transaction_type === 'Χρέωση' && normalize(row.transaction_unit) === 'εμποριο')
       }));
     },
 
@@ -367,6 +396,15 @@ function createAddyService(dependencies) {
         serviceName,
         financialOfficers,
         notes: row.notes,
+        invoiceNumber: row.invoice_number || '',
+        invoiceDate: row.invoice_date || '',
+        commerceCompanyId: row.commerce_company_id == null ? null : Number(row.commerce_company_id),
+        commerceCompany: row.commerce_company_id == null ? null : {
+          id: Number(row.commerce_company_id),
+          name: row.commerce_company_name || '',
+          taxNumber: row.commerce_company_tax_number || '',
+          address: row.commerce_company_address || ''
+        },
         items: items.map((item) => ({
           id: item.id,
           quantity: item.quantity,

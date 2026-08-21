@@ -289,6 +289,12 @@
   align-items: end;
 }
 
+.doc-st-clothing-editor .doc-st-edit-grid {
+  margin-top: -10px;
+  margin-bottom: 0;
+  gap: 6px 16px;
+}
+
 .exhp-form-field-narrow input,
 .exhp-form-field-narrow select,
 .exhp-form-field-narrow textarea,
@@ -461,15 +467,41 @@
 }
 
 .annual-share-print-preview {
-  display: grid;
-  justify-content: center;
-  gap: 18px;
+  display: block;
 }
 
-.annual-share-print-preview [data-annual-card-pages],
-.annual-share-print-preview [data-annual-change-sheet-pages] {
-  display: grid;
+.annual-prints-return-actions {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.annual-share-print-preview [data-annual-document-pages] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   gap: 18px;
+  width: 100%;
+}
+
+.annual-share-print-preview [data-annual-document-pages] > .official-share-page {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 210mm);
+  height: auto;
+  min-height: 0;
+  margin: 0 auto 18px;
+  aspect-ratio: 210 / 297;
+}
+
+.annual-share-print-preview [data-annual-document-pages] > .change-sheet-document-page {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 297mm);
+  height: auto;
+  min-height: 0;
+  margin: 0 auto 18px;
+  aspect-ratio: 297 / 210;
 }
 
 table.administration-table th,

@@ -73,6 +73,13 @@ export function formatDate(value) {
   return `${day}/${month}/${year}`;
 }
 
+export function formatAddyDate(value) {
+  if (!value) return '';
+  const [year, month, day] = String(value).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}-${month}-${year}`;
+}
+
 export function normalize(value) {
   return String(value || '').trim().toLocaleLowerCase('el-GR');
 }
@@ -92,7 +99,9 @@ export function isSameIssueReason(left, right) {
 }
 
 export function isCommerceUnit(value) {
-  return normalize(value) === 'εμπόριο';
+  return normalize(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') === 'εμποριο';
 }
 
 export function displaySupportStatus(value) {

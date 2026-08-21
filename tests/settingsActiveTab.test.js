@@ -11,6 +11,12 @@ assert.match(
   settingsPage,
   /querySelectorAll\('\[data-settings-panel\]'\)[\s\S]*\.find\(\(panel\) => !panel\.hidden\)/
 );
+assert.doesNotMatch(settingsPage, /<h3>Εμπόριο<\/h3>/u);
+assert.doesNotMatch(settingsPage, /id="commerce-business-form"/u);
+assert.match(settingsPage, /commerce-companies-table-wrap/u);
+assert.match(settingsPage, /const submenu = panel\.querySelector\('\[data-settings-submenu\]'\)/);
+assert.match(settingsPage, /if \(submenu\) submenu\.hidden = true/);
+assert.doesNotMatch(settingsPage, /settingsSubtab="initial-records"\]`\)\?\.click\(\)/);
 assert.match(settingsPage, /activePanel\?\.dataset\.settingsPanel \|\| ''/);
 assert.match(
   settingsPage,

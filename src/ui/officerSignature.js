@@ -6,23 +6,27 @@ const RANK_PATTERN = `(?:${[
   'Επγός', 'ΕΠΓΟΣ', 'Αντισμχος', 'ΑΝΤΙΣΜΧΟΣ', 'Σμχος', 'ΣΜΧΟΣ'
 ].join('|')})`;
 
+function trimSeparators(value) {
+  return String(value || '').replace(/^[\s\-,/]+|[\s\-,/]+$/gu, '');
+}
+
 export function splitOfficerSignature(value) {
   const text = String(value || '').trim();
   if (!text) return { name: '', rank: '' };
 
   const rankPrefix = text.match(new RegExp(`^(${RANK_PATTERN}\\s*(?:\\([^)]*\\))?)\\s+(.+)$`, 'i'));
   if (rankPrefix) {
-    return { name: formatOfficerName(rankPrefix[2]), rank: formatOfficerRank(rankPrefix[1]) };
+    return { name: formatOfficerName(trimSeparators(rankPrefix[2])), rank: formatOfficerRank(rankPrefix[1]) };
   }
 
   const rankSuffix = text.match(new RegExp(`\\s(${RANK_PATTERN}\\s*(?:\\([^)]*\\))?)$`, 'i'));
   if (rankSuffix) {
-    return { name: formatOfficerName(text.slice(0, rankSuffix.index)), rank: formatOfficerRank(rankSuffix[1]) };
+    return { name: formatOfficerName(trimSeparators(text.slice(0, rankSuffix.index))), rank: formatOfficerRank(rankSuffix[1]) };
   }
 
   const parts = text.split(/\s*(?:\r?\n| - |,|\/)\s*/).filter(Boolean);
   return {
-    name: formatOfficerName(parts[0]),
+    name: formatOfficerName(trimSeparators(parts[0])),
     rank: formatOfficerRank(parts.slice(1).join(' '))
   };
 }
@@ -39,8 +43,9 @@ export function formatOfficerName(value) {
 export function formatOfficerRank(value) {
   const text = String(value || '').trim();
   if (!text) return '';
-  const match = text.match(/^([^\s(]+)(.*)$/u);
-  if (!match) return text;
-  const rank = match[1].toLocaleLowerCase('el-GR');
-  return `${rank.charAt(0).toLocaleUpperCase('el-GR')}${rank.slice(1)}${match[2]}`;
+  return text.replace(/\(([^)]*)\)|(\S+)/gu, (match, _parenContent, word) => {
+    if (word === undefined) return match;
+    const lower = word.toLocaleLowerCase('el-GR');
+    return `${lower.charAt(0).toLocaleUpperCase('el-GR')}${lower.slice(1)}`;
+  });
 }

@@ -3,6 +3,9 @@
 const CHANNELS = Object.freeze([
   "transactions:get-structure",
   "transactions:addy-reference-data",
+  "transactions:add-commerce-company",
+  "transactions:update-commerce-company",
+  "transactions:delete-commerce-company",
   "transactions:suggest-share-number",
   "transactions:save-addy",
   "transactions:save-addy-department-allocations",
@@ -56,6 +59,15 @@ function registerTransactionsHandlers({
     );
   register('transactions:addy-reference-data', async () =>
       safeInvoke(() => services.transactions.getAddyReferenceData())
+    );
+  register('transactions:add-commerce-company', async (_event, payload) =>
+      safeInvoke(() => services.transactions.createCommerceCompany(payload))
+    );
+  register('transactions:update-commerce-company', async (_event, id, payload) =>
+      safeInvoke(() => services.transactions.updateCommerceCompany(id, payload))
+    );
+  register('transactions:delete-commerce-company', async (_event, id) =>
+      safeInvoke(() => services.transactions.deleteCommerceCompany(id))
     );
   register('transactions:suggest-share-number', async (_event, materialType) =>
       safeInvoke(() => services.transactions.suggestShareNumber(materialType))

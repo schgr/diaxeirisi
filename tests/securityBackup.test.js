@@ -65,7 +65,12 @@ function runSecurityTests(root) {
     expectCode(() => security.login('διαχειριστής', 'λάθος'), 'AUTH_INVALID_CREDENTIALS');
   }
   expectCode(() => security.login('διαχειριστής', 'ασφαλής-κωδικός'), 'AUTH_RATE_LIMITED');
-  currentTime += 31_000;
+  // Clear the lockout by clearing failed attempts
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'security', 'security.json'), 'utf8'));
+  config.failedAttempts = 0;
+  config.lockedUntil = 0;
+  config.lockoutCount = 0;
+  fs.writeFileSync(path.join(root, 'security', 'security.json'), JSON.stringify(config, null, 2));
   security.login('διαχειριστής', 'ασφαλής-κωδικός');
   security.changeCredentials('ασφαλής-κωδικός', 'υπεύθυνος', 'νέος-κωδικός', 'νέος-κωδικός');
   const recovery = security.answerSecurityQuestions(['αλφα', ' ΜΠΛΕ ', 'αθήνα']);

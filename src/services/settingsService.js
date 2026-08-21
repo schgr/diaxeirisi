@@ -20,6 +20,7 @@ function createSettingsService(db) {
       ranks: repository.listRanks(),
       measurementUnits: repository.listMeasurementUnits(),
       transactionUnits: repository.listTransactionUnits(),
+      commerceBusinesses: repository.listCommerceBusinesses(),
       materialCategories: repository.listMaterialCategories(),
       requestJustificationCodes: repository.listRequestJustificationCodes(),
       requestIssuingUnits: repository.listRequestIssuingUnits(),
@@ -121,6 +122,16 @@ function createSettingsService(db) {
 
     deleteTransactionUnit(id) {
       repository.deleteTransactionUnit(requirePositiveId(id));
+      return getSettings();
+    },
+
+    addCommerceBusiness(payload) {
+      repository.createCommerceBusiness(validateNamedSetting(payload, 'Επιχείρηση εμπορίου'));
+      return getSettings();
+    },
+
+    deleteCommerceBusiness(id) {
+      repository.deleteCommerceBusiness(requirePositiveId(id));
       return getSettings();
     },
 

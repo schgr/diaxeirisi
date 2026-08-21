@@ -17,6 +17,6 @@ assert.match(css, /@media \(max-width: 780px\)/);
 assert.match(css, /\[data-reveal\]\.visible/);
 assert.match(script, /\.github\.io/);
 assert.match(script, /releases\/latest\/download/);
-assert.match(script, new RegExp(`diaxeirisi-Ylikoy-Setup-${version.replace(/\./g, '\\.')}\\.exe`));
+assert.match(script, new RegExp(`diaxeirisi-Ylikoy-Windows-10-11-x64-Setup-${version.replace(/\./g, '\\.')}\\.exe`));
 
 console.log('website.test.js: OK');

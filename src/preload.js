@@ -127,6 +127,8 @@ contextBridge.exposeInMainWorld('appApi', {
     updateTransactionUnit: (id, payload) =>
       invoke('settings:update-transaction-unit', id, payload),
     deleteTransactionUnit: (id) => invoke('settings:delete-transaction-unit', id),
+    addCommerceBusiness: (payload) => invoke('settings:add-commerce-business', payload),
+    deleteCommerceBusiness: (id) => invoke('settings:delete-commerce-business', id),
     addMaterialCategory: (payload) => invoke('settings:add-material-category', payload),
     updateMaterialCategory: (id, payload) =>
       invoke('settings:update-material-category', id, payload),
@@ -143,6 +145,9 @@ contextBridge.exposeInMainWorld('appApi', {
   transactions: {
     getStructure: () => invoke('transactions:get-structure'),
     getAddyReferenceData: () => invoke('transactions:addy-reference-data'),
+    addCommerceCompany: (payload) => invoke('transactions:add-commerce-company', payload),
+    updateCommerceCompany: (id, payload) => invoke('transactions:update-commerce-company', id, payload),
+    deleteCommerceCompany: (id) => invoke('transactions:delete-commerce-company', id),
     suggestShareNumber: (materialType) => invoke('transactions:suggest-share-number', materialType),
     saveAddy: (payload) => invoke('transactions:save-addy', payload),
     saveAddyDepartmentAllocations: (documentId, payload) =>

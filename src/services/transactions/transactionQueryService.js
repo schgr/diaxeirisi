@@ -1,6 +1,6 @@
 function createTransactionQueryService(dependencies) {
   const { repository, settingsService, transactionSections } = dependencies;
-  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, compareShareNumbers } = dependencies.shared;
+  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
 
   return {
     getStructure() {
@@ -58,6 +58,7 @@ function createTransactionQueryService(dependencies) {
         exhpIssueReasons: settings ? settings.exhpIssueReasons : [],
         exhpSupportTemplates: repository.listExhpSupportTemplates().map(mapExhpSupportTemplate),
         materialTypes,
+        commerceCompanies: repository.listCommerceCompanies(),
         transactionUnits: transactionUnits.map((unit) => ({
           id: unit.id,
           name: unit.name
@@ -73,6 +74,18 @@ function createTransactionQueryService(dependencies) {
       return {
         shareNumber: repository.getNextShareNumber()
       };
+    },
+
+    createCommerceCompany(payload) {
+      return repository.createCommerceCompany(payload);
+    },
+
+    updateCommerceCompany(id, payload) {
+      return repository.updateCommerceCompany(id, payload);
+    },
+
+    deleteCommerceCompany(id) {
+      return repository.deleteCommerceCompany(id);
     }
   };
 }

@@ -113,19 +113,14 @@ const homeGroups = [
       { id: 'administration-handover', sectionId: 'administration', tab: 'handover', title: 'Παράδοση - Παραλαβή' },
       { id: 'administration-report', sectionId: 'administration', tab: 'management-report', title: 'Αναφορά Διαχείρισης' },
       { id: 'administration-aggregate-prints', sectionId: 'prints', title: 'ΕΚΤΥΠΩΣΕΙΣ' },
-      { id: 'administration-serial-numbers', sectionId: 'administration', tab: 'serial-numbers', title: 'Σειριακοί Αριθμοί' },
-      { id: 'administration-ammunition-batches', sectionId: 'administration', tab: 'ammunition-batches', title: 'Βιβλίο Μερίδων Β.Φ.' },
-      { id: 'administration-training-ammunition-batches', sectionId: 'administration', tab: 'training-ammunition-batches', title: 'Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως' },
-      { id: 'administration-controlled-materials', sectionId: 'administration', tab: 'controlled-materials', title: 'Βιβλίο Ελεγχομένων Υλικών' },
-      { id: 'administration-weapon-registry', sectionId: 'administration', tab: 'weapon-registry', title: 'Μητρώο Οπλισμού' }
+      { id: 'administration-books-registries', sectionId: 'administration', tab: 'books-registries', title: 'Βιβλία & Μητρώα' }
     ]
   },
   {
     label: 'Ρυθμίσεις',
     items: [
-      { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Γενικά' },
-      { id: 'settings-personnel', sectionId: 'settings', tab: 'personnel', title: 'Τμήματα Μονάδος' },
-      { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Παράμετροι' },
+      { id: 'settings-general', sectionId: 'settings', tab: 'general', title: 'Στοιχεία Μονάδος' },
+      { id: 'settings-parameters', sectionId: 'settings', tab: 'parameters', title: 'Δεδομένα Συστήματος' },
       { id: 'settings-security', sectionId: 'settings', tab: 'security', title: 'Ασφάλεια και Backup' },
       { id: 'settings-information', sectionId: 'settings', tab: 'information', title: 'Πληροφορίες' }
     ]

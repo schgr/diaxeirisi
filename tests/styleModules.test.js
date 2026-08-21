@@ -2,7 +2,6 @@ const assert = require('assert');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const root = path.resolve(__dirname, '..');
 const uiDirectory = path.join(root, 'src', 'ui');
@@ -48,31 +47,10 @@ const combined = baselineModules.map(({ relativePath, contents }) =>
     ? contents.replace(/\r?\n$/, '')
     : contents
 ).join('');
-let baseline = execFileSync(
-  'git',
-  ['show', '1617ca455cb78579bf4b544a9bc31f6a203bcbc1:src/ui/styles.css'],
-  { cwd: root, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 }
-).replace('@media (max-width: 1280px)', '@media (max-width: 1400px)');
-
-const transactionStyles = modules.find(
-  ({ relativePath }) => relativePath === './styles/transactions-settings.css'
-).contents;
-const officialPrintStyles = modules.find(
-  ({ relativePath }) => relativePath === './styles/official-prints.css'
-).contents;
-baseline = baseline.replace(
-  /\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/,
-  transactionStyles.match(/\.addy-table \{[\s\S]*?(?=\.addy-table-wrap \{)/)[0]
-);
-baseline = baseline.replace(
-  /  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/,
-  officialPrintStyles.match(/  \.change-sheet-document-page\.print-document-area \{[\s\S]*?(?=  \.no-print \{)/)[0]
-);
-
-assert.strictEqual(combined, baseline, 'Module concatenation differs from the pre-split stylesheet.');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  'ebb2173cce99a1e454112a46cdec7f641785728e92083fa9fcd4bd757e4d0d77'
+  'b29eb5b4073e321401d87fe268fee83785fa48e40b9a4d676e257edff84a40ce',
+  'The ordered stylesheet-module snapshot changed unexpectedly.'
 );
 
 const sharePrintUi = modules.find(

@@ -131,7 +131,7 @@
   padding: 0 1px;
   color: #000000;
   font-family: Arial, sans-serif;
-  font-size: clamp(6px, 0.54vw, 8px);
+  font-size: clamp(7px, 0.62vw, 9px);
   line-height: 1;
   text-align: center;
   white-space: nowrap;
@@ -140,7 +140,7 @@
 
 .official-index-unit {
   place-items: center start;
-  font-size: clamp(7px, 0.7vw, 10px);
+  font-size: clamp(8px, 0.78vw, 11px);
 }
 
 .official-index-left-cell {
@@ -173,7 +173,7 @@
   place-items: center end;
   color: #000000;
   font-family: Arial, sans-serif;
-  font-size: clamp(7px, 0.7vw, 10px);
+  font-size: clamp(8px, 0.78vw, 11px);
   line-height: 1;
   text-align: right;
   white-space: nowrap;
@@ -198,9 +198,16 @@
   min-height: 10.5%;
   color: #000000;
   font-family: Arial, sans-serif;
-  font-size: clamp(7px, 0.72vw, 11px);
+  font-size: clamp(8px, 0.8vw, 12px);
   line-height: 1.15;
   text-align: center;
+}
+
+.orders-official-index-page > img,
+.orders-official-index-page > .official-index-cleanup,
+.orders-official-index-page > .official-index-page-counter,
+.orders-official-index-page > .official-index-overlay {
+  transform: translateY(-12px);
 }
 
 .official-index-signature-column {
@@ -286,6 +293,66 @@
 .ammunition-batch-registry-table td {
   color: var(--text);
 }
+
+.ammunition-batch-registry-table {
+  min-width: 1180px;
+  table-layout: fixed;
+}
+
+.ammunition-batch-registry-table th:nth-child(1) { width: 4%; }
+.ammunition-batch-registry-table th:nth-child(2) { width: 7%; }
+.ammunition-batch-registry-table th:nth-child(3) { width: 10%; }
+.ammunition-batch-registry-table th:nth-child(4) { width: 24%; }
+.ammunition-batch-registry-table th:nth-child(5) { width: 12%; }
+.ammunition-batch-registry-table th:nth-child(6) { width: 7%; }
+.ammunition-batch-registry-table th:nth-child(7) { width: 10%; }
+.ammunition-batch-registry-table th:nth-child(8) { width: 15%; }
+.ammunition-batch-registry-table th:nth-child(9) { width: 11%; }
+
+.ammunition-batch-actions-cell .row-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.ammunition-batch-actions-cell button {
+  flex: 0 0 auto;
+}
+
+.ammunition-batch-registry-table td:nth-child(4),
+.ammunition-batch-registry-table td:nth-child(4).material-description-cell {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.ammunition-batch-registry-table input,
+.ammunition-batch-registry-table select {
+  width: 100%;
+  min-width: 0;
+}
+
+.ammunition-batch-preview-page .ammunition-batch-registry-table,
+.ammunition-batch-print .ammunition-batch-registry-table {
+  min-width: 0;
+}
+
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(1),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(1) { width: 4%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(2),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(2) { width: 7%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(3),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(3) { width: 10%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(4),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(4) { width: 31%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(5),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(5) { width: 15%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(6),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(6) { width: 7%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(7),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(7) { width: 11%; }
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(8),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(8) { width: 15%; }
 
 .index-table th {
   height: 70px;
@@ -605,6 +672,26 @@
 
 .index-document-preview-content {
   max-height: calc(96vh - 100px);
+}
+
+@media screen {
+  .index-document-preview-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+
+  .index-document-preview-content > .official-index-page {
+    position: relative;
+    flex: 0 0 auto;
+    width: min(100%, 297mm);
+    height: auto;
+    min-height: 0;
+    margin: 0 auto 18px;
+    aspect-ratio: 297 / 210;
+  }
 }
 
 .checkbox-field input {

@@ -71,9 +71,12 @@ export function openExhpDocument(documentData) {
 
 
 export function renderExhpDocument(documentData) {
-  const numberedItems = documentData.items.map((item, index) => ({ ...item, exhpSerial: index + 1 }));
-  const chargeItems = numberedItems.filter((item) => item.transactionType === 'Χρέωση');
-  const creditItems = numberedItems.filter((item) => item.transactionType === 'Πίστωση');
+  const chargeItems = documentData.items
+    .filter((item) => item.transactionType === 'Χρέωση')
+    .map((item, index) => ({ ...item, exhpSerial: index + 1 }));
+  const creditItems = documentData.items
+    .filter((item) => item.transactionType === 'Πίστωση')
+    .map((item, index) => ({ ...item, exhpSerial: index + 1 }));
   const pageCount = Math.max(1, Math.ceil(chargeItems.length / 14), Math.ceil(creditItems.length / 14));
   const fillSecondOpinion = shouldFillExhpSecondOpinion(
     documentData.reason,
@@ -84,13 +87,13 @@ export function renderExhpDocument(documentData) {
     documentData.reason,
     documentData.reasonCode || ''
   );
-  const supportingDocuments = [
+  const supportingDocuments = [...new Set([
     ...documentData.items.map((item) => item.supportingDocuments).filter(Boolean),
     ...(documentData.supports || [])
       .filter((support) => support.completed)
       .map((support) => [support.documentCode, support.documentReference || support.title].filter(Boolean).join(' ')),
     documentData.otherSupportDocument
-  ].filter(Boolean);
+  ].filter(Boolean))].slice(0, 6);
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
     const chargePage = chargeItems.slice(pageIndex * 14, pageIndex * 14 + 14);
     const creditPage = creditItems.slice(pageIndex * 14, pageIndex * 14 + 14);
@@ -106,11 +109,12 @@ export function renderExhpDocument(documentData) {
           ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
+          ${renderExhpFrontSignatureTitles()}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 76.1, 11.5, 2.7)}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
-          ${exhpStaticOverlay(supportingDocuments.join(' · '), 50.8, 81.0, 46.0, 5.1, 'material-description-overlay')}
+          ${exhpStaticOverlay(renderExhpSupportingDocuments(supportingDocuments), 50.8, 81.0, 46.0, 5.1, 'exhp-supporting-documents-overlay', true)}
           ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.approvalReference || '', 51.0, 89.0, 23.0, 4.3)}
           ${showCommanderInField23
@@ -129,6 +133,25 @@ export function renderExhpDocument(documentData) {
       </article>
     `;
   }).join('');
+}
+
+export function renderExhpFrontSignatureTitles() {
+  const fields = [
+    { left: 1.8, width: 10.8, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
+    { left: 12.8, width: 12.6, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' },
+    { left: 49.8, width: 9.2, text: '(18) ΤΟ ΛΟΓΙΣΤΗΡΙΟ' },
+    { left: 79.5, width: 8.2, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
+    { left: 87.9, width: 9.0, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' }
+  ];
+  return fields.map((field) => `
+    ${exhpStaticOverlay('', field.left, 76.0, field.width, 1.55, 'exhp-signature-title-mask')}
+    ${exhpStaticOverlay(field.text, field.left, 74.75, field.width, 1.25, 'exhp-signature-title')}
+  `).join('');
+}
+
+export function renderExhpSupportingDocuments(documents) {
+  const cells = Array.from({ length: 6 }, (_unused, index) => documents[index] || '');
+  return `<div class="exhp-supporting-documents-grid">${cells.map((document) => `<span>${escapeHtml(document)}</span>`).join('')}</div>`;
 }
 
 

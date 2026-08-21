@@ -353,60 +353,70 @@ function resolvePreviousYearInventoryDate(card, options) {
 }
 
 function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
-  const blankRows = Array.from({ length: Math.max(0, 32 - rows.length) }, () => null);
+  const pageRows = Array.from({ length: 32 }, (_unused, index) => rows[index] || null);
   return `
     <article class="official-share-page official-share-back-page print-document-area">
-      <div class="official-share-back-sheet">
-        <div class="official-share-back-code">Κ 2309/ΔΥΠ</div>
+      <section class="official-share-back-sheet" aria-label="Μερίδα Υλικού - Δελτίο Υπολοίπων, πίσω πλευρά">
+        <div class="official-share-back-code">Κ 2309ΔΥΠ</div>
         <h2>ΜΕΡΙΔΑ ΥΛΙΚΟΥ - ΔΕΛΤΙΟ ΥΠΟΛΟΙΠΩΝ</h2>
         <table class="official-share-back-table">
           <thead>
             <tr>
-              <th>Α/Α</th><th>ΗΜΕΡ</th><th>ΧΡΕΩΣΗ<br />Ή ΠΙΣΤΩΣΗ</th>
-              <th>ΑΡΙΘΜ<br />ΕΥΡΕΤΗΡΙΟΥ</th><th>ΕΙΣΑΓΩΓΕΣ</th><th>ΕΞΑΓΩΓΕΣ</th>
-              <th>ΥΠΟΛΟΙΠΟ</th><th>ΠΑΡΣΕΙΣ</th>
+              <th>Α/Α</th>
+              <th class="official-share-back-date-heading">ΗΜΕΡ</th>
+              <th>ΧΡΕΩΣΗ<br />Ή<br />ΠΙΣΤΩΣΗ</th>
+              <th>ΑΡΙΘΜ<br />ΕΥΡΥΤΗΡΙΟΥ</th>
+              <th>ΕΙΣΑΓΩΓΕΣ</th>
+              <th>ΕΞΑΓΩΓΕΣ</th>
+              <th>ΥΠΟΛΟΙΠΟ</th>
+              <th>ΠΑΡΑΤΗΡΗΣΕΙΣ</th>
             </tr>
             <tr class="official-share-back-column-numbers">
-              <th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th>
+              ${Array.from({ length: 8 }, (_unused, index) => `<th>${index + 22}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
             <tr class="official-share-back-transfer-row">
               <td colspan="6">ΑΠΟ ΜΕΤΑΦΟΡΑ</td>
-              <td>${escapeHtml(openingBalance === '' || openingBalance === null || openingBalance === undefined
-                ? ''
-                : formatQuantity(openingBalance))}</td><td></td>
+              <td>${openingBalance === '' || openingBalance === null || openingBalance === undefined ? '' : formatQuantity(openingBalance)}</td>
+              <td></td>
             </tr>
-            ${[...rows, ...blankRows].map((item) => item
-              ? `<tr>
-                  <td>${escapeHtml(item.serialNumber)}</td>
-                  <td>${escapeHtml(formatDate(item.date))}</td>
-                  <td>${escapeHtml(item.transactionUnit)}</td>
-                  <td>${escapeHtml(item.registryNumber)}</td>
-                  <td>${escapeHtml(item.imports ? formatQuantity(item.imports) : '')}</td>
-                  <td>${escapeHtml(item.exports ? formatQuantity(item.exports) : '')}</td>
-                  <td>${escapeHtml(formatQuantity(item.balance))}</td>
-                  <td></td>
-                </tr>`
-              : '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>')
-              .join('')}
-            <tr class="official-share-back-transfer-row official-share-back-carry-row">
+            ${pageRows.map(renderOfficialShareBackRow).join('')}
+            <tr class="official-share-back-transfer-row">
               <td colspan="6">ΓΙΑ ΜΕΤΑΦΟΡΑ</td>
-              <td>${escapeHtml(transferBalance === '' ? '' : formatQuantity(transferBalance))}</td><td></td>
+              <td>${transferBalance === '' ? '' : formatQuantity(transferBalance)}</td>
+              <td></td>
             </tr>
           </tbody>
         </table>
         <table class="official-share-back-summary">
+          <colgroup><col class="official-share-back-summary-label" />${'<col />'.repeat(12)}</colgroup>
           <tbody>
-            <tr><th>30. ΤΜΗΜΑΤΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><th>31. ΠΡΟΒΛΕΠΟΜΕΝΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><th>32. ΥΠΑΡΧΟΝΤΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><th>33. ΔΙΑΦΟΡΑ</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><th>30. ΤΜΗΜΑΤΑ</th>${'<td></td>'.repeat(12)}</tr>
+            <tr><th>31. ΠΡΟΒΛΕΠΟΜΕΝΑ</th>${'<td></td>'.repeat(12)}</tr>
+            <tr><th>32. ΥΠΑΡΧΟΝΤΑ</th>${'<td></td>'.repeat(12)}</tr>
+            <tr><th>33. ΔΙΑΦΟΡΑ</th>${'<td></td>'.repeat(12)}</tr>
           </tbody>
         </table>
-        <div class="official-share-back-footer">ΕΦΕΔ 202</div>
-      </div>
+        <div class="official-share-back-footer">ΕΦΟΔ 101</div>
+      </section>
     </article>
+  `;
+}
+
+function renderOfficialShareBackRow(item) {
+  if (!item) return '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  return `
+    <tr>
+      <td>${escapeHtml(item.serialNumber)}</td>
+      <td>${escapeHtml(formatDate(item.date))}</td>
+      <td class="official-share-back-unit">${escapeHtml(item.transactionUnit)}</td>
+      <td>${escapeHtml(item.registryNumber)}</td>
+      <td>${item.imports ? formatQuantity(item.imports) : ''}</td>
+      <td>${item.exports ? formatQuantity(item.exports) : ''}</td>
+      <td>${formatQuantity(item.balance)}</td>
+      <td></td>
+    </tr>
   `;
 }
 

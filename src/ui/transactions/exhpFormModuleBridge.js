@@ -350,6 +350,7 @@ function collectDocSTData(editor, context) {
   readPathFields(editor, '[data-doc-st-field]', data);
   data.entries = Array.from(editor.querySelectorAll('[data-doc-st-row]')).map((row) => ({
     shareNumber: row.querySelector('[data-doc-st-entry="shareNumber"]')?.value.trim() || '',
+    nominalNumber: row.querySelector('[data-doc-st-entry="nominalNumber"]')?.value.trim() || '',
     item: row.querySelector('[data-doc-st-entry="item"]')?.value.trim() || '',
     subunit: row.querySelector('[data-doc-st-entry="subunit"]')?.value.trim() || '',
     quantity: row.querySelector('[data-doc-st-entry="quantity"]')?.value || '',
@@ -571,25 +572,28 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   if (data?.aitiologiaCode === 'st') {
     const grouped = new Map();
     (data.entries || []).filter((entry) => entry.shareNumber && Number(entry.quantity) > 0).forEach((entry) => {
-      const key = String(entry.shareNumber).trim();
-      const current = grouped.get(key) || { shareNumber: key, description: entry.item || '', quantity: 0 };
+      const transactionType = entry.movement === 'return' ? 'Χρέωση' : 'Πίστωση';
+      const shareNumber = String(entry.shareNumber).trim();
+      const key = `${shareNumber}\u0000${transactionType}`;
+      const current = grouped.get(key) || { shareNumber, nominalNumber: entry.nominalNumber || '', description: entry.item || '', quantity: 0, transactionType };
       current.quantity += Number(entry.quantity);
       if (!current.description) current.description = entry.item || '';
+      if (!current.nominalNumber) current.nominalNumber = entry.nominalNumber || '';
       grouped.set(key, current);
     });
-    const credits = Array.from(grouped.values()).map((entry) => ({
+    const syncedItems = Array.from(grouped.values()).map((entry) => ({
       shareNumber: entry.shareNumber,
-      nominalNumber: '',
+      nominalNumber: entry.nominalNumber,
       description: entry.description,
       measurementUnit: 'Τεμάχια',
       materialType: '',
       materialCode: '',
       quantity: entry.quantity,
-      transactionType: 'Πίστωση',
+      transactionType: entry.transactionType,
       supportingDocuments: 'Συγκεντρωτική κατάσταση ΔΥΠ/189',
       supportModuleSource: 'docST_clothing_summary'
     }));
-    return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
+    return [...retained, ...syncedItems].sort(compareShareNumbersForExhpItems);
   }
   if (data?.aitiologiaCode !== 'z') return retained;
 

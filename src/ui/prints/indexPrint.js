@@ -1,7 +1,7 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 import { printIsolatedPreview } from './printPreview.js';
-import { formatDate } from './shared.js';
+import { formatAddyDate, formatDate } from './shared.js';
 
 const ROWS_PER_INDEX_PAGE = 34;
 
@@ -48,7 +48,7 @@ function renderExternalIndexTable(rows) {
     rows,
     cells: (row) => [
       escapeHtml(row.serial),
-      escapeHtml(formatDate(row.date)),
+      escapeHtml(formatAddyDate(row.date)),
       escapeHtml(row.unit),
       escapeHtml(row.documentType),
       escapeHtml(row.nominalNumber),
@@ -342,6 +342,7 @@ function bindFiscalYearControls(container, state, renderActiveTab) {
 }
 function renderExternalTransactionsIndex(settings, entries) {
   return renderOfficialIndexPages({
+    pageClassName: 'external-official-index-page',
     unit: settings.serviceInfo.serviceName,
     image: 'te34-254-page-227.png',
     rowsPerPage: 22,
@@ -361,7 +362,7 @@ function renderExternalTransactionsIndex(settings, entries) {
     rows: entries.map((entry) => {
       return [
         entry.serial,
-        formatDate(entry.date),
+        formatAddyDate(entry.date),
         entry.unit,
         entry.documentType,
         entry.nominalNumber,
@@ -376,6 +377,7 @@ function renderExternalTransactionsIndex(settings, entries) {
 
 function renderChargeCreditOrdersIndex(settings, entries) {
   return renderOfficialIndexPages({
+    pageClassName: 'orders-official-index-page',
     unit: settings.serviceInfo.serviceName,
     image: 'te34-254-page-228.png',
     rowsPerPage: 27,
@@ -384,7 +386,7 @@ function renderChargeCreditOrdersIndex(settings, entries) {
     columns: [
       { left: 6.1, width: 3.8 },
       { left: 9.95, width: 11.85 },
-      { left: 21.85, width: 28.6 },
+      { left: 21.85, width: 28.6, className: 'official-index-left-cell' },
       { left: 50.5, width: 13.4 },
       { left: 64.0, width: 21.85 },
       { left: 85.9, width: 8.4 }
@@ -411,7 +413,7 @@ function renderOfficialIndexPages(config) {
   }).join('');
 }
 
-function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns, pageNumber, pageCount }) {
+function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns, pageClassName = '', pageNumber, pageCount }) {
   const overlays = [
     officialIndexOverlay(unit, 13.2, 11.75, 16, 2.7, 'official-index-unit')
   ];
@@ -430,7 +432,7 @@ function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowSt
     });
   });
   return `
-    <article class="official-index-page print-document-area">
+    <article class="official-index-page ${pageClassName} print-document-area">
       <img src="./assets/official-forms/${image}" alt="Επίσημο ευρετήριο ΤΕ 34-254" />
       <div class="official-index-cleanup official-index-page-number-mask"></div>
       <div class="official-index-cleanup official-index-footer-mask"></div>

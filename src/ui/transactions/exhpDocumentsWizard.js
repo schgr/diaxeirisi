@@ -68,7 +68,9 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
         String(item.shareNumber || '').trim() === clothingShare.value.trim()
       );
       const itemField = clothingShare.closest('[data-doc-st-row]')?.querySelector('[data-doc-st-entry="item"]');
+      const nominalField = clothingShare.closest('[data-doc-st-row]')?.querySelector('[data-doc-st-entry="nominalNumber"]');
       if (share && itemField) itemField.value = share.description || '';
+      if (share && nominalField) nominalField.value = share.nominalNumber || share.nomenclature || '';
     }
     const materialPicker = event.target.closest('[data-material-picker-select]');
     if (!materialPicker) return;

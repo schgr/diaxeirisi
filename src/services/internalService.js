@@ -63,7 +63,7 @@ function createInternalService(db) {
 
       const departmentBalance = repository.getDepartmentShareBalance(department.id, share.id);
 
-      if (movement.movementType === 'Επιστροφή' && movement.quantity > departmentBalance) {
+      if (movement.movementType === 'Επιστροφή' && movement.quantity - departmentBalance > 0.000001) {
         throw new AppError('Η Μερική Διαχείριση δεν έχει επαρκή χρεωμένη ποσότητα.', 'VALIDATION_ERROR');
       }
 

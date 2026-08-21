@@ -1,6 +1,6 @@
 function createIndexRegistryService(dependencies) {
   const { repository, requirePositiveId } = dependencies;
-  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, compareShareNumbers } = dependencies.shared;
+  const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatAddyDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
 
   return {
     updateExhpIndexFields(documentId, payload) {
@@ -127,7 +127,7 @@ function createIndexRegistryService(dependencies) {
           nominalNumber: row.nominal_number || '',
           documentReference: row.transaction_type === 'Χρέωση'
             ? row.justification_reference || ''
-            : `Π-${row.document_id} / ${formatDate(row.document_date)}`,
+            : `Π-${row.document_id} / ${formatAddyDate(row.document_date)}`,
           movementDate: row.document_date,
           returnDate: '',
           indexField7: row.index_field_7,

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { renderFiscalYearControls, renderIndexPages } from '../src/ui/prints/indexPrint.js';
 
 const {
@@ -9,6 +10,10 @@ const {
 } = await import('../src/ui/pages/printsPage.js');
 
 const settings = { serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' } };
+const indexStyles = await readFile(new URL('../src/ui/styles/print-indexes.css', import.meta.url), 'utf8');
+assert.match(indexStyles, /\.index-document-preview-content > \.official-index-page[\s\S]*flex:\s*0 0 auto;[\s\S]*aspect-ratio:\s*297 \/ 210;/u);
+assert.match(indexStyles, /\.official-index-overlay[\s\S]*font-size:\s*clamp\(7px, 0\.62vw, 9px\)/u);
+assert.match(indexStyles, /\.orders-official-index-page > img,[\s\S]*transform:\s*translateY\(-12px\)/u);
 const movementControls = renderFiscalYearControls({ fiscalYear: 2026 });
 assert.match(movementControls, />Προβολή<\/button>/u);
 assert.doesNotMatch(movementControls, />Εκτύπωση<\/button>/u);
@@ -29,11 +34,14 @@ const ordersRows = Array.from({ length: 28 }, (_unused, index) => ({
 const externalHtml = renderExternalTransactionsIndex(settings, externalRows);
 assert.match(externalHtml, /Σελίδα 1 από Σελίδα 2/);
 assert.match(externalHtml, /Σελίδα 2 από Σελίδα 2/);
-assert.equal((externalHtml.match(/official-index-page print-document-area/g) || []).length, 2);
+assert.match(externalHtml, /01-01-2026/u);
+assert.equal((externalHtml.match(/official-index-page external-official-index-page print-document-area/g) || []).length, 2);
 
 const ordersHtml = renderChargeCreditOrdersIndex(settings, ordersRows);
 assert.match(ordersHtml, /Σελίδα 1 από Σελίδα 2/);
 assert.match(ordersHtml, /Σελίδα 2 από Σελίδα 2/);
+assert.match(ordersHtml, /official-index-page orders-official-index-page print-document-area/u);
+assert.match(ordersHtml, /official-index-cell official-index-left-cell[^>]*>ΑΙΤΙΟΛΟΓΙΑ 1</u);
 
 const defaultPageHtml = renderIndexPages({
   unit: 'UNIT',

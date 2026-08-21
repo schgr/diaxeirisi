@@ -155,6 +155,48 @@ export async function renderTransactionsPage(
         <button id="addy-add-item" class="primary-button" type="button" disabled>Προσθήκη</button>
       </div>
 
+      <div class="modal-backdrop addy-commerce-backdrop" id="addy-commerce-modal" hidden>
+        <section class="request-document-modal addy-commerce-modal" role="dialog" aria-modal="true" aria-labelledby="addy-commerce-title">
+          <header class="material-card-header">
+            <div>
+              <p class="eyebrow">ΑΔΔΥ ΕΜΠΟΡΙΟΥ</p>
+              <h2 id="addy-commerce-title">Στοιχεία Εμπορίου</h2>
+            </div>
+            <button class="secondary-button" data-cancel-addy-commerce type="button">Κλείσιμο</button>
+          </header>
+          <div class="addy-commerce-modal-body">
+            <label class="field addy-commerce-field" id="addy-invoice-number-field">
+              <span>Αρ. Τιμολογίου</span>
+              <input id="addy-invoice-number" autocomplete="off" disabled />
+            </label>
+            <label class="field addy-commerce-field" id="addy-invoice-date-field">
+              <span>Ημερομηνία Τιμολογίου</span>
+              <input id="addy-invoice-date" type="date" disabled />
+            </label>
+            <label class="field addy-commerce-field" id="addy-commerce-company-field">
+              <span>Επιχείρηση</span>
+              <select id="addy-commerce-company" disabled>
+                <option value="">Επιλογή</option>
+                ${(referenceData.commerceCompanies || [])
+                  .map((company) => `<option value="${company.id}">${escapeHtml(company.name)}</option>`)
+                  .join('')}
+                <option value="__new__">+ Νέα επιχείρηση</option>
+              </select>
+            </label>
+            <div class="addy-new-company-inline" id="addy-new-company-form" hidden>
+              <label class="field"><span>Επωνυμία</span><input id="addy-new-company-name" autocomplete="off" /></label>
+              <label class="field"><span>ΑΦΜ</span><input id="addy-new-company-tax-number" autocomplete="off" /></label>
+              <label class="field"><span>Διεύθυνση</span><input id="addy-new-company-address" autocomplete="off" /></label>
+              <button class="secondary-button" id="addy-new-company-save" type="button">Αποθήκευση επιχείρησης</button>
+            </div>
+          </div>
+          <div class="row-actions addy-commerce-modal-actions">
+            <button class="secondary-button" data-cancel-addy-commerce type="button">Ακύρωση</button>
+            <button class="primary-button" data-confirm-addy-commerce type="button">Συνέχεια στην αποθήκευση</button>
+          </div>
+        </section>
+      </div>
+
     </section>
 
     <section class="page-panel shares-panel addy-list-panel">

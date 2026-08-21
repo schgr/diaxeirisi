@@ -12,16 +12,11 @@ const HOME_TILE_META = {
   'administration-archive': { code: '§ 03-Β', icon: 'ΑΜ' },
   'administration-report': { code: '§ 03-Β', icon: 'ΑΔ' },
   'administration-aggregate-prints': { code: '§ 03-Γ', icon: 'ΕΚ' },
-  'administration-serial-numbers': { code: '§ 03-Δ', icon: 'ΣΑ' },
-  'administration-ammunition-batches': { code: '§ 03-Ε', icon: 'ΒΜ' },
-  'administration-training-ammunition-batches': { code: '§ 03-ΣΤ', icon: 'ΠΕ' },
-  'administration-controlled-materials': { code: '§ 03-Ζ', icon: 'ΕΥ' },
-  'administration-weapon-registry': { code: '§ 03-Η', icon: 'ΜΟ' },
-  'settings-general': { code: '§ 04-Α', icon: 'ΓΕ' },
-  'settings-personnel': { code: '§ 04-Β', icon: 'ΤΜ' },
-  'settings-parameters': { code: '§ 04-Γ', icon: 'ΠΑ' },
-  'settings-security': { code: '§ 04-Δ', icon: 'ΑΣ' },
-  'settings-information': { code: '§ 04-Ε', icon: 'ΠΛ' }
+  'administration-books-registries': { code: '§ 03-Δ', icon: 'ΒΜ' },
+  'settings-general': { code: '§ 04-Α', icon: 'ΣΜ' },
+  'settings-parameters': { code: '§ 04-Β', icon: 'ΔΣ' },
+  'settings-security': { code: '§ 04-Γ', icon: 'ΑΣ' },
+  'settings-information': { code: '§ 04-Δ', icon: 'ΠΛ' }
 };
 
 export function renderHomeTiles({ container, groups, onNavigate }) {

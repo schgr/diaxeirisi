@@ -21,6 +21,8 @@ const CHANNELS = Object.freeze([
   "settings:add-transaction-unit",
   "settings:update-transaction-unit",
   "settings:delete-transaction-unit",
+  "settings:add-commerce-business",
+  "settings:delete-commerce-business",
   "settings:add-material-category",
   "settings:update-material-category",
   "settings:delete-material-category",
@@ -137,6 +139,12 @@ function registerSettingsHandlers({
     );
   register('settings:delete-transaction-unit', async (_event, id) =>
       safeInvoke(() => services.settings.deleteTransactionUnit(id))
+    );
+  register('settings:add-commerce-business', async (_event, payload) =>
+      safeInvoke(() => services.settings.addCommerceBusiness(payload))
+    );
+  register('settings:delete-commerce-business', async (_event, id) =>
+      safeInvoke(() => services.settings.deleteCommerceBusiness(id))
     );
   register('settings:add-material-category', async (_event, payload) =>
       safeInvoke(() => services.settings.addMaterialCategory(payload))

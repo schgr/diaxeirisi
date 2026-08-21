@@ -4,6 +4,7 @@ function normalizeSettings({
   ranks,
   measurementUnits,
   transactionUnits,
+  commerceBusinesses = [],
   materialCategories,
   requestJustificationCodes = [],
   requestIssuingUnits = [],
@@ -48,6 +49,11 @@ function normalizeSettings({
       sortOrder: row.sort_order
     })),
     transactionUnits: transactionUnits.map((row) => ({
+      id: row.id,
+      name: row.name,
+      sortOrder: row.sort_order
+    })),
+    commerceBusinesses: commerceBusinesses.map((row) => ({
       id: row.id,
       name: row.name,
       sortOrder: row.sort_order

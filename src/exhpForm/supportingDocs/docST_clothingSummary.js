@@ -28,8 +28,16 @@ export function createDocSTClothingSummary({ monada = '', data = {}, materialCat
 
 export function renderDocSTEdit(data = {}, materialCatalog = []) {
   const state = normalize(data);
+  const entries = state.entries.map((entry) => {
+    const share = materialCatalog.find((item) => String(item.shareNumber || '').trim() === String(entry.shareNumber || '').trim());
+    return share ? {
+      ...entry,
+      nominalNumber: entry.nominalNumber || share.nominalNumber || share.nomenclature || '',
+      item: entry.item || share.description || ''
+    } : entry;
+  });
   return `<section class="doc-st-clothing-editor" data-doc-st-editor>
-    <div class="doc-z-edit-grid">
+    <div class="doc-z-edit-grid doc-st-edit-grid">
       ${field('Μονάδα', 'commonFields.monada', state.commonFields.monada)}
       ${field('Μήνας', 'specificFields.month', state.specificFields.month, 'month')}
       ${field('ΣΤΓ', 'specificFields.stg', state.specificFields.stg)}
@@ -37,12 +45,11 @@ export function renderDocSTEdit(data = {}, materialCatalog = []) {
       ${field('Διαχειριστής Υλικού', 'specificFields.manager', state.specificFields.manager)}
     </div>
     <div class="table-wrapper" data-doc-st-table>
-      <datalist id="doc-st-share-catalog">${materialCatalog.map((share) => `<option value="${escapeHtml(share.shareNumber || '')}">${escapeHtml(share.description || '')}</option>`).join('')}</datalist>
       <table class="data-table exhp-materials-table-input"><thead><tr><th>Α/Α</th><th>Μερίδα</th><th>Είδος</th><th>Υπομονάδα</th><th>Ποσότητα</th><th>Κίνηση</th><th>Ενέργειες</th></tr></thead>
-      <tbody data-doc-st-body>${state.entries.map(renderRow).join('')}</tbody></table>
+      <tbody data-doc-st-body>${entries.map(renderRow).join('')}</tbody></table>
       <button class="secondary-button" data-doc-st-add-row type="button">Προσθήκη γραμμής</button>
     </div>
-    <div class="doc-st-totals">${MOVEMENTS.map(([key, label]) => `<strong>${label}: <span data-doc-st-total="${key}">${movementTotal(state.entries, key)}</span></strong>`).join('')}</div>
+    <div class="doc-st-totals">${MOVEMENTS.map(([key, label]) => `<strong>${label}: <span data-doc-st-total="${key}">${movementTotal(entries, key)}</span></strong>`).join('')}</div>
   </section>`;
 }
 
@@ -73,9 +80,9 @@ export function validateDocSTClothingSummary(data = {}) {
   const errors = checks.filter((check) => !check.valid); return { valid: !errors.length, errors };
 }
 
-function renderRow(entry = {}, index = 0) { return `<tr data-doc-st-row><td data-doc-st-seq>${index + 1}</td><td><input data-doc-st-entry="shareNumber" list="doc-st-share-catalog" value="${escapeHtml(entry.shareNumber || '')}" /></td><td><input data-doc-st-entry="item" value="${escapeHtml(entry.item || '')}" /></td><td><input data-doc-st-entry="subunit" value="${escapeHtml(entry.subunit || '')}" /></td><td><input data-doc-st-entry="quantity" type="number" min="0" step="0.001" value="${escapeHtml(entry.quantity ?? '')}" /></td><td><select data-doc-st-entry="movement">${MOVEMENTS.map(([key, label]) => `<option value="${key}"${entry.movement === key ? ' selected' : ''}>${label}</option>`).join('')}</select></td><td><button class="danger-button" data-doc-st-remove-row type="button">Διαγραφή</button></td></tr>`; }
+function renderRow(entry = {}, index = 0) { return `<tr data-doc-st-row><td data-doc-st-seq>${index + 1}</td><td><input data-doc-st-entry="shareNumber" value="${escapeHtml(entry.shareNumber || '')}" autocomplete="off" /><input data-doc-st-entry="nominalNumber" type="hidden" value="${escapeHtml(entry.nominalNumber || '')}" /></td><td><input data-doc-st-entry="item" value="${escapeHtml(entry.item || '')}" readonly /></td><td><input data-doc-st-entry="subunit" value="${escapeHtml(entry.subunit || '')}" /></td><td><input data-doc-st-entry="quantity" type="number" min="0" step="0.001" value="${escapeHtml(entry.quantity ?? '')}" /></td><td><select data-doc-st-entry="movement">${MOVEMENTS.map(([key, label]) => `<option value="${key}"${entry.movement === key ? ' selected' : ''}>${label}</option>`).join('')}</select></td><td><button class="danger-button" data-doc-st-remove-row type="button">Διαγραφή</button></td></tr>`; }
 function field(label, path, value = '', type = 'text') { return `<label class="field"><span>${label}</span><input data-doc-st-field="${path}" type="${type}" value="${escapeHtml(value || '')}" /></label>`; }
-function normalize(data = {}) { return { aitiologiaCode: 'st', formCode: DOC_ST_CLOTHING_SUMMARY_DEFINITION.formCode, commonFields: { monada: data.commonFields?.monada || '', addyAxp: data.commonFields?.addyAxp || '', date: data.commonFields?.date || '' }, specificFields: { month: data.specificFields?.month || '', stg: data.specificFields?.stg || data.specificFields?.sp || '', commander: data.specificFields?.commander || '', manager: data.specificFields?.manager || '' }, entries: Array.isArray(data.entries) && data.entries.length ? data.entries.map((e) => ({ shareNumber: e.shareNumber || '', item: e.item || '', subunit: e.subunit || '', quantity: e.quantity ?? '', movement: e.movement || 'initial' })) : [{ shareNumber: '', item: '', subunit: '', quantity: '', movement: 'initial' }] }; }
+function normalize(data = {}) { return { aitiologiaCode: 'st', formCode: DOC_ST_CLOTHING_SUMMARY_DEFINITION.formCode, commonFields: { monada: data.commonFields?.monada || '', addyAxp: data.commonFields?.addyAxp || '', date: data.commonFields?.date || '' }, specificFields: { month: data.specificFields?.month || '', stg: data.specificFields?.stg || data.specificFields?.sp || '', commander: data.specificFields?.commander || '', manager: data.specificFields?.manager || '' }, entries: Array.isArray(data.entries) && data.entries.length ? data.entries.map((e) => ({ shareNumber: e.shareNumber || '', nominalNumber: e.nominalNumber || e.nomenclature || '', item: e.item || '', subunit: e.subunit || '', quantity: e.quantity ?? '', movement: e.movement || 'initial' })) : [{ shareNumber: '', nominalNumber: '', item: '', subunit: '', quantity: '', movement: 'initial' }] }; }
 function quantityFor(entries, item, unit, movement) { return entries.filter((e) => e.item === item && e.subunit === unit && e.movement === movement).reduce((sum, e) => sum + number(e.quantity), 0); }
 function movementTotal(entries, movement) { return entries.filter((e) => e.movement === movement).reduce((sum, e) => sum + number(e.quantity), 0); }
 function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }

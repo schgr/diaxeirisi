@@ -622,6 +622,20 @@ select {
   max-width: 760px;
 }
 
+.settings-subtab-menu,
+.administration-subtab-menu {
+  width: 100%;
+  max-width: none;
+}
+
+.settings-subtab-menu {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.administration-subtab-menu {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .contextual-tile-menu[hidden] {
   display: none;
 }

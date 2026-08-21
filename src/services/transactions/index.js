@@ -29,6 +29,9 @@ function createTransactionsService(db, settingsService) {
   return {
     getStructure: query.getStructure,
     getAddyReferenceData: query.getAddyReferenceData,
+    createCommerceCompany: query.createCommerceCompany,
+    updateCommerceCompany: query.updateCommerceCompany,
+    deleteCommerceCompany: query.deleteCommerceCompany,
     suggestShareNumber: query.suggestShareNumber,
     saveAddy: addy.saveAddy,
     saveAddyDepartmentAllocations: addy.saveAddyDepartmentAllocations,

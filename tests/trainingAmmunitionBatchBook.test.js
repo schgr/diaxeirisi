@@ -11,7 +11,7 @@ async function run() {
   assert.match(administrationSource, /Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως/u);
   assert.match(administrationSource, /data-preview-training-ammunition-batches/u);
   assert.match(administrationSource, /data-preview-ammunition-batches/u);
-  assert.match(administrationSource, /data-print-training-ammunition-preview/u);
+  assert.match(administrationSource, /openAmmunitionBatchPreview/u);
   assert.match(administrationSource, /ammunition-batch-preview-backdrop/u);
   assert.match(administrationSource, /querySelectorAll\('\.no-print'\)\.forEach\(\(cell\) => cell\.remove\(\)\)/u);
   assert.match(settingsSource, /requiresTrainingAmmunitionBatchBook/u);

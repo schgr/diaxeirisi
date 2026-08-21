@@ -35,7 +35,7 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
   );
   const savedItem = {
     ...item,
-    composition: buildCompositionSnapshot(repository, share.id, item.quantity)
+    composition: buildCompositionSnapshot(repository, share.id, item.quantity, share.material_type)
   };
   repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
   documentItems.push({ ...savedItem, ledgerSerial });
@@ -175,7 +175,7 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
       throw new Error(`Η μερίδα ${sourceShare.share_number} πρέπει να πιστωθεί με ολόκληρο το υπόλοιπο ${balance}.`);
     }
 
-    const composition = buildCompositionSnapshot(repository, sourceShare.id, balance);
+    const composition = buildCompositionSnapshot(repository, sourceShare.id, balance, sourceShare.material_type);
     const sharedFields = {
       nominalNumber: sourceShare.nominal_number,
       description: sourceShare.description,
@@ -249,12 +249,15 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
   }
 }
 
-function buildCompositionSnapshot(repository, shareId, quantity) {
+function buildCompositionSnapshot(repository, shareId, quantity, materialType) {
+  const skipMultiplication = isNonScalingCompositionMaterial(materialType);
   return repository.listCompositionItems(shareId).map((component) => ({
     componentNominalNumber: component.component_nominal_number,
     componentDescription: component.component_description,
     measurementUnit: component.measurement_unit,
-    projectedQuantity: Number(component.quantity || 0) * Number(quantity || 0),
+    projectedQuantity: skipMultiplication
+      ? Number(component.quantity || 0)
+      : Number(component.quantity || 0) * Number(quantity || 0),
     notIssuedQuantity: 0,
     notes: component.notes || ''
   }));
@@ -348,8 +351,19 @@ function formatDate(value) {
   return `${day}/${month}/${year}`;
 }
 
+function formatAddyDate(value) {
+  if (!value) return '';
+  const [year, month, day] = String(value).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}-${month}-${year}`;
+}
+
 function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('el-GR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function isConsumableMaterial(value) {
@@ -357,6 +371,11 @@ function isConsumableMaterial(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
   return normalized === 'αναλωσιμα' || normalized === 'αναλωσιμο';
+}
+
+function isNonScalingCompositionMaterial(value) {
+  const normalized = normalize(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return normalized === 'κανονισμοι' || normalized === 'βιβλια';
 }
 
 function compareShareNumbers(left, right) {
@@ -387,8 +406,10 @@ module.exports = {
   collectMaterialTypes,
   addMaterialType,
   mapAddyDocumentItem,
+  formatAddyDate,
   formatDate,
   normalize,
   isConsumableMaterial,
+  isNonScalingCompositionMaterial,
   compareShareNumbers
 };

@@ -6,6 +6,13 @@ function formatDate(value) {
   return `${day}/${month}/${year}`;
 }
 
+function formatAddyDate(value) {
+  if (!value) return '';
+  const [year, month, day] = String(value).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}-${month}-${year}`;
+}
+
 function formatNumber(value) {
   return Number(value).toLocaleString('el-GR', { maximumFractionDigits: 3, useGrouping: false });
 }
@@ -38,4 +45,4 @@ function printLandscapeDocument() {
   window.setTimeout(() => style.remove(), 500);
 }
 
-export { compareShareNumbers, formatDate, formatNumber, getDefaultRegistryCount };
+export { compareShareNumbers, formatAddyDate, formatDate, formatNumber, getDefaultRegistryCount };

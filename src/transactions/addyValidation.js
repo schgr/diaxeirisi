@@ -14,7 +14,7 @@ function validateAddy(payload) {
 
   const transactionUnit = requireText(payload && payload.transactionUnit, 'Μονάδα Δοσοληψιών');
   const validatedItems = items.map(validateAddyItem);
-  if (normalize(transactionUnit) === 'εμπόριο' && validatedItems.some((item) => item.unitPrice === null)) {
+  if (normalize(transactionUnit) === 'εμποριο' && validatedItems.some((item) => item.unitPrice === null)) {
     throw new AppError('Η τιμή είναι υποχρεωτική όταν η Μονάδα Δοσοληψιών είναι Εμπόριο.', 'VALIDATION_ERROR');
   }
 
@@ -23,6 +23,9 @@ function validateAddy(payload) {
     transactionUnit,
     justificationReference: optionalText(payload && payload.justificationReference),
     notes: optionalText(payload && payload.notes),
+    invoiceNumber: optionalText(payload && payload.invoiceNumber),
+    invoiceDate: optionalText(payload && payload.invoiceDate),
+    commerceCompanyId: payload && payload.commerceCompanyId ? Number(payload.commerceCompanyId) : null,
     items: validatedItems
   };
 }
@@ -90,5 +93,9 @@ module.exports = {
 };
 
 function normalize(value) {
-  return String(value || '').trim().toLocaleLowerCase('el-GR');
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('el-GR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }

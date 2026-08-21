@@ -2,7 +2,17 @@
 
 .serial-number-registry-table {
   min-width: 1180px;
+  table-layout: fixed;
 }
+
+.serial-number-registry-table th:nth-child(1) { width: 4%; }
+.serial-number-registry-table th:nth-child(2) { width: 7%; }
+.serial-number-registry-table th:nth-child(3) { width: 10%; }
+.serial-number-registry-table th:nth-child(4) { width: 30%; }
+.serial-number-registry-table th:nth-child(5) { width: 9%; }
+.serial-number-registry-table th:nth-child(6) { width: 14%; }
+.serial-number-registry-table th:nth-child(7) { width: 10%; }
+.serial-number-registry-table th:nth-child(8) { width: 16%; }
 
 .serial-number-registry-table thead {
   position: sticky;
@@ -16,11 +26,18 @@
 
 .serial-number-registry-table input {
   width: 100%;
-  min-width: 145px;
+  min-width: 0;
+}
+
+.serial-number-registry-table td:nth-child(4),
+.serial-number-registry-table td:nth-child(4).material-description-cell {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .serial-department-cell {
-  min-width: 180px;
+  min-width: 0;
   white-space: normal;
 }
 
@@ -276,12 +293,6 @@
   page-break-after: auto;
 }
 
-.serial-registry-print-page h2 {
-  margin: 0 0 8mm;
-  text-align: center;
-  color: #111;
-}
-
 .serial-number-registry-print-table {
   width: 100%;
   table-layout: fixed;
@@ -298,13 +309,19 @@
 }
 
 .serial-number-registry-print-table th:nth-child(1) { width: 4%; }
-.serial-number-registry-print-table th:nth-child(2) { width: 9%; }
-.serial-number-registry-print-table th:nth-child(3) { width: 11%; }
-.serial-number-registry-print-table th:nth-child(4) { width: 23%; }
-.serial-number-registry-print-table th:nth-child(5) { width: 7%; }
-.serial-number-registry-print-table th:nth-child(6) { width: 15%; }
-.serial-number-registry-print-table th:nth-child(7) { width: 15%; }
+.serial-number-registry-print-table th:nth-child(2) { width: 7%; }
+.serial-number-registry-print-table th:nth-child(3) { width: 10%; }
+.serial-number-registry-print-table th:nth-child(4) { width: 30%; }
+.serial-number-registry-print-table th:nth-child(5) { width: 9%; }
+.serial-number-registry-print-table th:nth-child(6) { width: 14%; }
+.serial-number-registry-print-table th:nth-child(7) { width: 10%; }
 .serial-number-registry-print-table th:nth-child(8) { width: 16%; }
+
+.serial-number-registry-print-table td:nth-child(4) {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
 
 .serial-registry-print-page footer {
   position: absolute;
@@ -414,6 +431,13 @@
 }
 
 @media print {
+  .serial-registry-print-root .serial-registry-print-page > h2,
+  .isolated-print-root .ammunition-batch-preview-page > h2,
+  .isolated-print-root .ammunition-batch-print > h2,
+  .isolated-print-root .controlled-material-print > h2 {
+    display: none !important;
+  }
+
   .serial-registry-print-root .serial-registry-print-page {
     width: 297mm;
     height: 210mm;

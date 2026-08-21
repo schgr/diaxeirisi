@@ -13,13 +13,16 @@ const materialCategorySection = {
 };
 
 export async function renderSettingsPage(container, settingsApi, clothingApi, showToast, initialTab = '', sharesApi = window.appApi.shares) {
-  const [settings, shares, authStatus, backups, appVersion] = await Promise.all([
+  const [settings, shares, authStatus, backups, appVersion, addyReferenceData] = await Promise.all([
     settingsApi.get(),
     sharesApi.list(),
     window.appApi.auth.status(),
     window.appApi.backup.list(),
-    window.appApi.app.getVersion().catch(() => '')
+    window.appApi.app.getVersion().catch(() => ''),
+    window.appApi.transactions.getAddyReferenceData().catch(() => ({ commerceCompanies: [] }))
   ]);
+
+  settings.commerceCompanies = addyReferenceData.commerceCompanies || [];
 
   container.innerHTML = `
     <section class="page-header">
@@ -30,11 +33,10 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
     </section>
 
     <nav class="transaction-flow-home contextual-tile-menu settings-tile-menu" data-settings-menu aria-label="Ενότητες ρυθμίσεων">
-      <button class="home-tile transaction-flow-tile" data-settings-tab="general" type="button"><span class="home-tile-icon">ΓΕ</span><span class="home-tile-title">Γενικά</span><span class="home-tile-code">§ ΡΥ-Α</span></button>
-      <button class="home-tile transaction-flow-tile" data-settings-tab="personnel" type="button"><span class="home-tile-icon">ΤΜ</span><span class="home-tile-title">Τμήματα Μονάδος</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
-      <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΠΑ</span><span class="home-tile-title">Παράμετροι</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
-      <button class="home-tile transaction-flow-tile" data-settings-tab="security" type="button"><span class="home-tile-icon">ΑΣ</span><span class="home-tile-title">Ασφάλεια και Backup</span><span class="home-tile-code">§ ΡΥ-Δ</span></button>
-      <button class="home-tile transaction-flow-tile" data-settings-tab="information" type="button"><span class="home-tile-icon">ΠΛ</span><span class="home-tile-title">Πληροφορίες</span><span class="home-tile-code">§ ΡΥ-Ε</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="general" type="button"><span class="home-tile-icon">ΣΜ</span><span class="home-tile-title">Στοιχεία Μονάδος</span><span class="home-tile-code">§ ΡΥ-Α</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="parameters" type="button"><span class="home-tile-icon">ΔΣ</span><span class="home-tile-title">Δεδομένα Συστήματος</span><span class="home-tile-code">§ ΡΥ-Β</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="security" type="button"><span class="home-tile-icon">ΑΣ</span><span class="home-tile-title">Ασφάλεια και Backup</span><span class="home-tile-code">§ ΡΥ-Γ</span></button>
+      <button class="home-tile transaction-flow-tile" data-settings-tab="information" type="button"><span class="home-tile-icon">ΠΛ</span><span class="home-tile-title">Πληροφορίες</span><span class="home-tile-code">§ ΡΥ-Δ</span></button>
     </nav>
     <div class="transaction-tab-panel" data-settings-panel="general" hidden>
       <div class="settings-layout">
@@ -56,13 +58,6 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
           </form>
         </section>
 
-        ${renderInitialInventorySection()}
-        ${renderCompositionImportSection()}
-      </div>
-    </div>
-
-    <div class="transaction-tab-panel" data-settings-panel="personnel" hidden>
-      <div class="settings-layout">
         <section class="page-panel wide-panel">
           <h3>Μερικοί Διαχειριστές</h3>
           ${renderDepartmentManagerTable(settings.departmentManagers)}
@@ -72,11 +67,23 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <button class="primary-button" type="submit">Προσθήκη</button>
           </form>
         </section>
+
       </div>
     </div>
 
     <div class="transaction-tab-panel" data-settings-panel="parameters" hidden>
-      <div class="settings-layout parameters-settings-layout">
+      <nav class="transaction-flow-home contextual-tile-menu settings-subtab-menu" data-settings-submenu aria-label="Ενότητες δεδομένων συστήματος">
+        <button class="home-tile transaction-flow-tile" data-settings-subtab="initial-records" type="button"><span class="home-tile-icon">ΑΚ</span><span class="home-tile-title">Αρχικές Καταχωρήσεις</span></button>
+        <button class="home-tile transaction-flow-tile" data-settings-subtab="system-catalogs" type="button"><span class="home-tile-icon">ΚΣ</span><span class="home-tile-title">Κατάλογοι Συστήματος</span></button>
+        <button class="home-tile transaction-flow-tile" data-settings-subtab="material-card-settings" type="button"><span class="home-tile-icon">ΡΚ</span><span class="home-tile-title">Ρυθμίσεις Καρτέλας Υλικού</span></button>
+      </nav>
+
+      <div class="settings-layout parameters-settings-layout" data-settings-subpanel="initial-records" hidden>
+        ${renderInitialInventorySection()}
+        ${renderCompositionImportSection()}
+      </div>
+
+      <div class="settings-layout parameters-settings-layout" data-settings-subpanel="system-catalogs" hidden>
         <section class="page-panel measurement-units-panel">
           <h3>Μονάδες Μέτρησης</h3>
           ${renderMeasurementUnitTable(settings.measurementUnits)}
@@ -105,6 +112,37 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
           </form>
         </section>
 
+        <section class="page-panel">
+          <h3>Επιχειρήσεις Τιμολογίου ΑΔΔΥ</h3>
+          <p class="hint">Επιχειρήσεις που εκδίδουν τιμολόγιο σε ΑΔΔΥ Εμπορίου.</p>
+          <div class="table-wrap commerce-companies-table-wrap">
+          <table class="index-table commerce-companies-table">
+            <thead><tr><th>Επωνυμία</th><th>ΑΦΜ</th><th>Διεύθυνση</th><th class="no-print">Ενέργειες</th></tr></thead>
+            <tbody>
+              ${settings.commerceCompanies.map((company) => `
+                <tr data-commerce-company-row="${company.id}">
+                  <td><input data-commerce-company-name="${company.id}" value="${escapeHtml(company.name)}" /></td>
+                  <td><input data-commerce-company-tax-number="${company.id}" value="${escapeHtml(company.taxNumber)}" /></td>
+                  <td><input data-commerce-company-address="${company.id}" value="${escapeHtml(company.address)}" /></td>
+                  <td class="no-print">
+                    <div class="row-actions">
+                      <button class="secondary-button" data-save-commerce-company="${company.id}" type="button">Αποθήκευση</button>
+                      <button class="danger-button" data-delete-commerce-company="${company.id}" type="button">Διαγραφή</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('') || '<tr><td colspan="4" class="empty-table">Δεν έχουν καταχωρηθεί επιχειρήσεις.</td></tr>'}
+            </tbody>
+          </table>
+          </div>
+          <form id="commerce-company-form" class="inline-form compact-form">
+            ${field('Επωνυμία', 'name')}${field('ΑΦΜ', 'taxNumber')}${field('Διεύθυνση', 'address')}
+            <button class="primary-button" type="submit">Προσθήκη</button>
+          </form>
+        </section>
+      </div>
+
+      <div class="settings-layout parameters-settings-layout" data-settings-subpanel="material-card-settings" hidden>
         <section class="page-panel wide-panel">
           <h3>Πεδία Καρτελών Υλικού</h3>
           <p class="muted">Ενεργοποιήστε ανά μερίδα τη Σύνθεση Υλικού, τον Σειριακό Αριθμό, το Μητρώο Οπλισμού, τα Πυρομαχικά Β.Φ. ή/και τα Πυρομαχικά Εκπαιδεύσεως.</p>
@@ -165,6 +203,7 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
 
   if (initialTab) container.querySelector('.page-header')?.remove();
   bindSettingsTabs(container, initialTab);
+  bindSettingsSubtabs(container);
   bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, showToast);
 }
 
@@ -329,6 +368,21 @@ function bindSettingsTabs(container, initialTab = '') {
     });
   });
   if (initialTab) container.querySelector(`[data-settings-tab="${initialTab}"]`)?.click();
+}
+
+function bindSettingsSubtabs(container) {
+  const panel = container.querySelector('[data-settings-panel="parameters"]');
+  if (!panel) return;
+  const submenu = panel.querySelector('[data-settings-submenu]');
+  panel.querySelectorAll('[data-settings-subtab]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const subtab = button.dataset.settingsSubtab;
+      if (submenu) submenu.hidden = true;
+      panel.querySelectorAll('[data-settings-subpanel]').forEach((subpanel) => {
+        subpanel.hidden = subpanel.dataset.settingsSubpanel !== subtab;
+      });
+    });
+  });
 }
 
 export function renderRequestPriorityTable() {
@@ -577,6 +631,42 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
   bindForm(container, '#transaction-unit-form', showToast, async (form) => {
     await settingsApi.addTransactionUnit(getFormData(form));
     await refresh(container, settingsApi, showToast, 'Η μονάδα δοσοληψιών προστέθηκε.');
+  });
+
+  bindForm(container, '#commerce-company-form', showToast, async (form) => {
+    await window.appApi.transactions.addCommerceCompany(getFormData(form));
+    await refresh(container, settingsApi, showToast, 'Η επιχείρηση τιμολογίου προστέθηκε.');
+  });
+
+  container.addEventListener('click', async (event) => {
+    const saveButton = event.target.closest('[data-save-commerce-company]');
+    if (saveButton) {
+      const id = Number(saveButton.dataset.saveCommerceCompany);
+      const row = saveButton.closest('[data-commerce-company-row]');
+      const name = row.querySelector(`[data-commerce-company-name="${id}"]`).value;
+      const taxNumber = row.querySelector(`[data-commerce-company-tax-number="${id}"]`).value;
+      const address = row.querySelector(`[data-commerce-company-address="${id}"]`).value;
+      try {
+        await window.appApi.transactions.updateCommerceCompany(id, { name, taxNumber, address });
+        await refresh(container, settingsApi, showToast, 'Η επιχείρηση τιμολογίου ενημερώθηκε.');
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της επιχείρησης.', 'error');
+      }
+      return;
+    }
+
+    const deleteButton = event.target.closest('[data-delete-commerce-company]');
+    if (deleteButton) {
+      const id = Number(deleteButton.dataset.deleteCommerceCompany);
+      if (!window.confirm('Να διαγραφεί η επιχείρηση τιμολογίου;')) return;
+      try {
+        await window.appApi.transactions.deleteCommerceCompany(id);
+        await refresh(container, settingsApi, showToast, 'Η επιχείρηση τιμολογίου διαγράφηκε.');
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή της επιχείρησης.', 'error');
+      }
+      return;
+    }
   });
 
   bindForm(container, '#change-password-form', showToast, async (form) => {
@@ -922,6 +1012,12 @@ function bindDeletes(container, settingsApi, showToast) {
       if (action === 'delete-transaction-unit') {
         await settingsApi.deleteTransactionUnit(id);
         await refresh(container, settingsApi, showToast, 'Η μονάδα δοσοληψιών διαγράφηκε.');
+        return;
+      }
+
+      if (action === 'delete-commerce-business') {
+        await settingsApi.deleteCommerceBusiness(id);
+        await refresh(container, settingsApi, showToast, 'Η επιχείρηση εμπορίου διαγράφηκε.');
       }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');
@@ -1058,6 +1154,9 @@ async function refresh(container, settingsApi, showToast, message) {
   const activePanel = Array.from(container.querySelectorAll('[data-settings-panel]'))
     .find((panel) => !panel.hidden);
   const activeTab = activePanel?.dataset.settingsPanel || '';
+  const activeSubpanel = Array.from(container.querySelectorAll('[data-settings-subpanel]'))
+    .find((panel) => !panel.hidden);
+  const activeSubtab = activeSubpanel?.dataset.settingsSubpanel || 'initial-records';
   await renderSettingsPage(
     container,
     settingsApi,
@@ -1066,6 +1165,7 @@ async function refresh(container, settingsApi, showToast, message) {
     activeTab,
     window.appApi.shares
   );
+  container.querySelector(`[data-settings-subtab="${activeSubtab}"]`)?.click();
   const content = container.closest('.content');
   if (content) content.scrollTop = 0;
   showToast(message);

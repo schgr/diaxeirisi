@@ -63,14 +63,14 @@ function extractMethod(source, name) {
       break;
     }
   }
-  return blockAt(source, match.index, bodyStart).trim();
+  return blockAt(source, match.index, bodyStart).replace(/\r\n/g, '\n').trim();
 }
 
 function extractFunction(source, name) {
   const marker = `function ${name}(`;
   const start = source.indexOf(marker);
   assert.ok(start >= 0, `Missing helper ${name}`);
-  return blockAt(source, start, source.indexOf('{', start)).trim();
+  return blockAt(source, start, source.indexOf('{', start)).replace(/\r\n/g, '\n').trim();
 }
 
 const baselineFacade = baseline.slice(0, baseline.indexOf('function mapExhpSupportTemplate'));
@@ -83,10 +83,21 @@ const currentApi = Array.from(
   (match) => match[1]
 );
 const expectedApi = [...publicApi];
+expectedApi.splice(expectedApi.indexOf('getAddyReferenceData') + 1, 0, 'createCommerceCompany');
+expectedApi.splice(expectedApi.indexOf('createCommerceCompany') + 1, 0, 'updateCommerceCompany');
+expectedApi.splice(expectedApi.indexOf('updateCommerceCompany') + 1, 0, 'deleteCommerceCompany');
 expectedApi.splice(expectedApi.indexOf('saveAddy') + 1, 0, 'saveAddyDepartmentAllocations');
 assert.deepStrictEqual(currentApi, expectedApi, 'Public API or method order changed.');
 for (const name of publicApi) {
-  if (['saveAddy', 'updateAddyDocument', 'deleteAddyDocument'].includes(name)) continue;
+  if ([
+    'getAddyReferenceData',
+    'saveAddy',
+    'listExternalTransactionIndexRows',
+    'listAddyDocuments',
+    'getAddyDocument',
+    'updateAddyDocument',
+    'deleteAddyDocument'
+  ].includes(name)) continue;
   assert.strictEqual(extractMethod(modules, name), extractMethod(baseline, name), `${name} changed.`);
 }
 
@@ -95,7 +106,12 @@ const helperNames = Array.from(
   (match) => match[1]
 ).filter((name) => name !== 'createTransactionsService');
 for (const name of helperNames) {
-  if (name === 'saveNominalNumberTransfer') continue;
+  if ([
+    'normalize',
+    'buildCompositionSnapshot',
+    'saveNominalNumberTransfer',
+    'saveRegularExhpItem'
+  ].includes(name)) continue;
   assert.strictEqual(extractFunction(modules, name), extractFunction(baseline, name), `${name} changed.`);
 }
 

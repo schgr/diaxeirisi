@@ -4,6 +4,7 @@ import {
   displaySupportStatus,
   findShareByNominal,
   findShareByNumber,
+  formatAddyDate,
   formatDate,
   formatQuantity,
   isCommerceUnit,
@@ -53,6 +54,15 @@ export function getControls(container) {
       date: container.querySelector('#addy-date'),
       unit: container.querySelector('#addy-unit'),
       notes: container.querySelector('#addy-notes'),
+    invoiceNumber: container.querySelector('#addy-invoice-number'),
+    invoiceDate: container.querySelector('#addy-invoice-date'),
+    commerceCompany: container.querySelector('#addy-commerce-company'),
+    commerceModal: container.querySelector('#addy-commerce-modal'),
+    newCompanyForm: container.querySelector('#addy-new-company-form'),
+    newCompanyName: container.querySelector('#addy-new-company-name'),
+    newCompanyTaxNumber: container.querySelector('#addy-new-company-tax-number'),
+    newCompanyAddress: container.querySelector('#addy-new-company-address'),
+    newCompanySave: container.querySelector('#addy-new-company-save'),
     shareNumber: container.querySelector('#addy-share-number'),
     nominalNumber: container.querySelector('#addy-nominal-number'),
     description: container.querySelector('#addy-description'),
@@ -261,8 +271,16 @@ export function updateAddButton(controls, state) {
     controls.materialType.value = '';
   }
   controls.unitPrice.disabled = !isCommerceTransactionUnit;
+  controls.invoiceNumber.disabled = !isCommerceTransactionUnit;
+  controls.invoiceDate.disabled = !isCommerceTransactionUnit;
+  controls.commerceCompany.disabled = !isCommerceTransactionUnit;
   if (!isCommerceTransactionUnit) {
     controls.unitPrice.value = '';
+    controls.invoiceNumber.value = '';
+    controls.invoiceDate.value = '';
+    controls.commerceCompany.value = '';
+    controls.newCompanyForm.hidden = true;
+    controls.commerceModal.hidden = true;
   }
   controls.addItem.disabled = !canAddItem(controls, state);
   controls.save.disabled = !state.items.length;
@@ -304,7 +322,7 @@ export function renderSavedAddyRows(documents) {
       (documentItem) => `
         <tr>
           <td>${documentItem.id}</td>
-          <td>${formatDate(documentItem.documentDate)}</td>
+          <td>${formatAddyDate(documentItem.documentDate)}</td>
           <td>${escapeHtml(documentItem.transactionUnit)}</td>
           <td>${escapeHtml(documentItem.transactionType)}</td>
           <td>${escapeHtml(documentItem.nominalNumber)}</td>

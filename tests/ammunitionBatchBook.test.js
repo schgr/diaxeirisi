@@ -14,7 +14,7 @@ async function run() {
     administrationSource,
     /data-preview-ammunition-batches/u
   );
-  assert.match(administrationSource, /data-print-training-ammunition-preview/u);
+  assert.match(administrationSource, /openAmmunitionBatchPreview/u);
 
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-ammunition-batches-'));
   try {

@@ -29,6 +29,33 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
     fs.renameSync(temporaryPath, configPath);
   }
 
+  function assertNotLocked(config) {
+    if (Number(config.lockedUntil || 0) > now()) {
+      throw new AppError('Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε λίγο.', 'AUTH_RATE_LIMITED', {
+        lockedUntil: config.lockedUntil
+      });
+    }
+  }
+
+  function registerFailure(config) {
+    config.failedAttempts = Number(config.failedAttempts || 0) + 1;
+    config.lockedUntil = 0;
+    let remainingAttempts = Math.max(0, MAX_FAILURES - config.failedAttempts);
+    if (config.failedAttempts >= MAX_FAILURES) {
+      config.lockoutCount = Number(config.lockoutCount || 0) + 1;
+      const lockDurationMs = LOCK_DURATION_MS * Math.pow(2, Math.min(config.lockoutCount, MAX_LOCKOUT_EXPONENT));
+      config.lockedUntil = now() + lockDurationMs;
+      config.failedAttempts = 0;
+    }
+    return { remainingAttempts, lockedUntil: config.lockedUntil || 0 };
+  }
+
+  function clearFailures(config) {
+    config.failedAttempts = 0;
+    config.lockedUntil = 0;
+    config.lockoutCount = 0;
+  }
+
   function validatePassword(password) {
     if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
       throw new AppError(
@@ -167,35 +194,20 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       if (!config) {
         throw new AppError('Πρέπει πρώτα να οριστεί κωδικός εισόδου.', 'SECURITY_NOT_CONFIGURED');
       }
-      if (Number(config.lockedUntil || 0) > now()) {
-        throw new AppError('Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε λίγο.', 'AUTH_RATE_LIMITED', {
-          lockedUntil: config.lockedUntil
-        });
-      }
+      assertNotLocked(config);
       const expectedUsername = normalizedUsername(config.username || 'admin');
       const usernameValid = normalizedUsername(username) === expectedUsername;
       const passwordValid = verifyPassword(String(password || ''), config);
       const credentialsValid = usernameValid && passwordValid;
       if (!credentialsValid) {
-        const failedAttempts = Number(config.failedAttempts || 0) + 1;
-        config.failedAttempts = failedAttempts;
-        config.lockedUntil = 0;
-        if (failedAttempts >= MAX_FAILURES) {
-          const lockoutCount = Number(config.lockoutCount || 0);
-          const lockDurationMs = LOCK_DURATION_MS * Math.pow(2, Math.min(lockoutCount, MAX_LOCKOUT_EXPONENT));
-          config.lockedUntil = now() + lockDurationMs;
-          config.lockoutCount = lockoutCount + 1;
-          config.failedAttempts = 0;
-        }
+        const { remainingAttempts, lockedUntil } = registerFailure(config);
         writeConfig(config);
         throw new AppError('Λανθασμένο όνομα χρήστη ή κωδικός εισόδου.', 'AUTH_INVALID_CREDENTIALS', {
-          remainingAttempts: Math.max(0, MAX_FAILURES - failedAttempts),
-          lockedUntil: config.lockedUntil || 0
+          remainingAttempts,
+          lockedUntil
         });
       }
-      config.failedAttempts = 0;
-      config.lockedUntil = 0;
-      config.lockoutCount = 0;
+      clearFailures(config);
       if (!config.username) {
         config.version = 2;
         config.username = 'admin';
@@ -289,9 +301,16 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       if (!Array.isArray(config?.securityQuestions) || config.securityQuestions.length !== 3) {
         throw new AppError('Δεν έχουν οριστεί ερωτήσεις ασφαλείας.', 'SECURITY_QUESTIONS_NOT_CONFIGURED');
       }
+      assertNotLocked(config);
       if (!verifySecurityAnswers(answers, config.securityQuestions)) {
-        throw new AppError('Μία ή περισσότερες απαντήσεις δεν είναι σωστές.', 'SECURITY_ANSWERS_INVALID');
+        const { remainingAttempts, lockedUntil } = registerFailure(config);
+        writeConfig(config);
+        throw new AppError('Μία ή περισσότερες απαντήσεις δεν είναι σωστές.', 'SECURITY_ANSWERS_INVALID', {
+          remainingAttempts,
+          lockedUntil
+        });
       }
+      clearFailures(config);
       const recoveryCode = createRecoveryCodeValue();
       config.recoveryHash = recoveryDigest(recoveryCode);
       config.recoveryCreatedAt = new Date(now()).toISOString();
@@ -305,12 +324,19 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       if (!config?.recoveryHash) {
         throw new AppError('Δεν έχει δημιουργηθεί κωδικός ανάκτησης.', 'RECOVERY_NOT_CONFIGURED');
       }
+      assertNotLocked(config);
       const suppliedHash = recoveryDigest(recoveryCode);
       const expected = Buffer.from(config.recoveryHash, 'hex');
       const actual = Buffer.from(suppliedHash, 'hex');
       if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
-        throw new AppError('Ο κωδικός ανάκτησης δεν είναι σωστός.', 'RECOVERY_CODE_INVALID');
+        const { remainingAttempts, lockedUntil } = registerFailure(config);
+        writeConfig(config);
+        throw new AppError('Ο κωδικός ανάκτησης δεν είναι σωστός.', 'RECOVERY_CODE_INVALID', {
+          remainingAttempts,
+          lockedUntil
+        });
       }
+      clearFailures(config);
       const cleanUsername = validateUsername(username);
       validatePassword(newPassword);
       if (newPassword !== confirmation) {
@@ -321,9 +347,6 @@ function createSecurityService(userDataPath, now = () => Date.now()) {
       config.username = cleanUsername;
       config.salt = salt;
       config.passwordHash = passwordDigest(newPassword, salt);
-      config.failedAttempts = 0;
-      config.lockedUntil = 0;
-      config.lockoutCount = 0;
       delete config.recoveryHash;
       delete config.recoveryCreatedAt;
       config.updatedAt = new Date(now()).toISOString();

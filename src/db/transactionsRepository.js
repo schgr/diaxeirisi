@@ -1,4 +1,6 @@
 const { listActiveShares } = require('./shareQueries');
+const { optionalText, requireText } = require('../core/validation');
+const { AppError } = require('../core/errorHandler');
 
 const ALLOWED_TABLE_NAMES = new Set([
   'share_assignments',
@@ -201,6 +203,58 @@ function createTransactionsRepository(db) {
           `
         )
         .all();
+    },
+
+    listCommerceCompanies() {
+      return db
+        .prepare(
+          `
+            SELECT id, name, tax_number AS taxNumber, address
+            FROM commerce_companies
+            ORDER BY sort_order ASC, id ASC
+          `
+        )
+        .all();
+    },
+
+    createCommerceCompany({ name, taxNumber = '', address = '' } = {}) {
+      const validatedName = requireText(name, 'Επωνυμία');
+      const validatedTaxNumber = optionalText(taxNumber);
+      const validatedAddress = optionalText(address);
+      const nextOrder = db
+        .prepare('SELECT COALESCE(MAX(sort_order), 0) + 1 AS nextOrder FROM commerce_companies')
+        .get().nextOrder;
+      const result = db
+        .prepare(
+          'INSERT INTO commerce_companies (name, tax_number, address, sort_order) VALUES (?, ?, ?, ?)'
+        )
+        .run(validatedName, validatedTaxNumber, validatedAddress, nextOrder);
+      return {
+        id: Number(result.lastInsertRowid),
+        name: validatedName,
+        taxNumber: validatedTaxNumber,
+        address: validatedAddress
+      };
+    },
+
+    updateCommerceCompany(id, { name, taxNumber = '', address = '' }) {
+      const validatedName = requireText(name, 'Επωνυμία');
+      const validatedTaxNumber = optionalText(taxNumber);
+      const validatedAddress = optionalText(address);
+      db.prepare('UPDATE commerce_companies SET name = ?, tax_number = ?, address = ? WHERE id = ?')
+        .run(validatedName, validatedTaxNumber, validatedAddress, id);
+    },
+
+    deleteCommerceCompany(id) {
+      const inUse = db.prepare('SELECT COUNT(*) AS count FROM addy_documents WHERE commerce_company_id = ?')
+        .get(id).count;
+      if (inUse > 0) {
+        throw new AppError(
+          'Η επιχείρηση χρησιμοποιείται ήδη σε καταχωρημένα ΑΔΔΥ και δεν μπορεί να διαγραφεί.',
+          'COMMERCE_COMPANY_IN_USE'
+        );
+      }
+      db.prepare('DELETE FROM commerce_companies WHERE id = ?').run(id);
     },
 
     listMaterialCategories() {
@@ -752,14 +806,29 @@ function createTransactionsRepository(db) {
     },
 
     createAddyDocument(payload) {
-      return db
-        .prepare(
-          `
-            INSERT INTO addy_documents (document_date, transaction_unit, justification_reference, notes)
-            VALUES (?, ?, ?, ?)
-          `
-        )
-        .run(payload.documentDate, payload.transactionUnit, payload.justificationReference, payload.notes).lastInsertRowid;
+      const nextId = db.prepare(`
+        SELECT MIN(candidate.id) AS next_id
+        FROM (SELECT 1 AS id UNION ALL SELECT id + 1 FROM addy_documents) AS candidate
+        WHERE candidate.id NOT IN (SELECT id FROM addy_documents)
+      `).get().next_id;
+
+      db.prepare(
+        `INSERT INTO addy_documents (
+          id, document_date, transaction_unit, justification_reference, notes,
+          invoice_number, invoice_date, commerce_company_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        nextId,
+        payload.documentDate,
+        payload.transactionUnit,
+        payload.justificationReference,
+        payload.notes,
+        payload.invoiceNumber || null,
+        payload.invoiceDate || null,
+        payload.commerceCompanyId || null
+      );
+
+      return nextId;
     },
 
     createAddyItem(documentId, item, shareId, shareTransactionId) {
@@ -947,6 +1016,12 @@ function createTransactionsRepository(db) {
               d.transaction_unit,
               d.justification_reference,
               d.notes,
+              d.invoice_number,
+              d.invoice_date,
+              d.commerce_company_id,
+              company.name AS commerce_company_name,
+              company.tax_number AS commerce_company_tax_number,
+              company.address AS commerce_company_address,
               first_item.nominal_number,
               first_item.description,
               first_item.transaction_type,
@@ -956,6 +1031,7 @@ function createTransactionsRepository(db) {
                 WHERE addy_document_id = d.id
               ) AS total_quantity
             FROM addy_documents d
+            LEFT JOIN commerce_companies company ON company.id = d.commerce_company_id
             LEFT JOIN addy_items first_item
               ON first_item.id = (
                 SELECT id
@@ -971,7 +1047,16 @@ function createTransactionsRepository(db) {
     },
 
     getAddyDocument(id) {
-      return db.prepare('SELECT * FROM addy_documents WHERE id = ?').get(id);
+      return db.prepare(`
+        SELECT
+          document.*,
+          company.name AS commerce_company_name,
+          company.tax_number AS commerce_company_tax_number,
+          company.address AS commerce_company_address
+        FROM addy_documents document
+        LEFT JOIN commerce_companies company ON company.id = document.commerce_company_id
+        WHERE document.id = ?
+      `).get(id);
     },
 
     listAddyDocumentItems(documentId) {

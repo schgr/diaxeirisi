@@ -7,6 +7,12 @@ const { createSettingsService } = require('../src/services/settingsService');
 const { createTransactionsService } = require('../src/services/transactionsService');
 
 async function run() {
+  const pageSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'financialYearTasksPage.js'), 'utf8');
+  const actionsPosition = pageSource.indexOf('data-year-prints-toggle');
+  const resultsPosition = pageSource.indexOf('data-year-prints-results');
+  assert(actionsPosition > -1 && actionsPosition < resultsPosition);
+  assert.match(pageSource, /data-year-prints-scroll-top[^>]*>Επιστροφή στην αρχή/u);
+  assert.match(pageSource, /yearPrintsDetail\.querySelector\('\[data-year-prints-start\]'\)\?\.scrollIntoView/u);
   const testDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'dchsi-financial-year-'));
   try {
     const {
@@ -19,7 +25,7 @@ async function run() {
 
     transactions.saveAddy({
       documentDate: '2026-02-03',
-      transactionUnit: 'ΕΜΠΟΡΙΟ',
+      transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ',
       notes: '',
       items: [{
         shareNumber: '1', nominalNumber: 'TEST-1', description: 'Υλικό δοκιμής',
@@ -53,7 +59,7 @@ async function run() {
     assert.deepStrictEqual(transactions.listFinancialYearMovementRows('addy', 2026, 'Χρέωση'), [{
       serial: 1, registryNumber: 1, shareNumber: '1', ledgerSerial: 1,
       description: 'Υλικό δοκιμής', transactionKind: 'Χ',
-      date: '2026-02-03', quantity: 10, transactionUnit: 'ΕΜΠΟΡΙΟ'
+      date: '2026-02-03', quantity: 10, transactionUnit: '104 Α/Κ ΠΜΠ/ΓΔΥ'
     }]);
     const exhpRows = transactions.listFinancialYearMovementRows('exhp', 2026, 'Πίστωση');
     assert.strictEqual(exhpRows.length, 1);
@@ -74,7 +80,7 @@ async function run() {
     assert.match(addyHtml, /ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ/);
     assert.match(addyHtml, /ΠΕΡΙΓΡΑΦΗ/);
     assert.match(exhpHtml, /Υλικό δοκιμής/);
-    assert.match(addyHtml, /ΕΜΠΟΡΙΟ/);
+    assert.match(addyHtml, /104 Α\/Κ ΠΜΠ\/ΓΔΥ/);
     assert.doesNotMatch(exhpHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(exhpHtml, />Π</);
     const movedCardsHtml = renderMovedShareCardsTable([{

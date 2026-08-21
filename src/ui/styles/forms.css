@@ -147,6 +147,40 @@ h3 {
   min-width: 0;
 }
 
+.commerce-companies-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.commerce-companies-table {
+  min-width: 720px;
+  table-layout: fixed;
+}
+
+.commerce-companies-table th:nth-child(1) { width: 25%; }
+.commerce-companies-table th:nth-child(2) { width: 18%; }
+.commerce-companies-table th:nth-child(3) { width: 32%; }
+.commerce-companies-table th:nth-child(4) { width: 25%; }
+
+.commerce-companies-table td {
+  vertical-align: middle;
+}
+
+.commerce-companies-table input {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.commerce-companies-table .row-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.commerce-companies-table .row-actions > button {
+  width: 100%;
+}
+
 .settings-request-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
@@ -288,8 +322,8 @@ h3 {
 .addy-entry-grid {
   display: grid;
   grid-template-columns:
-    minmax(120px, 0.65fr)
-    minmax(145px, 0.8fr)
+    minmax(145px, 0.72fr)
+    minmax(175px, 0.9fr)
     minmax(150px, 0.9fr)
     minmax(95px, 0.55fr)
     minmax(135px, 0.75fr)
@@ -300,8 +334,13 @@ h3 {
     minmax(125px, 0.7fr)
     minmax(130px, 0.75fr)
     auto;
-  gap: 10px;
+  gap: 12px;
   align-items: end;
+}
+
+.addy-entry-grid > .field:nth-child(1) > span,
+.addy-entry-grid > .field:nth-child(2) > span {
+  white-space: nowrap;
 }
 
 .addy-header-grid > *,

@@ -85,6 +85,7 @@ const intentionallyChanged = new Set([
   'printMaterialFormDocument',
   'renderCompositionDocument',
   'renderCompositionDocumentFooter',
+  'renderOfficialShareBackPage',
   'renderRows',
   'renderSharesPage'
 ]);

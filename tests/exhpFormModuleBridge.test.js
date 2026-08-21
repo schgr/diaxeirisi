@@ -292,6 +292,17 @@ async function run() {
       { shareNumber: '20', item: 'ΑΡΒΥΛΑ', subunit: '2ος Λόχος', quantity: 1, movement: 'return' }
     ]
   });
+
+  const clothingItems = syncSupportDocumentMaterialsToExhpItems([], {
+    aitiologiaCode: 'st',
+    entries: [
+      { shareNumber: '10', nominalNumber: 'N-10', item: 'ΧΙΤΩΝΙΟ', quantity: 2, movement: 'initial' },
+      { shareNumber: '20', nominalNumber: 'N-20', item: 'ΑΡΒΥΛΑ', quantity: 3, movement: 'return' }
+    ]
+  });
+  assert.strictEqual(clothingItems.find((item) => item.shareNumber === '10').transactionType, 'Πίστωση');
+  assert.strictEqual(clothingItems.find((item) => item.shareNumber === '20').transactionType, 'Χρέωση');
+  assert.strictEqual(clothingItems.find((item) => item.shareNumber === '20').nominalNumber, 'N-20');
   assert.match(clothingPrint, /ΔΥΠ\/189/);
   assert.match(clothingPrint, /ΧΙΤΩΝΙΟ/);
   assert.match(clothingPrint, /ΑΡΧΙΚ/);

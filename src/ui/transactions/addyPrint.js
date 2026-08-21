@@ -1,7 +1,7 @@
 import { escapeHtml } from '../components/forms.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 import { numberToGreekWords, renderCompositionDocumentFooter } from '../pages/sharesPage.js';
-import { formatDate, formatQuantity, isCommerceUnit } from './shared.js';
+import { formatAddyDate, formatQuantity, isCommerceUnit } from './shared.js';
 export function shouldOpenAddyDocument(documentData) {
   return hasCredit(documentData.items) || (hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit));
 }
@@ -71,7 +71,7 @@ export function renderAddyCompositionDocument(documentData, items) {
       <div class="composition-document-details">
         <p><span>1.</span> ΑΡΙΘΜΟΣ ΣΥΝΘΕΣΕΩΣ: <strong>${escapeHtml(compositionNumbers)}</strong></p>
         <p><span>2.</span> ΑΡΙΘΜ. ΗΜΕΡΟΜ. ΔΙΚΑΙΟΛ. ΧΟΡΗΓΗΣΕΩΣ:
-          <strong>ΑΔΔΥ ${escapeHtml(documentData.id)} / ${formatDate(documentData.documentDate)}</strong></p>
+          <strong>ΑΔΔΥ ${escapeHtml(documentData.id)} / ${formatAddyDate(documentData.documentDate)}</strong></p>
         <p><span>3.</span> ΧΟΡΗΓΟΥΣΑ ΜΟΝΑΔΑ:
           <strong>${escapeHtml(documentData.transactionUnit)}</strong></p>
         <p class="composition-title"><span>4.</span>
@@ -115,14 +115,18 @@ export function renderAddyCompositionDocument(documentData, items) {
 
 export function renderAddyDocument(documentData) {
   const rows = Array.from({ length: 10 }, (_unused, index) => documentData.items[index] || null);
-  const rawDocumentReference = `${String(documentData.id || '')} / ${formatDate(documentData.documentDate)}`;
+  const rawDocumentReference = `${String(documentData.id || '')} / ${formatAddyDate(documentData.documentDate)}`;
   const hasOnlyCredit = hasCredit(documentData.items) && !hasCharge(documentData.items);
+  const isCommerceDocument = isCommerceUnit(documentData.transactionUnit);
   const hasCommerceChargeDocument = hasCharge(documentData.items) && isCommerceUnit(documentData.transactionUnit);
   const leftDocumentReference = hasCommerceChargeDocument ? '' : rawDocumentReference;
   const field17Reference = hasCommerceChargeDocument ? `Χ-${rawDocumentReference}` : '';
-  const field19Reference = hasOnlyCredit ? `Π-${rawDocumentReference}` : '';
+  const field19Reference = isCommerceDocument
+    ? `Αρ. Τιμολογίου ${documentData.invoiceNumber || ''} / ${formatAddyDate(documentData.invoiceDate)}`
+    : hasOnlyCredit ? `Π-${rawDocumentReference}` : '';
   const leftNotes = hasCharge(documentData.items) && !hasCommerceChargeDocument ? documentData.notes || '' : '';
   const rightNotes = hasCredit(documentData.items) || hasCommerceChargeDocument ? documentData.notes || '' : '';
+  const field21Information = isCommerceDocument ? '' : rightNotes;
   const leftPed = hasCharge(documentData.items) ? documentData.financialOfficers?.ped : '';
   const leftManager = hasCharge(documentData.items) ? documentData.financialOfficers?.manager : '';
   const rightPed = hasOnlyCredit ? documentData.financialOfficers?.ped : '';
@@ -135,89 +139,99 @@ export function renderAddyDocument(documentData) {
     : '';
 
   return `
-    <article class="addy-document-page print-document-area">
-      <div class="addy-document-code">Κ 2300/ΔΥΠ</div>
-      <h1>ΑΙΤΗΣΗ - ΔΙΚΑΙΟΛΟΓΗΤΙΚΟ ΔΟΣΟΛΗΨΙΩΝ ΥΛΙΚΟΥ</h1>
-      <table class="addy-document-table">
-        <colgroup>
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-reason" />
-          <col class="addy-doc-priority" />
-          <col class="addy-doc-description" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-narrow" />
-          <col class="addy-doc-small" />
-          <col class="addy-doc-small" />
-        </colgroup>
-        <tbody>
-          <tr>
-            <td colspan="8" class="addy-doc-section-title">ΣΥΜΠΛΗΡΩΝΕΤΑΙ ΑΠΟ ΤΗ ΜΟΝΑΔΑ</td>
-            <td colspan="11" class="addy-doc-section-title addy-doc-right-block">ΣΥΜΠΛΗΡΩΝΕΤΑΙ ΑΠΟ ΤΗ ΜΟΝΑΔΑ ΕΦΟΔ.</td>
-          </tr>
-          <tr>
-            <td colspan="2">${addyTopCell('ΜΟΝΑΔΑ', firstValue(rows, 'column1'), '1')}</td>
-            <td colspan="2">${addyTopCell('ΑΡΙΘΜΟΣ -<br />ΗΜΕΡΟΜΗΝΙΑ', hasOnlyCredit || hasCommerceChargeDocument ? '' : leftDocumentReference, '2')}</td>
-            <td colspan="1" class="addy-doc-reason-cell addy-doc-field-3">${addyTopCell('ΔΙΚΑΙΟΛΟΓΙΑ', '', '3')}</td>
-            <td colspan="1" class="addy-doc-field-4">${addyTopCell('ΠΡΟΤΕΡΑΙΟΤΗΤΑ', '', '4')}</td>
-            <td colspan="2" rowspan="2">${addyTopCell('ΥΠΟΓΡΑΦΗ<br />ΑΙΤΟΥΝΤΟΣ', '', '5')}</td>
-            <td colspan="3" class="addy-doc-right-block">${addyTopCell('ΜΟΝΑΔΑ<br />ΕΦΟΔ.', firstValue(rows, 'column18'), '18')}</td>
-            <td colspan="4">${addyTopCell('ΑΡΙΘ. - ΗΜΕΡΟΜΗΝΙΑ<br />ΔΙΚ/ΚΟΥ', field19Reference, '19')}</td>
-            <td colspan="4">${addyTopCell('ΕΙΔΟΣ<br />ΧΟΡΗΓΗΣΗΣ', '', '20')}</td>
-          </tr>
-          <tr>
-            <td colspan="6" class="addy-doc-info">ΠΛΗΡΟΦΟΡΙΕΣ<br />${escapeHtml(leftNotes)}${addyCellNumber('6')}</td>
-            <td colspan="11" class="addy-doc-info addy-doc-right-block">ΠΛΗΡΟΦΟΡΙΕΣ<br />${escapeHtml(rightNotes)}${addyCellNumber('21')}</td>
-          </tr>
-          <tr class="addy-doc-vertical-row">
-            <td>${addyVerticalHeader('Προβλ.', '7')}</td>
-            <td>${addyVerticalHeader('Υπαρχ.', '8')}</td>
-            <td>${addyVerticalHeader('Αιτ.', '9')}</td>
-            <td>${addyVerticalHeader('Επιστρ.', '10')}</td>
-            <td>${addyVerticalHeader('Στοιχεία<br />Καταχώρισης', '11')}</td>
-            <td class="addy-doc-horizontal">${addyHorizontalHeader('Αριθμός<br />Ονομαστικού', '12')}</td>
-            <td class="addy-doc-horizontal">${addyHorizontalHeader('Περιγραφή', '13')}</td>
-            <td>${addyVerticalHeader('Μονάδα<br />Μέτρησης', '14')}</td>
-            <td class="addy-doc-right-block">${addyVerticalHeader('Χορηγ.', '22')}</td>
-            <td>${addyVerticalHeader('Οφειλ.', '23')}</td>
-            <td>${addyVerticalHeader('Στοιχεία<br />Καταχώρησης', '24')}</td>
-            <td>${addyVerticalHeader('Θέση', '25')}</td>
-            <td>${addyVerticalHeader('Τιμή Μονάδος', '26')}</td>
-            <td>${addyVerticalHeader('Μονάδα<br />Γεν. Δχσης', '27')}</td>
-            <td>${addyVerticalHeader('Προβλ.<br />Ποσότητα', '28')}</td>
-            <td>${addyVerticalHeader('Στοιχεία<br />Καταχώρησης', '29')}</td>
-            <td>${addyVerticalHeader('Θέση', '30')}</td>
-            <td>${addyVerticalHeader('Μονάδα Β&apos; Γεν.<br />Διαχ.', '31')}</td>
-            <td>${addyVerticalHeader('Μονάδα<br />Προμηθέα', '32')}</td>
-          </tr>
-          ${rows.map(renderAddyDocumentRow).join('')}
-          <tr>
-            <td colspan="3" class="addy-doc-signature">${addySignatureCell('Υπογραφή ΠΕΔ<br />Σφραγίδα Μονάδας', '15', leftPed)}</td>
-            <td colspan="3" class="addy-doc-signature">${addySignatureCell('Υπογραφή Διαχειριστή', '16', leftManager)}</td>
-            <td colspan="2" class="addy-doc-signature">${addySignatureCell('Αύξ. Αριθ. Δοσοληψίας - Ημερομηνία', '17', field17Reference)}</td>
-            <td colspan="4" class="addy-doc-signature addy-doc-right-block">${addySignatureCell('Ο Εγκρίνων', '33', rightPed)}</td>
-            <td colspan="4" class="addy-doc-signature">${addySignatureCell('Ο Χορηγών', '34', rightManager)}</td>
-            <td colspan="3" class="addy-doc-signature">${addySignatureCell('Ο Παραλαμβάνων', '35')}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="addy-document-footer">
-        <span>ΕΦΕΔ 101</span>
-        <strong>ΧΡΗΣΙΜΟΠΟΙΕΙΤΑΙ ΚΑΙ ΓΙΑ ΠΡΟΜΗΘΕΙΑ ΥΛΙΚΩΝ ΑΠΟ ΤΟ ΕΜΠΟΡΙΟ</strong>
-        <span></span>
-      </div>
+    <article class="addy-document-page print-document-area" style="position:relative;padding:0;overflow:hidden;">
+      <img src="./assets/official-forms/addy-k2300-clean.png" alt="Αίτηση - Δικαιολογητικό Δοσοληψιών Υλικού" style="display:block;width:100%;height:100%;object-fit:fill;" />
+      ${addyDocumentOverlay(firstValue(rows, 'column1'), 4.2, 21.4, 7.5, 10.1, 'addy-field-1')}
+      ${addyDocumentOverlay(hasOnlyCredit || hasCommerceChargeDocument ? '' : leftDocumentReference, 11.7, 21.4, 11.1, 10.1, 'addy-field-2')}
+      ${addyDocumentOverlay(leftNotes, 4.2, 31.5, 42.0, 10.3, 'addy-field-6')}
+      ${addyDocumentOverlay(firstValue(rows, 'column18'), 56.7, 21.4, 10.8, 10.1, 'addy-field-18')}
+      ${addyDocumentOverlay(field19Reference, 67.5, 21.4, 14.3, 10.1, 'addy-field-19')}
+      ${isCommerceDocument
+        ? addyCommerceInformationOverlay(documentData.commerceCompany)
+        : addyDocumentOverlay(field21Information, 56.7, 31.5, 39.1, 10.3, 'addy-field-21')}
+      ${renderAddyDocumentRowsOverlay(rows)}
+      ${renderAddySignatureOverlay(leftPed, 4.2, 83.2, 12.6, 5.7, 'addy-field-15')}
+      ${renderAddySignatureOverlay(leftManager, 16.8, 83.2, 13.6, 5.7, 'addy-field-16')}
+      ${addyDocumentOverlay(field17Reference, 30.4, 79.7, 26.0, 9.2, 'addy-field-17')}
+      ${renderAddySignatureOverlay(rightPed, 56.7, 83.2, 13.1, 5.7, 'addy-field-33')}
+      ${renderAddySignatureOverlay(rightManager, 69.8, 83.2, 13.1, 5.7, 'addy-field-34')}
+      ${renderAddyLineReinforcements()}
     </article>
     ${compositionDocument}
+  `;
+}
+
+
+
+function renderAddyDocumentRowsOverlay(rows) {
+  const columns = [
+    { left: 13.5, width: 3.3, value: (item) => item?.column11 || '' },
+    { left: 16.8, width: 13.6, value: (item) => item?.column12 || '' },
+    { left: 30.4, width: 22.7, value: (item) => item?.column13 || '', className: 'addy-document-description-overlay' },
+    { left: 53.1, width: 3.3, value: (item) => item?.column14 || '' },
+    { left: 56.7, width: 3.9, value: (item) => item?.column22 ? formatQuantity(item.column22) : '' },
+    { left: 60.6, width: 3.5, value: (item) => item?.column23 ? formatQuantity(item.column23) : '' },
+    { left: 64.1, width: 3.4, value: (item) => item?.column24 || '' },
+    { left: 67.5, width: 2.5, value: (item) => String(item?.column25 || '') },
+    { left: 70.0, width: 3.4, value: (item) => item?.column26 ? formatQuantity(item.column26) : '' }
+  ];
+  return rows.map((item, rowIndex) => columns.map((column) => addyDocumentOverlay(
+    column.value(item),
+    column.left,
+    55.3 + rowIndex * 2.44,
+    column.width,
+    2.44,
+    column.className || ''
+  )).join('')).join('');
+}
+
+
+
+function addyDocumentOverlay(value, left, top, width, height, className = '') {
+  const isDescription = className.includes('addy-document-description-overlay');
+  return `<div class="addy-document-overlay ${className}" style="position:absolute;display:flex;align-items:center;justify-content:${isDescription ? 'flex-start' : 'center'};left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px ${isDescription ? '4px' : '2px'};color:#000;font-family:Arial,sans-serif;font-size:clamp(10px,calc(0.8vw + 2px),14px);line-height:1.05;text-align:${isDescription ? 'left' : 'center'};box-sizing:border-box;overflow:hidden;">${escapeHtml(value ?? '')}</div>`;
+}
+
+
+
+function renderAddySignatureOverlay(value, left, top, width, height, className) {
+  const signature = splitOfficerSignature(value);
+  if (!signature.name && !signature.rank) {
+    return addyDocumentOverlay('', left, top, width, height, className);
+  }
+  return `
+    <div class="addy-document-overlay addy-document-signature-overlay ${className}"
+      style="position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px 2px;color:#000;font-family:Arial,sans-serif;font-size:${className.includes('addy-field-15') ? '9px' : 'clamp(10px,calc(0.8vw + 2px),14px)'};line-height:1.1;text-align:center;box-sizing:border-box;overflow:hidden;">
+      <strong class="addy-document-signature-name">${escapeHtml(signature.name)}</strong>
+      <span class="addy-document-signature-rank">${escapeHtml(signature.rank)}</span>
+    </div>
+  `;
+}
+
+
+
+function addyCommerceInformationOverlay(company = {}) {
+  const lines = [
+    company?.name || '',
+    company?.taxNumber ? `ΑΦΜ: ${company.taxNumber}` : '',
+    company?.address || ''
+  ];
+  return `
+    <div class="addy-document-overlay addy-field-21 addy-commerce-information-overlay"
+      style="position:absolute;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;left:56.7%;top:34.0%;width:39.1%;height:7.8%;padding:2px 5px;color:#000;font-family:Arial,sans-serif;font-size:clamp(10px,calc(0.8vw + 2px),14px);line-height:1.15;text-align:left;box-sizing:border-box;overflow:hidden;">
+      ${lines.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}
+    </div>
+  `;
+}
+
+
+
+function renderAddyLineReinforcements() {
+  return `
+    <span class="addy-k2300-line addy-field-13-border" aria-hidden="true" style="position:absolute;left:30.4%;top:41.7%;width:22.7%;height:38%;box-sizing:border-box;border:2px solid #000;pointer-events:none;"></span>
+    <span class="addy-k2300-line addy-description-top-line" aria-hidden="true" style="position:absolute;left:30.4%;top:55.3%;width:22.7%;height:1px;background:#000;"></span>
+    <span class="addy-k2300-line addy-description-bottom-line" aria-hidden="true" style="position:absolute;left:30.4%;top:79.7%;width:22.7%;height:1px;background:#000;"></span>
+    <span class="addy-k2300-line addy-field-5-right-line" aria-hidden="true" style="position:absolute;left:56.68%;top:21.4%;width:1px;height:20.4%;background:#000;"></span>
   `;
 }
 

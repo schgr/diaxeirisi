@@ -236,7 +236,42 @@
 .controlled-materials-table th,
 .controlled-materials-table td {
   color: #fff;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.controlled-materials-table {
+  min-width: 1180px;
+  table-layout: fixed;
+}
+
+.controlled-materials-table th:nth-child(1) { width: 4%; }
+.controlled-materials-table th:nth-child(2) {
+  width: 8%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.controlled-materials-table th:nth-child(3) { width: 10%; }
+.controlled-materials-table th:nth-child(4) { width: 32%; }
+.controlled-materials-table th:nth-child(5) { width: 10%; }
+.controlled-materials-table th:nth-child(6),
+.controlled-materials-table th:nth-child(7),
+.controlled-materials-table th:nth-child(8) { width: 8%; }
+.controlled-materials-table th:nth-child(9) { width: 12%; }
+
+.controlled-material-category-heading {
+  height: 26px !important;
+}
+
+.controlled-material-category-heading th {
+  height: 26px !important;
+  padding-block: 1px !important;
+  font-size: inherit;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.books-registries-back-button {
+  margin: 0 0 14px;
 }
 
 .controlled-material-settings-table th,
@@ -351,8 +386,10 @@
 }
 
 .controlled-materials-table .material-description-cell {
-  min-width: 260px;
+  min-width: 0;
   white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .controlled-material-settings-table td:nth-child(2) {
@@ -495,6 +532,7 @@
 
 .controlled-material-print table {
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
   font-size: 9pt;
 }
@@ -507,7 +545,7 @@
 
 .controlled-material-print footer {
   margin-top: 5mm;
-  text-align: center;
+  text-align: right;
   font-size: 9pt;
 }
 
@@ -545,4 +583,11 @@
 }
 .k2310-document-modal [data-k2310-pages] {
   gap: 24px;
+}
+/* Nested navigation panels must remain completely hidden until their tile is selected. */
+[data-settings-submenu][hidden],
+[data-settings-subpanel][hidden],
+[data-administration-submenu][hidden],
+[data-administration-subpanel][hidden] {
+  display: none !important;
 }
