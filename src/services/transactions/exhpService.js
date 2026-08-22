@@ -121,6 +121,10 @@ function createExhpService(dependencies) {
             }
           : { recommendation: '', firstOpinion: '', secondOpinion: '' },
         supports: repository.listExhpDocumentSupports(id).map(mapExhpDocumentSupport),
+        officialSupportDocuments: repository.listExhpOfficialSupportDocuments(id).map((document) => ({
+          id: document.id,
+          documentType: document.document_type
+        })),
         materialAttachments: {
           composition: (isToolCollection ? attachments.composition : []).map((item) => ({
             shareNumber: item.share_number,

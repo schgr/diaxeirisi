@@ -49,7 +49,7 @@ const combined = baselineModules.map(({ relativePath, contents }) =>
 ).join('');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  'b29eb5b4073e321401d87fe268fee83785fa48e40b9a4d676e257edff84a40ce',
+  '3577b2bbd6f80df3b51b2a4c6519c142cdba588572722bcffcc2d1118c332fb0',
   'The ordered stylesheet-module snapshot changed unexpectedly.'
 );
 

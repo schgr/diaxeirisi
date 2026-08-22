@@ -212,7 +212,11 @@
     width: 18% !important;
     overflow: visible;
     white-space: nowrap;
-    transform: translateX(-12px);
+    transform: translateX(-18px);
+  }
+
+  .exhp-document-backdrop .exhp-row-overlay {
+    font-size: clamp(8px, calc(0.72vw + 1px), 12px);
   }
 
   .exhp-document-backdrop .exhp-date-overlay {
@@ -222,6 +226,14 @@
   .exhp-document-backdrop .exhp-field-15-signature {
     height: 4.3% !important;
     overflow: visible;
+  }
+
+  .exhp-document-backdrop .exhp-field-15-signature:not(.exhp-credit-field-15-signature) .exhp-officer-signature strong {
+    font-size: clamp(7px, calc(0.72vw - 1px), 10px);
+  }
+
+  .exhp-document-backdrop .exhp-field-15-signature:not(.exhp-credit-field-15-signature) .exhp-officer-signature em {
+    font-size: clamp(6px, calc(0.64vw - 1px), 9px);
   }
 
   .exhp-document-backdrop .exhp-credit-field-15-signature {
@@ -270,7 +282,7 @@
   overflow: hidden;
   color: #000;
   font-family: Arial, sans-serif;
-  font-size: clamp(10px, 1vw, 15px);
+  font-size: clamp(12px, calc(1vw + 2px), 17px);
   line-height: 1.12;
   text-align: center;
   white-space: normal;
@@ -282,7 +294,7 @@
   display: grid;
   place-items: center;
   padding: 1px 2px;
-  font-size: clamp(7px, 0.72vw, 11px);
+  font-size: clamp(9px, calc(0.72vw + 2px), 13px);
   line-height: 1;
 }
 
@@ -498,7 +510,7 @@
 
 .exhp-back-copy {
   padding: 2px 6px;
-  font-size: clamp(10px, 0.92vw, 14px);
+  font-size: clamp(12px, calc(0.92vw + 2px), 16px);
   line-height: 1.25;
   white-space: pre-wrap;
 }
@@ -506,7 +518,7 @@
 .exhp-back-value {
   display: grid;
   place-items: center start;
-  font-size: clamp(10px, 0.92vw, 14px);
+  font-size: clamp(12px, calc(0.92vw + 2px), 16px);
   font-weight: 700;
 }
 
@@ -551,6 +563,11 @@
   background: #fff;
 }
 
+.exhp-credit-field-16-clear-mask {
+  z-index: 5;
+  background: #fff;
+}
+
 .exhp-signature-title {
   z-index: 3;
   display: flex;
@@ -559,7 +576,7 @@
   overflow: hidden;
   padding: 0 2px;
   background: #fff;
-  font-size: clamp(5px, 0.55vw, 8px);
+  font-size: clamp(7px, calc(0.55vw + 2px), 10px);
   font-weight: 400;
   line-height: 1;
   text-align: left;
@@ -587,7 +604,7 @@
 .exhp-supporting-documents-grid span {
   min-width: 0;
   overflow: hidden;
-  font-size: clamp(6px, 0.58vw, 8px);
+  font-size: clamp(8px, calc(0.58vw + 2px), 10px);
   line-height: 1.05;
   text-align: left;
   white-space: normal;

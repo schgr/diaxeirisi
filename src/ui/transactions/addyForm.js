@@ -638,7 +638,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           showToast('Η ΕΧΠ αποθηκεύτηκε, αλλά ορισμένα δικαιολογητικά δεν αποθηκεύτηκαν.', 'error');
         }
         showToast(result.message || 'Η ΕΧΠ αποθηκεύτηκε.');
-        openExhpDocument(result.document);
+        const savedDocument = await transactionsApi.getExhpDocument(result.documentId);
+        openExhpDocument(savedDocument);
         await rerender(container, transactionsApi, settingsApi, showToast, 'exhp');
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση της ΕΧΠ.', 'error');

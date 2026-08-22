@@ -45,6 +45,25 @@ const sixSupportHtml = renderExhpDocument({
 assert.match(sixSupportHtml, /Δ6 ΕΓΓΡΑΦΟ 6/u);
 assert.doesNotMatch(sixSupportHtml, /Δ7 ΕΓΓΡΑΦΟ 7/u);
 
+const officialSupportHtml = renderExhpDocument({
+  ...baseDocument,
+  officialSupportDocuments: [{ documentType: 'useless_material_a' }],
+  otherSupportDocument: 'ΤΕ 34-254 ΤΜ 99\nΠΡΩΤΟΚΟΛΛΑ ΖΥΓΙΣΗΣ'
+});
+assert.match(officialSupportHtml, /Πρωτόκολλο Πρωτοβάθμιας Επιτροπής/u);
+assert.match(officialSupportHtml, /ΤΕ 34-254 ΤΜ 99/u);
+assert.match(officialSupportHtml, /ΠΡΩΤΟΚΟΛΛΑ ΖΥΓΙΣΗΣ/u);
+assert.match(renderExhpFrontSignatureTitles(), /top:73\.25%;/u);
+assert.match(renderExhpFrontSignatureTitles(), /left:47\.4%;top:74\.05%;width:10\.5%;height:2\.7%;/u);
+assert.match(html, /left:1\.2%;top:76\.1%;width:10\.8%;height:2\.7%;/u);
+assert.match(html, /left:46\.6%;top:76\.1%;width:11\.5%;height:2\.7%;/u);
+assert.match(html, /left:75\.4%;top:89%;width:20\.5%;height:4\.3%;/u);
+assert.match(html, /exhp-registry-overlay[^>]+left:82\.6%;top:14\.2%/u);
+assert.match(html, /exhp-date-overlay[^>]+left:81%;top:17%/u);
+assert.match(renderExhpFrontSignatureTitles(), /left:49\.2%;top:73\.25%;width:9\.2%;/u);
+assert.match(renderExhpFrontSignatureTitles(), /left:78\.9%;top:73\.25%;width:8\.2%;/u);
+assert.match(renderExhpFrontSignatureTitles(), /exhp-credit-field-16-clear-mask[^>]+left:87%;top:75\.35%;width:10\.9%;height:2\.85%;/u);
+
 assert.equal(shouldShowCommanderInExhpField23('', 'z'), true);
 for (const code of ['a', 'd', 'th', 'i', 'ib']) {
   assert.equal(shouldShowCommanderInExhpField23('', code), false);

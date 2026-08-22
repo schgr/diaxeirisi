@@ -555,6 +555,15 @@ function createTransactionsRepository(db) {
       `).all(documentId);
     },
 
+    listExhpOfficialSupportDocuments(documentId) {
+      return db.prepare(`
+        SELECT id, document_type
+        FROM exhp_support_documents
+        WHERE exhp_id = ?
+        ORDER BY created_at, id
+      `).all(documentId);
+    },
+
     updateExhpDocumentSupport(id, completed, documentReference, notes) {
       db.prepare(`
         UPDATE exhp_document_supports

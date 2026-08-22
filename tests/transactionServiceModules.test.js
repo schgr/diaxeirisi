@@ -92,6 +92,7 @@ for (const name of publicApi) {
   if ([
     'getAddyReferenceData',
     'saveAddy',
+    'getExhpDocument',
     'listExternalTransactionIndexRows',
     'listAddyDocuments',
     'getAddyDocument',

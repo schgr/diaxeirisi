@@ -8,6 +8,13 @@ import {
 } from './exhpFormModuleBridge.js';
 
 const EXHP_FIELD_23_COMMANDER_EXCLUDED_REASON_CODES = new Set(['a', 'd', 'th', 'i', 'ib']);
+const EXHP_OFFICIAL_SUPPORT_TITLES = {
+  useless_material_a: 'Πρωτόκολλο Πρωτοβάθμιας Επιτροπής',
+  useless_material_b: 'Πρωτόκολλο Δευτεροβάθμιας Επιτροπής',
+  ammo_consumption: 'ΔΥΠ/192 Πιστοποιητικό Καταναλώσεως Πυρομαχικών',
+  transformation_materials: 'ΕΦΕΔ 506 Πρωτόκολλο Μετασχηματισμού Υλικών',
+  clothing_monthly_summary: 'Μηνιαία Κατάσταση Ιματισμού'
+};
 export function openExhpDocument(documentData) {
   const existing = window.document.querySelector('.exhp-document-backdrop');
   if (existing) existing.remove();
@@ -88,11 +95,14 @@ export function renderExhpDocument(documentData) {
     documentData.reasonCode || ''
   );
   const supportingDocuments = [...new Set([
-    ...documentData.items.map((item) => item.supportingDocuments).filter(Boolean),
+    ...documentData.items.flatMap((item) => splitExhpSupportingDocumentLines(item.supportingDocuments)),
     ...(documentData.supports || [])
       .filter((support) => support.completed)
       .map((support) => [support.documentCode, support.documentReference || support.title].filter(Boolean).join(' ')),
-    documentData.otherSupportDocument
+    ...(documentData.officialSupportDocuments || [])
+      .map((document) => EXHP_OFFICIAL_SUPPORT_TITLES[document.documentType])
+      .filter(Boolean),
+    ...splitExhpSupportingDocumentLines(documentData.otherSupportDocument)
   ].filter(Boolean))].slice(0, 6);
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
     const chargePage = chargeItems.slice(pageIndex * 14, pageIndex * 14 + 14);
@@ -103,22 +113,22 @@ export function renderExhpDocument(documentData) {
         <div class="exhp-page-content">
           <img src="./assets/official-forms/exhp-front-clean.png" alt="Εντολή Χρεωπιστώσεως - εμπρός πλευρά" />
           ${exhpStaticOverlay(documentData.unit, 14.2, 16.4, 10.8, 2.2, 'exhp-unit-overlay')}
-          ${exhpStaticOverlay(documentData.registryNumber, 83.2, 14.2, 9.2, 2.2)}
-          ${exhpStaticOverlay(formatDate(documentData.date), 81.6, 17.0, 10.5, 2.2, 'exhp-date-overlay')}
+          ${exhpStaticOverlay(documentData.registryNumber, 82.6, 14.2, 9.2, 2.2, 'exhp-registry-overlay')}
+          ${exhpStaticOverlay(formatDate(documentData.date), 81.0, 17.0, 10.5, 2.2, 'exhp-date-overlay')}
           ${chargeItems.length ? exhpStaticOverlay(documentData.managementType || '', 20.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
           ${renderFaithfulExhpRows(chargePage, false)}
           ${renderFaithfulExhpRows(creditPage, true)}
           ${renderExhpFrontSignatureTitles()}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.8, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 47.2, 76.1, 11.5, 2.7)}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 79.5, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.2, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 46.6, 76.1, 11.5, 2.7)}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 78.9, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(renderExhpSupportingDocuments(supportingDocuments), 50.8, 81.0, 46.0, 5.1, 'exhp-supporting-documents-overlay', true)}
           ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
           ${exhpStaticOverlay(documentData.approvalReference || '', 51.0, 89.0, 23.0, 4.3)}
           ${showCommanderInField23
-            ? renderExhpFrontSignature(documentData.financialOfficers?.commander, 76.0, 89.0, 20.5, 4.3, 'exhp-field-23-signature')
+            ? renderExhpFrontSignature(documentData.financialOfficers?.commander, 75.4, 89.0, 20.5, 4.3, 'exhp-field-23-signature')
             : ''}
         </div>
         ${renderExhpPageNumber(frontPageNumber, pageCount)}
@@ -137,16 +147,25 @@ export function renderExhpDocument(documentData) {
 
 export function renderExhpFrontSignatureTitles() {
   const fields = [
-    { left: 1.8, width: 10.8, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
-    { left: 12.8, width: 12.6, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' },
-    { left: 49.8, width: 9.2, text: '(18) ΤΟ ΛΟΓΙΣΤΗΡΙΟ' },
-    { left: 79.5, width: 8.2, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
-    { left: 87.9, width: 9.0, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' }
+    { left: 1.8, width: 10.8, maskLeft: 1.6, maskWidth: 11.5, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
+    { left: 12.8, width: 12.6, maskLeft: 12.5, maskWidth: 13.6, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' },
+    { left: 49.2, width: 9.2, maskLeft: 47.4, maskWidth: 10.5, text: '(18) ΤΟ ΛΟΓΙΣΤΗΡΙΟ' },
+    { left: 78.9, width: 8.2, maskLeft: 79.3, maskWidth: 8.2, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
+    { left: 87.9, width: 9.0, maskLeft: 87.2, maskWidth: 10.7, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' }
   ];
-  return fields.map((field) => `
-    ${exhpStaticOverlay('', field.left, 76.0, field.width, 1.55, 'exhp-signature-title-mask')}
-    ${exhpStaticOverlay(field.text, field.left, 74.75, field.width, 1.25, 'exhp-signature-title')}
-  `).join('');
+  return `${fields.map((field) => `
+    ${exhpStaticOverlay('', field.maskLeft, 74.05, field.maskWidth, 2.7, 'exhp-signature-title-mask')}
+    ${exhpStaticOverlay(field.text, field.left, 73.25, field.width, 1.35, 'exhp-signature-title')}
+  `).join('')}
+    ${exhpStaticOverlay('', 87.0, 75.35, 10.9, 2.85, 'exhp-credit-field-16-clear-mask')}
+  `;
+}
+
+function splitExhpSupportingDocumentLines(value) {
+  return String(value || '')
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 export function renderExhpSupportingDocuments(documents) {
@@ -193,7 +212,7 @@ export function renderExhpBackOverlay(text, date, officer, role, sectionIndex) {
   return `
     ${exhpStaticOverlay(text || '', 2.8, sectionTop + 5.3, 61.5, 9.5, 'exhp-back-copy material-description-overlay')}
     ${exhpStaticOverlay(formatDate(date), 78.2, sectionTop + 2.1, 13.0, 2.2, 'exhp-back-value')}
-    ${exhpStaticOverlay(renderExhpOfficerSignature(officer), 67.0, sectionTop + 6.0, 28.0, 5.5, 'exhp-back-signature', true)}
+    ${exhpStaticOverlay(renderExhpOfficerSignature(officer), 66.4, sectionTop + 6.0, 28.0, 5.5, 'exhp-back-signature', true)}
     ${exhpStaticOverlay(signature.name || signature.rank ? role : '', 78.2, sectionTop + 12.0, 13.0, 2.2, 'exhp-back-value')}
   `;
 }
