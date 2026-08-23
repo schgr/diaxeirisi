@@ -70,7 +70,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
         <div class="card-table-wrap">
           <table class="editable-records-table">
             <thead><tr><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μ/Μ</th><th>Ποσότητα ανά Υλικό</th><th>Προβλεπόμενη Ποσότητα</th><th>Μη Χορηγηθείσα</th><th>Παρατηρήσεις</th><th></th></tr></thead>
-            <tbody data-composition-body>${renderCompositionRows(card.compositionItems, compositionLocked)}</tbody>
+            <tbody data-composition-body>${renderCompositionRows(card.compositionItems, compositionLocked, settings?.measurementUnits)}</tbody>
           </table>
         </div>
         ${compositionEditor ? `<div class="addy-save-row">
@@ -188,7 +188,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
     if (event.target.closest('[data-add-composition-row]')) {
       const body = modal.querySelector('[data-composition-body]');
       body.querySelector('.empty-record-row')?.remove();
-      body.insertAdjacentHTML('beforeend', renderCompositionRows([{}], false));
+      body.insertAdjacentHTML('beforeend', renderCompositionRows([{}], false, settings?.measurementUnits));
       return;
     }
 

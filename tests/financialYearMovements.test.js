@@ -79,6 +79,8 @@ async function run() {
     assert.match(addyHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);
     assert.match(addyHtml, /ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ/);
     assert.match(addyHtml, /ΠΕΡΙΓΡΑΦΗ/);
+    assert.match(addyHtml, /class="financial-year-movement-table"/);
+    assert.match(addyHtml, /class="financial-year-description-cell">Υλικό δοκιμής/);
     assert.match(exhpHtml, /Υλικό δοκιμής/);
     assert.match(addyHtml, /104 Α\/Κ ΠΜΠ\/ΓΔΥ/);
     assert.doesNotMatch(exhpHtml, /ΜΟΝΑΔΑ ΔΟΣΟΛΗΨΙΑΣ/);

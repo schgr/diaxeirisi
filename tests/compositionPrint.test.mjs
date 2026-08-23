@@ -9,6 +9,7 @@ import {
 import { renderShareNumberOptions } from '../src/ui/pages/transactionsPage.js';
 import { renderAddyCompositionDocument } from '../src/ui/transactions/addyPrint.js';
 import { renderFiscalYearOptions } from '../src/ui/components/forms.js';
+import { renderCompositionRows } from '../src/ui/shares/shareComposition.js';
 
 const card = {
   share: {
@@ -22,6 +23,15 @@ const settings = {
   serviceInfo: { serviceName: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' },
   financialOfficers: { ped: 'Λγός Πέτρος Ελεγκτής', manager: 'Υπλγός Μάριος Διαχειριστής' }
 };
+
+const editableCompositionRows = renderCompositionRows(
+  [{ measurementUnit: 'Τεμάχια' }],
+  false,
+  [{ name: 'Τεμάχια' }, { name: 'Χιλιόγραμμα' }]
+);
+assert.match(editableCompositionRows, /<select data-field="measurementUnit">/u);
+assert.match(editableCompositionRows, /value="Τεμάχια" selected/u);
+assert.match(editableCompositionRows, /value="Χιλιόγραμμα"/u);
 
 const emptyDocument = renderCompositionDocument(card, settings);
 assert.equal(countPages(emptyDocument), 1, 'An empty composition must print on one page.');

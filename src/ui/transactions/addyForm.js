@@ -574,7 +574,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
       try {
         const exhpDate = container.querySelector('#exhp-date').value;
-        if (!confirmFutureTransactionDate(exhpDate)) return;
+        if (!(await confirmFutureTransactionDate(exhpDate))) return;
         captureExhpDraftSupports(container, state.exhpDraftSupports);
         state.exhpDocumentsState.currentItems = state.exhpItems;
         let saveExhpItems = state.exhpItems;
@@ -738,7 +738,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   controls.save.addEventListener('click', async () => {
     try {
       if (isCommerceUnit(controls.unit.value) && !(await openCommerceDialog())) return;
-      if (!confirmFutureTransactionDate(controls.date.value)) return;
+      if (!(await confirmFutureTransactionDate(controls.date.value))) return;
       const result = await transactionsApi.saveAddy({
         documentDate: controls.date.value,
         transactionUnit: controls.unit.value.trim(),

@@ -39,7 +39,7 @@ function resolveGitHubRepository() {
 }
 
 const repository = resolveGitHubRepository();
-const defaultInstallerFileName = 'diaxeirisi-Ylikoy-Windows-10-11-x64-Setup-0.13.311.exe';
+const defaultInstallerFileName = 'diaxeirisi-Ylikoy-Windows-10-11-x64-Setup-1.0.0.exe';
 const downloadLinks = document.querySelectorAll('[data-download-link]');
 const downloadNote = document.querySelector('[data-download-note]');
 

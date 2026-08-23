@@ -591,3 +591,48 @@
 [data-administration-subpanel][hidden] {
   display: none !important;
 }
+
+/* Compact report columns while reserving most of the sheet for descriptions. */
+.balance-differences-table {
+  table-layout: fixed;
+  font-size: 8pt;
+}
+
+.balance-differences-table th,
+.balance-differences-table td {
+  padding: 1.2mm 0.7mm;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.balance-differences-table th:nth-child(1) { width: 4%; }
+.balance-differences-table th:nth-child(2) { width: 6%; }
+.balance-differences-table th:nth-child(3) { width: 6%; }
+.balance-differences-table th:nth-child(4) { width: 12%; }
+.balance-differences-table th:nth-child(5) { width: 30%; }
+.balance-differences-table th:nth-child(6) { width: 9%; }
+.balance-differences-table th:nth-child(7),
+.balance-differences-table th:nth-child(8),
+.balance-differences-table th:nth-child(9) { width: 8%; }
+.balance-differences-table th:nth-child(10) { width: 9%; }
+
+@media screen {
+  .generic-print-preview-backdrop .share-card-preview .official-share-page,
+  .share-back-preview-backdrop .official-share-page {
+    width: min(210mm, calc((96vh - 190px) * 210 / 297), calc(96vw - 80px));
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 210 / 297;
+  }
+
+  .share-back-preview-backdrop .official-share-back-table th:last-child,
+  .share-back-preview-backdrop .official-share-back-table td:last-child {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .share-back-preview-backdrop .official-share-back-table th:last-child {
+    font-size: clamp(7px, 0.68vw, 10px);
+  }
+}

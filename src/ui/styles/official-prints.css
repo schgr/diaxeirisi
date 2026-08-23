@@ -2609,9 +2609,17 @@
     display: none !important;
   }
 }
-.material-card-flags-table th:nth-last-child(-n + 3),
-.material-card-flags-table td:nth-last-child(-n + 3) {
-  width: 150px;
+.material-card-flags-table th:nth-child(7),
+.material-card-flags-table td:nth-child(7),
+.material-card-flags-table th:nth-child(8),
+.material-card-flags-table td:nth-child(8) {
+  width: 8%;
+  text-align: center;
+}
+
+.material-card-flags-table th:nth-child(9),
+.material-card-flags-table td:nth-child(9) {
+  width: 10%;
   text-align: center;
 }
 

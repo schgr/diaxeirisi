@@ -82,12 +82,15 @@ const intentionallyChanged = new Set([
   'bindShareCardOpen',
   'descriptionMatchRank',
   'filterAndRankShares',
+  'openShareCard',
   'printMaterialFormDocument',
   'renderCompositionDocument',
   'renderCompositionDocumentFooter',
+  'renderCompositionRows',
   'renderOfficialShareBackPage',
   'renderRows',
-  'renderSharesPage'
+  'renderSharesPage',
+  'setCompositionLocked'
 ]);
 assert.strictEqual(new Set(functionNames).size, functionNames.length, 'Baseline has duplicate function names.');
 

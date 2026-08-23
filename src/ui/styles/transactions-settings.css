@@ -995,6 +995,43 @@ table.administration-table td {
   gap: 5px;
 }
 
+.material-card-flags-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.material-card-flags-table th,
+.material-card-flags-table td {
+  padding: 6px 5px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.material-card-flags-table th:nth-child(1) { width: 4%; }
+.material-card-flags-table th:nth-child(2) { width: 10%; }
+.material-card-flags-table th:nth-child(3) { width: 13%; }
+.material-card-flags-table th:nth-child(4) { width: 31%; }
+.material-card-flags-table th:nth-child(5),
+.material-card-flags-table th:nth-child(6),
+.material-card-flags-table th:nth-child(7) { width: 8%; }
+.material-card-flags-table th:nth-child(8) { width: 8%; }
+.material-card-flags-table th:nth-child(9) { width: 10%; }
+
+.material-card-flags-table th:nth-child(n + 5) {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.material-card-flags-table th:nth-child(8) {
+  white-space: nowrap;
+}
+
+.material-card-flags-table .material-description-cell {
+  text-align: left;
+}
+
 .latest-inventory-share-summary span {
   color: var(--muted);
   font-size: 0.78rem;

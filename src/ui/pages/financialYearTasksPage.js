@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { confirmDialog } from '../components/confirmDialog.js';
 import { openArchivedSharesPreview, renderArchivePanel } from './administrationPage.js';
 import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPage.js';
 import { splitOfficerSignature } from '../officerSignature.js';
@@ -458,9 +459,9 @@ export async function renderFinancialYearTasksPage(
     try {
       const payload = collectRenumberingPayload();
       await yearEndApi.validateRenumbering(payload);
-      const accepted = window.confirm(
-        'Η αλλαγή αρίθμησης θα εφαρμοστεί σε όλες τις καρτέλες υλικού και είναι μη αναστρέψιμη. Θέλετε να συνεχίσετε;'
-      );
+      const accepted = await confirmDialog({
+        message: 'Η αλλαγή αρίθμησης θα εφαρμοστεί σε όλες τις καρτέλες υλικού και είναι μη αναστρέψιμη. Θέλετε να συνεχίσετε;'
+      });
       if (!accepted) return;
       const result = await yearEndApi.applyRenumbering(payload);
       await loadRenumbering();
@@ -610,7 +611,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
           <td>${escapeHtml(row.registryNumber)}</td>
           <td>${escapeHtml(row.shareNumber)}</td>
           <td>${escapeHtml(row.ledgerSerial)}</td>
-          <td>${escapeHtml(row.description)}</td>
+          <td class="financial-year-description-cell">${escapeHtml(row.description)}</td>
           <td>${escapeHtml(row.transactionKind)}</td>
           <td>${escapeHtml(formatDate(row.date))}</td>
           <td>${escapeHtml(formatQuantity(row.quantity))}</td>
@@ -624,7 +625,7 @@ export function renderFinancialYearMovementTable(rows, source, transactionType) 
       <div><h3>Έλεγχος Κινήσεων ${sourceLabel}</h3><p class="muted">${typeLabel} κινήσεις · ${rows.length} εγγραφές</p></div>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="financial-year-movement-table">
         <thead><tr>
           <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΕΥΡΕΤΗΡΙΟΥ</th><th>ΑΡΙΘΜΟΣ ΜΕΡΙΔΑΣ</th><th>Α/Α ΔΟΣΟΛΗΨΙΑΣ</th>
           <th>ΠΕΡΙΓΡΑΦΗ</th><th>ΕΙΔΟΣ ΔΟΣΟΛΗΨΙΑΣ</th><th>ΗΜΕΡΟΜΗΝΙΑ</th><th>ΠΟΣΟΤΗΤΑ</th>${unitHeader}
@@ -793,7 +794,8 @@ function openFinancialYearResultsPreview(results, state, showToast) {
           .financial-year-preview-content .financial-year-print-sheet h3 { margin: 0 0 3mm; font-size: 16pt; }
           .financial-year-preview-content .financial-year-print-sheet .muted { margin: 0 0 5mm; color: #333; }
           .financial-year-preview-content .financial-year-print-sheet table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-          .financial-year-preview-content .financial-year-print-sheet th, .financial-year-preview-content .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: left; }
+          .financial-year-preview-content .financial-year-print-sheet th, .financial-year-preview-content .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: center; vertical-align: middle; }
+          .financial-year-preview-content .financial-year-print-sheet .financial-year-description-cell { text-align: left; }
           .financial-year-preview-content .financial-year-print-sheet th { background: #e8eef5; font-size: 8pt; }
         </style>
         <section class="financial-year-print-sheet print-document-area">${results.innerHTML}</section>
@@ -828,7 +830,8 @@ async function printFinancialYearResults(results) {
       .financial-year-print-sheet h3 { margin: 0 0 3mm; font-size: 16pt; }
       .financial-year-print-sheet .muted { margin: 0 0 5mm; color: #333; }
       .financial-year-print-sheet table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 9pt; }
-      .financial-year-print-sheet th, .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: left; }
+      .financial-year-print-sheet th, .financial-year-print-sheet td { padding: 2mm 1.5mm; border: 1px solid #555; color: #000; text-align: center; vertical-align: middle; }
+      .financial-year-print-sheet .financial-year-description-cell { text-align: left; }
       .financial-year-print-sheet th { background: #e8eef5; font-size: 8pt; }
     </style>
     <section class="financial-year-print-sheet print-document-area">${results.innerHTML}</section>

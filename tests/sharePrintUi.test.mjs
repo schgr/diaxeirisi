@@ -16,6 +16,10 @@ const printsPageSource = fs.readFileSync(
   path.join(root, 'src', 'ui', 'pages', 'printsPage.js'),
   'utf8'
 );
+const sharePrintStyles = fs.readFileSync(
+  path.join(root, 'src', 'ui', 'styles', 'share-print-ui.css'),
+  'utf8'
+);
 
 assert.doesNotMatch(
   rendererSource,
@@ -27,6 +31,8 @@ assert.match(
   /pageAction\([\s\S]*?data-generic-preview-content/,
   'Share-card pagination inside the modal preview must invoke the modal page action.'
 );
+assert.match(sharePrintStyles, /\.balance-differences-table th:nth-child\(5\) \{ width: 30%; \}/u);
+assert.match(sharePrintStyles, /\.share-back-preview-backdrop \.official-share-page[\s\S]*?96vh - 190px/u);
 
 const controls = renderAllShareCardControls(1485, {
   shareFrom: '',
