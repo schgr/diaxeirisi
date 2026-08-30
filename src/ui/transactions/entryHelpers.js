@@ -110,8 +110,14 @@ export function isToolCollectionReason(value) {
   return String(value || '').toLocaleLowerCase('el-GR').includes('συλλογές εργαλείων');
 }
 
-export function openToolCollectionCreditDialog(collectionShare, referenceShares) {
+export function openToolCollectionCreditDialog(
+  collectionShare,
+  referenceShares,
+  transactionType = 'Πίστωση',
+  parentQuantity = 0
+) {
   return new Promise((resolve) => {
+    const isCredit = transactionType === 'Πίστωση';
     const components = collectionShare.composition.map((compositionItem) => {
       const sourceShare = referenceShares.find((candidate) =>
         String(candidate.nominalNumber || '').trim() === String(compositionItem.componentNominalNumber || '').trim()
@@ -130,26 +136,30 @@ export function openToolCollectionCreditDialog(collectionShare, referenceShares)
     modal.innerHTML = `
       <section class="material-card-modal collection-credit-modal" role="dialog" aria-modal="true">
         <header class="material-card-header">
-          <div><p class="eyebrow">ΠΙΣΤΩΣΗ ΕΧΠ</p><h2>Υλικά Συλλογών Εργαλείων</h2></div>
+          <div>
+            <p class="eyebrow">${escapeHtml(transactionType.toLocaleUpperCase('el-GR'))} ΕΧΠ</p>
+            <h2>Υλικά Φύλλου Μεταβολών</h2>
+            <p class="muted">Οι ποσότητες θα ενημερώσουν μόνο την πλευρά «${escapeHtml(transactionType)}» κατά την τελική αποθήκευση της ΕΧΠ.</p>
+          </div>
         </header>
         <div class="card-table-wrap">
           <table>
-            <thead><tr><th>Μερίδα Συλλογής</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μονάδα Μέτρησης</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
-            <tbody>${components.map(({ share, item }, index) => `
+            <thead><tr>${isCredit ? '<th>Μερίδα Υλικού</th>' : ''}<th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μονάδα Μέτρησης</th><th>Χρεωμένη Ποσότητα Φ.Μ.</th><th>Ποσότητα ΕΧΠ</th></tr></thead>
+            <tbody>${components.map(({ share, sourceShare, item }, index) => `
               <tr data-collection-component="${index}">
-                <td>${escapeHtml(share.shareNumber)}</td>
+                ${isCredit ? `<td><input data-collection-share-number value="${escapeHtml(sourceShare?.shareNumber || '')}" placeholder="Αριθμός μερίδας" /></td>` : ''}
                 <td>${escapeHtml(item.componentNominalNumber)}</td>
                 <td>${escapeHtml(item.componentDescription)}</td>
                 <td>${escapeHtml(item.measurementUnit)}</td>
                 <td class="number-cell">${formatQuantity(item.chargedQuantity)}</td>
-                <td><input data-collection-quantity type="number" min="0" max="${Number(item.chargedQuantity || 0)}" step="0.001" /></td>
+                <td><input data-collection-quantity type="number" min="0" step="0.001" value="" /></td>
               </tr>
             `).join('')}</tbody>
           </table>
         </div>
         <div class="addy-save-row">
-          <button class="primary-button" data-save-collection-credit type="button">Αποθήκευση</button>
           <button class="secondary-button" data-close-collection-credit type="button">Κλείσιμο</button>
+          <button class="primary-button" data-save-collection-credit type="button">Αποθήκευση</button>
         </div>
       </section>
     `;
@@ -162,15 +172,132 @@ export function openToolCollectionCreditDialog(collectionShare, referenceShares)
       if (!event.target.closest('[data-save-collection-credit]')) return;
       const selected = [...modal.querySelectorAll('[data-collection-component]')].map((row) => {
         const component = components[Number(row.dataset.collectionComponent)];
-        const { share, item, sourceShare } = component;
+        const { share, item } = component;
         const quantity = Number(row.querySelector('[data-collection-quantity]').value || 0);
-        return { share, item, quantity, sourceShare };
-      }).filter(({ quantity }) => quantity > 0);
-      const invalid = selected.some(({ item, quantity }) => quantity > Number(item.chargedQuantity || 0));
-      if (invalid || !selected.length) return;
+        const shareNumber = row.querySelector('[data-collection-share-number]')?.value.trim() || '';
+        const sourceShare = referenceShares.find((candidate) =>
+          String(candidate.shareNumber || '').trim() === shareNumber
+        );
+        return { share, item, quantity, sourceShare, shareNumber };
+      });
+      const invalid = selected.some(({ quantity, shareNumber }) =>
+        !Number.isFinite(quantity) || quantity < 0 || (isCredit && quantity > 0 && !shareNumber)
+      );
+      if (invalid || !selected.some(({ quantity }) => quantity > 0)) return;
       close(selected);
     });
     document.body.appendChild(modal);
+  });
+}
+
+export function openNewToolCollectionCompositionDialog(
+  referenceShares,
+  parentQuantity,
+  documentType = 'ΕΧΠ',
+  measurementUnits = []
+) {
+  return new Promise((resolve) => {
+    const calculateExhpMovement = documentType === 'ΕΧΠ';
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <section class="material-card-modal addy-composition-modal" role="dialog" aria-modal="true">
+        <header class="material-card-header">
+          <div>
+            <p class="eyebrow">ΝΕΑ ΣΥΝΘΕΣΗ ΥΛΙΚΟΥ</p>
+            <h2>Υλικά Φύλλου Μεταβολών</h2>
+            <p class="muted">Καταχώρισε τα υλικά και τις ποσότητες που θα χρεωθούν με την αποθήκευση του ${escapeHtml(documentType)}.</p>
+          </div>
+        </header>
+        <datalist id="new-tool-composition-nominals">
+          ${referenceShares.map((share) => `<option value="${escapeHtml(share.nominalNumber)}">${escapeHtml(share.description)}</option>`).join('')}
+        </datalist>
+        <div class="card-table-wrap">
+          <table class="editable-records-table">
+            <thead><tr><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μ/Μ</th><th>Προβλεπόμενα ανά μονάδα</th>${calculateExhpMovement ? '<th>Μη χορηγηθέντα</th><th>Ποσότητα Φ.Μ.</th>' : `<th>Ποσότητα ${escapeHtml(documentType)}</th>`}<th></th></tr></thead>
+            <tbody data-new-tool-composition-body></tbody>
+          </table>
+        </div>
+        <div class="addy-save-row">
+          <button class="secondary-button" data-add-new-tool-component type="button">Προσθήκη γραμμής</button>
+          <button class="secondary-button" data-cancel-new-tool-composition type="button">Άκυρο</button>
+          <button class="primary-button" data-confirm-new-tool-composition type="button">Καταχώριση σύνθεσης</button>
+        </div>
+      </section>`;
+    const body = modal.querySelector('[data-new-tool-composition-body]');
+    const addRow = () => {
+      const row = document.createElement('tr');
+      row.dataset.newToolCompositionRow = '';
+      row.innerHTML = `
+        <td><input data-component-nominal list="new-tool-composition-nominals" /></td>
+        <td><input data-component-description /></td>
+        <td><select data-component-unit>
+          <option value="">Επιλογή Μ/Μ</option>
+          ${measurementUnits.map((unit) => {
+            const value = typeof unit === 'string' ? unit : unit.name;
+            return `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`;
+          }).join('')}
+        </select></td>
+        <td><input data-component-per-unit type="number" min="0.001" step="0.001" /></td>
+        ${calculateExhpMovement ? '<td><input data-component-not-issued type="number" min="0" step="0.001" value="0" /></td>' : ''}
+        <td><input data-component-movement type="number" min="0" step="0.001" ${calculateExhpMovement ? 'readonly' : ''} /></td>
+        <td><button class="danger-button" data-remove-new-tool-component type="button">Διαγραφή</button></td>`;
+      body.appendChild(row);
+    };
+    const close = (result) => {
+      modal.remove();
+      resolve(result);
+    };
+    modal.addEventListener('input', (event) => {
+      const row = event.target.closest('[data-new-tool-composition-row]');
+      if (!row) return;
+      if (event.target.matches('[data-component-nominal]')) {
+        const source = referenceShares.find((share) =>
+          String(share.nominalNumber || '').trim() === event.target.value.trim()
+        );
+        if (source) {
+          row.querySelector('[data-component-description]').value = source.description || '';
+          row.querySelector('[data-component-unit]').value = source.measurementUnit || '';
+        }
+      }
+      if (calculateExhpMovement && event.target.matches('[data-component-per-unit], [data-component-not-issued]')) {
+        const projected = Number(row.querySelector('[data-component-per-unit]').value || 0) * Number(parentQuantity || 0);
+        const notIssued = Number(row.querySelector('[data-component-not-issued]').value || 0);
+        row.querySelector('[data-component-movement]').value = Math.max(0, projected - notIssued) || '';
+      }
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-cancel-new-tool-composition]')) return close(null);
+      if (event.target.closest('[data-add-new-tool-component]')) {
+        addRow();
+        return;
+      }
+      const remove = event.target.closest('[data-remove-new-tool-component]');
+      if (remove) {
+        remove.closest('[data-new-tool-composition-row]').remove();
+        if (!body.children.length) addRow();
+        return;
+      }
+      if (!event.target.closest('[data-confirm-new-tool-composition]')) return;
+      const rows = [...body.querySelectorAll('[data-new-tool-composition-row]')].map((row) => ({
+        componentNominalNumber: row.querySelector('[data-component-nominal]').value.trim(),
+        componentDescription: row.querySelector('[data-component-description]').value.trim(),
+        measurementUnit: row.querySelector('[data-component-unit]').value.trim(),
+        quantityPerMaterial: Number(row.querySelector('[data-component-per-unit]').value),
+        notIssuedQuantity: Number(row.querySelector('[data-component-not-issued]')?.value || 0),
+        movementQuantity: Number(row.querySelector('[data-component-movement]').value)
+      }));
+      if (!rows.length || rows.some((row) =>
+        !row.componentNominalNumber || !row.componentDescription || !row.measurementUnit ||
+        !Number.isFinite(row.quantityPerMaterial) || row.quantityPerMaterial <= 0 ||
+        !Number.isFinite(row.notIssuedQuantity) || row.notIssuedQuantity < 0 ||
+        (calculateExhpMovement && row.notIssuedQuantity > row.quantityPerMaterial * Number(parentQuantity || 0)) ||
+        !Number.isFinite(row.movementQuantity) || row.movementQuantity < 0
+      ) || !rows.some((row) => row.movementQuantity > 0)) return;
+      close(rows);
+    });
+    document.body.appendChild(modal);
+    addRow();
   });
 }
 

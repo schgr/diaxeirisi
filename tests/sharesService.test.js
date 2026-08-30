@@ -28,6 +28,18 @@ async function run() {
       run: testRequiresFlagsAreIndependent
     },
     {
+      label: 'updateShareDetails() updates flags on legacy shares with incomplete required fields',
+      run: testLegacyShareFlagUpdate
+    },
+    {
+      label: 'deleteShare() removes an unreferenced share and its archive history',
+      run: testDeleteUnreferencedShare
+    },
+    {
+      label: 'deleteShare() rejects a share referenced by an internal document',
+      run: testDeleteReferencedShare
+    },
+    {
       label: 'getShareCard() calculates balance, availability, difference and status',
       run: testShareCardBalances
     },
@@ -98,6 +110,46 @@ function testAddShareDefaults({ service }) {
   assert.strictEqual(created.statusTone, 'deficit');
 }
 
+function testDeleteUnreferencedShare({ db, service }) {
+  const share = createShare(service, '120');
+  db.prepare(`
+    INSERT INTO share_archive_events (share_id, action_type, action_date, reason)
+    VALUES (?, 'Αρχειοθέτηση', '2026-08-25', 'Δοκιμή')
+  `).run(share.id);
+
+  service.deleteShare(share.id);
+
+  assert.strictEqual(service.listShares().some((item) => item.id === share.id), false);
+  assert.strictEqual(
+    db.prepare('SELECT COUNT(*) AS count FROM share_archive_events WHERE share_id = ?').get(share.id).count,
+    0
+  );
+}
+
+function testDeleteReferencedShare({ db, service }) {
+  const share = createShare(service, '121');
+  const managerId = db.prepare(`
+    INSERT INTO department_managers (department_name, department_head, sort_order)
+    VALUES ('Δοκιμαστικό Τμήμα', 'Δοκιμαστικός Διαχειριστής', 1)
+  `).run().lastInsertRowid;
+  insertInternalMovement(
+    db,
+    share,
+    managerId,
+    'Δοκιμαστικό Τμήμα',
+    'Δοκιμαστικός Διαχειριστής',
+    'Χορήγηση',
+    1,
+    1
+  );
+
+  assert.throws(
+    () => service.deleteShare(share.id),
+    /η μερίδα αναφέρεται σε Εσωτερικά έγγραφα διακίνησης/u
+  );
+  assert.strictEqual(service.getShareByNumber(share.shareNumber).id, share.id);
+}
+
 function testMovedShareCardsByYear({ db, service }) {
   const moved = createShare(service, '310', { chargedQuantity: 0 });
   const otherYear = createShare(service, '311', { chargedQuantity: 0 });
@@ -143,6 +195,20 @@ function testRequiresFlagsAreIndependent({ service }) {
   });
   assert.strictEqual(updated.requiresComposition, false);
   assert.strictEqual(updated.requiresChangeSheet, false);
+  assert.strictEqual(updated.requiresWeaponRegistry, true);
+}
+
+function testLegacyShareFlagUpdate({ db, service }) {
+  const share = createShare(service, '201', { chargedQuantity: 0 });
+  db.prepare('UPDATE shares SET material_type = ? WHERE id = ?').run('', share.id);
+
+  const updated = service.updateShareDetails(share.id, {
+    requiresComposition: true,
+    requiresWeaponRegistry: true
+  });
+
+  assert.strictEqual(updated.materialType, '');
+  assert.strictEqual(updated.requiresComposition, true);
   assert.strictEqual(updated.requiresWeaponRegistry, true);
 }
 

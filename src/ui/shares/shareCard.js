@@ -1,4 +1,5 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
+import { confirmDialog } from '../components/confirmDialog.js';
 import { summaryItem, detailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows } from './shareDetails.js';
 import { renderCompositionRows, setCompositionLocked, renderChangeSheetRows, setChangeSheetLocked, collectCompositionRows, collectChangeSheetRows, collectRecordRow, renderCompositionDocument } from './shareComposition.js';
 import { openMaterialFormPreview, printMaterialFormDocument, renderChangeSheetDocument, openSharePrintDocument } from './sharePrint.js';
@@ -24,15 +25,16 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
         </div>
         <div class="row-actions">
           <button class="secondary-button" data-close-card type="button">Κλείσιμο</button>
+          ${!options.compositionOnly ? '<button class="danger-button" data-delete-share type="button">Διαγραφή</button>' : ''}
         </div>
       </header>
 
       ${options.compositionOnly ? '' : `<section class="material-card-top">
         <div class="material-card-summary material-card-fields">
           ${detailField('Αριθμός μερίδας', 'shareNumber', card.share.shareNumber, 'text', true)}
-          ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', true)}
+          ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', false)}
           ${detailField('Αριθμός Κυρίου Υλικού', 'mainMaterialNumber', card.share.mainMaterialNumber)}
-          ${detailField('Περιγραφή', 'description', card.share.description, 'text', true)}
+          ${detailField('Περιγραφή', 'description', card.share.description, 'text', false)}
           ${detailField('Είδος υλικού', 'materialType', card.share.materialType, 'text', true)}
           ${detailField('Προβλεπόμενη Ποσότητα', 'projectedQuantity', card.share.projectedQuantity, 'number')}
           ${detailField('Λογιστικό υπόλοιπο', 'accountingBalance', card.share.accountingBalance, 'number', true)}
@@ -138,7 +140,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
     </div>
   `;
 
-  modal.addEventListener('click', (event) => {
+  modal.addEventListener('click', async (event) => {
     if (event.target === modal || event.target.closest('[data-close-card]')) {
       modal.remove();
       return;
@@ -158,12 +160,25 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
     if (event.target.closest('[data-save-share-details]')) {
       const photoBox = modal.querySelector('.material-photo-box');
       const details = getShareDetailControls(modal);
+      const newNominalNumber = details.nominalNumber.value.trim();
+      const newDescription = details.description.value.trim();
+      const identityChanged =
+        newNominalNumber !== (card.share.nominalNumber || '') ||
+        newDescription !== (card.share.description || '');
+      if (identityChanged) {
+        const confirmed = await confirmDialog({
+          message: 'Πρόκειται να αλλάξεις τον Αριθμό Ονομαστικού ή την Περιγραφή αυτής της μερίδας. Θέλεις να προχωρήσεις;',
+          confirmLabel: 'Αλλαγή',
+          cancelLabel: 'Άκυρο'
+        });
+        if (!confirmed) return;
+      }
       sharesApi.updateDetails(card.share.id, {
         shareNumber: details.shareNumber.value.trim(),
-        nominalNumber: details.nominalNumber.value.trim(),
+        nominalNumber: newNominalNumber,
         mainMaterialNumber: details.mainMaterialNumber.value.trim(),
         materialCode: card.share.materialCode || '',
-        description: details.description.value.trim(),
+        description: newDescription,
         materialType: details.materialType.value.trim(),
         projectedQuantity: details.projectedQuantity.value,
         accountingBalance: details.accountingBalance.value,
@@ -182,6 +197,23 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
         openShareCard(refreshed, sharesApi, showToast, settings, options);
       })
         .catch((error) => showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση.', 'error'));
+      return;
+    }
+
+    if (event.target.closest('[data-delete-share]')) {
+      const confirmed = await confirmDialog({
+        message: 'Αυτή είναι μία μη ανεστρέψιμη ενέργεια. Θα διαγραφεί όλη η μερίδα με το ιστορικό της. Να προχωρήσω;',
+        confirmLabel: 'Διαγραφή',
+        cancelLabel: 'Άκυρο'
+      });
+      if (!confirmed) return;
+      try {
+        await sharesApi.delete(card.share.id);
+        showToast('Η μερίδα διαγράφηκε.');
+        modal.remove();
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή της μερίδας.', 'error');
+      }
       return;
     }
 

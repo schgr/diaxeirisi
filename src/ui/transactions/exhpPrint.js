@@ -103,7 +103,7 @@ export function renderExhpDocument(documentData) {
       .map((document) => EXHP_OFFICIAL_SUPPORT_TITLES[document.documentType])
       .filter(Boolean),
     ...splitExhpSupportingDocumentLines(documentData.otherSupportDocument)
-  ].filter(Boolean))].slice(0, 6);
+  ].filter(Boolean))].slice(0, 9);
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
     const chargePage = chargeItems.slice(pageIndex * 14, pageIndex * 14 + 14);
     const creditPage = creditItems.slice(pageIndex * 14, pageIndex * 14 + 14);
@@ -121,7 +121,7 @@ export function renderExhpDocument(documentData) {
           ${renderFaithfulExhpRows(creditPage, true)}
           ${renderExhpFrontSignatureTitles()}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.2, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 46.6, 76.1, 11.5, 2.7)}
+          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 46.6, 76.1, 11.5, 2.7, 'exhp-field-18-signature')}
           ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 78.9, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
           ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
           ${exhpStaticOverlay(renderExhpSupportingDocuments(supportingDocuments), 50.8, 81.0, 46.0, 5.1, 'exhp-supporting-documents-overlay', true)}
@@ -169,8 +169,19 @@ function splitExhpSupportingDocumentLines(value) {
 }
 
 export function renderExhpSupportingDocuments(documents) {
-  const cells = Array.from({ length: 6 }, (_unused, index) => documents[index] || '');
+  const cells = Array.from({ length: 9 }, (_unused, index) => documents[index] || '');
   return `<div class="exhp-supporting-documents-grid">${cells.map((document) => `<span>${escapeHtml(document)}</span>`).join('')}</div>`;
+}
+
+function formatExhpMaterialPosition(item) {
+  const shareNumber = String(item.shareNumber || '').trim();
+  const ledgerSerial = String(item.ledgerSerial || '').trim();
+  if (shareNumber === 'Φ.Μ.' && ledgerSerial === 'Φ.Μ.') return 'Φ.Μ.';
+  return [shareNumber, ledgerSerial].filter(Boolean).join('/');
+}
+
+function formatExhpPrintedQuantity(quantity) {
+  return Number(quantity) === 0 ? '' : formatQuantity(quantity);
 }
 
 
@@ -181,17 +192,17 @@ export function renderFaithfulExhpRows(items, isCredit) {
         { left: 49.95, width: 3.2, value: (item) => item.exhpSerial },
         { left: 53.25, width: 13.1, value: (item) => item.nominalNumber },
         { left: 66.4, width: 14.1, value: (item) => item.description, className: 'material-description-overlay' },
-        { left: 80.65, width: 2.45, value: (item) => item.ledgerSerial },
+        { left: 80.65, width: 2.45, value: formatExhpMaterialPosition, className: 'exhp-material-position-overlay' },
         { left: 83.25, width: 2.4, value: (item) => item.measurementUnit },
-        { left: 85.8, width: 2.45, value: (item) => formatQuantity(item.quantity) }
+        { left: 85.8, width: 2.45, value: (item) => formatExhpPrintedQuantity(item.quantity) }
       ]
     : [
         { left: 1.65, width: 3.7, value: (item) => item.exhpSerial },
         { left: 5.45, width: 12.25, value: (item) => item.nominalNumber },
         { left: 17.85, width: 13.0, value: (item) => item.description, className: 'material-description-overlay' },
-        { left: 30.95, width: 2.35, value: (item) => item.ledgerSerial },
+        { left: 30.95, width: 2.35, value: formatExhpMaterialPosition, className: 'exhp-material-position-overlay' },
         { left: 33.42, width: 3.25, value: (item) => item.measurementUnit },
-        { left: 36.85, width: 2.45, value: (item) => formatQuantity(item.quantity) }
+        { left: 36.85, width: 2.45, value: (item) => formatExhpPrintedQuantity(item.quantity) }
       ];
 
   return items.map((item, rowIndex) => columns.map((column) => exhpStaticOverlay(

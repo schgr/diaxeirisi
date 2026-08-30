@@ -178,7 +178,8 @@ function renderChangeDateHeaders(columns, count) {
 }
 
 function normalizeInventoryReference(value) {
-  return String(value || '').trim().toLocaleUpperCase('el-GR');
+  const normalized = String(value || '').trim().toLocaleUpperCase('el-GR');
+  return normalized.includes('ΑΠΟΓΡΑΦ') ? 'ΑΠΟΓΡΑΦΗ' : normalized;
 }
 
 function formatChangeSheetDate(value) {

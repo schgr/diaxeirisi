@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   renderExhpDocument,
   renderExhpFrontSignatureTitles,
+  renderFaithfulExhpRows,
   renderExhpSupportingDocuments,
   shouldShowCommanderInExhpField23
 } from '../src/ui/transactions/exhpPrint.js';
@@ -25,6 +26,7 @@ const baseDocument = {
 const html = renderExhpDocument(baseDocument);
 assert.match(html, /exhp-unit-overlay/u);
 assert.equal((html.match(/exhp-field-15-signature/gu) || []).length, 2);
+assert.match(html, /exhp-field-18-signature/u);
 assert.match(html, /exhp-field-23-signature/u);
 assert.match(html, /<strong>Διοικητής Δημήτριος<\/strong>\s*<em>Σχης \(ΠΖ\)<\/em>/u);
 assert.match(html, /<div class="exhp-page-number">Σελίδα 1 από 1<\/div>/u);
@@ -32,18 +34,18 @@ assert.equal((renderExhpFrontSignatureTitles().match(/exhp-signature-title-mask/
 assert.match(renderExhpFrontSignatureTitles(), /\(18\) ΤΟ ΛΟΓΙΣΤΗΡΙΟ/u);
 const supportGrid = renderExhpSupportingDocuments(['1', '2', '3', '4', '5', '6']);
 assert.match(supportGrid, /exhp-supporting-documents-grid/u);
-assert.equal((supportGrid.match(/<span>/gu) || []).length, 6);
+assert.equal((supportGrid.match(/<span>/gu) || []).length, 9);
 
-const sixSupportHtml = renderExhpDocument({
+const nineSupportHtml = renderExhpDocument({
   ...baseDocument,
-  supports: Array.from({ length: 7 }, (_unused, index) => ({
+  supports: Array.from({ length: 10 }, (_unused, index) => ({
     completed: true,
     documentCode: `Δ${index + 1}`,
     documentReference: `ΕΓΓΡΑΦΟ ${index + 1}`
   }))
 });
-assert.match(sixSupportHtml, /Δ6 ΕΓΓΡΑΦΟ 6/u);
-assert.doesNotMatch(sixSupportHtml, /Δ7 ΕΓΓΡΑΦΟ 7/u);
+assert.match(nineSupportHtml, /Δ9 ΕΓΓΡΑΦΟ 9/u);
+assert.doesNotMatch(nineSupportHtml, /Δ10 ΕΓΓΡΑΦΟ 10/u);
 
 const officialSupportHtml = renderExhpDocument({
   ...baseDocument,
@@ -87,5 +89,45 @@ const separateSerialHtml = renderExhpDocument({
 assert.match(separateSerialHtml, /C-1/u);
 assert.match(separateSerialHtml, /P-1/u);
 assert.equal((separateSerialHtml.match(/>1<\/div>/gu) || []).length >= 2, true);
+
+const materialPositionRows = renderFaithfulExhpRows([
+  {
+    exhpSerial: 1,
+    shareNumber: '25',
+    ledgerSerial: 7,
+    nominalNumber: 'AO-25',
+    description: 'ΚΑΝΟΝΙΚΗ ΚΙΝΗΣΗ',
+    measurementUnit: 'Τεμ',
+    quantity: 3
+  },
+  {
+    exhpSerial: 2,
+    shareNumber: '30',
+    ledgerSerial: 'Φ.Μ.',
+    nominalNumber: 'AO-30',
+    description: 'ΣΥΝΘΕΣΗ ΧΩΡΙΣ ΚΙΝΗΣΗ',
+    measurementUnit: 'Τεμ',
+    quantity: 0
+  }
+], false);
+assert.match(materialPositionRows, />25\/7<\/div>/u);
+assert.match(materialPositionRows, />30\/Φ\.Μ\.<\/div>/u);
+assert.equal((materialPositionRows.match(/exhp-material-position-overlay/gu) || []).length, 2);
+assert.match(
+  materialPositionRows,
+  /left:36\.85%;top:41%;width:2\.45%;height:2\.45%;"><\/div>/u
+);
+
+const hundredItemHtml = renderExhpDocument({
+  ...baseDocument,
+  items: Array.from({ length: 100 }, (_unused, index) => ({
+    transactionType: 'Χρέωση',
+    nominalNumber: `C-${index + 1}`,
+    description: `ΧΡΕΩΣΗ ${index + 1}`,
+    quantity: 1
+  }))
+});
+assert.equal((hundredItemHtml.match(/exhp-faithful-front-side/gu) || []).length, 8);
+assert.match(hundredItemHtml, /<div class="exhp-page-number">Σελίδα 8 από 8<\/div>/u);
 
 console.log('EXHP preview overlays, pagination and field 23 signature test passed.');

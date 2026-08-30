@@ -71,6 +71,76 @@ function createExhpService(dependencies) {
       };
     },
 
+    saveExhpDepartmentAllocations(idValue, payload = {}) {
+      const documentId = requirePositiveId(idValue);
+      const document = repository.getExhpDocument(documentId);
+      if (!document) throw new Error('Η ΕΧΠ δεν βρέθηκε.');
+      const fiscalYear = Number(document.document_date.slice(0, 4));
+      if (repository.isFiscalYearClosed(fiscalYear)) {
+        throw new Error(`Το οικονομικό έτος ${fiscalYear} έχει κλείσει και δεν δέχεται νέες κινήσεις.`);
+      }
+      const items = new Map(repository.listExhpDocumentItems(documentId)
+        .map((item) => [Number(item.id), item]));
+      const entries = Array.isArray(payload.entries) ? payload.entries : [];
+
+      repository.transaction(() => {
+        for (const entry of entries) {
+          const item = items.get(requirePositiveId(entry.exhpItemId));
+          if (!item) throw new Error('Το υλικό της ΕΧΠ δεν βρέθηκε.');
+          const allocations = Array.isArray(entry.allocations) ? entry.allocations : [];
+          const total = allocations.reduce((sum, allocation) => sum + Number(allocation.quantity || 0), 0);
+          if (!allocations.length || Math.abs(total - Number(item.quantity)) >= 0.000001) {
+            throw new Error('Η κατανομή στα τμήματα δεν συμφωνεί με την ποσότητα της ΕΧΠ.');
+          }
+          const share = repository.getShareById(item.share_id);
+          if (!share) throw new Error('Η μερίδα της ΕΧΠ δεν βρέθηκε.');
+          const movementType = item.transaction_type === 'Χρέωση' ? 'Χορήγηση' : 'Επιστροφή';
+
+          for (const allocation of allocations) {
+            const departmentId = requirePositiveId(allocation.departmentManagerId);
+            const quantity = Number(allocation.quantity);
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+              throw new Error('Η κατανομή στα τμήματα περιέχει μη έγκυρη ποσότητα.');
+            }
+            const department = repository.listDepartmentManagers()
+              .find((candidate) => Number(candidate.id) === departmentId);
+            if (!department) throw new Error('Το επιλεγμένο τμήμα δεν βρέθηκε.');
+            if (movementType === 'Επιστροφή'
+              && quantity - repository.getDepartmentShareBalance(department.id, share.id) > 0.000001) {
+              throw new Error(`Το τμήμα ${department.department_name} δεν έχει επαρκή χρεωμένη ποσότητα.`);
+            }
+            const internalDocumentId = repository.createInternalDocument({
+              fiscalYear,
+              serialNumber: repository.getNextInternalSerial(fiscalYear),
+              documentDate: document.document_date,
+              departmentManagerId: department.id,
+              departmentName: department.department_name,
+              departmentHead: department.department_head,
+              movementType,
+              notes: `ΕΧΠ ${document.registry_number}/${fiscalYear}`
+            });
+            repository.createInternalItem(internalDocumentId, {
+              shareId: share.id,
+              shareNumber: share.share_number,
+              nominalNumber: share.nominal_number,
+              description: share.description,
+              measurementUnit: share.measurement_unit,
+              quantity,
+              composition: buildCompositionSnapshot(repository, share.id, quantity, share.material_type)
+                .map((component) => ({
+                  componentNominalNumber: component.componentNominalNumber,
+                  componentDescription: component.componentDescription,
+                  measurementUnit: component.measurementUnit,
+                  quantity: component.projectedQuantity - component.notIssuedQuantity
+                }))
+            });
+            repository.adjustChargedQuantity(share.id, movementType === 'Χορήγηση' ? quantity : -quantity);
+          }
+        }
+      });
+      return { message: 'Οι χρεώσεις και επιστροφές των τμημάτων αποθηκεύτηκαν.' };
+    },
+
     listExhpDocuments() {
       return repository.listExhpDocuments().map((row) => ({
         id: row.id,
@@ -156,8 +226,11 @@ function createExhpService(dependencies) {
                 item.share_transaction_id,
                 row.document_date
               )
-            : (isToolCollectionReason(row.issue_reason) && item.transaction_type === 'Πίστωση' ? 'Φ.Μ.' : '');
+            : (isToolCollectionReason(row.issue_reason) && (
+              Number(item.quantity) === 0 || item.transaction_type === 'Πίστωση'
+            ) ? 'Φ.Μ.' : '');
           return {
+            id: item.id,
             shareNumber: item.share_number,
             nominalNumber: item.nominal_number,
             description: item.description,
@@ -186,7 +259,43 @@ function createExhpService(dependencies) {
         throw new Error('Η ημερομηνία ΕΧΠ δεν είναι έγκυρη.');
       }
       const fiscalYear = Number(documentDate.slice(0, 4));
+      const requestedItems = Array.isArray(payload && payload.items) ? payload.items : [];
+      const storedItems = repository.listExhpDocumentItems(id);
+      const storedItemsById = new Map(storedItems.map((item) => [Number(item.id), item]));
+      const requestedItemIds = new Set();
+      const quantityUpdates = requestedItems.map((item) => {
+        const itemId = Number(item.id);
+        if (requestedItemIds.has(itemId)) throw new Error('Το ίδιο υλικό εμφανίζεται περισσότερες από μία φορές.');
+        requestedItemIds.add(itemId);
+        const stored = storedItemsById.get(itemId);
+        if (!stored) throw new Error('Ένα από τα υλικά της ΕΧΠ δεν βρέθηκε.');
+        const quantity = Number(item.quantity);
+        const minimum = stored.share_transaction_id ? Number.EPSILON : 0;
+        if (!Number.isFinite(quantity) || quantity < minimum) {
+          throw new Error('Οι ποσότητες της ΕΧΠ πρέπει να είναι έγκυροι θετικοί αριθμοί.');
+        }
+        return { stored, quantity };
+      });
       repository.transaction(() => {
+        quantityUpdates.forEach(({ stored, quantity }) => {
+          const previousQuantity = Number(stored.quantity);
+          const difference = quantity - previousQuantity;
+          if (stored.share_transaction_id && Math.abs(difference) > 0.000001) {
+            const share = repository.getShareById(stored.share_id);
+            const direction = stored.transaction_type === 'Χρέωση' ? 1 : -1;
+            const balanceChange = direction * difference;
+            const nextBalance = Number(share.accounting_balance || 0) + balanceChange;
+            if (nextBalance < -0.000001) {
+              throw new Error(`Το υπόλοιπο της μερίδας ${stored.share_number} δεν επαρκεί για τη νέα ποσότητα.`);
+            }
+            repository.adjustAccountingBalance(stored.share_id, balanceChange);
+          }
+          repository.updateExhpItemQuantity(
+            stored.id,
+            stored.share_transaction_id,
+            quantity
+          );
+        });
         repository.updateExhpMetadata(id, {
           fiscalYear,
           registryNumber,
@@ -194,7 +303,7 @@ function createExhpService(dependencies) {
         });
       });
       return {
-        message: `Η ΕΧΠ ${registryNumber}/${fiscalYear} και οι συνδεδεμένες κινήσεις ενημερώθηκαν.`,
+        message: `Η ΕΧΠ ${registryNumber}/${fiscalYear}, τα υλικά και οι συνδεδεμένες κινήσεις ενημερώθηκαν.`,
         document: this.getExhpDocument(id)
       };
     },

@@ -226,6 +226,7 @@
   .exhp-document-backdrop .exhp-field-15-signature {
     height: 4.3% !important;
     overflow: visible;
+    transform: translateY(-4px);
   }
 
   .exhp-document-backdrop .exhp-field-15-signature:not(.exhp-credit-field-15-signature) .exhp-officer-signature strong {
@@ -237,8 +238,12 @@
   }
 
   .exhp-document-backdrop .exhp-credit-field-15-signature {
-    transform: translateX(-8px);
+    transform: translate(-11px, -4px);
     width: 9.2% !important;
+  }
+
+  .exhp-document-backdrop .exhp-field-18-signature {
+    transform: translateX(-6px);
   }
 
   .exhp-document-backdrop .exhp-credit-field-15-signature .exhp-officer-signature strong {
@@ -301,6 +306,16 @@
 .material-description-cell,
 .material-description-overlay {
   text-align: left !important;
+}
+
+.exhp-material-position-overlay {
+  font-size: clamp(6px, calc(0.72vw - 1px), 10px);
+}
+
+@media screen {
+  .exhp-document-backdrop .exhp-material-position-overlay {
+    font-size: clamp(5px, calc(0.72vw - 2px), 9px);
+  }
 }
 
 .addy-field-15 .addy-document-signature-name {
@@ -594,8 +609,9 @@
 
 .exhp-supporting-documents-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: column;
   gap: 1px 8px;
   width: 100%;
   height: 100%;
@@ -670,6 +686,7 @@
   height: 24px;
   border: 1px solid #555;
   padding: 3px;
+  color: #000;
   text-align: center;
 }
 
@@ -1076,12 +1093,14 @@
   font-size: clamp(9px, 0.86vw, 12px);
   font-weight: 700;
   text-decoration: underline;
+  color: #000;
 }
 
 .official-share-back-sheet h2 {
   margin: 0 0 1.4%;
   font-size: clamp(12px, 1.25vw, 18px);
   text-align: center;
+  color: #000;
 }
 
 .official-share-back-table,
@@ -1101,6 +1120,7 @@
   text-align: center;
   vertical-align: middle;
   box-sizing: border-box;
+  color: #000;
 }
 
 .official-share-back-table th:nth-child(1) { width: 6%; }
@@ -1170,6 +1190,17 @@
   margin-top: 2.2%;
   font-size: clamp(9px, 0.8vw, 11px);
   font-weight: 700;
+  color: #000;
+}
+
+.official-handover-page h1,
+.official-handover-page h2,
+.official-handover-table th,
+.official-handover-table td,
+.addy-document-page h1,
+.addy-document-page .addy-document-code,
+.addy-document-page .addy-document-footer {
+  color: #000;
 }
 
 .official-share-back-unit {

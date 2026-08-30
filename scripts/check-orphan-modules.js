@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const ENTRY_POINTS = [
@@ -26,18 +25,24 @@ const INTENTIONAL_TEST_ONLY_MODULES = new Set([
 ]);
 
 function collectModules(root = ROOT) {
-  return execFileSync(
-    'git',
-    ['ls-files', '--cached', '--others', '--exclude-standard', 'src'],
-    { cwd: root, encoding: 'utf8' }
-  )
-    .split(/\r?\n/)
-    .filter((modulePath) =>
-      MODULE_PATTERN.test(modulePath)
-      && !DEVICE_COPY_PATTERN.test(modulePath)
-      && fs.existsSync(path.join(root, modulePath))
-    )
-    .sort();
+  const srcRoot = path.join(root, 'src');
+  const results = [];
+  const pending = [srcRoot];
+  while (pending.length) {
+    const directory = pending.pop();
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(fullPath);
+      } else if (entry.isFile()) {
+        const relative = path.relative(root, fullPath).replace(/\\/g, '/');
+        if (MODULE_PATTERN.test(relative) && !DEVICE_COPY_PATTERN.test(relative)) {
+          results.push(relative);
+        }
+      }
+    }
+  }
+  return results.sort();
 }
 
 function extractSpecifiers(source) {

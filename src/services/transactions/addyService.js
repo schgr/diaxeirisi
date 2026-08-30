@@ -57,8 +57,14 @@ function createAddyService(dependencies) {
               measurementUnit: item.measurementUnit,
               accountingBalance: 0,
               chargedQuantity: 0,
-              excludeFromInventory: isConsumableMaterial(item.materialType)
+              excludeFromInventory: isConsumableMaterial(item.materialType),
+              requiresComposition: Boolean(item.createComposition && item.createComposition.length),
+              requiresChangeSheet: Boolean(item.createComposition && item.createComposition.length)
             });
+            if (item.createComposition && item.createComposition.length) {
+              repository.replaceCompositionItems(share.id, item.createComposition);
+              share = repository.findShareByNumber(item.shareNumber);
+            }
           }
 
           if (share && item.transactionType === 'Πίστωση' && Number(item.quantity) > Number(share.accounting_balance || 0)) {
@@ -308,6 +314,7 @@ function createAddyService(dependencies) {
         .filter(Number.isInteger);
 
       repository.transaction(() => {
+        repository.deleteInternalMovementsByReference(`ΑΔΔΥ ${id}`);
         for (const item of items) {
           if (!item.share_id || item.existing_share_transaction_id == null) continue;
           const balanceDelta = item.transaction_type === 'Χρέωση'
@@ -315,8 +322,9 @@ function createAddyService(dependencies) {
             : Number(item.quantity);
           const share = repository.getShareById(item.share_id);
           if (!share || Number(share.accounting_balance) + balanceDelta < 0) {
-            throw new Error(
-              `Η μερίδα ${item.share_number} έχει μεταγενέστερες κινήσεις και το ΑΔΔΥ δεν μπορεί να διαγραφεί.`
+            throw new AppError(
+              `Η μερίδα ${item.share_number} έχει μεταγενέστερες κινήσεις και το ΑΔΔΥ δεν μπορεί να διαγραφεί.`,
+              'ADDY_DEPENDENT_TRANSACTIONS'
             );
           }
           repository.adjustAccountingBalance(item.share_id, balanceDelta);

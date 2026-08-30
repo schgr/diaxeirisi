@@ -37,6 +37,74 @@ async function run() {
       composition: []
     });
     assert.equal(shares.listShares()[0].chargedQuantity, 8);
+    assert.throws(() => internal.saveMovement({
+      documentDate: '2026-08-01',
+      departmentManagerId: reference.departmentManagers[0].id,
+      shareId: reference.shares[0].id,
+      movementType: 'Χορήγηση',
+      quantity: 0,
+      notes: '',
+      composition: []
+    }), /Η ποσότητα πρέπει να είναι θετικός αριθμός/u);
+
+    shares.addShare({
+      shareNumber: '2',
+      nominalNumber: '1000000000001',
+      description: 'Σύνθετο δοκιμαστικό υλικό',
+      materialType: 'Υλικό',
+      projectedQuantity: 0,
+      accountingBalance: 5,
+      chargedQuantity: 0
+    });
+    const compositionShare = shares.getShareByNumber('2');
+    shares.updateShareDetails(compositionShare.id, { requiresComposition: true });
+    shares.saveComposition(compositionShare.id, [{
+      componentNominalNumber: 'COMP-1',
+      componentDescription: 'Επιμέρους υλικό 1',
+      measurementUnit: 'Τεμάχια',
+      projectedQuantity: 1,
+      notIssuedQuantity: 0
+    }, {
+      componentNominalNumber: 'COMP-2',
+      componentDescription: 'Επιμέρους υλικό 2',
+      measurementUnit: 'Τεμάχια',
+      projectedQuantity: 1,
+      notIssuedQuantity: 0
+    }]);
+
+    internal.saveMovement({
+      documentDate: '2026-08-02',
+      departmentManagerId: reference.departmentManagers[0].id,
+      shareId: compositionShare.id,
+      movementType: 'Χορήγηση',
+      quantity: 0,
+      notes: '',
+      composition: [
+        { componentNominalNumber: 'COMP-1', componentDescription: 'Επιμέρους υλικό 1', measurementUnit: 'Τεμάχια', quantity: 3 },
+        { componentNominalNumber: 'COMP-2', componentDescription: 'Επιμέρους υλικό 2', measurementUnit: 'Τεμάχια', quantity: 2 }
+      ]
+    });
+    internal.saveMovement({
+      documentDate: '2026-08-03',
+      departmentManagerId: reference.departmentManagers[0].id,
+      shareId: compositionShare.id,
+      movementType: 'Επιστροφή',
+      quantity: 0,
+      notes: '',
+      composition: [
+        { componentNominalNumber: 'COMP-1', componentDescription: 'Επιμέρους υλικό 1', measurementUnit: 'Τεμάχια', quantity: 1 },
+        { componentNominalNumber: 'COMP-2', componentDescription: 'Επιμέρους υλικό 2', measurementUnit: 'Τεμάχια', quantity: 0 }
+      ]
+    });
+
+    assert.equal(shares.getShareByNumber('2').chargedQuantity, 0);
+    const compositionBalance = internal.listDepartmentBalances(reference.departmentManagers[0].id)
+      .find((item) => item.shareId === compositionShare.id);
+    assert.equal(compositionBalance.finalQuantity, 0);
+    assert.deepEqual(
+      compositionBalance.composition.map((item) => item.finalQuantity),
+      [2, 2]
+    );
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
@@ -63,6 +131,15 @@ async function run() {
   assert.match(styles, /\.inventory-session-grid\s*\{[\s\S]*grid-template-columns:/u);
   assert.match(styles, /\.inventory-count-grid\s*\{[\s\S]*grid-template-columns:/u);
   assert.match(chargesPage, /<h2>Κινήσεις Μερικών Διαχειρίσεων<\/h2>/u);
+  assert.match(chargesPage, /id="internal-quantity" type="number" min="0"/u);
+  assert.match(chargesPage, /quantity === 0 && share\?\.requiresComposition/u);
+  assert.match(chargesPage, /data-return-without-redistribution/u);
+  assert.match(chargesPage, /await confirmDialog/u);
+  assert.match(
+    chargesPage,
+    /const difference = resultingCharged - Number\(share\.accountingBalance \|\| 0\);[\s\S]*difference > 0\.000001[\s\S]*Πλεόνασμα[\s\S]*difference < -0\.000001[\s\S]*Έλλειμμα/u
+  );
+  assert.match(chargesPage, /movementType === 'Επιστροφή' && quantity > 0/u);
   assert.match(addyPrint, /isolated-print-root addy-isolated-print-root/u);
   assert.match(addyPrint, /printRoot\.innerHTML = source\.outerHTML/u);
   assert.match(

@@ -3,7 +3,9 @@ data/
 .db-check*/
 *.log
 dist/
-build/
+build/*
+!build/icon.ico
+!build/installer.nsh
 release/
 .env
 diaxeirisi-source-*.zip

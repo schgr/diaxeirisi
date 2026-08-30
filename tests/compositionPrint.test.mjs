@@ -175,6 +175,19 @@ assert.match(openingInventoryChangeSheet, /Απογραφή 31-12-2025/);
 assert.match(openingInventoryChangeSheet, /Π-4\/31-05-2026/);
 assert.match(openingInventoryChangeSheet, />6<\/td>/);
 
+const legacyInventoryReferenceSheet = renderChangeSheetDocument({
+  share: { ...card.share, projectedQuantity: 1, accountingBalance: 1 },
+  compositionItems: [{ ...compositionItem(0), quantityPerMaterial: 2 }],
+  openingTransfer: {
+    balance: 3,
+    inventoryDate: '2025-12-31',
+    reference: 'ΤΕΛΕΥΤΑΙΑ ΕΤΗΣΙΑ ΑΠΟΓΡΑΦΗ 2025'
+  },
+  changeSheetEntries: []
+});
+assert.match(legacyInventoryReferenceSheet, /Απογραφή 31-12-2025/);
+assert.doesNotMatch(legacyInventoryReferenceSheet, /ΤΕΛΕΥΤΑΙΑ ΕΤΗΣΙΑ/u);
+
 const yearOptions = renderFiscalYearOptions(2025);
 assert.match(yearOptions, /value="2025" selected/);
 assert.match(yearOptions, /value="2026"/);

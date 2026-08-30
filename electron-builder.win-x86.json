@@ -1,7 +1,7 @@
 {
   "appId": "gr.local.diaxeirisi.ylikoy",
   "productName": "diaxeirisi Ylikoy",
-  "electronVersion": "42.2.0",
+  "electronVersion": "42.10.1",
   "npmRebuild": false,
   "icon": "build/icon.ico",
   "directories": {
@@ -10,6 +10,8 @@
   "files": [
     "src/**/*",
     "!src/types/**/*",
+    "!src/**/README.md",
+    "!src/**/*.codexbak",
     "!src/exhpForm/supportingDocs/shared/docHeader.js",
     "!src/exhpForm/supportingDocs/shared/letteredList.js",
     "!node_modules/**/*.codexbak",
@@ -36,6 +38,6 @@
     "createStartMenuShortcut": true,
     "shortcutName": "diaxeirisi Ylikoy",
     "include": "build/installer.nsh",
-    "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-${version}.${ext}"
+    "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-1.0.5.${ext}"
   }
 }

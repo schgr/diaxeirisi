@@ -84,6 +84,15 @@
   justify-content: center;
 }
 
+.action-confirm-dialog > [data-addy-confirm-message] {
+  margin: 18px;
+  line-height: 1.5;
+}
+
+.action-confirm-dialog > .row-actions {
+  margin: 0 18px 18px;
+}
+
 .confirm-dialog .primary,
 .confirm-dialog .secondary {
   height: 38px;

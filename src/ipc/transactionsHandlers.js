@@ -9,6 +9,7 @@ const CHANNELS = Object.freeze([
   "transactions:suggest-share-number",
   "transactions:save-addy",
   "transactions:save-addy-department-allocations",
+  "transactions:save-exhp-department-allocations",
   "transactions:external-index-rows",
   "transactions:update-addy-index-fields",
   "transactions:addy-documents",
@@ -77,6 +78,9 @@ function registerTransactionsHandlers({
     );
   register('transactions:save-addy-department-allocations', async (_event, documentId, payload) =>
       safeInvoke(() => services.transactions.saveAddyDepartmentAllocations(documentId, payload))
+    );
+  register('transactions:save-exhp-department-allocations', async (_event, documentId, payload) =>
+      safeInvoke(() => services.transactions.saveExhpDepartmentAllocations(documentId, payload))
     );
   register('transactions:external-index-rows', async (_event, year) =>
       safeInvoke(() => services.transactions.listExternalTransactionIndexRows(year))

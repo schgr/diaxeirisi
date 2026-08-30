@@ -9,14 +9,23 @@ import {
   renderRequestPriorityTable
 } from './settingsPage.js';
 
+const REQUEST_DRAFT_KEY = 'request-new-document';
+
 export async function renderRequestsPage(container, requestsApi, settingsApi, showToast, activeTab = '') {
   if (typeof container.__requestsPageCleanup === 'function') container.__requestsPageCleanup();
   const [reference, settings] = await Promise.all([
     requestsApi.getReferenceData(),
     settingsApi.get()
   ]);
+  let draftItems = [];
+  try {
+    const existingDraft = await window.appApi.drafts.get(REQUEST_DRAFT_KEY);
+    draftItems = Array.isArray(existingDraft?.data?.items) ? existingDraft.data.items : [];
+  } catch (error) {
+    console.error('Αποτυχία επαναφοράς πρόχειρης αίτησης:', error);
+  }
   const state = {
-    items: [],
+    items: draftItems,
     year: reference.year,
     requests: await requestsApi.list(reference.year),
     catalogueRequest: 0
@@ -230,6 +239,7 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
     clearRequestLine(controls);
     renderRequestState(container, state);
     updateRequestAddButton(controls, state);
+    persistRequestDraft(state);
   });
 
   const requestsClickHandler = async (event) => {
@@ -238,6 +248,7 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
       state.items.splice(Number(remove.dataset.removeRequestItem), 1);
       renderRequestState(container, state);
       updateRequestAddButton(controls, state);
+      persistRequestDraft(state);
       return;
     }
 
@@ -261,6 +272,7 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
         notes: '',
         items: state.items
       });
+      await window.appApi.drafts.clear(REQUEST_DRAFT_KEY);
       showToast(result.message);
       await renderRequestsPage(container, requestsApi, settingsApi, showToast, 'requests');
     } catch (error) {
@@ -271,6 +283,12 @@ function bindRequestsPage(container, requestsApi, settingsApi, reference, state,
   return () => {
     container.removeEventListener('click', requestsClickHandler);
   };
+}
+
+function persistRequestDraft(state) {
+  window.appApi.drafts.save(REQUEST_DRAFT_KEY, { items: state.items }).catch((error) => {
+    console.error('Αποτυχία αποθήκευσης πρόχειρης αίτησης:', error);
+  });
 }
 
 function bindKeyCatalogue(container, requestsApi, controls, state, showToast) {

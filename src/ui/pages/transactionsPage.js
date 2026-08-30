@@ -16,8 +16,6 @@ import {
 } from '../transactions/entryHelpers.js';
 import { isSameIssueReason } from '../transactions/shared.js';
 
-const EXHP_REASON_DISPLAY_CODES = ['ΑΥ', 'ΟΥ', 'ΜΥ', 'ΚΜ', 'ΣΥ', 'ΔΙΧ', 'ΔΑ', 'ΣΕ', 'ΤΔ', 'ΔΑΕ', 'ΠΕ', 'ΑΠ'];
-
 const transactionDraftState = {
   items: [],
   exhpItems: [],
@@ -53,14 +51,13 @@ export async function renderTransactionsPage(
   const state = transactionDraftState;
   state.documents = documents;
   state.exhpDocuments = exhpDocuments;
-  const issueReasonByCode = Object.fromEntries(
-    EXP_AITIOLOGIES.map((aitiologia, index) => [
-      aitiologia.code,
-      referenceData.exhpIssueReasons.find((item) => isSameIssueReason(item.name, aitiologia.label))?.name
-        || referenceData.exhpIssueReasons[index]?.name
-        || aitiologia.label
-    ])
-  );
+  const exhpReasons = referenceData.exhpIssueReasons.map((reason, index) => ({
+    ...reason,
+    displayNumber: index + 1,
+    moduleCode: EXP_AITIOLOGIES.find((aitiologia) =>
+      isSameIssueReason(aitiologia.label, reason.name)
+    )?.code || ''
+  }));
   const today = localDateValue(referenceData.fiscalYear);
 
   container.innerHTML = `
@@ -282,18 +279,18 @@ export async function renderTransactionsPage(
         <span>Αιτιολογία Εκδόσεως</span>
         <select id="exhp-wizard-reason">
           <option value="">Επιλογή</option>
-          ${EXP_AITIOLOGIES
-            .map((aitiologia) => `<option value="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-issue-reason-code="${escapeHtml(aitiologia.code)}">${escapeHtml(aitiologia.label)}</option>`)
+          ${exhpReasons
+            .map((reason) => `<option value="${escapeHtml(reason.name)}" data-issue-reason-code="${escapeHtml(reason.moduleCode)}">${escapeHtml(reason.name)}</option>`)
             .join('')}
         </select>
       </label>
       <div class="exhp-reason-tile-grid">
-        ${EXP_AITIOLOGIES
-          .map((aitiologia, index) => `
-            <button class="home-tile transaction-flow-tile exhp-reason-tile" data-exhp-reason-tile="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-exhp-reason-code="${escapeHtml(aitiologia.code)}" type="button">
-              <span class="home-tile-icon" aria-hidden="true">${escapeHtml(EXHP_REASON_DISPLAY_CODES[index])}</span>
-              <span class="home-tile-title">${escapeHtml(aitiologia.label)}</span>
-              <span class="home-tile-code">§ ΕΧΠ-${escapeHtml(aitiologia.code.toUpperCase())}</span>
+        ${exhpReasons
+          .map((reason) => `
+            <button class="home-tile transaction-flow-tile exhp-reason-tile" data-exhp-reason-tile="${escapeHtml(reason.name)}" data-exhp-reason-code="${escapeHtml(reason.moduleCode)}" type="button">
+              <span class="home-tile-icon" aria-hidden="true">ΑΙ</span>
+              <span class="home-tile-title">${escapeHtml(reason.name)}</span>
+              <span class="home-tile-code">§ ΕΧΠ-${reason.displayNumber}</span>
             </button>
           `)
           .join('')}
@@ -347,8 +344,8 @@ export async function renderTransactionsPage(
         </label>
         <select id="exhp-reason" hidden>
           <option value="">Επιλογή</option>
-          ${EXP_AITIOLOGIES
-            .map((aitiologia) => `<option value="${escapeHtml(issueReasonByCode[aitiologia.code])}" data-issue-reason-code="${escapeHtml(aitiologia.code)}">${escapeHtml(aitiologia.label)}</option>`)
+          ${exhpReasons
+            .map((reason) => `<option value="${escapeHtml(reason.name)}" data-issue-reason-code="${escapeHtml(reason.moduleCode)}">${escapeHtml(reason.name)}</option>`)
             .join('')}
         </select>
         <label class="field">
@@ -365,11 +362,16 @@ export async function renderTransactionsPage(
         </label>
         <label class="field">
           <span>Μονάδα Μέτρησης</span>
-          <input id="exhp-measurement-unit" readonly />
+          <select id="exhp-measurement-unit" disabled>
+            <option value="">Επιλογή Μ/Μ</option>
+            ${referenceData.measurementUnits
+              .map((unit) => `<option value="${escapeHtml(unit.name)}">${escapeHtml(unit.name)}</option>`)
+              .join('')}
+          </select>
         </label>
         <label class="field">
           <span>Ποσότητα</span>
-          <input id="exhp-quantity" type="number" min="0.001" step="0.001" />
+          <input id="exhp-quantity" type="number" min="0" step="0.001" />
         </label>
         <label class="field">
           <span>Είδος Δοσοληψίας</span>
@@ -420,9 +422,6 @@ export async function renderTransactionsPage(
     </section>
 
     <section id="exhp-edit-panel" class="page-panel no-print" hidden>
-      <div class="page-toolbar">
-        <button class="secondary-button" data-exhp-edit-back type="button">Πίσω στις Ρυθμίσεις</button>
-      </div>
       <h3>Επεξεργασία ΕΧΠ</h3>
       <form id="exhp-metadata-edit-form" class="inline-form exhp-metadata-edit-form">
         <input id="exhp-edit-id" type="hidden" />
@@ -434,11 +433,11 @@ export async function renderTransactionsPage(
           <span>Ημερομηνία</span>
           <input id="exhp-edit-date" type="date" required />
         </label>
-        <button class="primary-button" type="submit">Αποθήκευση αλλαγών</button>
+        <button class="primary-button exhp-edit-save-button" type="submit">Αποθήκευση αλλαγών</button>
       </form>
-      <p class="muted">Η αλλαγή ενημερώνει το Ευρετήριο Εντολών Χρεωπιστώσεων και τις αναφορές στις κινήσεις των μερίδων, χωρίς αλλαγή ποσοτήτων.</p>
-      <h4>Δικαιολογητικά υποστήριξης</h4>
-      <div id="exhp-edit-documents-mount"></div>
+      <p class="muted">Οι αλλαγές ενημερώνουν την ΕΧΠ, το Ευρετήριο Εντολών Χρεωπιστώσεων και τις κινήσεις των αντίστοιχων μερίδων.</p>
+      <h4>Υλικά της ΕΧΠ</h4>
+      <div id="exhp-edit-items-mount" class="exhp-entry-split"></div>
     </section>
 
     <section class="page-panel no-print" data-exhp-settings-reasons>
@@ -506,7 +505,7 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
   const reasonDetail = container.querySelector('[data-exhp-reason-detail]');
   const editor = container.querySelector('#exhp-documents-editor');
   const editorHome = container.querySelector('#exhp-documents-editor-home');
-  const editMount = container.querySelector('#exhp-edit-documents-mount');
+  const editItemsMount = container.querySelector('#exhp-edit-items-mount');
   const selector = container.querySelector('#exhp-documents-exhp');
   const editPanel = container.querySelector('#exhp-edit-panel');
   const editForm = container.querySelector('#exhp-metadata-edit-form');
@@ -583,9 +582,7 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
         container.querySelector('#exhp-edit-id').value = documentData.id;
         container.querySelector('#exhp-edit-registry-number').value = documentData.registryNumber;
         container.querySelector('#exhp-edit-date').value = documentData.date;
-        if (editor && editMount) editMount.appendChild(editor);
-        selector.value = String(documentData.id);
-        selector.dispatchEvent(new Event('change', { bubbles: true }));
+        if (editItemsMount) editItemsMount.innerHTML = renderEditableExhpItems(documentData.items);
         editPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση της ΕΧΠ.', 'error');
@@ -593,7 +590,6 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
     });
   });
 
-  container.querySelector('[data-exhp-edit-back]')?.addEventListener('click', closeEditor);
 
   container.querySelectorAll('[data-delete-exhp-document]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -620,9 +616,14 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
       const id = Number(container.querySelector('#exhp-edit-id').value);
       const result = await transactionsApi.updateExhpMetadata(id, {
         registryNumber: Number(container.querySelector('#exhp-edit-registry-number').value),
-        documentDate: container.querySelector('#exhp-edit-date').value
+        documentDate: container.querySelector('#exhp-edit-date').value,
+        items: [...container.querySelectorAll('[data-exhp-edit-item]')].map((input) => ({
+          id: Number(input.dataset.exhpEditItem),
+          quantity: Number(input.value)
+        }))
       });
       state.viewedExhp = result.document;
+      if (editItemsMount) editItemsMount.innerHTML = renderEditableExhpItems(result.document.items);
       const row = container.querySelector(`[data-edit-exhp-document="${id}"]`)?.closest('tr');
       if (row) {
         row.children[0].textContent = result.document.registryNumber;
@@ -633,6 +634,29 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της ΕΧΠ.', 'error');
     }
   });
+}
+
+function renderEditableExhpItems(items = []) {
+  return ['Χρέωση', 'Πίστωση'].map((transactionType) => {
+    const rows = items.filter((item) => item.transactionType === transactionType);
+    return `
+      <section class="exhp-entry-section">
+        <h4>${transactionType} Διαχειρίσεως</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Αριθμός Μερίδας</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μονάδα Μέτρησης</th><th>Ποσότητα</th></tr></thead>
+            <tbody>${rows.length ? rows.map((item) => `
+              <tr>
+                <td>${escapeHtml(item.shareNumber)}</td>
+                <td>${escapeHtml(item.nominalNumber)}</td>
+                <td class="material-description-cell">${escapeHtml(item.description)}</td>
+                <td>${escapeHtml(item.measurementUnit)}</td>
+                <td><input class="table-input exhp-edit-quantity-input" data-exhp-edit-item="${Number(item.id)}" type="number" min="${item.ledgerSerial === 'Φ.Μ.' ? '0' : '0.001'}" step="0.001" value="${Number(item.quantity)}" aria-label="Ποσότητα μερίδας ${escapeHtml(item.shareNumber)}" /></td>
+              </tr>`).join('') : '<tr><td colspan="5" class="empty-table">Δεν υπάρχουν υλικά.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </section>`;
+  }).join('');
 }
 
 function localDateValue(fiscalYear = new Date().getFullYear()) {

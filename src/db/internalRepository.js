@@ -202,8 +202,8 @@ function createInternalRepository(db) {
         GROUP BY
           item.share_id, item.share_number, item.nominal_number,
           item.description, item.measurement_unit, document.department_name,
-          share.projected_quantity
-        HAVING final_quantity > 0
+          share.projected_quantity, share.requires_composition
+        HAVING final_quantity > 0 OR share.requires_composition = 1
         ORDER BY
           CASE WHEN item.share_number GLOB '[0-9]*' THEN 0 ELSE 1 END,
           CAST(item.share_number AS INTEGER),

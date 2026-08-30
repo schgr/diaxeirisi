@@ -6,6 +6,7 @@ const { registerWindowHandlers } = require('./windowHandlers');
 const { registerPrintHandlers } = require('./printHandlers');
 const { registerSharesHandlers } = require('./sharesHandlers');
 const { registerSettingsHandlers } = require('./settingsHandlers');
+const { registerDraftsHandlers } = require('./draftsHandlers');
 const { registerTransactionsHandlers } = require('./transactionsHandlers');
 const { registerRequestsHandlers } = require('./requestsHandlers');
 const { registerInventoryHandlers } = require('./inventoryHandlers');
@@ -19,6 +20,7 @@ const REGISTRARS = Object.freeze([
   registerPrintHandlers,
   registerSharesHandlers,
   registerSettingsHandlers,
+  registerDraftsHandlers,
   registerTransactionsHandlers,
   registerRequestsHandlers,
   registerInventoryHandlers,

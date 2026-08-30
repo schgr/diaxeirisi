@@ -89,6 +89,7 @@ contextBridge.exposeInMainWorld('appApi', {
     getCardsBatch: (payload) => invoke('shares:get-cards-batch', payload),
     listMovedCards: (year) => invoke('shares:list-moved-cards', year),
     updateDetails: (id, payload) => invoke('shares:update-details', id, payload),
+    delete: (id) => invoke('shares:delete', id),
     listSerialRegistry: () => invoke('shares:list-serial-registry'),
     saveSerialNumbers: (id, entries) => invoke('shares:save-serial-numbers', id, entries),
     listAmmunitionBatchRegistry: () => invoke('shares:list-ammunition-batch-registry'),
@@ -142,6 +143,11 @@ contextBridge.exposeInMainWorld('appApi', {
       invoke('settings:update-exhp-issue-reason-texts', id, payload),
     deleteExhpIssueReason: (id) => invoke('settings:delete-exhp-issue-reason', id)
   },
+  drafts: {
+    get: (key) => invoke('drafts:get', { key }),
+    save: (key, data) => invoke('drafts:save', { key, data }),
+    clear: (key) => invoke('drafts:clear', { key })
+  },
   transactions: {
     getStructure: () => invoke('transactions:get-structure'),
     getAddyReferenceData: () => invoke('transactions:addy-reference-data'),
@@ -152,6 +158,8 @@ contextBridge.exposeInMainWorld('appApi', {
     saveAddy: (payload) => invoke('transactions:save-addy', payload),
     saveAddyDepartmentAllocations: (documentId, payload) =>
       invoke('transactions:save-addy-department-allocations', documentId, payload),
+    saveExhpDepartmentAllocations: (documentId, payload) =>
+      invoke('transactions:save-exhp-department-allocations', documentId, payload),
     listExternalIndexRows: (year) => invoke('transactions:external-index-rows', year),
     updateAddyIndexFields: (documentId, payload) =>
       invoke('transactions:update-addy-index-fields', documentId, payload),

@@ -49,13 +49,21 @@ const combined = baselineModules.map(({ relativePath, contents }) =>
 ).join('');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  '23440962042f10e754e0753098d68a69c29d3a5c47aac3333d243ee26f12d355',
+  'cb5c0bf76b322fa466305e877c45817b05c030821e2a01f3bebfb91b684fbdc2',
   'The ordered stylesheet-module snapshot changed unexpectedly.'
 );
 
 const sharePrintUi = modules.find(
   ({ relativePath }) => relativePath === './styles/share-print-ui.css'
 ).contents;
+const officialPrints = modules.find(
+  ({ relativePath }) => relativePath === './styles/official-prints.css'
+).contents;
+assert.match(
+  officialPrints,
+  /\.exhp-supporting-documents-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,[\s\S]*grid-template-rows:\s*repeat\(3,[\s\S]*grid-auto-flow:\s*column/,
+  'EXHP supporting documents must retain their 3x3 column-first layout.'
+);
 assert.match(
   sharePrintUi,
   /\.legacy-offline-badge\s*\{[\s\S]*display:\s*none\s*!important/,

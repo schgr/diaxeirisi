@@ -20,6 +20,10 @@ async function run() {
       shareNumber: '13', nominalNumber: 'MAIN-13', description: 'Κύριο υλικό',
       materialType: 'Αναλώσιμα', projectedQuantity: 10, accountingBalance: 10, chargedQuantity: 0
     });
+    const zeroQuantityShare = shares.addShare({
+      shareNumber: '14', nominalNumber: 'MAIN-14', description: 'Κύριο υλικό χωρίς υπάρχουσα σύνθεση',
+      materialType: 'Αναλώσιμα', projectedQuantity: 5, accountingBalance: 5, chargedQuantity: 0
+    }).find((item) => item.shareNumber === '14');
     db.prepare(`
       INSERT INTO share_transactions (
         share_id, transaction_date, transaction_unit, transaction_type,
@@ -33,12 +37,13 @@ async function run() {
     sheet.addRow(COMPOSITION_HEADERS);
     sheet.addRow(['13', 'COMP-1', 'Εξάρτημα', 'Τεμάχια', 15, 100]);
     sheet.addRow(['13', '', 'Εξάρτημα χωρίς αριθμό ονομαστικού', 'Τεμάχια', 2, 5]);
+    sheet.addRow(['14', 'COMP-0', 'Εξάρτημα με μηδενική απογραφή', 'Τεμάχια', 1, 0]);
     await workbook.xlsx.writeFile(input);
 
     const inventoryDate = `${new Date().getFullYear() - 1}-12-31`;
     const result = await importer.importWorkbook(input, inventoryDate);
-    assert.strictEqual(result.updatedShares, 1);
-    assert.strictEqual(result.importedRows, 2);
+    assert.strictEqual(result.updatedShares, 2);
+    assert.strictEqual(result.importedRows, 3);
     const card = shares.getShareCard(share.id, new Date().getFullYear());
     assert.strictEqual(card.share.requiresComposition, true);
     assert.strictEqual(card.compositionItems[0].projectedQuantity, 150);
@@ -51,6 +56,11 @@ async function run() {
     assert.strictEqual(card.changeSheetEntries[0].orderReference, 'Απογραφή');
     assert.strictEqual(card.changeSheetEntries[0].movementType, 'ΧΡΕΩΣΗ');
     assert.strictEqual(card.changeSheetEntries[0].quantity, 100);
+    const zeroQuantityCard = shares.getShareCard(zeroQuantityShare.id, new Date().getFullYear());
+    assert.strictEqual(zeroQuantityCard.changeSheetEntries.length, 1);
+    assert.strictEqual(zeroQuantityCard.changeSheetEntries[0].changeDate, inventoryDate);
+    assert.strictEqual(zeroQuantityCard.changeSheetEntries[0].orderReference, 'Απογραφή');
+    assert.strictEqual(zeroQuantityCard.changeSheetEntries[0].quantity, 0);
 
     const output = path.join(root, 'composition-template.xlsx');
     await importer.writeTemplate(output);

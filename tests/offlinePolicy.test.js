@@ -140,6 +140,7 @@ function run() {
     assert.match(mainSource, /offlineOnly:\s*true/);
     assert.match(mainSource, /contextIsolation:\s*true/);
     assert.match(mainSource, /nodeIntegration:\s*false/);
+    assert.match(mainSource, /sandbox:\s*true/);
     assert.doesNotMatch(mainSource, /offlineOnly:\s*isWindows7Legacy/);
     const htmlSource = fs.readFileSync(path.resolve(__dirname, '..', 'src', 'ui', 'index.html'), 'utf8');
     assert.match(htmlSource, /connect-src 'none'/);

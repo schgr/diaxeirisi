@@ -24,6 +24,7 @@ const { createCompositionImportService } = require('./services/compositionImport
 const { createExhpDocumentsService } = require('./services/exhpDocumentsService');
 const { createClothingService } = require('./services/clothingService');
 const { createSecurityService } = require('./services/securityService');
+const { createDraftsService } = require('./services/draftsService');
 const { createKeyCatalogueService } = require('./services/keyCatalogueService');
 const { createBackupService, applyPendingRestore } = require('./services/backupService');
 const {
@@ -39,6 +40,10 @@ const {
   createOfflinePolicy,
   applyOfflineCommandLine,
 } = require('./offlinePolicy');
+const {
+  createBetaDevToolsReporter,
+  installConsoleErrorMirror
+} = require('./betaDevToolsReporter');
 
 applyOfflineCommandLine(app.commandLine);
 
@@ -66,6 +71,7 @@ const isWindows7Legacy = packageMetadata.buildFlavor === 'win7-legacy'
 
 let services;
 let securityService;
+let draftsService;
 let backupService;
 let persistentDatabase;
 let heavyTaskRunner;
@@ -73,6 +79,7 @@ let shutdownCoordinator;
 let offlinePolicy;
 let ipcSecurity;
 let keyCatalogueService;
+let betaDevToolsReporter;
 const pendingSessions = new Set();
 
 app.on('session-created', (createdSession) => {
@@ -112,12 +119,18 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
       devTools: isBetaBuild,
       spellcheck: false
     }
   });
 
   offlinePolicy.hardenWebContents(window.webContents);
+  if (isBetaBuild) {
+    window.webContents.once('did-finish-load', () => {
+      betaDevToolsReporter?.setRendererReady();
+    });
+  }
   if (isBetaBuild) {
     window.webContents.on('before-input-event', (event, input) => {
       if (!shouldToggleDevToolsForInput(app.getVersion(), input)) return;
@@ -158,6 +171,7 @@ function registerIpcHandlers() {
     ipcSecurity,
     isWindows7Legacy,
     securityService,
+    draftsService,
     backupService,
     persistentDatabase,
     heavyTaskRunner,
@@ -236,6 +250,22 @@ async function safeInvoke(operation, allowLocked = false) {
 
 app.whenReady().then(async () => {
   configureOfflineMode();
+  const isBetaBuild = shouldShowApplicationMenu(app.getVersion());
+  if (isBetaBuild) {
+    betaDevToolsReporter = createBetaDevToolsReporter({
+      enabled: true,
+      send: (entry) => {
+        const window = BrowserWindow.getAllWindows().find((candidate) => !candidate.isDestroyed());
+        if (!window) return Promise.reject(new Error('Δεν υπάρχει ενεργό παράθυρο beta.'));
+        const diagnostic = JSON.stringify(entry);
+        return window.webContents.executeJavaScript(
+          `console.error('[Βeta διαγνωστικά]', ${diagnostic});`,
+          true
+        );
+      }
+    });
+    installConsoleErrorMirror({ enabled: true, reporter: betaDevToolsReporter });
+  }
   configureApplicationMenu({ Menu, BrowserWindow, version: app.getVersion() });
   const userDataPath = app.getPath('userData');
   heavyTaskRunner = createHeavyTaskRunner({ defaultTimeout: 10 * 60 * 1000 });
@@ -245,6 +275,7 @@ app.whenReady().then(async () => {
   await keyCatalogueService.initialize();
   await applyPendingRestore(userDataPath, heavyTaskRunner);
   securityService = createSecurityService(userDataPath);
+  draftsService = createDraftsService(userDataPath);
   const database = await initializeDatabase(userDataPath, {
     offerBackupRecovery: async ({ mainExists }) => {
       const result = await dialog.showMessageBox({

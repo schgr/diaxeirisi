@@ -7,8 +7,8 @@ function validateExhp(payload) {
     throw new AppError('Πρέπει να προστεθεί τουλάχιστον ένα υλικό στην ΕΧΠ.', 'VALIDATION_ERROR');
   }
 
-  if (items.length > 280) {
-    throw new AppError('Η ΕΧΠ δέχεται έως 280 υλικά.', 'VALIDATION_ERROR');
+  if (items.length > 1000) {
+    throw new AppError('Η ΕΧΠ δέχεται έως 1000 υλικά.', 'VALIDATION_ERROR');
   }
 
   const documentDate = optionalText(payload && payload.documentDate) || getLocalDate();
@@ -52,8 +52,8 @@ function sanitizeFormData(value) {
 
 function validateItem(item) {
   const quantity = Number(item && item.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+  if (!Number.isFinite(quantity) || quantity < 0) {
+    throw new AppError('Η ποσότητα πρέπει να είναι μη αρνητικός αριθμός.', 'VALIDATION_ERROR');
   }
 
   const transactionType = requireText(item && item.transactionType, 'Είδος Δοσοληψίας');
@@ -73,13 +73,41 @@ function validateItem(item) {
     collectionTransfer: Boolean(item && item.collectionTransfer),
     collectionVirtualCredit: Boolean(item && item.collectionVirtualCredit),
     collectionParentShareNumber: optionalText(item && item.collectionParentShareNumber),
+    composition: sanitizeComposition(item && item.composition),
+    createComposition: sanitizeComposition(item && item.createComposition),
     transactionType,
     quantity,
     supportingDocuments: optionalText(item && item.supportingDocuments)
   };
 }
 
+function sanitizeComposition(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const projectedQuantity = Number(item && item.projectedQuantity);
+    const notIssuedQuantity = Number(item && item.notIssuedQuantity || 0);
+    if (
+      !Number.isFinite(projectedQuantity) || projectedQuantity < 0 ||
+      !Number.isFinite(notIssuedQuantity) || notIssuedQuantity < 0 ||
+      notIssuedQuantity > projectedQuantity
+    ) {
+      throw new AppError('Οι ποσότητες του Φύλλου Μεταβολών δεν είναι έγκυρες.', 'VALIDATION_ERROR');
+    }
+    return {
+      componentNominalNumber: optionalText(item && item.componentNominalNumber),
+      componentDescription: requireText(item && item.componentDescription, 'Περιγραφή υλικού σύνθεσης'),
+      measurementUnit: optionalText(item && item.measurementUnit),
+      projectedQuantity,
+      notIssuedQuantity,
+      notes: optionalText(item && item.notes)
+    };
+  });
+}
+
 function validateNominalTransferItems(items) {
+  if (items.some((item) => item.quantity <= 0)) {
+    throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+  }
   const credits = items.filter((item) => item.transactionType === 'Πίστωση');
   const charges = items.filter((item) => item.transactionType === 'Χρέωση');
   if (!credits.length || credits.length !== charges.length || items.length !== credits.length * 2) {

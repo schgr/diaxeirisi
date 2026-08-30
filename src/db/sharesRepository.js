@@ -246,6 +246,7 @@ function createSharesRepository(db) {
             movement.id = item.share_transaction_id
             OR (
               item.share_transaction_id IS NULL
+              AND item.quantity <> 0
               AND movement.share_id = item.share_id
               AND movement.transaction_date = document.document_date
               AND movement.document_reference LIKE 'ΑΔΔΥ ' || document.id || ' /%'
@@ -254,17 +255,17 @@ function createSharesRepository(db) {
             AND movement.transaction_date >= ?
             AND movement.transaction_date <= ?
           UNION ALL
-          SELECT movement.share_id,
-                 movement.id AS transaction_id,
-                 movement.transaction_date,
-                 movement.transaction_type,
-                 movement.quantity,
+          SELECT item.share_id,
+                 COALESCE(movement.id, -item.id) AS transaction_id,
+                 COALESCE(movement.transaction_date, document.document_date) AS transaction_date,
+                 COALESCE(movement.transaction_type, item.transaction_type) AS transaction_type,
+                 COALESCE(movement.quantity, item.quantity) AS quantity,
                  'ΕΧΠ' AS source_type,
                  document.registry_number AS document_number,
                  item.composition_snapshot
           FROM exhp_items item
           JOIN exhp_documents document ON document.id = item.exhp_document_id
-          JOIN share_transactions movement ON
+          LEFT JOIN share_transactions movement ON
             movement.id = item.share_transaction_id
             OR (
               item.share_transaction_id IS NULL
@@ -272,9 +273,10 @@ function createSharesRepository(db) {
               AND movement.transaction_date = document.document_date
               AND movement.document_reference = 'ΕΧΠ ' || document.registry_number || '/' || document.fiscal_year
             )
-          WHERE movement.share_id IN (${placeholders})
-            AND movement.transaction_date >= ?
-            AND movement.transaction_date <= ?
+          WHERE item.share_id IN (${placeholders})
+            AND document.document_date >= ?
+            AND document.document_date <= ?
+            AND TRIM(COALESCE(item.composition_snapshot, '')) <> ''
           ORDER BY 1, 3, 2
         `).all(
           ...chunk, `${year}-01-01`, `${year}-12-31`,
@@ -298,6 +300,7 @@ function createSharesRepository(db) {
           movement.id = item.share_transaction_id
           OR (
             item.share_transaction_id IS NULL
+            AND item.quantity <> 0
             AND movement.share_id = item.share_id
             AND movement.transaction_date = document.document_date
             AND movement.document_reference LIKE 'ΑΔΔΥ ' || document.id || ' /%'
@@ -306,16 +309,16 @@ function createSharesRepository(db) {
           AND movement.transaction_date >= ?
           AND movement.transaction_date <= ?
         UNION ALL
-        SELECT movement.id AS transaction_id,
-               movement.transaction_date,
-               movement.transaction_type,
-               movement.quantity,
+        SELECT COALESCE(movement.id, -item.id) AS transaction_id,
+               COALESCE(movement.transaction_date, document.document_date) AS transaction_date,
+               COALESCE(movement.transaction_type, item.transaction_type) AS transaction_type,
+               COALESCE(movement.quantity, item.quantity) AS quantity,
                'ΕΧΠ' AS source_type,
                document.registry_number AS document_number,
                item.composition_snapshot
         FROM exhp_items item
         JOIN exhp_documents document ON document.id = item.exhp_document_id
-        JOIN share_transactions movement ON
+        LEFT JOIN share_transactions movement ON
           movement.id = item.share_transaction_id
           OR (
             item.share_transaction_id IS NULL
@@ -323,9 +326,10 @@ function createSharesRepository(db) {
             AND movement.transaction_date = document.document_date
             AND movement.document_reference = 'ΕΧΠ ' || document.registry_number || '/' || document.fiscal_year
           )
-        WHERE movement.share_id = ?
-          AND movement.transaction_date >= ?
-          AND movement.transaction_date <= ?
+        WHERE item.share_id = ?
+          AND document.document_date >= ?
+          AND document.document_date <= ?
+          AND TRIM(COALESCE(item.composition_snapshot, '')) <> ''
         ORDER BY transaction_date, transaction_id
       `).all(
         shareId, `${year}-01-01`, `${year}-12-31`,
@@ -419,6 +423,49 @@ function createSharesRepository(db) {
       );
 
       return this.getShare(id);
+    },
+
+    updateShareFlags(id, payload) {
+      db.prepare(
+        `
+          UPDATE shares
+          SET requires_composition = ?,
+              requires_serial_number = ?,
+              requires_weapon_registry = ?,
+              requires_ammunition_batch_book = ?,
+              requires_training_ammunition_batch_book = ?,
+              requires_change_sheet = ?
+          WHERE id = ?
+        `
+      ).run(
+        payload.requiresComposition ? 1 : 0,
+        payload.requiresSerialNumber ? 1 : 0,
+        payload.requiresWeaponRegistry ? 1 : 0,
+        payload.requiresAmmunitionBatchBook ? 1 : 0,
+        payload.requiresTrainingAmmunitionBatchBook ? 1 : 0,
+        payload.requiresChangeSheet ? 1 : 0,
+        id
+      );
+
+      return this.getShare(id);
+    },
+
+    deleteShare(id) {
+      const blockers = [
+        { table: 'exhp_items', label: 'Εντολές Χρεωπιστώσεως (ΕΧΠ)' },
+        { table: 'internal_items', label: 'Εσωτερικά έγγραφα διακίνησης' },
+        { table: 'inventory_items', label: 'Φύλλα απογραφής' },
+        { table: 'movement_difference_protocols', label: 'Πρωτόκολλα διαφοράς κίνησης' }
+      ];
+      for (const blocker of blockers) {
+        const row = db.prepare(`SELECT COUNT(*) AS count FROM ${blocker.table} WHERE share_id = ?`).get(id);
+        if (row.count > 0) {
+          throw new Error(`Δεν είναι δυνατή η διαγραφή: η μερίδα αναφέρεται σε ${blocker.label}.`);
+        }
+      }
+      db.prepare('DELETE FROM share_archive_events WHERE share_id = ?').run(id);
+      db.prepare('DELETE FROM share_renumbering_items WHERE share_id = ?').run(id);
+      db.prepare('DELETE FROM shares WHERE id = ?').run(id);
     },
 
     getTransactionBalanceBeforeYear(shareId, year) {
@@ -740,6 +787,10 @@ function createSharesRepository(db) {
           entry.quantity
         ));
       })();
+    },
+
+    transaction(operation) {
+      return db.transaction(operation)();
     }
   };
 }

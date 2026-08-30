@@ -87,12 +87,14 @@ expectedApi.splice(expectedApi.indexOf('getAddyReferenceData') + 1, 0, 'createCo
 expectedApi.splice(expectedApi.indexOf('createCommerceCompany') + 1, 0, 'updateCommerceCompany');
 expectedApi.splice(expectedApi.indexOf('updateCommerceCompany') + 1, 0, 'deleteCommerceCompany');
 expectedApi.splice(expectedApi.indexOf('saveAddy') + 1, 0, 'saveAddyDepartmentAllocations');
+expectedApi.splice(expectedApi.indexOf('saveAddyDepartmentAllocations') + 1, 0, 'saveExhpDepartmentAllocations');
 assert.deepStrictEqual(currentApi, expectedApi, 'Public API or method order changed.');
 for (const name of publicApi) {
   if ([
     'getAddyReferenceData',
     'saveAddy',
     'getExhpDocument',
+    'updateExhpMetadata',
     'listExternalTransactionIndexRows',
     'listAddyDocuments',
     'getAddyDocument',
@@ -111,7 +113,8 @@ for (const name of helperNames) {
     'normalize',
     'buildCompositionSnapshot',
     'saveNominalNumberTransfer',
-    'saveRegularExhpItem'
+    'saveRegularExhpItem',
+    'saveToolCollectionTransfers'
   ].includes(name)) continue;
   assert.strictEqual(extractFunction(modules, name), extractFunction(baseline, name), `${name} changed.`);
 }

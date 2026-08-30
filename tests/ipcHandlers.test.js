@@ -27,6 +27,7 @@ function createDependencies(safeInvoke) {
     ipcSecurity: { validate: () => null },
     isWindows7Legacy: false,
     securityService: callable,
+    draftsService: callable,
     backupService: callable,
     persistentDatabase: callable,
     heavyTaskRunner: callable,
@@ -59,7 +60,7 @@ async function run() {
 
   assert.deepStrictEqual(registered, IPC_CHANNELS);
   assert.deepStrictEqual([...handlers.keys()], IPC_CHANNELS);
-  assert.strictEqual(IPC_CHANNELS.length, 169);
+  assert.strictEqual(IPC_CHANNELS.length, 174);
 
   const registrar = createIpcRegistrar({ handle() {} });
   registrar.register('test:duplicate', () => undefined);
@@ -151,6 +152,11 @@ async function run() {
   smokeDependencies.backupService = {
     list: () => smokeCalls.push('backup')
   };
+  smokeDependencies.draftsService = {
+    getDraft: (key) => smokeCalls.push(`draft-get:${key}`),
+    saveDraft: (key) => smokeCalls.push(`draft-save:${key}`),
+    clearDraft: (key) => smokeCalls.push(`draft-clear:${key}`)
+  };
   smokeDependencies.printCurrentDocument = () => smokeCalls.push('print');
   registerAllIpcHandlers(
     { handle: (channel, handler) => smokeHandlers.set(channel, handler) },
@@ -160,6 +166,9 @@ async function run() {
   await smokeHandlers.get('shares:list')();
   await smokeHandlers.get('transactions:get-structure')();
   await smokeHandlers.get('settings:get')();
+  await smokeHandlers.get('drafts:get')(null, { key: 'addy' });
+  await smokeHandlers.get('drafts:save')(null, { key: 'addy', data: {} });
+  await smokeHandlers.get('drafts:clear')(null, { key: 'addy' });
   await smokeHandlers.get('backup:list')();
   await smokeHandlers.get('print:current-document')({ sender: {} }, {});
   assert.deepStrictEqual(smokeCalls, [
@@ -167,6 +176,9 @@ async function run() {
     'shares',
     'transactions',
     'settings',
+    'draft-get:addy',
+    'draft-save:addy',
+    'draft-clear:addy',
     'backup',
     'print'
   ]);

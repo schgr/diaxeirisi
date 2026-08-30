@@ -78,9 +78,30 @@ assert.deepEqual(
 
 const addyStyles = await readFile(new URL('../src/ui/styles/transactions-settings.css', import.meta.url), 'utf8');
 const modalStyles = await readFile(new URL('../src/ui/styles/modals-tables.css', import.meta.url), 'utf8');
-const addyFormSource = await readFile(new URL('../src/ui/transactions/addyForm.js', import.meta.url), 'utf8');
+const addyFormSource = (await Promise.all([
+  '../src/ui/transactions/addyForm.js',
+  '../src/ui/transactions/addy/addyState.js',
+  '../src/ui/transactions/addy/addyCalculations.js',
+  '../src/ui/transactions/addy/addyDom.js',
+  '../src/ui/transactions/addy/addyEvents.js'
+].map((file) => readFile(new URL(file, import.meta.url), 'utf8').catch(() => '')))).join('\n');
 const transactionsPageSource = await readFile(new URL('../src/ui/pages/transactionsPage.js', import.meta.url), 'utf8');
 assert.doesNotMatch(addyFormSource, /window\.confirm/u);
+assert.match(addyFormSource, /const ADDY_DRAFT_KEY = 'addy-new-document';/u);
+assert.match(addyFormSource, /window\.appApi\.drafts\.get\(ADDY_DRAFT_KEY\)/u);
+assert.match(addyFormSource, /function scheduleAddyDraftSave\(controls, state\)/u);
+assert.match(addyFormSource, /state\.items\.length = 0;[\s\S]*window\.appApi\.drafts\.clear\(ADDY_DRAFT_KEY\)/u);
+assert.match(addyFormSource, /const EXHP_DRAFT_KEY = 'exhp-new-document';/u);
+assert.match(addyFormSource, /function exhpDraftKey\(reason\)/u);
+assert.match(addyFormSource, /encodeURIComponent\(normalizedReason\)/u);
+assert.match(addyFormSource, /window\.appApi\.drafts\.get\(EXHP_DRAFT_KEY\)/u);
+assert.match(addyFormSource, /function scheduleExhpDraftSave\(container, state\)/u);
+assert.match(addyFormSource, /drafts\.save\(exhpDraftKey\(exhpReasonValue\)/u);
+assert.match(addyFormSource, /drafts\.get\(exhpDraftKey\(reason\)\)/u);
+assert.doesNotMatch(addyFormSource, /Βρέθηκε μη αποθηκευμένη εργασία/u);
+assert.match(addyFormSource, /reasonDraft = existingReasonDraft\.data;/u);
+assert.match(addyFormSource, /#exhp-date[\s\S]*#exhp-unit[\s\S]*#exhp-reason/u);
+assert.match(addyFormSource, /clearIssuedExhpDraftState\(state\);[\s\S]*window\.appApi\.drafts\.clear\(exhpDraftKey\(exhpReason\.value\)\)/u);
 assert.match(addyFormSource, /function confirmAddyAction\(message\)/u);
 assert.match(addyFormSource, /Μερίδες με τον ίδιο Αριθμό Ονομαστικού/u);
 assert.match(addyFormSource, /Υπόλοιπο Μερίδας/u);

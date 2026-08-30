@@ -753,11 +753,21 @@
 
 .exhp-metadata-edit-form {
   align-items: end;
-  grid-template-columns: minmax(150px, 220px) minmax(180px, 240px) auto;
+  grid-template-columns: minmax(150px, 220px) minmax(180px, 240px) max-content;
 }
 
-#exhp-edit-documents-mount:not(:empty) {
+#exhp-edit-items-mount:not(:empty) {
   margin-top: 12px;
+}
+
+.exhp-edit-save-button {
+  min-width: 0;
+  padding: 9px 14px;
+  white-space: nowrap;
+}
+
+.exhp-edit-quantity-input {
+  width: 110px;
 }
 
 .transaction-tab {

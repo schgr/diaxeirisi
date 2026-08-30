@@ -120,9 +120,15 @@ async function run() {
     );
     const oldShare = db.prepare("SELECT * FROM shares WHERE share_number = '10'").get();
     const newShare = db.prepare("SELECT * FROM shares WHERE share_number = '110'").get();
-    assert.strictEqual(oldShare.archive_status, 'Αρχειοθετημένη');
+    assert.strictEqual(oldShare.archive_status, 'Ενεργή');
     assert.strictEqual(Number(oldShare.accounting_balance), 0);
     assert.strictEqual(Number(oldShare.charged_quantity), 0);
+    assert.strictEqual(oldShare.archived_at, null);
+    assert.strictEqual(oldShare.archive_reason, '');
+    assert.strictEqual(
+      db.prepare('SELECT COUNT(*) AS total FROM share_archive_events WHERE share_id = ?').get(oldShare.id).total,
+      0
+    );
     assert.strictEqual(newShare.archive_status, 'Ενεργή');
     assert.strictEqual(newShare.nominal_number, '1005000099');
     assert.strictEqual(Number(newShare.accounting_balance), 10);

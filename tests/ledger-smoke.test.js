@@ -517,6 +517,20 @@ assert.match(overflowingShareHtml, />8<\/td>\s*<td><\/td>/u);
     assert.strictEqual(cardAfterExhpRename.transactions[1].registryNumber, 'ΕΧΠ-3');
     assert.strictEqual(cardAfterExhpRename.transactions[1].date, '2026-06-07');
     assert.strictEqual(cardAfterExhpRename.share.accountingBalance, 6);
+    const quantityUpdate = transactions.updateExhpMetadata(exhp.documentId, {
+      registryNumber: 3,
+      documentDate: '2026-06-07',
+      items: [{ id: metadataUpdate.document.items[0].id, quantity: 5 }]
+    });
+    assert.strictEqual(quantityUpdate.document.items[0].quantity, 5);
+    assert.strictEqual(shares.getShareCard(share.id, 2026).share.accountingBalance, 5);
+    assert.strictEqual(shares.getShareCard(share.id, 2026).transactions[1].exports, 5);
+    transactions.updateExhpMetadata(exhp.documentId, {
+      registryNumber: 3,
+      documentDate: '2026-06-07',
+      items: [{ id: metadataUpdate.document.items[0].id, quantity: 4 }]
+    });
+    assert.strictEqual(shares.getShareCard(share.id, 2026).share.accountingBalance, 6);
     const exhpDocument = transactions.getExhpDocument(exhp.documentId);
     assert.strictEqual(exhpDocument.supportStatus, 'Πλήρης για ΕΥΣ');
     assert.strictEqual(exhpDocument.materialAttachments.composition.length, 0);

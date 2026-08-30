@@ -14,6 +14,7 @@ import { showToast } from './components/toast.js';
 import { escapeHtml } from './components/forms.js';
 import { initializeDocumentExports } from './documentExport.js';
 import { initializeLocalizedQuantities } from './localizedQuantities.js';
+import { createPageDraftController } from './pageDrafts.js';
 
 const THEME_STORAGE_KEY = 'diaxeirisi-theme';
 const DEFAULT_THEME = 'blueprint';
@@ -136,6 +137,21 @@ const state = {
 
 const app = document.querySelector('#app');
 let applicationUnlocked = false;
+const pageDrafts = createPageDraftController(window.appApi.drafts);
+
+document.addEventListener('input', (event) => {
+  if (pageDrafts.handles(event.target)) pageDrafts.capture();
+});
+document.addEventListener('change', (event) => {
+  if (pageDrafts.handles(event.target)) pageDrafts.capture();
+});
+document.addEventListener('click', (event) => {
+  if (!pageDrafts.handles(event.target)) return;
+  window.setTimeout(() => pageDrafts.capture(), 500);
+});
+window.addEventListener('beforeunload', () => {
+  pageDrafts.capture(0);
+});
 
 document.addEventListener('diaxeirisi:navigate', (event) => {
   const detail = event.detail || {};
@@ -187,6 +203,7 @@ function applyStoredTheme() {
 }
 
 function renderShell() {
+  void pageDrafts.deactivate();
   app.innerHTML = `
     <div class="app-shell app-shell-headerless">
       <main class="content">
@@ -264,6 +281,7 @@ function showWindowOptions() {
       }
 
       if (action === 'exit') {
+        await pageDrafts.capture(0);
         await window.appApi.windowControls.quit();
         return;
       }
@@ -279,6 +297,7 @@ function showWindowOptions() {
 }
 
 function navigate(sectionId, options = {}) {
+  void pageDrafts.deactivate();
   state.activeSection = sectionId || 'home';
   if (sectionId === 'as') {
     state.inventoryTab = options.inventoryTab || 'counts';
@@ -298,6 +317,7 @@ async function renderActivePage() {
 
   try {
     if (state.activeSection === 'home') {
+      await pageDrafts.mount('', null);
       renderHomeTiles({
         container: pageRoot,
         groups: homeGroups,
@@ -335,11 +355,13 @@ async function renderActivePage() {
         state.settingsTab,
         window.appApi.shares
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
     if (section.type === 'shares') {
       await renderSharesPage(sectionRoot, window.appApi.shares, window.appApi.settings, showToast);
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -351,6 +373,7 @@ async function renderActivePage() {
         showToast,
         { compositionOnly: true }
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -361,11 +384,13 @@ async function renderActivePage() {
         window.appApi.settings,
         showToast
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
     if (section.type === 'charges') {
       await renderChargesPage(sectionRoot, window.appApi.internal, showToast);
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -378,11 +403,13 @@ async function renderActivePage() {
         null,
         state.inventoryTab
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
     if (section.type === 'movement-differences') {
       await renderMovementDifferencesPage(sectionRoot, window.appApi.movementDifferences, showToast);
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -397,6 +424,7 @@ async function renderActivePage() {
         window.appApi.inventory,
         showToast
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -411,6 +439,7 @@ async function renderActivePage() {
         state.administrationTab,
         window.appApi.shares
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -426,6 +455,7 @@ async function renderActivePage() {
         showToast,
         section.printOptions
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -436,6 +466,7 @@ async function renderActivePage() {
         window.appApi.settings,
         showToast
       );
+      await restoreActivePageDraft(sectionRoot);
       return;
     }
 
@@ -448,6 +479,18 @@ async function renderActivePage() {
       </section>
     `;
   }
+}
+
+async function restoreActivePageDraft(sectionRoot) {
+  if (state.activeSection === 'transactions') return;
+  const tab = state.activeSection === 'settings'
+    ? state.settingsTab
+    : state.activeSection === 'administration'
+      ? state.administrationTab
+      : state.activeSection === 'as'
+        ? state.inventoryTab
+        : '';
+  await pageDrafts.mount([state.activeSection, tab].filter(Boolean).join(':'), sectionRoot);
 }
 
 initializeApplication();

@@ -40,6 +40,9 @@ function createInternalService(db) {
       if (!department) {
         throw new AppError('Η Μερική Διαχείριση δεν βρέθηκε.', 'NOT_FOUND');
       }
+      if (!share.requires_composition && movement.quantity <= 0) {
+        throw new AppError('Η ποσότητα πρέπει να είναι θετικός αριθμός.', 'VALIDATION_ERROR');
+      }
 
       let composition = [];
       if (share.requires_composition) {
@@ -85,10 +88,12 @@ function createInternalService(db) {
           description: share.description,
           measurementUnit: share.measurement_unit
         });
-        repository.adjustChargedQuantity(
-          share.id,
-          movement.movementType === 'Χορήγηση' ? movement.quantity : -movement.quantity
-        );
+        if (movement.quantity !== 0) {
+          repository.adjustChargedQuantity(
+            share.id,
+            movement.movementType === 'Χορήγηση' ? movement.quantity : -movement.quantity
+          );
+        }
       });
 
       return {

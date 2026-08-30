@@ -6,8 +6,14 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSharesService } = require('../src/services/sharesService');
 
 async function run() {
-  const administrationSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'administrationPage.js'), 'utf8');
-  const settingsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'settingsPage.js'), 'utf8');
+  const administrationSource = [
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'administrationPage.js'),
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'administration', 'administrationPage.js')
+  ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+  const settingsSource = [
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'settingsPage.js'),
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'settings', 'settingsPage.js')
+  ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
   assert.match(administrationSource, /Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως/u);
   assert.match(administrationSource, /data-preview-training-ammunition-batches/u);
   assert.match(administrationSource, /data-preview-ammunition-batches/u);

@@ -1,5 +1,7 @@
 'use strict';
 
+const { displayVersion } = require('../../package.json');
+
 const CHANNELS = Object.freeze([
   "app:get-version",
   "app:get-runtime-info",
@@ -23,9 +25,9 @@ function registerAuthHandlers({
   isWindows7Legacy,
   securityService
 }) {
-  register('app:get-version', async () => safeInvoke(() => app.getVersion(), true));
+  register('app:get-version', async () => safeInvoke(() => displayVersion || app.getVersion(), true));
   register('app:get-runtime-info', async () => safeInvoke(() => ({
-      version: app.getVersion(),
+      version: displayVersion || app.getVersion(),
       buildFlavor: isWindows7Legacy ? 'win7-legacy' : 'standard',
       offlineOnly,
       electronVersion: process.versions.electron

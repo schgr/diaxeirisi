@@ -73,6 +73,8 @@ function validateAddyItem(item) {
       notes: optionalText(component.notes)
     };
   });
+  const createComposition = (Array.isArray(item && item.createComposition) ? item.createComposition : [])
+    .map((component) => validateCompositionComponent(component));
 
   return {
     shareNumber: requireText(item && item.shareNumber, 'Αριθμός Μερίδας'),
@@ -84,7 +86,29 @@ function validateAddyItem(item) {
     materialType: transactionType === 'Χρέωση' ? requireText(item && item.materialType, 'Είδος Υλικού') : optionalText(item && item.materialType),
     unitPrice,
     justificationReference: optionalText(item && item.justificationReference),
-    composition
+    composition,
+    createComposition
+  };
+}
+
+function validateCompositionComponent(component) {
+  const projectedQuantity = Number(component && component.projectedQuantity);
+  const notIssuedQuantity = Number(component && component.notIssuedQuantity || 0);
+  if (
+    !String(component && component.componentDescription || '').trim() ||
+    !Number.isFinite(projectedQuantity) || projectedQuantity <= 0 ||
+    !Number.isFinite(notIssuedQuantity) || notIssuedQuantity < 0 ||
+    notIssuedQuantity > projectedQuantity
+  ) {
+    throw new AppError('Η νέα σύνθεση χρειάζεται έγκυρες ποσότητες.', 'VALIDATION_ERROR');
+  }
+  return {
+    componentNominalNumber: optionalText(component && component.componentNominalNumber),
+    componentDescription: requireText(component && component.componentDescription, 'Περιγραφή σύνθεσης'),
+    measurementUnit: optionalText(component && component.measurementUnit),
+    projectedQuantity,
+    notIssuedQuantity,
+    notes: optionalText(component && component.notes)
   };
 }
 

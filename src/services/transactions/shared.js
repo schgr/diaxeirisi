@@ -10,32 +10,68 @@ function mapExhpSupportTemplate(row) {
 }
 
 function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems) {
-  const share = repository.findShareByNumber(item.shareNumber);
-  if (!share || share.archive_status !== 'Ενεργή') {
+  let share = repository.findShareByNumber(item.shareNumber);
+  if (share && share.archive_status !== 'Ενεργή') {
     throw new Error(`Η μερίδα ${item.shareNumber} δεν βρέθηκε.`);
+  }
+  if (!share) {
+    const canCreateZeroComposition = item.quantity === 0
+      && isToolCollectionReason(exhp.issueReason)
+      && Boolean(item.createComposition && item.createComposition.length);
+    if (item.transactionType === 'Πίστωση' && !canCreateZeroComposition) {
+      throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
+    }
+    share = repository.createShare({
+      shareNumber: item.shareNumber,
+      nominalNumber: item.nominalNumber,
+      description: item.description,
+      materialType: item.materialType || 'Υλικό',
+      measurementUnit: item.measurementUnit,
+      accountingBalance: 0,
+      chargedQuantity: 0,
+      excludeFromInventory: isConsumableMaterial(item.materialType),
+      requiresComposition: Boolean(item.createComposition && item.createComposition.length),
+      requiresChangeSheet: Boolean(item.createComposition && item.createComposition.length)
+    });
+    if (item.createComposition && item.createComposition.length) {
+      repository.replaceCompositionItems(share.id, item.createComposition);
+      share = repository.findShareByNumber(item.shareNumber);
+    }
+  }
+  const zeroCompositionMovement = item.quantity === 0
+    && isToolCollectionReason(exhp.issueReason)
+    && Boolean(share.requires_composition);
+  if (item.quantity === 0 && !zeroCompositionMovement) {
+    throw new Error('Η ποσότητα πρέπει να είναι θετικός αριθμός.');
   }
   if (item.transactionType === 'Πίστωση' && item.quantity > Number(share.accounting_balance || 0)) {
     throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
   }
-  const quantityDelta = item.transactionType === 'Χρέωση' ? item.quantity : -item.quantity;
-  repository.adjustAccountingBalance(share.id, quantityDelta);
-  const shareTransactionId = repository.createShareTransaction({
-    shareId: share.id,
-    transactionDate: exhp.documentDate,
-    transactionUnit: exhp.serviceUnit,
-    transactionType: item.transactionType,
-    documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
-    quantity: item.quantity,
-    notes: exhp.issueReason
-  });
-  const ledgerSerial = repository.getShareTransactionSerialForYear(
-    share.id,
-    shareTransactionId,
-    exhp.documentDate
-  );
+  let shareTransactionId = null;
+  let ledgerSerial = 'Φ.Μ.';
+  if (!zeroCompositionMovement) {
+    const quantityDelta = item.transactionType === 'Χρέωση' ? item.quantity : -item.quantity;
+    repository.adjustAccountingBalance(share.id, quantityDelta);
+    shareTransactionId = repository.createShareTransaction({
+      shareId: share.id,
+      transactionDate: exhp.documentDate,
+      transactionUnit: exhp.serviceUnit,
+      transactionType: item.transactionType,
+      documentReference: `ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`,
+      quantity: item.quantity,
+      notes: exhp.issueReason
+    });
+    ledgerSerial = repository.getShareTransactionSerialForYear(
+      share.id,
+      shareTransactionId,
+      exhp.documentDate
+    );
+  }
   const savedItem = {
     ...item,
-    composition: buildCompositionSnapshot(repository, share.id, item.quantity, share.material_type)
+    composition: item.composition && item.composition.length
+      ? item.composition
+      : buildCompositionSnapshot(repository, share.id, item.quantity, share.material_type)
   };
   repository.createExhpItem(documentId, savedItem, share.id, shareTransactionId);
   documentItems.push({ ...savedItem, ledgerSerial });
@@ -44,6 +80,9 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
 function saveToolCollectionTransfers(repository, exhp, documentId, registryNumber, documentItems) {
   const collectionItems = exhp.items.filter((item) => item.collectionTransfer);
   const regularItems = exhp.items.filter((item) => !item.collectionTransfer);
+  if (collectionItems.some((item) => item.quantity <= 0)) {
+    throw new Error('Η ποσότητα πρέπει να είναι θετικός αριθμός.');
+  }
   regularItems.forEach((item) =>
     saveRegularExhpItem(repository, exhp, documentId, registryNumber, item, documentItems)
   );
@@ -241,11 +280,7 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
     );
     repository.createExhpItem(documentId, charge, targetShare.id, chargeTransactionId);
     documentItems.push({ ...charge, ledgerSerial: chargeSerial });
-    repository.archiveTransferredShare(
-      sourceShare.id,
-      exhp.documentDate,
-      `Μεταβολή Αριθμού Ονομαστικού με ΕΧΠ ${registryNumber}/${exhp.fiscalYear}`
-    );
+    repository.keepTransferredShareActive(sourceShare.id);
   }
 }
 

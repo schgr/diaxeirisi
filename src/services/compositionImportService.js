@@ -91,7 +91,7 @@ function createCompositionImportService(db) {
         sharesService.saveComposition(share.id, items);
         sharesService.saveChangeSheet(
           share.id,
-          groupRows.flatMap((row, index) => Number(row.existingQuantity) > 0 ? [{
+          groupRows.map((row, index) => ({
             changeDate: openingDate,
             orderReference: 'Απογραφή',
             previousValue: '',
@@ -101,7 +101,7 @@ function createCompositionImportService(db) {
             componentLineNumber: index + 1,
             movementType: 'ΧΡΕΩΣΗ',
             quantity: row.existingQuantity
-          }] : [])
+          }))
         );
         importedRows += items.length;
       }

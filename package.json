@@ -1,6 +1,7 @@
 {
   "name": "diaxeirisi-ylikoy",
-  "version": "1.0.0",
+  "version": "1.0.5",
+  "displayVersion": "1.0.5",
   "description": "Offline-first Windows desktop prototype for service and financial management.",
   "author": "Λγος (ΦΠΒ) Αλεξανδρής Ιωάννης",
   "main": "src/main.js",
@@ -8,15 +9,16 @@
   "scripts": {
     "start": "electron .",
     "pretest": "node scripts/check-orphan-modules.js",
+    "lint": "eslint .",
     "check": "node --check src/main.js && node --check src/preload.js",
     "test": "node scripts/run-tests.js",
+    "validate:packaging": "node scripts/validate-packaging.js",
     "benchmark": "node benchmarks/performanceBenchmark.mjs",
     "benchmark:persistence": "node benchmarks/persistenceMutationBenchmark.mjs",
     "benchmark:share-print": "node benchmarks/sharePrintBatchBenchmark.mjs",
     "benchmark:share-ui": "node benchmarks/shareUiResponsivenessBenchmark.mjs",
     "benchmark:workers": "node benchmarks/workerPoolBenchmark.mjs",
     "benchmark:offline": "node benchmarks/offlinePolicyBenchmark.mjs",
-    "pack:source": "node scripts/pack-source.js",
     "build": "npm run dist:win",
     "dist:win": "electron-builder --win nsis --x64",
     "dist:win:x86": "electron-builder --config electron-builder.win-x86.json --win nsis --ia32",
@@ -27,6 +29,7 @@
     "dist:win:all": "npm run dist:win:stable && npm run dist:win:beta"
   },
   "build": {
+    "buildVersion": "1.0.5",
     "appId": "gr.local.diaxeirisi.ylikoy",
     "productName": "diaxeirisi Ylikoy",
     "icon": "build/icon.ico",
@@ -36,6 +39,8 @@
     "files": [
       "src/**/*",
       "!src/types/**/*",
+      "!src/**/README.md",
+      "!src/**/*.codexbak",
       "!src/exhpForm/supportingDocs/shared/docHeader.js",
       "!src/exhpForm/supportingDocs/shared/letteredList.js",
       "!node_modules/**/*.codexbak",
@@ -68,7 +73,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "diaxeirisi Ylikoy",
       "include": "build/installer.nsh",
-      "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-${arch}-Setup-${version}.${ext}"
+      "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-${arch}-Setup-1.0.5.${ext}"
     }
   },
   "dependencies": {
@@ -81,10 +86,14 @@
     "readable-stream": "3.6.2",
     "lazystream": {
       "readable-stream": "1.1.14"
+    },
+    "exceljs": {
+      "uuid": "^11.1.1"
     }
   },
   "devDependencies": {
-    "electron": "^42.2.0",
-    "electron-builder": "^26.0.12"
+    "electron": "^42.10.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9.39.5"
   }
 }

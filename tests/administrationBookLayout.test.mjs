@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const administration = await readFile(new URL('../src/ui/pages/administrationPage.js', import.meta.url), 'utf8');
+const administration = (await Promise.all([
+  '../src/ui/pages/administrationPage.js',
+  '../src/ui/pages/administration/administrationPage.js'
+].map((file) => readFile(new URL(file, import.meta.url), 'utf8')))).join('\n');
 const controlledMaterials = await readFile(new URL('../src/ui/administration/controlledMaterials.js', import.meta.url), 'utf8');
 const registryStyles = await readFile(new URL('../src/ui/styles/registries-legacy.css', import.meta.url), 'utf8');
 const indexStyles = await readFile(new URL('../src/ui/styles/print-indexes.css', import.meta.url), 'utf8');

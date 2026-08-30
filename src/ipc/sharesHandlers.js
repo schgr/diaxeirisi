@@ -10,6 +10,7 @@ const CHANNELS = Object.freeze([
   "shares:get-cards-batch",
   "shares:list-moved-cards",
   "shares:update-details",
+  "shares:delete",
   "shares:list-serial-registry",
   "shares:save-serial-numbers",
   "shares:list-ammunition-batch-registry",
@@ -57,6 +58,9 @@ function registerSharesHandlers({
     );
   register('shares:update-details', async (_event, id, payload) =>
       safeInvoke(() => services.shares.updateShareDetails(id, payload))
+    );
+  register('shares:delete', async (_event, id) =>
+      safeInvoke(() => services.shares.deleteShare(id))
     );
   register('shares:list-serial-registry', async () =>
       safeInvoke(() => services.shares.listSerialNumberRegistry())

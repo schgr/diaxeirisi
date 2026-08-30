@@ -37,5 +37,9 @@ assert.match(styles, /\.official-share-back-table th:nth-child\(4\) \{ width: 16
 assert.match(styles, /\.official-share-back-table th:nth-child\(8\) \{ width: 15%; \}/u);
 assert.match(styles, /tbody tr:not\(\.official-share-back-transfer-row\)[\s\S]*font-size: clamp\(10px, 0\.92vw, 12px\);/u);
 assert.match(styles, /\.official-share-back-table tbody td[\s\S]*overflow: hidden;[\s\S]*white-space: nowrap;/u);
+assert.match(styles, /\.official-share-back-code\s*\{[^}]*color: #000;/u);
+assert.match(styles, /\.official-share-back-sheet h2\s*\{[^}]*color: #000;/u);
+assert.match(styles, /\.official-share-back-table th,[\s\S]*\.official-share-back-summary td\s*\{[^}]*color: #000;/u);
+assert.match(styles, /\.official-share-back-footer\s*\{[^}]*color: #000;/u);
 
 console.log('Generated official material-share back-page test passed.');

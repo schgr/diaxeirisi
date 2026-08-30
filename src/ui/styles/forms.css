@@ -143,6 +143,10 @@ h3 {
   grid-template-columns: minmax(440px, 1.35fr) repeat(2, minmax(280px, 1fr));
 }
 
+.settings-subpanel-toolbar {
+  grid-column: 1 / -1;
+}
+
 .parameters-settings-layout > .measurement-units-panel {
   min-width: 0;
 }

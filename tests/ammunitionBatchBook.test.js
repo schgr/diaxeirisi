@@ -6,10 +6,10 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSharesService } = require('../src/services/sharesService');
 
 async function run() {
-  const administrationSource = fs.readFileSync(
+  const administrationSource = [
     path.join(__dirname, '..', 'src', 'ui', 'pages', 'administrationPage.js'),
-    'utf8'
-  );
+    path.join(__dirname, '..', 'src', 'ui', 'pages', 'administration', 'administrationPage.js')
+  ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
   assert.match(
     administrationSource,
     /data-preview-ammunition-batches/u

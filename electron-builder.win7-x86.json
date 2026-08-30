@@ -16,6 +16,8 @@
   "files": [
     "src/**/*",
     "!src/types/**/*",
+    "!src/**/README.md",
+    "!src/**/*.codexbak",
     "!src/exhpForm/supportingDocs/shared/docHeader.js",
     "!src/exhpForm/supportingDocs/shared/letteredList.js",
     "!node_modules/**/*.codexbak",
@@ -42,6 +44,6 @@
     "createStartMenuShortcut": true,
     "shortcutName": "diaxeirisi Ylikoy - Windows 7 Legacy",
     "include": "build/installer.nsh",
-    "artifactName": "diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-${version}.${ext}"
+    "artifactName": "diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-1.0.5.${ext}"
   }
 }

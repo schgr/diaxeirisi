@@ -1,13 +1,27 @@
 import { escapeHtml } from '../components/forms.js';
+import { confirmDialog } from '../components/confirmDialog.js';
 import { splitOfficerSignature } from '../officerSignature.js';
 
 const internalMovementDraftState = {
   drafts: [],
   pendingComposition: null,
-  pendingCompositionShareId: null
+  pendingCompositionShareId: null,
+  restored: false
 };
+const INTERNAL_MOVEMENT_DRAFT_KEY = 'internal-movement-list';
 
 export async function renderChargesPage(container, internalApi, showToast) {
+  if (!internalMovementDraftState.restored) {
+    internalMovementDraftState.restored = true;
+    try {
+      const existing = await window.appApi.drafts.get(INTERNAL_MOVEMENT_DRAFT_KEY);
+      internalMovementDraftState.drafts = Array.isArray(existing?.data?.drafts)
+        ? existing.data.drafts
+        : [];
+    } catch (error) {
+      console.error('Αποτυχία επαναφοράς πρόχειρων εσωτερικών κινήσεων:', error);
+    }
+  }
   const referenceData = await internalApi.getReferenceData();
   const state = internalMovementDraftState;
 
@@ -96,7 +110,7 @@ function renderMovementForm(referenceData) {
         <label class="field"><span>ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</span><input id="internal-nominal" readonly /></label>
         <label class="field"><span>ΠΕΡΙΓΡΑΦΗ</span><input id="internal-description" readonly /></label>
         <label class="field"><span>ΜΟΝΑΔΑ ΜΕΤΡΗΣΗΣ</span><input id="internal-measurement" readonly /></label>
-        <label class="field"><span>ΠΟΣΟΤΗΤΑ</span><input id="internal-quantity" type="number" min="0.001" step="0.001" /></label>
+        <label class="field"><span>ΠΟΣΟΤΗΤΑ</span><input id="internal-quantity" type="number" min="0" step="0.001" /></label>
         <button id="internal-add" class="primary-button" type="button">ΠΡΟΣΘΗΚΗ</button>
       </div>
     </div>
@@ -127,7 +141,10 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
       const shareId = share ? share.id : 0;
       const quantity = Number(container.querySelector('#internal-quantity').value);
       const movementType = container.querySelector('#internal-type').value;
-      if (!department || !share || !movementType || !Number.isFinite(quantity) || quantity <= 0) {
+      const validQuantity = Number.isFinite(quantity) && (
+        quantity > 0 || (quantity === 0 && share?.requiresComposition)
+      );
+      if (!department || !share || !movementType || !validQuantity) {
         showToast('ΣΥΜΠΛΗΡΩΣΕ ΜΕΡΙΚΗ ΔΙΑΧΕΙΡΙΣΗ, ΚΙΝΗΣΗ, ΜΕΡΙΔΑ ΚΑΙ ΠΟΣΟΤΗΤΑ.', 'error');
         return;
       }
@@ -149,7 +166,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         quantity,
         composition
       };
-      if (movementType === 'Επιστροφή') {
+      if (movementType === 'Επιστροφή' && quantity > 0) {
         const allocations = await openInternalRedistributionDialog(
           internalApi,
           referenceData.departmentManagers,
@@ -176,6 +193,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
       }
       state.drafts.sort(compareShareNumbers);
       renderDraftList(container, state);
+      persistInternalMovementDrafts(state);
       shareSelect.value = '';
       container.querySelector('#internal-quantity').value = '';
       state.pendingComposition = null;
@@ -194,6 +212,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
       state.drafts.splice(Number(button.dataset.removeDraft), 1);
     }
     renderDraftList(container, state);
+    persistInternalMovementDrafts(state);
   });
 
   container.querySelector('#internal-save-list').addEventListener('click', async () => {
@@ -205,6 +224,7 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         await internalApi.save(draft);
       }
       state.drafts.length = 0;
+      await window.appApi.drafts.clear(INTERNAL_MOVEMENT_DRAFT_KEY);
       showToast('Η ΛΙΣΤΑ ΚΙΝΗΣΕΩΝ ΑΠΟΘΗΚΕΥΤΗΚΕ.');
       await renderChargesPage(container, internalApi, showToast);
     } catch (error) {
@@ -248,6 +268,12 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
     } catch (error) {
       showToast(error.message || 'ΔΕΝ ΗΤΑΝ ΔΥΝΑΤΗ Η ΠΡΟΒΟΛΗ ΤΟΥ Κ2310/ΔΥΠ.', 'error');
     }
+  });
+}
+
+function persistInternalMovementDrafts(state) {
+  window.appApi.drafts.save(INTERNAL_MOVEMENT_DRAFT_KEY, { drafts: state.drafts }).catch((error) => {
+    console.error('Αποτυχία αποθήκευσης πρόχειρων εσωτερικών κινήσεων:', error);
   });
 }
 
@@ -571,6 +597,7 @@ async function openInternalRedistributionDialog(internalApi, departments, source
           <strong data-redistribution-total>Σύνολο: 0 / ${formatQuantity(returnQuantity)}</strong>
           <span class="form-error" data-redistribution-mismatch></span>
           <button class="secondary-button" data-cancel-redistribution type="button">Ακύρωση</button>
+          <button class="secondary-button" data-return-without-redistribution type="button">Επιστροφή χωρίς ανακατανομή</button>
           <button class="primary-button" data-confirm-redistribution type="button" disabled>Προσθήκη κινήσεων</button>
         </div>
       </section>`;
@@ -593,9 +620,25 @@ async function openInternalRedistributionDialog(internalApi, departments, source
     modal.addEventListener('input', (event) => {
       if (event.target.matches('[data-redistribution-quantity]')) updateAgreement();
     });
-    modal.addEventListener('click', (event) => {
+    modal.addEventListener('click', async (event) => {
       if (event.target === modal || event.target.closest('[data-cancel-redistribution]')) {
         close(null);
+        return;
+      }
+      if (event.target.closest('[data-return-without-redistribution]')) {
+        const resultingCharged = Number(share.chargedQuantity || 0) - Number(returnQuantity || 0);
+        const difference = resultingCharged - Number(share.accountingBalance || 0);
+        const status = difference > 0.000001
+          ? `Πλεόνασμα ${formatQuantity(difference)}`
+          : difference < -0.000001
+            ? `Έλλειμμα ${formatQuantity(Math.abs(difference))}`
+            : 'Ισοσκελισμένο υπόλοιπο';
+        const confirmed = await confirmDialog({
+          message: `Η επιστροφή θα αποθηκευτεί χωρίς χρέωση σε άλλο τμήμα. Μετά την κίνηση η μερίδα θα έχει: ${status}. Να συνεχιστεί;`,
+          confirmLabel: 'Συνέχεια',
+          cancelLabel: 'Άκυρο'
+        });
+        if (confirmed) close([]);
         return;
       }
       if (!event.target.closest('[data-confirm-redistribution]')) return;
