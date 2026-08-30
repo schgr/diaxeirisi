@@ -99,7 +99,8 @@ for (const name of publicApi) {
     'listAddyDocuments',
     'getAddyDocument',
     'updateAddyDocument',
-    'deleteAddyDocument'
+    'deleteAddyDocument',
+    'deleteExhpDocument'
   ].includes(name)) continue;
   assert.strictEqual(extractMethod(modules, name), extractMethod(baseline, name), `${name} changed.`);
 }

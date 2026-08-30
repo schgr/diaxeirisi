@@ -313,6 +313,15 @@ function createAddyService(dependencies) {
         .map(Number)
         .filter(Number.isInteger);
 
+      const laterMovement = repository.findSubsequentShareTransaction(transactionIds);
+      if (laterMovement) {
+        const share = repository.getShareById(laterMovement.share_id);
+        throw new AppError(
+          `Η μερίδα ${share?.share_number || ''} έχει μεταγενέστερη κίνηση και το ΑΔΔΥ δεν μπορεί να διαγραφεί.`,
+          'DOCUMENT_HAS_SUBSEQUENT_MOVEMENTS'
+        );
+      }
+
       repository.transaction(() => {
         repository.deleteInternalMovementsByReference(`ΑΔΔΥ ${id}`);
         for (const item of items) {

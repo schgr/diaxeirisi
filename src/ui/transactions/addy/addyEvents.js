@@ -26,7 +26,7 @@ import { syncExhpIssueReasonSettings } from '../../pages/settingsPage.js';
 import { buildToolCompositionChargeItems } from './addyCalculations.js';
 import {
   openAddyDepartmentAllocationDialog, openAddyEditDialog, openAddyShareSelectionDialog,
-  restoreAddyEntryFocus
+  restoreAddyEntryFocus, confirmAddyAction
 } from './addyDom.js';
 import {
   ADDY_DRAFT_KEY, EXHP_DRAFT_KEY, clearIssuedExhpDraftState, exhpDraftKey,
@@ -739,7 +739,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         }
         restoreAddyEntryFocus(controls);
       } catch (error) {
-        if (error?.code === 'ADDY_DEPENDENT_TRANSACTIONS') {
+        if (error?.code === 'DOCUMENT_HAS_SUBSEQUENT_MOVEMENTS'
+          || error?.code === 'ADDY_DEPENDENT_TRANSACTIONS') {
           await showAddyDeleteBlockedNotice(error.message);
           return;
         }

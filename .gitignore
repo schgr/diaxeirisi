@@ -23,3 +23,5 @@ package-lock-ULTRAPC.json
 # Local third-party and temporary publishing worktrees
 external-program/
 .publish-site-*/
+.publish-final-*/
+.publish-final-*.patch

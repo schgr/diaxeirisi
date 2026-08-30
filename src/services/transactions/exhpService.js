@@ -1,3 +1,5 @@
+const { AppError } = require('../../core/errorHandler');
+
 function createExhpService(dependencies) {
   const { repository, settingsService, validateExhp, isNominalNumberTransferReason, requirePositiveId } = dependencies;
   const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
@@ -321,6 +323,15 @@ function createExhpService(dependencies) {
         normalize('Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού')
       );
 
+      const laterMovement = repository.findSubsequentShareTransaction(transactionIds);
+      if (laterMovement) {
+        const share = repository.getShareById(laterMovement.share_id);
+        throw new AppError(
+          `Η μερίδα ${share?.share_number || ''} έχει μεταγενέστερη κίνηση και η ΕΧΠ δεν μπορεί να διαγραφεί.`,
+          'DOCUMENT_HAS_SUBSEQUENT_MOVEMENTS'
+        );
+      }
+
       repository.transaction(() => {
         const credits = nominalTransfer
           ? items.filter((item) => item.transaction_type === 'Πίστωση')
@@ -331,14 +342,6 @@ function createExhpService(dependencies) {
         if (nominalTransfer && credits.length !== charges.length) {
           throw new Error('Η ΕΧΠ μεταβολής αριθμού δεν μπορεί να επαναφερθεί με ασφάλεια.');
         }
-        charges.forEach((charge) => {
-          if (repository.countShareTransactionsExcluding(charge.share_id, transactionIds) > 0) {
-            throw new Error(
-              `Η νέα μερίδα ${charge.share_number} έχει μεταγενέστερες κινήσεις και η ΕΧΠ δεν μπορεί να διαγραφεί.`
-            );
-          }
-        });
-
         items.filter((item) => item.share_transaction_id).forEach((item) => {
           const reverseDelta = item.transaction_type === 'Χρέωση'
             ? -Number(item.quantity)

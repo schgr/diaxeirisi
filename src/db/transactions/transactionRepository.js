@@ -698,6 +698,30 @@ function createTransactionsRepository(db) {
       `).get(shareId, ...ids)?.total || 0);
     },
 
+    findSubsequentShareTransaction(transactionIds = []) {
+      const ids = transactionIds.map(Number).filter(Number.isInteger);
+      if (!ids.length) return null;
+      const placeholders = ids.map(() => '?').join(', ');
+      return db.prepare(`
+        SELECT
+          source.share_id AS share_id,
+          source.transaction_date AS source_date,
+          source.id AS source_transaction_id,
+          later.transaction_date AS later_date,
+          later.id AS later_transaction_id
+        FROM share_transactions source
+        JOIN share_transactions later ON later.share_id = source.share_id
+          AND later.id NOT IN (${placeholders})
+          AND (
+            later.transaction_date > source.transaction_date
+            OR (later.transaction_date = source.transaction_date AND later.id > source.id)
+          )
+        WHERE source.id IN (${placeholders})
+        ORDER BY later.transaction_date ASC, later.id ASC
+        LIMIT 1
+      `).get(...ids, ...ids) || null;
+    },
+
     deleteExhpDocument(documentId) {
       db.prepare('DELETE FROM exhp_documents WHERE id = ?').run(documentId);
     },

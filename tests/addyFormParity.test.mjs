@@ -21,7 +21,7 @@ const expectedHashes = {
   scheduleAddyDraftSave: '788f7fe623e0952b659accec3148ba64e4e0f293542aaa094b86b576e41c87ee',
   scheduleExhpDraftSave: '730eb41ce090dc97aec177ec64b0edbab6d5fbe4972e8c4f1e3ec70c391e0a37',
   buildToolCompositionChargeItems: 'd93e2a4466abc0d04cf25fb268710e5e05c0c368bdb490abe7fe2ae36866713d',
-  bindAddyForm: '73b94c09c143760dc593fe1898eddfc750b710ae609a3bcfefdeb17419cf7c2f',
+  bindAddyForm: '45b6a0cf9ff245de4a0771178ac696683af39e203ad2e136c390a081f82f1f29',
   restoreAddyEntryFocus: '894750b959f3427329c9494ed7c8d0923d769bbd03e9d59b0f14b29a6acada2b',
   openAddyEditDialog: '00f7eee24ff173e66f10c83cac7dde692b9654be7bf704a4de2bc4e6eb482518',
   confirmAddyAction: 'dde55bc242787bed6f9d92481c9ec03311b1cf839001a2ce3ab2371f9f791717',

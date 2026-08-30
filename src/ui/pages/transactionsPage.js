@@ -1,5 +1,5 @@
 import { escapeHtml, field } from '../components/forms.js';
-import { confirmDialog } from '../components/confirmDialog.js';
+import { confirmDialog, showNoticeDialog } from '../components/confirmDialog.js';
 import { EXP_AITIOLOGIES } from '../../exhpForm/aitiologies.js';
 import {
   bindTransactionSettings,
@@ -605,6 +605,10 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
         if (Number(state.viewedExhp?.id) === id) closeEditor();
         showToast(result.message);
       } catch (error) {
+        if (error?.code === 'DOCUMENT_HAS_SUBSEQUENT_MOVEMENTS') {
+          await showNoticeDialog({ message: error.message });
+          return;
+        }
         showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή της ΕΧΠ.', 'error');
       }
     });

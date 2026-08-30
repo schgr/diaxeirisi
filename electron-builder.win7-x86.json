@@ -44,6 +44,6 @@
     "createStartMenuShortcut": true,
     "shortcutName": "diaxeirisi Ylikoy - Windows 7 Legacy",
     "include": "build/installer.nsh",
-    "artifactName": "diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-1.0.5.${ext}"
+    "artifactName": "diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-1.0.6.${ext}"
   }
 }

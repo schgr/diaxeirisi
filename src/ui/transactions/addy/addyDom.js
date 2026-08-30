@@ -146,7 +146,7 @@ export function openAddyEditDialog(documentData, transactionsApi, showToast, onS
   window.document.body.appendChild(modal);
 }
 
-function confirmAddyAction(message) {
+export function confirmAddyAction(message) {
   return new Promise((resolve) => {
     const modal = window.document.createElement('div');
     modal.className = 'modal-backdrop';

@@ -21,7 +21,7 @@ const expectedOperations = [
   'createExhpDocumentSupports', 'listExhpDocumentSupports', 'listExhpOfficialSupportDocuments',
   'updateExhpDocumentSupport', 'updateExhpOtherSupportDocument', 'updateExhpIndexFields',
   'updateAddyIndexFields', 'saveExhpDocumentSupportForm', 'refreshExhpSupportStatus',
-  'getExhpDocument', 'getShareById', 'countShareTransactionsExcluding', 'deleteExhpDocument',
+  'getExhpDocument', 'getShareById', 'countShareTransactionsExcluding', 'findSubsequentShareTransaction', 'deleteExhpDocument',
   'deleteShareTransactions', 'rollbackTransferredShare', 'updateExhpMetadata',
   'updateExhpItemQuantity', 'listExhpDocumentItems', 'listExhpMaterialAttachments',
   'listExhpIndexRows', 'listExhpFinancialYearMovementRows', 'ensureTransactionUnit',
@@ -54,6 +54,40 @@ async function run() {
       }), /characterization nested rollback/);
     });
     assert.deepEqual(repository.listCommerceCompanies().map(({ name }) => name), ['outer transaction']);
+
+    const share = repository.createShare({
+      shareNumber: 'ΔΟΚ-1',
+      nominalNumber: 'TEST-001',
+      description: 'Δοκιμαστική μερίδα',
+      materialType: 'Υλικό',
+      measurementUnit: 'Τεμάχια',
+      accountingBalance: 0,
+      chargedQuantity: 0
+    });
+    const sourceTransactionId = repository.createShareTransaction({
+      shareId: share.id,
+      transactionDate: '2026-08-01',
+      transactionUnit: 'Δοκιμή',
+      transactionType: 'Χρέωση',
+      documentReference: 'ΑΔΔΥ 1',
+      quantity: 1,
+      notes: ''
+    });
+    assert.equal(repository.findSubsequentShareTransaction([sourceTransactionId]), null);
+    const laterTransactionId = repository.createShareTransaction({
+      shareId: share.id,
+      transactionDate: '2026-08-02',
+      transactionUnit: 'Δοκιμή',
+      transactionType: 'Πίστωση',
+      documentReference: 'ΕΧΠ 1/2026',
+      quantity: 1,
+      notes: ''
+    });
+    assert.equal(
+      Number(repository.findSubsequentShareTransaction([sourceTransactionId]).later_transaction_id),
+      Number(laterTransactionId)
+    );
+    assert.equal(repository.findSubsequentShareTransaction([laterTransactionId]), null);
     console.log('transactionsRepository parity and rollback characterization passed.');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

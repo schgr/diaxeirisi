@@ -38,6 +38,6 @@
     "createStartMenuShortcut": true,
     "shortcutName": "diaxeirisi Ylikoy",
     "include": "build/installer.nsh",
-    "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-1.0.5.${ext}"
+    "artifactName": "diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-1.0.6.${ext}"
   }
 }
