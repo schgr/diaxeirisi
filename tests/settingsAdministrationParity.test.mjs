@@ -33,7 +33,8 @@ assert.deepEqual(names(administration), [
   'renderArchivePanel', 'setSerialRegistryEditing', 'collectSerialRegistryPreviewRows',
   'renderSerialRegistryPreviewPage', 'openSerialRegistryPreview', 'printSerialRegistryPreview',
   'bindAdministrationPage', 'openHandoverProtocolDocument', 'printHandoverDocument', 'collectHandoverProtocol',
-  'renderOfficerIdentity', 'printArchivedSharesTable', 'openArchivedSharesPreview', 'printAmmunitionBatchTable',
+  'renderOfficerIdentity', 'printArchivedSharesTable', 'openArchivedSharesPreview', 'renderArchivedSharesDocument',
+  'printAmmunitionBatchTable',
   'openAmmunitionBatchPreview', 'printAmmunitionBatchPreview', 'run', 'value', 'formatDate', 'formatQuantity'
 ]);
 

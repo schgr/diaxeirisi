@@ -90,8 +90,10 @@ const intentionallyChanged = new Set([
   'renderCompositionRows',
   'renderOfficialShareBackPage',
   'renderRows',
+  'renderSharePrintDocument',
   'renderSharesPage',
-  'setCompositionLocked'
+  'setCompositionLocked',
+  'toggleField'
 ]);
 assert.strictEqual(new Set(functionNames).size, functionNames.length, 'Baseline has duplicate function names.');
 

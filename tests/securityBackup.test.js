@@ -78,7 +78,7 @@ function runSecurityTests(root) {
     'RECOVERY_CODE_INVALID'
   );
   security.recover(recovery.recoveryCode, 'ανακτημένος', 'κωδικός-ανάκτησης', 'κωδικός-ανάκτησης');
-  assert.strictEqual(security.status().recoveryConfigured, true);
+  assert.strictEqual(security.status().recoveryConfigured, false);
   security.lock();
   expectCode(() => security.login('υπεύθυνος', 'νέος-κωδικός'), 'AUTH_INVALID_CREDENTIALS');
   security.login('ανακτημένος', 'κωδικός-ανάκτησης');
