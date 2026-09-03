@@ -255,6 +255,11 @@
   box-sizing: border-box;
 }
 
+.addy-edit-modal {
+  width: min(1080px, calc(100vw - 96px));
+  margin: 48px auto;
+}
+
 .editable-records-table td {
   vertical-align: middle;
 }

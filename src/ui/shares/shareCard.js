@@ -24,27 +24,28 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           <h2>${escapeHtml(card.share.description)}</h2>
         </div>
         <div class="row-actions">
-          <button class="secondary-button" data-close-card type="button">Κλείσιμο</button>
+          ${!options.compositionOnly ? '<button class="secondary-button" data-edit-share-details type="button">Επεξεργασία</button><button class="primary-button" data-save-share-details type="button" hidden>Αποθήκευση</button>' : ''}
           ${!options.compositionOnly ? '<button class="danger-button" data-delete-share type="button">Διαγραφή</button>' : ''}
+          <button class="secondary-button" data-close-card type="button">Κλείσιμο</button>
         </div>
       </header>
 
       ${options.compositionOnly ? '' : `<section class="material-card-top">
         <div class="material-card-summary material-card-fields">
           ${detailField('Αριθμός μερίδας', 'shareNumber', card.share.shareNumber, 'text', true)}
-          ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', false)}
-          ${detailField('Αριθμός Κυρίου Υλικού', 'mainMaterialNumber', card.share.mainMaterialNumber)}
-          ${detailField('Περιγραφή', 'description', card.share.description, 'text', false)}
+          ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', true)}
+          ${detailField('Αριθμός Κυρίου Υλικού', 'mainMaterialNumber', card.share.mainMaterialNumber, 'text', true)}
+          ${detailField('Περιγραφή', 'description', card.share.description, 'text', true)}
           ${detailField('Είδος υλικού', 'materialType', card.share.materialType, 'text', true)}
-          ${detailField('Προβλεπόμενη Ποσότητα', 'projectedQuantity', card.share.projectedQuantity, 'number')}
+          ${detailField('Προβλεπόμενη Ποσότητα', 'projectedQuantity', card.share.projectedQuantity, 'number', true)}
           ${detailField('Λογιστικό υπόλοιπο', 'accountingBalance', card.share.accountingBalance, 'number', true)}
-          ${detailField('Τιμή', 'unitPrice', card.share.unitPrice ?? '', 'number')}
+          ${detailField('Τιμή', 'unitPrice', card.share.unitPrice ?? '', 'number', true)}
           ${summaryItem('Σε Μερικές Διαχειρίσεις', formatQuantity(card.share.chargedQuantity))}
           ${summaryItem('Διαφορά', formatDifference(card.share.differenceQuantity))}
-          ${toggleField('Απαιτεί Σύνθεση', 'requiresComposition', card.share.requiresComposition)}
-          ${toggleField('Απαιτεί Σειριακό Αριθμό', 'requiresSerialNumber', card.share.requiresSerialNumber)}
-          ${toggleField('Μητρώο Οπλισμού', 'requiresWeaponRegistry', card.share.requiresWeaponRegistry)}
-          ${toggleField('Πυρομαχικά Β.Φ.', 'requiresAmmunitionBatchBook', card.share.requiresAmmunitionBatchBook)}
+          ${toggleField('Απαιτεί Σύνθεση', 'requiresComposition', card.share.requiresComposition, true)}
+          ${toggleField('Απαιτεί Σειριακό Αριθμό', 'requiresSerialNumber', card.share.requiresSerialNumber, true)}
+          ${toggleField('Μητρώο Οπλισμού', 'requiresWeaponRegistry', card.share.requiresWeaponRegistry, true)}
+          ${toggleField('Πυρομαχικά Β.Φ.', 'requiresAmmunitionBatchBook', card.share.requiresAmmunitionBatchBook, true)}
         </div>
         <div class="material-details-form">
           <div class="material-photo-box" data-photo-path="${escapeHtml(card.share.photoPath || '')}">
@@ -52,7 +53,6 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           </div>
           <div class="row-actions">
             <button class="secondary-button" data-choose-share-photo type="button">Επιλογή Φωτογραφίας</button>
-            <button class="primary-button" data-save-share-details type="button">Αποθήκευση</button>
           </div>
         </div>
       </section>`}
@@ -197,6 +197,16 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
         openShareCard(refreshed, sharesApi, showToast, settings, options);
       })
         .catch((error) => showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση.', 'error'));
+      return;
+    }
+
+    if (event.target.closest('[data-edit-share-details]')) {
+      modal.querySelectorAll(
+        '[data-share-detail="nominalNumber"], [data-share-detail="description"], [data-share-detail="materialType"]'
+      ).forEach((control) => { control.readOnly = false; });
+      modal.querySelector('[data-edit-share-details]').hidden = true;
+      modal.querySelector('[data-save-share-details]').hidden = false;
+      modal.querySelector('[data-share-detail="nominalNumber"]')?.focus();
       return;
     }
 

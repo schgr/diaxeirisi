@@ -161,7 +161,7 @@ function renderAmmunitionBatchRegistry(registry) {
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">
         <table class="index-table ammunition-batch-registry-table" data-ammunition-batch-table>
-          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print">Ενέργειες</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Β.Φ.».</td></tr>'}</tbody>
         </table>
       </div>
@@ -216,7 +216,7 @@ function renderTrainingAmmunitionBatchRegistry(registry) {
       </div>
       <div class="table-wrap ammunition-batch-registry-wrap">
         <table class="index-table ammunition-batch-registry-table" data-training-ammunition-batch-table>
-          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print"></th></tr></thead>
+          <thead><tr><th>Α/Α</th><th>Μερίδα Υλικού</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Μερίδα Πυρκού</th><th>Ποσότητα</th><th>Τμήμα</th><th>Παρατηρήσεις</th><th class="no-print">Ενέργειες</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν καρτέλες με ενεργό το πεδίο «Πυρομαχικά Εκπαιδεύσεως».</td></tr>'}</tbody>
         </table>
       </div>
@@ -390,12 +390,13 @@ function protocolTextarea(label, id, value) {
 
 export function renderArchivePanel(data) {
   const eligible = data.activeShares.filter((share) => share.accountingBalance === 0 && share.chargedQuantity === 0);
+  const archiveDate = `${String(data.today || new Date().toISOString().slice(0, 10)).slice(0, 4)}-12-31`;
   return `
     <section class="page-panel">
       <h3>Αρχειοθέτηση Ανενεργής Μερίδας</h3>
       <p class="muted">Εμφανίζονται όλες οι ενεργές Μερίδες με μηδενικό λογιστικό και μηδενικό χρεωμένο υπόλοιπο. Επιλέξτε «Αρχείο» για όσες θα αρχειοθετηθούν.</p>
       <div class="administration-form-grid archive-options-grid">
-        <label class="field"><span>Ημερομηνία</span><input id="archive-date" type="date" value="${data.today}" /></label>
+        <label class="field"><span>Ημερομηνία αρχειοθέτησης</span><input id="archive-date" type="date" value="${archiveDate}" readonly /></label>
         <label class="field administration-wide-field"><span>Αιτιολογία</span><input id="archive-reason" placeholder="Κατάργηση είδους, μεταβολή ΑΟ ή άλλη διαταγή" /></label>
       </div>
       <div class="table-wrap">
@@ -911,14 +912,14 @@ export async function printArchivedSharesTable(table) {
       @page { size: A4 landscape; margin: 10mm; }
       .archived-shares-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
       .archived-shares-print h2 { margin: 0 0 8mm; font-size: 18pt; }
-      .archived-shares-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+      .archived-shares-print table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10pt; }
       .archived-shares-print th, .archived-shares-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
       .archived-shares-print th { background: #e8eef5; }
       .archived-shares-print .no-print { display: none !important; }
     </style>
     <section class="archived-shares-print print-document-area">
       <h2>Αρχειοθετημένες Μερίδες</h2>
-      ${table.outerHTML}
+      ${renderArchivedSharesDocument(table)}
     </section>`;
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
@@ -945,7 +946,7 @@ export function openArchivedSharesPreview(table) {
         </div>
       </header>
       <div class="request-document-preview archived-shares-preview-content">
-        ${table.outerHTML}
+        ${renderArchivedSharesDocument(table)}
       </div>
     </section>`;
   backdrop.addEventListener('click', async (event) => {
@@ -960,6 +961,21 @@ export function openArchivedSharesPreview(table) {
   document.body.appendChild(backdrop);
 }
 
+function renderArchivedSharesDocument(table) {
+  const documentTable = table.cloneNode(true);
+  documentTable.classList.add('archived-shares-document-table');
+  documentTable.querySelectorAll('.no-print').forEach((element) => element.remove());
+  return `
+    <article class="archived-shares-document print-document-area">
+      <div class="archived-shares-document-heading">
+        <span>ΑΡΧΕΙΟ ΜΕΡΙΔΩΝ ΥΛΙΚΟΥ</span>
+        <h2>Αρχειοθετημένες Μερίδες</h2>
+      </div>
+      ${documentTable.outerHTML}
+    </article>
+  `;
+}
+
 async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδων Β.Φ.') {
   if (!table) return;
   const printRoot = document.createElement('div');
@@ -970,7 +986,7 @@ async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδ
   printableTable.querySelectorAll('input, select').forEach((input) => {
     const text = document.createElement('span');
     text.textContent = input.tagName === 'SELECT'
-      ? input.selectedOptions[0]?.textContent || ''
+      ? input.value || ''
       : input.value;
     input.replaceWith(text);
   });
@@ -1003,7 +1019,7 @@ function openAmmunitionBatchPreview(table, title) {
   printableTable.querySelectorAll('input, select').forEach((control) => {
     const text = document.createElement('span');
     text.textContent = control.tagName === 'SELECT'
-      ? control.selectedOptions[0]?.textContent || ''
+      ? control.value || ''
       : control.value;
     control.replaceWith(text);
   });

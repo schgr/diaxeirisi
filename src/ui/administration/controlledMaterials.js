@@ -37,7 +37,7 @@ export function renderControlledMaterialsBook(cards) {
         </div>
         <div class="table-wrap controlled-materials-wrap">
           <table class="index-table controlled-materials-table" data-controlled-materials-table>
-            <thead><tr><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Κωδικός Υλικού</th><th>Περιγραφή</th><th>Προβλεπόμενα</th><th>Υπάρχοντα</th><th>Πλεόνασμα</th><th>Έλλειμμα</th><th>Παρατηρήσεις</th></tr></thead>
+            <thead><tr><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Κώδικας<br />Υλικού</th><th>Περιγραφή</th><th>Προβλεπόμενα</th><th>Υπάρχοντα</th><th>Πλεόνασμα</th><th>Έλλειμμα</th><th>Παρατηρήσεις</th></tr></thead>
             <tbody>${rows.length ? rows.map(renderControlledMaterialRow).join('') : '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν μερίδες που αντιστοιχούν στις κατηγορίες ελεγχομένων υλικών.</td></tr>'}</tbody>
           </table>
         </div>

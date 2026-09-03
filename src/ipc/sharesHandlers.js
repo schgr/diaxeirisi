@@ -32,7 +32,8 @@ function registerSharesHandlers({
   dialog,
   fs,
   path,
-  app
+  app,
+  nativeImage
 }) {
   register('shares:list', async () => safeInvoke(() => services.shares.listShares()));
   register('shares:get-by-number', async (_event, shareNumber) =>
@@ -125,10 +126,21 @@ function registerSharesHandlers({
         }
         const photosDirectory = path.join(app.getPath('userData'), 'photos');
         fs.mkdirSync(photosDirectory, { recursive: true });
-        const extension = path.extname(sourcePath);
-        const baseName = path.basename(sourcePath, extension).replace(/[^\p{L}\p{N}_-]+/gu, '_');
-        const destinationPath = path.join(photosDirectory, `${Date.now()}-${baseName}${extension}`);
-        fs.copyFileSync(sourcePath, destinationPath);
+        const image = nativeImage.createFromPath(sourcePath);
+        if (image.isEmpty()) {
+          throw new AppError('Η εικόνα δεν μπόρεσε να επεξεργαστεί.', 'INVALID_IMAGE_FILE');
+        }
+        const { width, height } = image.getSize();
+        const scale = Math.min(1, 1280 / Math.max(width, height));
+        const compactImage = image.resize({
+          width: Math.max(1, Math.round(width * scale)),
+          height: Math.max(1, Math.round(height * scale)),
+          quality: 'good'
+        });
+        const baseName = path.basename(sourcePath, path.extname(sourcePath))
+          .replace(/[^\p{L}\p{N}_-]+/gu, '_');
+        const destinationPath = path.join(photosDirectory, `${Date.now()}-${baseName || 'photo'}.jpg`);
+        fs.writeFileSync(destinationPath, compactImage.toJPEG(68), { mode: 0o600 });
         return destinationPath;
       })
     );

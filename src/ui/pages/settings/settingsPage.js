@@ -164,16 +164,13 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
             <button class="primary-button" type="submit">Αλλαγή κωδικού</button>
           </form>
           <div class="credential-recovery-settings">
-            <h4>Ερωτήσεις Ασφαλείας</h4>
-            <p class="muted">Αλλάξτε τις όταν αλλάζει ο Διαχειριστής. Για επιβεβαίωση απαιτείται ο τρέχων κωδικός.</p>
-            <form data-security-questions-form class="stacked-form">
-              <label class="field"><span>Τρέχων κωδικός</span><input name="currentPassword" type="password" autocomplete="current-password" required /></label>
-              ${[1, 2, 3].map((number) => `
-                <label class="field"><span>Ερώτηση ${number}</span><input name="question${number}" minlength="5" required /></label>
-                <label class="field"><span>Απάντηση ${number}</span><input name="answer${number}" minlength="2" autocomplete="off" required /></label>
-              `).join('')}
-              <button class="secondary-button" type="submit">Αποθήκευση Ερωτήσεων Ασφαλείας</button>
-            </form>
+            <h4>Κωδικός Ανάκτησης</h4>
+            <p class="muted">Δημιουργήστε νέο κωδικό όταν χρειάζεται και αποθηκεύστε ή εκτυπώστε τον αμέσως.</p>
+            <div class="row-actions">
+              <button class="secondary-button" data-create-recovery-code type="button">Δημιουργία κωδικού ανάκτησης</button>
+              <button class="secondary-button" data-print-recovery-code type="button" hidden>Εκτύπωση</button>
+            </div>
+            <p class="recovery-code-result" data-recovery-code-output hidden></p>
           </div>
         </section>
 
@@ -601,6 +598,7 @@ export function renderExhpIssueReasonSettings(items, selectedReasonName = '') {
         </label>
         <div class="row-actions">
           <button class="primary-button" data-save-exhp-reason-texts type="button">Αποθήκευση Κειμένων</button>
+          <button class="danger-button" data-delete-exhp-reason type="button">Διαγραφή Αιτιολογίας</button>
         </div>
       </article>
     </div>
@@ -697,17 +695,31 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
     showToast('Το όνομα χρήστη και ο κωδικός εισόδου ενημερώθηκαν.');
   });
 
-  bindForm(container, '[data-security-questions-form]', showToast, async (form) => {
-    const data = getFormData(form);
-    await window.appApi.auth.changeSecurityQuestions(
-      data.currentPassword,
-      [1, 2, 3].map((number) => ({
-        question: data[`question${number}`],
-        answer: data[`answer${number}`]
-      }))
-    );
-    form.reset();
-    showToast('Οι ερωτήσεις ασφαλείας ενημερώθηκαν.');
+  let latestRecoveryCode = '';
+  container.querySelector('[data-create-recovery-code]')?.addEventListener('click', async (event) => {
+    event.currentTarget.disabled = true;
+    try {
+      const result = await window.appApi.auth.createRecoveryCode();
+      latestRecoveryCode = result.recoveryCode;
+      const output = container.querySelector('[data-recovery-code-output]');
+      output.textContent = `Κωδικός ανάκτησης: ${latestRecoveryCode}`;
+      output.hidden = false;
+      container.querySelector('[data-print-recovery-code]').hidden = false;
+      showToast('Αποθηκεύστε ή εκτυπώστε τον νέο κωδικό ανάκτησης.');
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η δημιουργία κωδικού ανάκτησης.', 'error');
+    } finally {
+      event.currentTarget.disabled = false;
+    }
+  });
+  container.querySelector('[data-print-recovery-code]')?.addEventListener('click', () => {
+    if (!latestRecoveryCode) return;
+    const printWindow = window.open('', '_blank', 'width=620,height=360');
+    if (!printWindow) return;
+    printWindow.document.write(`<main style="font-family:Arial,sans-serif;padding:36px"><h1>Διαχείριση Υλικού</h1><h2>Κωδικός ανάκτησης</h2><p style="font-size:24px;font-weight:bold;letter-spacing:2px">${latestRecoveryCode}</p></main>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   });
 
   const backupButtons = [...container.querySelectorAll('[data-backup-now], [data-backup-export], [data-backup-restore]')];
@@ -1109,6 +1121,25 @@ export function bindTransactionSettings(container, settingsApi, exhpIssueReasons
         showToast('Τα κείμενα της ΕΧΠ αποθηκεύτηκαν.');
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση των κειμένων.', 'error');
+      }
+      return;
+    }
+
+    const deleteReason = event.target.closest('[data-delete-exhp-reason]');
+    if (deleteReason) {
+      const row = deleteReason.closest('[data-exhp-reason-setting]');
+      const selectedReason = exhpIssueReasons.find((item) => item.id === Number(row?.dataset.exhpReasonSetting));
+      if (!selectedReason) return;
+      const accepted = await confirmDialog({
+        message: `Να διαγραφεί η αιτιολογία «${selectedReason.name}» από το μενού ΕΧΠ; Τα ήδη καταχωρημένα ΕΧΠ δεν θα διαγραφούν.`,
+        confirmLabel: 'Διαγραφή'
+      });
+      if (!accepted) return;
+      try {
+        await settingsApi.deleteExhpIssueReason(selectedReason.id);
+        await refreshMovedSettings(container, () => rerender('exhp'), showToast, 'Η αιτιολογία αφαιρέθηκε από το μενού ΕΧΠ.');
+      } catch (error) {
+        showToast(error.message || 'Δεν ήταν δυνατή η διαγραφή της αιτιολογίας.', 'error');
       }
       return;
     }

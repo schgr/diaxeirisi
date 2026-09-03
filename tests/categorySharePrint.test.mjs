@@ -55,7 +55,9 @@ assert.doesNotMatch(
   shareRegistryPrintSource.match(/function bindCategoryShareControls[\s\S]*?\n\}\n/u)?.[0] || '',
   /preview\.innerHTML/u
 );
-assert.match(categoryStyles, /\.category-share-table th:nth-child\(5\) \{ width: 50%; \}/u);
+assert.match(categoryStyles, /\.category-share-table th:nth-child\(2\) \{ width: 8%; \}/u);
+assert.match(categoryStyles, /\.category-share-table th:nth-child\(3\) \{ width: 5%; \}/u);
+assert.match(categoryStyles, /\.category-share-table th:nth-child\(5\) \{ width: 55%; \}/u);
 assert.match(categoryStyles, /\.category-share-table td:nth-child\(2\)[\s\S]*?overflow-wrap: anywhere/u);
 
 console.log('Multiple-category share print filtering test passed.');

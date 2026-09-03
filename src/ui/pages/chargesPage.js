@@ -379,6 +379,7 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
   const pageCount = Math.max(1, Math.ceil(printableRows.length / pageSize));
   const documentDate = new Date().toLocaleDateString('el-GR');
   const departmentHead = splitOfficerSignature(department.departmentHead || '');
+  const departmentRecipient = [departmentHead.rank, departmentHead.name].filter(Boolean).join(' ');
   const financialManager = splitOfficerSignature(options.financialManager || '');
   const signatureMode = options.signatureMode || 'none';
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
@@ -403,7 +404,7 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
               <th colspan="17" class="k2310-integrated-meta">
                 <div class="k2310-meta-grid">
                   <span><strong>ΧΟΡΗΓΗΘΗΚΑΝ</strong><br />(1) ΑΠΟ: ${escapeHtml(serviceName || '')}</span>
-                  <span>(2) ΠΡΟΣ: ${escapeHtml(department.departmentName)}</span>
+                  <span>(2) ΠΡΟΣ: ${escapeHtml(department.departmentName)}${departmentRecipient ? ` (${escapeHtml(departmentRecipient)})` : ''}</span>
                   <span>(3) ΑΡΙΘΜΟΣ ΔΕΛΤΙΟΥ: ${pageIndex + 1}</span>
                 </div>
               </th>

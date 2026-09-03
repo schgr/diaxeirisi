@@ -267,10 +267,10 @@ function renderSharePrintDocument(card, options = {}) {
   const frontRows = card.transactions.slice(0, 12);
   const remainingRows = card.transactions.slice(12);
   const pages = [{ side: 'front', rows: frontRows, startIndex: 0 }];
-  for (let startIndex = 0; startIndex < remainingRows.length; startIndex += 32) {
+  for (let startIndex = 0; startIndex < remainingRows.length; startIndex += 18) {
     pages.push({
       side: 'back',
-      rows: remainingRows.slice(startIndex, startIndex + 32),
+      rows: remainingRows.slice(startIndex, startIndex + 18),
       startIndex: 12 + startIndex
     });
   }
@@ -354,19 +354,19 @@ function resolvePreviousYearInventoryDate(card, options) {
 }
 
 function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
-  const pageRows = Array.from({ length: 32 }, (_unused, index) => rows[index] || null);
+  const pageRows = Array.from({ length: 18 }, (_unused, index) => rows[index] || null);
   return `
     <article class="official-share-page official-share-back-page print-document-area">
       <section class="official-share-back-sheet" aria-label="Μερίδα Υλικού - Δελτίο Υπολοίπων, πίσω πλευρά">
-        <div class="official-share-back-code">Κ 2309ΔΥΠ</div>
+        <div class="official-share-back-code">Κ 2309/ΔΥΠ</div>
         <h2>ΜΕΡΙΔΑ ΥΛΙΚΟΥ - ΔΕΛΤΙΟ ΥΠΟΛΟΙΠΩΝ</h2>
         <table class="official-share-back-table">
           <thead>
             <tr>
               <th>Α/Α</th>
               <th class="official-share-back-date-heading">ΗΜΕΡ</th>
-              <th>ΧΡΕΩΣΗ<br />Ή<br />ΠΙΣΤΩΣΗ</th>
-              <th>ΑΡΙΘΜ<br />ΕΥΡΥΤΗΡΙΟΥ</th>
+              <th>ΑΥΤΟΣ ΠΟΥ<br />ΠΑΡΕΔΩΣΕ<br />ή ΠΑΡΕΛΑΒΕ</th>
+              <th>ΑΡΙΘΜΟΣ<br />ΕΥΡΕΤΗΡΙΟΥ</th>
               <th>ΕΙΣΑΓΩΓΕΣ</th>
               <th>ΕΞΑΓΩΓΕΣ</th>
               <th>ΥΠΟΛΟΙΠΟ</th>
@@ -384,7 +384,7 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
             </tr>
             ${pageRows.map(renderOfficialShareBackRow).join('')}
             <tr class="official-share-back-transfer-row">
-              <td colspan="6">ΓΙΑ ΜΕΤΑΦΟΡΑ</td>
+              <td colspan="6">ΣΕ ΜΕΤΑΦΟΡΑ</td>
               <td>${transferBalance === '' ? '' : formatQuantity(transferBalance)}</td>
               <td></td>
             </tr>
@@ -399,7 +399,7 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
             <tr><th>33. ΔΙΑΦΟΡΑ</th>${'<td></td>'.repeat(12)}</tr>
           </tbody>
         </table>
-        <div class="official-share-back-footer">ΕΦΟΔ 101</div>
+        <div class="official-share-back-footer">ΕΦΟΔ 202</div>
       </section>
     </article>
   `;

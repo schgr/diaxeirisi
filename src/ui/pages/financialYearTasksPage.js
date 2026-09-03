@@ -137,7 +137,8 @@ export async function renderFinancialYearTasksPage(
           </label>
         </div>
         <div class="form-actions annual-prints-actions no-print">
-          <button class="secondary-button" data-year-prints-toggle type="button">Αποεπιλογή Όλων</button>
+          <button class="secondary-button" data-year-prints-select-all type="button">Επιλογή Όλων</button>
+          <button class="secondary-button" data-year-prints-clear-all type="button">Αποεπιλογή Όλων</button>
           <button class="primary-button" data-year-prints-open type="button" disabled>Προεπισκόπηση / Εκτύπωση</button>
         </div>
         <div data-year-prints-results><p class="muted">Φόρτωση Μερίδων...</p></div>
@@ -242,8 +243,8 @@ export async function renderFinancialYearTasksPage(
     const checkboxes = [...yearPrintsResults.querySelectorAll('[data-year-print-card]')];
     const selectedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
     container.querySelector('[data-year-prints-open]').disabled = selectedCount === 0;
-    container.querySelector('[data-year-prints-toggle]').textContent =
-      checkboxes.length && selectedCount === checkboxes.length ? 'Αποεπιλογή Όλων' : 'Επιλογή Όλων';
+    container.querySelector('[data-year-prints-select-all]').disabled = !checkboxes.length || selectedCount === checkboxes.length;
+    container.querySelector('[data-year-prints-clear-all]').disabled = selectedCount === 0;
   }
 
   async function loadArchive() {
@@ -391,11 +392,17 @@ export async function renderFinancialYearTasksPage(
   yearPrintsResults.addEventListener('change', (event) => {
     if (event.target.matches('[data-year-print-card]')) updateYearPrintButtons();
   });
-  container.querySelector('[data-year-prints-toggle]').addEventListener('click', () => {
+  container.querySelector('[data-year-prints-select-all]').addEventListener('click', () => {
     const checkboxes = [...yearPrintsResults.querySelectorAll('[data-year-print-card]')];
-    const shouldSelect = checkboxes.some((checkbox) => !checkbox.checked);
     checkboxes.forEach((checkbox) => {
-      checkbox.checked = shouldSelect;
+      checkbox.checked = true;
+    });
+    updateYearPrintButtons();
+  });
+  container.querySelector('[data-year-prints-clear-all]').addEventListener('click', () => {
+    const checkboxes = [...yearPrintsResults.querySelectorAll('[data-year-print-card]')];
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = false;
     });
     updateYearPrintButtons();
   });

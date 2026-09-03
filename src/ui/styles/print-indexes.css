@@ -45,7 +45,7 @@
 .registry-footer {
   position: absolute;
   right: 20mm;
-  bottom: 4mm;
+  bottom: 7mm;
   text-align: right;
   font-size: 11px;
 }
@@ -210,6 +210,20 @@
   transform: translateY(-12px);
 }
 
+/* The two official registers use the same form background but need different
+   data sizes for legibility when printed. */
+.orders-official-index-page .official-index-cell {
+  font-size: clamp(9px, 0.8vw, 11px);
+}
+
+.external-official-index-page .official-index-cell {
+  font-size: clamp(8px, 0.7vw, 10px);
+}
+
+.external-official-index-page .official-index-annual-signatures {
+  font-size: clamp(9px, 0.89vw, 13px);
+}
+
 .official-index-signature-column {
   display: flex;
   flex-direction: column;
@@ -316,6 +330,17 @@
 
 .ammunition-batch-actions-cell button {
   flex: 0 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .ammunition-batch-actions-cell .row-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ammunition-batch-actions-cell button {
+    width: 100%;
+  }
 }
 
 .ammunition-batch-registry-table td:nth-child(4),
@@ -568,11 +593,15 @@
   background: var(--preview-bg, #020812);
 }
 
+.share-preview-pagination {
+  margin: -8px auto 12px;
+}
+
 .category-share-table th:nth-child(1) { width: 4%; }
-.category-share-table th:nth-child(2) { width: 11%; }
-.category-share-table th:nth-child(3) { width: 6%; }
-.category-share-table th:nth-child(4) { width: 11%; }
-.category-share-table th:nth-child(5) { width: 50%; }
+.category-share-table th:nth-child(2) { width: 8%; }
+.category-share-table th:nth-child(3) { width: 5%; }
+.category-share-table th:nth-child(4) { width: 10%; }
+.category-share-table th:nth-child(5) { width: 55%; }
 .category-share-table th:nth-child(6) { width: 7%; }
 .category-share-table th:nth-child(7) { width: 11%; }
 

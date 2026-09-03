@@ -8,7 +8,7 @@ const { createTransactionsService } = require('../src/services/transactionsServi
 
 async function run() {
   const pageSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'pages', 'financialYearTasksPage.js'), 'utf8');
-  const actionsPosition = pageSource.indexOf('data-year-prints-toggle');
+  const actionsPosition = pageSource.indexOf('data-year-prints-select-all');
   const resultsPosition = pageSource.indexOf('data-year-prints-results');
   assert(actionsPosition > -1 && actionsPosition < resultsPosition);
   assert.match(pageSource, /data-year-prints-scroll-top[^>]*>Επιστροφή στην αρχή/u);

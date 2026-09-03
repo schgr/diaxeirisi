@@ -11,8 +11,6 @@ const CHANNELS = Object.freeze([
   "auth:change-password",
   "auth:change-credentials",
   "auth:create-recovery-code",
-  "auth:change-security-questions",
-  "auth:answer-security-questions",
   "auth:recover",
   "auth:lock"
 ]);
@@ -33,8 +31,8 @@ function registerAuthHandlers({
       electronVersion: process.versions.electron
     }), true));
   register('auth:status', async () => safeInvoke(() => securityService.status(), true));
-  register('auth:setup', async (_event, username, password, confirmation, securityQuestions) =>
-      safeInvoke(() => securityService.setup(username, password, confirmation, securityQuestions), true)
+  register('auth:setup', async (_event, username, password, confirmation) =>
+      safeInvoke(() => securityService.setup(username, password, confirmation), true)
     );
   register('auth:login', async (_event, username, password) =>
       safeInvoke(() => securityService.login(username, password), true)
@@ -47,12 +45,6 @@ function registerAuthHandlers({
     );
   register('auth:create-recovery-code', async () =>
       safeInvoke(() => securityService.createRecoveryCode())
-    );
-  register('auth:change-security-questions', async (_event, currentPassword, questions) =>
-      safeInvoke(() => securityService.changeSecurityQuestions(currentPassword, questions))
-    );
-  register('auth:answer-security-questions', async (_event, answers) =>
-      safeInvoke(() => securityService.answerSecurityQuestions(answers), true)
     );
   register('auth:recover', async (_event, recoveryCode, username, newPassword, confirmation) =>
       safeInvoke(() => securityService.recover(recoveryCode, username, newPassword, confirmation), true)

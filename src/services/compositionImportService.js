@@ -71,12 +71,12 @@ function createCompositionImportService(db) {
       let importedRows = 0;
       for (const { share, rows: groupRows } of groups.values()) {
         const card = sharesService.getShareCard(share.id, Number(openingDate.slice(0, 4)) + 1);
-        const existingByNominal = new Map(
-          card.compositionItems.map((item) => [normalizeKey(item.componentNominalNumber), item])
+        const existingByComponent = new Map(
+          card.compositionItems.map((item) => [componentKey(item.componentNominalNumber, item.componentDescription, item.measurementUnit), item])
         );
         const balance = Number(card.share.accountingBalance || 0);
         const items = groupRows.map((row) => {
-          const existing = row.nominalNumber ? existingByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
+          const existing = existingByComponent.get(componentKey(row.nominalNumber, row.description, row.measurementUnit));
           const componentShare = row.nominalNumber ? sharesByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
           const projectedTotal = row.projectedQuantity * balance;
           return {
@@ -162,9 +162,8 @@ function parseCompositionRows(matrix) {
       errors.push(`Γραμμή ${excelRow}: η Υπάρχουσα Ποσότητα πρέπει να είναι μη αρνητική.`);
       return;
     }
-    const componentKey = nominalNumber || `${description}|${measurementUnit}`;
-    const key = `${normalizeKey(shareNumber)}|${normalizeKey(componentKey)}`;
-    if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${componentKey}.`);
+    const key = `${normalizeKey(shareNumber)}|${componentKey(nominalNumber, description, measurementUnit)}`;
+    if (seen.has(key)) errors.push(`Γραμμή ${excelRow}: διπλή γραμμή σύνθεσης για ${shareNumber} / ${nominalNumber || description}.`);
     seen.add(key);
     rows.push({ shareNumber, nominalNumber, description, measurementUnit, projectedQuantity, existingQuantity });
   });
@@ -173,6 +172,10 @@ function parseCompositionRows(matrix) {
   }
   if (!rows.length) throw new AppError('Δεν βρέθηκαν γραμμές συνθέσεων στο Excel.', 'VALIDATION_ERROR');
   return rows;
+}
+
+function componentKey(nominalNumber, description, measurementUnit) {
+  return [nominalNumber, description, measurementUnit].map(normalizeKey).join('|');
 }
 
 function addInstructionsSheet(workbook) {

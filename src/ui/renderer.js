@@ -540,12 +540,7 @@ function renderAuthGate(status) {
             <label class="field"><span>Όνομα χρήστη</span><input name="username" minlength="3" maxlength="50" autocomplete="username" required autofocus /></label>
             <label class="field"><span>Νέος κωδικός</span><input name="password" type="password" minlength="10" autocomplete="new-password" required /></label>
             <label class="field"><span>Επιβεβαίωση κωδικού</span><input name="confirmation" type="password" minlength="10" autocomplete="new-password" required /></label>
-            <h2>Ερωτήσεις Ασφαλείας</h2>
-            <p class="muted">Ορίστε τρεις ερωτήσεις και απαντήσεις για ασφαλή ανάκτηση πρόσβασης.</p>
-            ${[1, 2, 3].map((number) => `
-              <label class="field"><span>Ερώτηση ${number}</span><input name="securityQuestion${number}" minlength="5" required /></label>
-              <label class="field"><span>Απάντηση ${number}</span><input name="securityAnswer${number}" minlength="2" autocomplete="off" required /></label>
-            `).join('')}
+            <p class="muted">Με την ενεργοποίηση θα δημιουργηθεί κωδικός ανάκτησης. Αποθηκεύστε ή εκτυπώστε τον, γιατί εμφανίζεται μόνο μία φορά.</p>
           ` : `
             <label class="field"><span>Όνομα χρήστη</span><input name="username" value="${escapeHtml(status.username || 'admin')}" autocomplete="username" required autofocus ${lockedSeconds ? 'disabled' : ''} /></label>
             <label class="field"><span>Κωδικός εισόδου</span><input name="password" type="password" autocomplete="current-password" required ${lockedSeconds ? 'disabled' : ''} /></label>
@@ -557,17 +552,6 @@ function renderAuthGate(status) {
         </form>
         ${!isSetup && status.recoveryConfigured ? `
           <form class="auth-form auth-recovery-form" data-auth-recovery-form hidden>
-            ${status.securityQuestionsConfigured ? `
-              <p class="muted">Απαντήστε σωστά και στις τρεις ερωτήσεις για να δημιουργηθεί νέος, διαφορετικός κωδικός ανάκτησης.</p>
-              ${status.securityQuestions.map((question, index) => `
-                <label class="field"><span>${escapeHtml(question)}</span><input name="securityAnswer${index + 1}" autocomplete="off" required /></label>
-              `).join('')}
-              <button class="secondary-button" data-generate-recovery-code type="button">Δημιουργία κωδικού ανάκτησης</button>
-              <div class="recovery-code-result" data-auth-recovery-code-result hidden>
-                <span>Νέος κωδικός ανάκτησης</span>
-                <strong data-auth-recovery-code></strong>
-              </div>
-            ` : ''}
             <h2>Επαναφορά στοιχείων εισόδου</h2>
             <p class="muted">Χρησιμοποιήστε τον κωδικό ανάκτησης που δημιουργήσατε από τις Ρυθμίσεις Ασφαλείας.</p>
             <label class="field"><span>Κωδικός ανάκτησης</span><input name="recoveryCode" autocomplete="off" required /></label>
@@ -591,24 +575,6 @@ function renderAuthGate(status) {
   app.querySelector('[data-hide-auth-recovery]')?.addEventListener('click', () => {
     app.querySelector('[data-auth-recovery-form]').hidden = true;
     app.querySelector('[data-auth-form]').hidden = false;
-  });
-  app.querySelector('[data-generate-recovery-code]')?.addEventListener('click', async (event) => {
-    const form = event.currentTarget.closest('form');
-    const message = form.querySelector('[data-recovery-message]');
-    event.currentTarget.disabled = true;
-    message.textContent = '';
-    try {
-      const data = new FormData(form);
-      const result = await window.appApi.auth.answerSecurityQuestions(
-        [1, 2, 3].map((number) => data.get(`securityAnswer${number}`))
-      );
-      form.elements.recoveryCode.value = result.recoveryCode;
-      form.querySelector('[data-auth-recovery-code]').textContent = result.recoveryCode;
-      form.querySelector('[data-auth-recovery-code-result]').hidden = false;
-    } catch (error) {
-      message.textContent = error.message || 'Οι απαντήσεις δεν επαληθεύτηκαν.';
-      event.currentTarget.disabled = false;
-    }
   });
   app.querySelector('[data-auth-recovery-form]')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -641,15 +607,15 @@ function renderAuthGate(status) {
     try {
       const data = new FormData(form);
       if (isSetup) {
-        await window.appApi.auth.setup(
+        const setupResult = await window.appApi.auth.setup(
           data.get('username'),
           data.get('password'),
-          data.get('confirmation'),
-          [1, 2, 3].map((number) => ({
-            question: data.get(`securityQuestion${number}`),
-            answer: data.get(`securityAnswer${number}`)
-          }))
+          data.get('confirmation')
         );
+        if (setupResult.recoveryCode) {
+          showRecoveryCodeModal(setupResult.recoveryCode, startUnlockedApplication);
+          return;
+        }
       } else {
         await window.appApi.auth.login(data.get('username'), data.get('password'));
       }
@@ -668,6 +634,27 @@ function renderAuthGate(status) {
   if (lockedSeconds) {
     window.setTimeout(() => initializeApplication(), Math.min(lockedSeconds * 1000 + 100, 31_000));
   }
+}
+
+function showRecoveryCodeModal(recoveryCode, onContinue) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `<section class="confirm-dialog" role="dialog" aria-modal="true"><h2>Κωδικός ανάκτησης</h2><p>Αποθηκεύστε ή εκτυπώστε τον κωδικό. Εμφανίζεται μόνο τώρα.</p><strong class="recovery-code-value">${escapeHtml(recoveryCode)}</strong><div class="row-actions"><button class="secondary-button" data-print-recovery type="button">Εκτύπωση</button><button class="primary-button" data-continue-recovery type="button">Συνέχεια</button></div></section>`;
+  modal.querySelector('[data-print-recovery]').addEventListener('click', () => printRecoveryCode(recoveryCode));
+  modal.querySelector('[data-continue-recovery]').addEventListener('click', () => {
+    modal.remove();
+    onContinue();
+  });
+  document.body.appendChild(modal);
+}
+
+function printRecoveryCode(recoveryCode) {
+  const printWindow = window.open('', '_blank', 'width=620,height=360');
+  if (!printWindow) return;
+  printWindow.document.write(`<main style="font-family:Arial,sans-serif;padding:36px"><h1>Διαχείριση Υλικού</h1><h2>Κωδικός ανάκτησης</h2><p>Φυλάξτε αυτόν τον κωδικό σε ασφαλές σημείο.</p><p style="font-size:24px;font-weight:bold;letter-spacing:2px">${escapeHtml(recoveryCode)}</p></main>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
 }
 
 async function showRequestRenewalNotice() {

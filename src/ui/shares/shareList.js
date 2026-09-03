@@ -78,6 +78,8 @@ function bindLiveFilters(container, shares, showToast) {
       <button type="button" data-share-page="${currentPage - 1}" ${currentPage ? '' : 'disabled'} aria-label="Προηγούμενη σελίδα">Προηγούμενη</button>
       <button type="button" data-share-page="${currentPage + 1}" ${currentPage + 1 < pageCount ? '' : 'disabled'} aria-label="Επόμενη σελίδα">Επόμενη</button>
     `;
+    tableWrap.scrollTo({ top: 0, left: tableWrap.scrollLeft, behavior: 'auto' });
+    container.closest('.content')?.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   const controller = createShareFilterController(shares, {

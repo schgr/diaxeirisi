@@ -23,9 +23,14 @@ async function run() {
     shares.addShare(makeShare('20', 'Υλικό μηδενικού υπολοίπου', 0));
     shares.addShare(makeShare('30', 'Δεύτερο ενεργό υλικό', 5));
     const inactiveShare = shares.listShares().find((share) => share.shareNumber === '20');
-    administration.archiveShare({
+    assert.throws(() => administration.archiveShare({
       shareId: inactiveShare.id,
       actionDate: '2026-12-30',
+      reason: 'Κατάργηση είδους'
+    }), /μόνο στις 31\/12/u);
+    administration.archiveShare({
+      shareId: inactiveShare.id,
+      actionDate: '2026-12-31',
       reason: 'Κατάργηση είδους'
     });
     const data = yearEnd.getRenumberingData();

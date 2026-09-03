@@ -1080,7 +1080,7 @@
 .official-share-back-sheet {
   position: absolute;
   inset: 0;
-  padding: 10.5% 5.3% 4.5%;
+  padding: 8.9% 6.4% 3.5%;
   color: #000;
   font-family: Arial, sans-serif;
   box-sizing: border-box;
@@ -1088,8 +1088,8 @@
 
 .official-share-back-code {
   position: absolute;
-  top: 8.7%;
-  right: 7%;
+  top: 5.8%;
+  right: 7.2%;
   font-size: clamp(9px, 0.86vw, 12px);
   font-weight: 700;
   text-decoration: underline;
@@ -1123,17 +1123,17 @@
   color: #000;
 }
 
-.official-share-back-table th:nth-child(1) { width: 6%; }
-.official-share-back-table th:nth-child(2) { width: 9%; }
-.official-share-back-table th:nth-child(3) { width: 15%; }
-.official-share-back-table th:nth-child(4) { width: 16%; }
-.official-share-back-table th:nth-child(5) { width: 14%; }
-.official-share-back-table th:nth-child(6) { width: 12%; }
-.official-share-back-table th:nth-child(7) { width: 13%; }
-.official-share-back-table th:nth-child(8) { width: 15%; }
+.official-share-back-table th:nth-child(1) { width: 4.5%; }
+.official-share-back-table th:nth-child(2) { width: 5.8%; }
+.official-share-back-table th:nth-child(3) { width: 12.5%; }
+.official-share-back-table th:nth-child(4) { width: 16.3%; }
+.official-share-back-table th:nth-child(5) { width: 18.3%; }
+.official-share-back-table th:nth-child(6) { width: 12.3%; }
+.official-share-back-table th:nth-child(7) { width: 12.3%; }
+.official-share-back-table th:nth-child(8) { width: 18%; }
 
 .official-share-back-table thead tr:first-child {
-  height: 52px;
+  height: 48px;
   font-size: clamp(9px, 0.9vw, 12px);
 }
 
@@ -1144,7 +1144,7 @@
 }
 
 .official-share-back-table tr {
-  height: 21px;
+  height: 18px;
 }
 
 .official-share-back-table tbody tr:not(.official-share-back-transfer-row) {
@@ -1183,11 +1183,11 @@
 }
 
 .official-share-back-summary tr {
-  height: 24px;
+  height: 21px;
 }
 
 .official-share-back-footer {
-  margin-top: 2.2%;
+  margin-top: 1.2%;
   font-size: clamp(9px, 0.8vw, 11px);
   font-weight: 700;
   color: #000;
@@ -1281,14 +1281,14 @@
 }
 
 .official-inventory-overlay.inventory-row-overlay {
-  font-size: clamp(7px, 0.72vw, 10px);
+  font-size: clamp(8px, 0.8vw, 11px);
   font-weight: 600;
   line-height: 0.95;
 }
 
 @media screen {
   .official-inventory-overlay.inventory-row-overlay {
-    font-size: clamp(7px, 0.7vw, 9px);
+    font-size: clamp(8px, 0.78vw, 10px);
   }
 
   .official-inventory-overlay.inventory-meta-overlay,

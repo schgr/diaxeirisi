@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, session, nativeImage } = require('electron');
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
@@ -164,6 +164,7 @@ function registerIpcHandlers() {
     app,
     BrowserWindow,
     dialog,
+    nativeImage,
     fs,
     path,
     __dirname,

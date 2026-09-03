@@ -9,8 +9,6 @@ const IPC_CHANNELS = Object.freeze([
   "auth:change-password",
   "auth:change-credentials",
   "auth:create-recovery-code",
-  "auth:change-security-questions",
-  "auth:answer-security-questions",
   "auth:recover",
   "auth:lock",
   "backup:list",

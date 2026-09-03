@@ -60,7 +60,7 @@ async function run() {
 
   assert.deepStrictEqual(registered, IPC_CHANNELS);
   assert.deepStrictEqual([...handlers.keys()], IPC_CHANNELS);
-  assert.strictEqual(IPC_CHANNELS.length, 174);
+  assert.strictEqual(IPC_CHANNELS.length, 172);
 
   const registrar = createIpcRegistrar({ handle() {} });
   registrar.register('test:duplicate', () => undefined);
@@ -115,7 +115,6 @@ async function run() {
     'auth:status',
     'auth:setup',
     'auth:login',
-    'auth:answer-security-questions',
     'auth:recover',
     'window:set-fullscreen',
     'window:minimize',

@@ -28,7 +28,7 @@ const html = renderK2310Pages(
 assert.match(html, /<td>7<\/td>(?:<td><\/td>){10}<\/tr>/u);
 assert.doesNotMatch(html, /<td>10<\/td>/u);
 assert.doesNotMatch(html, /<td>20<\/td>/u);
-assert.doesNotMatch(html, /Αζίζογλου Πρόδρομος/u);
+assert.match(html, /\(Λγός \(ΠΒ\) Αζίζογλου Πρόδρομος\)/u);
 assert.match(
   html,
   /class="k2310-serial-numbers-row"><td><\/td><td><\/td><td><\/td><td class="k2310-description-cell">SN-001, SN-002, SN-003<\/td>/u

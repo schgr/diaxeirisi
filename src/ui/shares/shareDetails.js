@@ -21,11 +21,11 @@ function detailField(label, name, value, type = 'text', readonly = false) {
   `;
 }
 
-function toggleField(label, name, checked) {
+function toggleField(label, name, checked, disabled = false) {
   return `
     <label class="summary-item material-detail-toggle">
       <span>${label}</span>
-      <input data-share-detail="${name}" type="checkbox" ${checked ? 'checked' : ''} />
+      <input data-share-detail="${name}" type="checkbox" ${checked ? 'checked' : ''}${disabled ? ' disabled' : ''} />
     </label>
   `;
 }

@@ -739,6 +739,17 @@
   font-size: 9px;
 }
 
+@media print {
+  .request-doc-signatures {
+    transform: translateY(-2mm);
+    margin-bottom: -2mm;
+  }
+
+  .request-signature-person {
+    transform: translateY(-2mm);
+  }
+}
+
 .registry-table th:nth-child(1),
 .registry-table td:nth-child(1) {
   width: 7%;

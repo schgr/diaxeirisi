@@ -52,9 +52,13 @@ function validateHandover(payload) {
 }
 
 function validateArchive(payload) {
+  const actionDate = requireDate(payload.actionDate, 'Ημερομηνία');
+  if (!actionDate.endsWith('-12-31')) {
+    throw new AppError('Η αρχειοθέτηση Μερίδας γίνεται μόνο στις 31/12 του αντίστοιχου οικονομικού έτους.', 'ARCHIVE_DATE_INVALID');
+  }
   return {
     shareId: requirePositiveId(payload && payload.shareId, 'Μερίδα'),
-    actionDate: requireDate(payload.actionDate, 'Ημερομηνία'),
+    actionDate,
     reason: requireText(payload.reason, 'Αιτιολογία αρχειοθέτησης')
   };
 }

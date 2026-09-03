@@ -166,7 +166,7 @@ async function run() {
     });
     assert.strictEqual((overflowingShareHtml.match(/class="official-share-page/g) || []).length, 2);
     assert.match(overflowingShareHtml, /official-share-back-page/);
-    assert.match(overflowingShareHtml, /ΓΙΑ ΜΕΤΑΦΟΡΑ/);
+    assert.match(overflowingShareHtml, /ΣΕ ΜΕΤΑΦΟΡΑ/);
     assert.match(overflowingShareHtml, /ΑΠΟ ΜΕΤΑΦΟΡΑ/);
 assert.match(overflowingShareHtml, />8<\/td>\s*<td><\/td>/u);
     assert.doesNotMatch(overflowingShareHtml, /Πίσω πλευρά|ΣΥΔΑ/);
@@ -906,7 +906,7 @@ assert.match(overflowingShareHtml, />8<\/td>\s*<td><\/td>/u);
     const archiveShare = shares.listShares().find((item) => item.shareNumber === '2');
     administration.archiveShare({
       shareId: archiveShare.id,
-      actionDate: '2026-06-08',
+      actionDate: '2026-12-31',
       reason: 'Δοκιμαστική κατάργηση είδους'
     });
     assert.strictEqual(shares.listShares().some((item) => item.id === archiveShare.id), false);
