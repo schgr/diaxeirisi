@@ -21,15 +21,15 @@ https://USERNAME.github.io/REPOSITORY/
 ## Διάθεση του installer
 
 1. Ανοίξτε την ενότητα **Releases** του repository.
-2. Δημιουργήστε release με tag `v1.0.6.01`.
+2. Δημιουργήστε release με tag `v1.0.6.40`.
 3. Επισυνάψτε και τα τέσσερα αρχεία, διατηρώντας ακριβώς τις παρακάτω
    ονομασίες:
 
 ```text
-diaxeirisi-Ylikoy-Windows-10-11-x64-Setup-1.0.6.01.exe
-diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-1.0.6.01.exe
-diaxeirisi-Ylikoy-Windows-7-x64-Setup-1.0.6.01.exe
-diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-1.0.6.01.exe
+diaxeirisi-Ylikoy-Windows-10-11-x64-Setup-1.0.6.40.exe
+diaxeirisi-Ylikoy-Windows-10-11-x86-Setup-1.0.6.40.exe
+diaxeirisi-Ylikoy-Windows-7-x64-Setup-1.0.6.40.exe
+diaxeirisi-Ylikoy-Windows-7-SP1-x86-Setup-1.0.6.40.exe
 ```
 
 Η ιστοσελίδα αναγνωρίζει αυτόματα το repository από τη διεύθυνση GitHub
