@@ -480,6 +480,15 @@ h1 em, h2 em { color: var(--cyan-deep); font-style: normal; font-weight: 500; }
 .download-ring.two { width: 330px; height: 330px; }
 .download-ring.three { width: 440px; height: 440px; border-style: dashed; animation: orbit 35s linear reverse infinite; }
 .download-note { margin: 20px 0 0; text-align: center; color: var(--muted); font-size: 12px; }
+.requirements-panel { margin-top: 38px; padding: 34px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--white); box-shadow: 0 16px 40px rgba(6,31,46,.06); }
+.requirements-heading h3 { margin: 10px 0 8px; font-size: clamp(24px, 3vw, 34px); }
+.requirements-heading > p:last-child, .requirements-footnote { max-width: 780px; color: var(--muted); font-size: 14px; }
+.requirements-grid { margin: 25px 0 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.requirements-grid > div { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #f6f9f9; }
+.requirements-grid dt { margin-bottom: 8px; color: var(--cyan-deep); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.requirements-grid dd { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.requirements-footnote { margin-bottom: 0; }
+.requirements-footnote a { color: var(--cyan-deep); text-decoration: underline; text-underline-offset: 3px; }
 
 .faq .section-heading { margin-bottom: 35px; }
 .faq-list { border-top: 1px solid var(--line); }
@@ -577,6 +586,7 @@ h1 em, h2 em { color: var(--cyan-deep); font-style: normal; font-weight: 500; }
   .security-copy ul { grid-template-columns: 1fr; }
   .download-card { min-height: 650px; padding: 50px 28px; grid-template-columns: 1fr; }
   .download-options { grid-template-columns: 1fr; }
+  .requirements-grid { grid-template-columns: 1fr; }
   .download-art { min-height: 220px; }
   .download-ring.three { width: 340px; height: 340px; }
   .footer-inner { align-items: flex-start; flex-direction: column; }
@@ -615,5 +625,6 @@ h1 em, h2 em { color: var(--cyan-deep); font-style: normal; font-weight: 500; }
   .security-visual { overflow: hidden; }
   .orbit-three { width: 300px; height: 300px; }
   .download-actions .button { width: 100%; }
+  .requirements-panel { padding: 24px 20px; }
   .faq summary { font-size: 15px; }
 }
