@@ -530,6 +530,8 @@ h1 em, h2 em { color: var(--cyan-deep); font-style: normal; font-weight: 500; }
 
 @media (max-width: 780px) {
   :root { --shell: min(100% - 28px, 620px); }
+  .ambient-one { right: 0; }
+  .screenshots::before { right: 0; }
   .section-block { padding-block: 82px; }
   .site-header { min-height: 68px; margin-top: 8px; }
   .menu-toggle {
