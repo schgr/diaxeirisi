@@ -485,6 +485,7 @@ h1 em, h2 em { color: var(--cyan-deep); font-style: normal; font-weight: 500; }
 .requirements-heading > p:last-child, .requirements-footnote { max-width: 780px; color: var(--muted); font-size: 14px; }
 .requirements-grid { margin: 25px 0 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .requirements-grid > div { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #f6f9f9; }
+.requirements-grid > div:last-child { grid-column: 1 / -1; }
 .requirements-grid dt { margin-bottom: 8px; color: var(--cyan-deep); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .requirements-grid dd { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.5; }
 .requirements-footnote { margin-bottom: 0; }
