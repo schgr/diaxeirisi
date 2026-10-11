@@ -281,7 +281,9 @@
   position: relative;
   width: 297mm;
   min-height: 210mm;
-  padding: 12mm 10mm 16mm;
+  height: 210mm;
+  min-height: 210mm;
+  padding: 5mm 8mm 10mm;
   color: #111;
   background: #fff;
   break-after: page;
@@ -295,6 +297,7 @@
 
 .serial-number-registry-print-table {
   width: 100%;
+  height: calc(100% - 8mm);
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 9pt;

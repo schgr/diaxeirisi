@@ -8,7 +8,7 @@ export function renderMaterialPickerTableInput(rows = [], shares = [], onChange 
 
   return `
     <div class="exhp-materials-editor" data-material-picker-table data-material-picker-variant="${escapeHtml(variant)}"${changeAttribute}>
-      ${renderCatalogDatalist(catalog)}
+      ${variant === 'manual' ? '' : renderCatalogDatalist(catalog)}
       <table class="exhp-materials-table exhp-materials-table-input">
         ${renderColgroup(variant)}
         ${renderTableHead(variant)}
@@ -37,7 +37,7 @@ export function renderMaterialPickerRow(row = {}, index = 0, options = {}) {
       <td>
         <input
           data-material-picker-select
-          list="exhp-material-picker-catalog"
+          ${variant === 'manual' ? '' : 'list="exhp-material-picker-catalog"'}
           value="${escapeHtml(item.shareNumber)}"
           placeholder="Αριθμός μερίδας"
           autocomplete="off"

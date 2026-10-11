@@ -26,7 +26,7 @@ assert.match(requestsPage, /textContent = item\.description/);
 assert.match(requestsPage, /search\.addEventListener\('input'/);
 assert.doesNotMatch(requestsPage, /search\.addEventListener\('change'/);
 assert.match(styles, /\.key-catalogue-result-list\s*\{[\s\S]*overflow: auto;/);
-assert.match(requestsPage, /renderRequestItemBarcode\(item\)/);
+assert.doesNotMatch(requestsPage, /renderRequestItemBarcode\(item\)/);
 assert.doesNotMatch(requestsPage, /getKeyCatalogueImage|key-catalogue-image-overlay/);
 assert.doesNotMatch(requestsPage, /request-document-notes-cell" rowspan=/);
 assert.match(styles, /\.request-line-barcode\s*\{[\s\S]*height:\s*30px/);

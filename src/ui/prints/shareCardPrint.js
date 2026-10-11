@@ -277,13 +277,17 @@ async function printPreparedShareCards(container, preview, settings, state) {
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
     const printRoot = document.createElement('div');
-    printRoot.className = 'isolated-print-root';
+    printRoot.className = 'isolated-print-root share-card-print-root';
     printRoot.innerHTML = chunks.join('');
+    const pageStyle = document.createElement('style');
+    pageStyle.textContent = '@page { size: A4 portrait !important; margin: 0; }';
     document.body.dataset.isolatedDocumentPrint = 'true';
     document.body.appendChild(printRoot);
+    document.head.appendChild(pageStyle);
     try {
       await window.appApi.print.currentDocument({ landscape: false });
     } finally {
+      pageStyle.remove();
       printRoot.remove();
       delete document.body.dataset.isolatedDocumentPrint;
     }

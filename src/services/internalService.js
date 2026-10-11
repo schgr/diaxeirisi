@@ -15,7 +15,9 @@ function createInternalService(db) {
           composition: repository.listCompositionItems(row.id).map((item) => ({
             componentNominalNumber: item.component_nominal_number,
             componentDescription: item.component_description,
-            measurementUnit: item.measurement_unit
+            measurementUnit: item.measurement_unit,
+            quantityPerMaterial: Number(item.quantity || 0),
+            notes: item.notes || ''
           }))
         })),
         departmentManagers: repository.listDepartmentManagers().map((row) => ({
@@ -67,7 +69,10 @@ function createInternalService(db) {
       const departmentBalance = repository.getDepartmentShareBalance(department.id, share.id);
 
       if (movement.movementType === 'Επιστροφή' && movement.quantity - departmentBalance > 0.000001) {
-        throw new AppError('Η Μερική Διαχείριση δεν έχει επαρκή χρεωμένη ποσότητα.', 'VALIDATION_ERROR');
+        throw new AppError(
+          `Η επιστροφή ${movement.quantity} από το τμήμα ${department.department_name} υπερβαίνει τη διαθέσιμη ποσότητα ${departmentBalance} της μερίδας ${share.share_number}.`,
+          'VALIDATION_ERROR'
+        );
       }
 
       let documentId;

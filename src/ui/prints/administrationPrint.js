@@ -28,7 +28,7 @@ function renderMovementDifferencesIndex(settings, protocols) {
     ],
     numbers: ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
     rows: protocols.map((item) => [
-      `${item.registryNumber}/${item.fiscalYear}`,
+      item.registryNumber,
       formatDate(item.protocolDate),
       item.counterpartyUnit,
       `${item.differenceType} ${formatNumber(item.differenceQuantity)} ${item.measurementUnit}`,
@@ -37,7 +37,9 @@ function renderMovementDifferencesIndex(settings, protocols) {
       item.responseDate ? `${item.responseStatus} ${formatDate(item.responseDate)}` : item.responseStatus,
       formatDate(item.escalationDate),
       item.settlementReference || item.settlementStatus
-    ])
+    ]),
+    rowsPerPage: 25,
+    showPageNumber: true
   });
 }
 
@@ -100,7 +102,7 @@ function renderBalanceDifferenceTable(rows) {
               <td>${formatNumber(row.existingQuantity)}</td>
               <td>${formatNumber(row.chargedQuantity)}</td>
               <td>${formatNumber(row.differenceQuantity)}</td>
-              <td><span class="status-pill ${row.status === 'Πλεόνασμα' ? 'surplus' : 'deficit'}">${escapeHtml(row.status)}</span></td>
+              <td>${escapeHtml(row.status)}</td>
             </tr>
           `).join('') : '<tr><td colspan="10" class="empty-table">Δεν υπάρχουν πλεονάσματα ή ελλείμματα για την επιλεγμένη κατηγορία.</td></tr>'}
         </tbody>
@@ -108,6 +110,44 @@ function renderBalanceDifferenceTable(rows) {
       <div class="balance-differences-page-number">Σελίδα ${pageIndex + 1} από ${pages.length}</div>
     </article>
   `).join('');
+}
+
+function renderBalanceDifferenceActionList(rows, departments) {
+  const shareRows = rows.filter((row) => row.sourceType === 'Μερίδα');
+  if (!shareRows.length) {
+    return '<section class="balance-difference-action-list no-print"><p class="empty-table">Δεν υπάρχουν μερίδες για τακτοποίηση στην επιλεγμένη προβολή.</p></section>';
+  }
+  return `
+    <section class="balance-difference-action-list no-print">
+      <div>
+        <h3>Μερίδες προς τακτοποίηση</h3>
+        <p class="muted">Η κατανομή επιτρέπει χρέωση ή επιστροφή σε ένα ή περισσότερα τμήματα, με έλεγχο ότι το άθροισμα συμφωνεί με τη διαφορά.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="balance-difference-action-table">
+          <thead><tr><th>Μερίδα</th><th>Υλικό</th><th>Διαφορά</th><th>Τύπος</th><th>Ενέργειες</th></tr></thead>
+          <tbody>
+            ${shareRows.map((row) => {
+              const isDeficit = row.status === 'Έλλειμμα';
+              const canSettle = departments.length;
+              return `
+                <tr>
+                  <td>${escapeHtml(row.shareNumber)}</td>
+                  <td>${escapeHtml(row.description)}</td>
+                  <td class="${isDeficit ? 'deficit' : 'surplus'}">${formatNumber(row.differenceQuantity)} ${escapeHtml(row.measurementUnit)}</td>
+                  <td>${isDeficit ? 'Χρέωση' : 'Πίστωση'}</td>
+                  <td><button class="primary-button" data-settle-balance-difference
+                    data-share-id="${Number(row.shareId)}"
+                    data-status="${escapeHtml(row.status)}"
+                    data-quantity="${Number(row.differenceQuantity)}"
+                    data-share-number="${escapeHtml(row.shareNumber)}"
+                    type="button" ${canSettle ? '' : 'disabled'}>${row.requiresComposition ? 'Κατανομή σύνθεσης' : 'Κατανομή'}</button></td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </section>`;
 }
 
 function filterBalanceDifferences(rows, filter) {
@@ -124,13 +164,14 @@ function filterBalanceDifferences(rows, filter) {
   );
 }
 
-function bindBalanceDifferenceControls(container, state, rows, preview) {
+function bindBalanceDifferenceControls(container, state, rows, preview, onFilterChange = null) {
   container.querySelector('#balance-difference-filter')?.addEventListener('change', (event) => {
     state.balanceDifferenceFilter = event.target.value;
     preview.innerHTML = renderBalanceDifferenceTable(
       filterBalanceDifferences(rows, state.balanceDifferenceFilter)
     );
+    onFilterChange?.(filterBalanceDifferences(rows, state.balanceDifferenceFilter));
   });
 }
 
-export { bindBalanceDifferenceControls, filterBalanceDifferences, renderBalanceDifferenceControls, renderBalanceDifferenceTable, renderMovementDifferencesIndex };
+export { bindBalanceDifferenceControls, filterBalanceDifferences, renderBalanceDifferenceActionList, renderBalanceDifferenceControls, renderBalanceDifferenceTable, renderMovementDifferencesIndex };

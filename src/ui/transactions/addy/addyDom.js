@@ -10,6 +10,56 @@ export function restoreAddyEntryFocus(controls) {
   });
 }
 
+export function openAddyDraftItemsDialog(items, onSave) {
+  const modal = window.document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <section class="request-document-modal addy-edit-modal" role="dialog" aria-modal="true" aria-labelledby="addy-draft-edit-title">
+      <header class="material-card-header">
+        <h2 id="addy-draft-edit-title">Υλικά ΑΔΔΥ</h2>
+        <button class="secondary-button" data-close-addy-draft type="button">Κλείσιμο</button>
+      </header>
+      <form data-addy-draft-edit-form class="stacked-form">
+        <div class="table-wrap addy-draft-edit-table-wrap">
+          <table>
+            <thead><tr><th>Μερίδα</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Είδος</th><th>Ποσότητα</th><th>Ενέργεια</th></tr></thead>
+            <tbody>${items.map((item, index) => `
+              <tr data-addy-draft-item="${index}">
+                <td>${escapeAddyEditHtml(item.shareNumber)}</td>
+                <td>${escapeAddyEditHtml(item.nominalNumber)}</td>
+                <td>${escapeAddyEditHtml(item.description)}</td>
+                <td>${escapeAddyEditHtml(item.transactionType)}</td>
+                <td><input data-addy-draft-quantity type="number" min="0.000001" step="any" value="${Number(item.quantity)}" required aria-label="Ποσότητα ${escapeAddyEditHtml(item.description)}" /></td>
+                <td><button class="danger-button" data-remove-addy-draft type="button">Διαγραφή</button></td>
+              </tr>`).join('')}</tbody>
+          </table>
+          ${items.length ? '' : '<p class="empty-table">Δεν έχουν προστεθεί υλικά.</p>'}
+        </div>
+        <div class="row-actions addy-draft-edit-actions">
+          <button class="secondary-button" data-close-addy-draft type="button">Ακύρωση</button>
+          <button class="primary-button" type="submit">Αποθήκευση</button>
+        </div>
+      </form>
+    </section>`;
+  const close = () => modal.remove();
+  modal.querySelectorAll('[data-close-addy-draft]').forEach((button) => button.addEventListener('click', close));
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) close();
+    event.target.closest('[data-remove-addy-draft]')?.closest('tr')?.remove();
+  });
+  modal.querySelector('[data-addy-draft-edit-form]').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const updatedItems = [...modal.querySelectorAll('[data-addy-draft-item]')].map((row) => ({
+      ...items[Number(row.dataset.addyDraftItem)],
+      quantity: Number(row.querySelector('[data-addy-draft-quantity]').value)
+    }));
+    if (updatedItems.some((item) => !Number.isFinite(item.quantity) || item.quantity <= 0)) return;
+    onSave(updatedItems);
+    close();
+  });
+  window.document.body.appendChild(modal);
+}
+
 export function openAddyEditDialog(documentData, transactionsApi, showToast, onSaved) {
   const modal = window.document.createElement('div');
   modal.className = 'modal-backdrop';
@@ -300,6 +350,7 @@ export async function openAddyDepartmentAllocationDialog({ departments, share, s
           <strong data-addy-allocation-total>Σύνολο: 0 / ${formatAddyShareBalance(quantity)}</strong>
           <span class="form-error" data-addy-allocation-mismatch></span>
           <button class="secondary-button" data-close-addy-allocation type="button">Κλείσιμο</button>
+          <button class="secondary-button" data-skip-addy-allocation type="button">Παράβλεψη κατανομής</button>
           <button class="primary-button" data-confirm-addy-allocation type="button" disabled>Αποθήκευση</button>
         </div>
       </section>`;
@@ -337,6 +388,13 @@ export async function openAddyDepartmentAllocationDialog({ departments, share, s
         finish(null);
         return;
       }
+      if (event.target.closest('[data-skip-addy-allocation]')) {
+        finish({
+          allocations: [],
+          skipped: true
+        });
+        return;
+      }
       if (!event.target.closest('[data-confirm-addy-allocation]')) return;
       const allocations = [...modal.querySelectorAll('[data-addy-department-allocation-row]')]
         .map((row) => ({
@@ -344,7 +402,7 @@ export async function openAddyDepartmentAllocationDialog({ departments, share, s
           quantity: Number(row.querySelector('[data-addy-department-allocation-quantity]')?.value || 0)
         }))
         .filter((allocation) => allocation.quantity > 0);
-      finish(allocations);
+      finish({ allocations, skipped: false });
     });
     window.document.addEventListener('keydown', onKeyDown);
     window.document.body.appendChild(modal);

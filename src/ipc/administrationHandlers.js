@@ -7,6 +7,7 @@ const CHANNELS = Object.freeze([
   "administration:add-officer",
   "administration:close-officer",
   "administration:create-handover",
+  "administration:delete-handover",
   "administration:get-handover",
   "administration:update-handover-check",
   "administration:update-handover-protocol",
@@ -41,6 +42,9 @@ function registerAdministrationHandlers({
     );
   register('administration:create-handover', async (_event, payload) =>
       safeInvoke(() => services.administration.createHandover(payload))
+    );
+  register('administration:delete-handover', async (_event, id) =>
+      safeInvoke(() => services.administration.deleteHandover(id))
     );
   register('administration:get-handover', async (_event, id) =>
       safeInvoke(() => services.administration.getHandover(id))

@@ -53,12 +53,12 @@ async function run() {
         notes: 'ΠΑΡΑΤΗΡΗΣΗ'
       }))
     );
-    assert.strictEqual((externalIndexHtml.match(/<article class="official-index-page/g) || []).length, 2);
-    assert.match(externalIndexHtml, /te34-254-page-227\.png/);
+    assert.strictEqual((externalIndexHtml.match(/<article class="external-excel-index-page/g) || []).length, 2);
+    assert.match(externalIndexHtml, /Κ2312\/ΔΥΠ/);
     assert.match(externalIndexHtml, /ΕΙΔΙΚΟ ΠΕΔΙΟ 7/);
     assert.match(externalIndexHtml, /ΕΙΔΙΚΟ ΠΕΔΙΟ 8/);
     assert.match(externalIndexHtml, /ΕΙΔΙΚΟ ΠΕΔΙΟ 9/);
-    assert.match(externalIndexHtml, /official-index-cell official-index-left-cell/);
+    assert.match(externalIndexHtml, /external-index-cell-text/);
     const emptyExternalFieldsHtml = renderExternalTransactionsIndex(printSettings, [{
       serial: 1,
       date: '2026-06-13',
@@ -219,8 +219,8 @@ assert.match(overflowingShareHtml, />8<\/td>\s*<td><\/td>/u);
       notes: 'Δοκιμή'
     });
     assert.strictEqual((movementProtocolHtml.match(/official-movement-protocol-page/g) || []).length, 2);
-    assert.match(movementProtocolHtml, /-214-/);
-    assert.match(movementProtocolHtml, /-215-/);
+    assert.doesNotMatch(movementProtocolHtml, /-214-|Εμπρός Πλευρά|ΣΗΔΑ ΕΔ/);
+    assert.doesNotMatch(movementProtocolHtml, /-215-|Πίσω Πλευρά/);
     assert.match(movementProtocolHtml, /Κ 2303\/ΔΥΠ/);
     assert.match(movementProtocolHtml, /ΓΝΩΜΑΤΕΥΣΗ ΠΑΡΑΛΗΠΤΗ/);
 

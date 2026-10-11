@@ -109,11 +109,11 @@ export function renderDocDEdit(data = {}, options = {}) {
       </div>
       <section data-doc-d-materials="used">
         <h3>Α' ΧΡΗΣΙΜΟΠΟΙΗΘΕΝΤΑ ΕΙΔΗ</h3>
-        ${renderMaterialPickerTableInput(normalized.materialsUsed, options.materialCatalog || [], 'docDUsedMaterialsChanged')}
+        ${renderMaterialPickerTableInput(normalized.materialsUsed, options.materialCatalog || [], 'docDUsedMaterialsChanged', { variant: 'manual' })}
       </section>
       <section data-doc-d-materials="produced">
         <h3>Β' ΠΑΡΑΧΘΕΝΤΑ ΕΙΔΗ</h3>
-        ${renderMaterialPickerTableInput(normalized.materialsProduced, options.materialCatalog || [], 'docDProducedMaterialsChanged')}
+        ${renderMaterialPickerTableInput(normalized.materialsProduced, options.materialCatalog || [], 'docDProducedMaterialsChanged', { variant: 'manual' })}
       </section>
     </section>
   `;
@@ -165,7 +165,6 @@ export function validateDocDMetasximatismos(data = {}) {
   const fields = normalized.specificFields;
   const checks = [
     requireNonEmpty(normalized.commonFields.monada, 'Μονάδα'),
-    requireNonEmpty(normalized.commonFields.addyAxp, 'Α/Α ΕΧΠ'),
     requireNonEmpty(fields.topos, 'Τόπος'),
     requireNonEmpty(fields.dgiArithmos, 'Δγή συγκρότησης'),
     requireNonEmpty(fields.proedros, 'Πρόεδρος Επιτροπής'),

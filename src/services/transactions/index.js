@@ -8,11 +8,13 @@ const { createAddyService } = require('./addyService');
 const { createExhpService } = require('./exhpService');
 const { createIndexRegistryService } = require('./indexRegistryService');
 const shared = require('./shared');
+const { createSharesService } = require('../sharesService');
 
 function createTransactionsService(db, settingsService) {
   const repository = createTransactionsRepository(db);
   const dependencies = {
     repository,
+    sharesService: createSharesService(db),
     settingsService,
     transactionSections,
     validateAddy,
@@ -30,6 +32,7 @@ function createTransactionsService(db, settingsService) {
     getStructure: query.getStructure,
     getAddyReferenceData: query.getAddyReferenceData,
     createCommerceCompany: query.createCommerceCompany,
+    listCommerceCompanies: query.listCommerceCompanies,
     updateCommerceCompany: query.updateCommerceCompany,
     deleteCommerceCompany: query.deleteCommerceCompany,
     suggestShareNumber: query.suggestShareNumber,

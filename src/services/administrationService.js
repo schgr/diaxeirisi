@@ -142,6 +142,15 @@ function createAdministrationService(db) {
       return { id, message: 'Το πρωτόκολλο παράδοσης δημιουργήθηκε.' };
     },
 
+    deleteHandover(id) {
+      const handoverId = requirePositiveId(id);
+      if (!repository.getHandover(handoverId)) {
+        throw new AppError('Το πρωτόκολλο παράδοσης δεν βρέθηκε.', 'NOT_FOUND');
+      }
+      repository.transaction(() => repository.deleteHandover(handoverId));
+      return { message: 'Το πρωτόκολλο παράδοσης διαγράφηκε.' };
+    },
+
     getHandover(id) {
       const handoverId = requirePositiveId(id);
       const handover = repository.getHandover(handoverId);

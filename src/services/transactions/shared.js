@@ -1,3 +1,20 @@
+const { AppError } = require('../../core/errorHandler');
+
+function assertShareMatchesItem(share, item) {
+  if (share && item.transactionType === 'Χρέωση' &&
+      String(share.nominal_number || '').trim() !== String(item.nominalNumber || '').trim()) {
+    throw new AppError(`Ο Αριθμός Μερίδας ${item.shareNumber} χρησιμοποιείται ήδη με διαφορετικό Αριθμό Ονομαστικού.`, 'VALIDATION_ERROR');
+  }
+}
+
+function assertSufficientBalance(share, item, allowZeroComposition = false) {
+  if (item.transactionType === 'Πίστωση' &&
+      !(allowZeroComposition && item.quantity === 0 && item.createComposition?.length) &&
+      (!share || Number(item.quantity) > Number(share.accounting_balance || 0))) {
+    throw new AppError(`Το διαθέσιμο υπόλοιπο της μερίδας ${item.shareNumber} δεν επαρκεί για τη δοσοληψία.`, 'VALIDATION_ERROR');
+  }
+}
+
 function mapExhpSupportTemplate(row) {
   return {
     id: row.id,
@@ -14,13 +31,9 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
   if (share && share.archive_status !== 'Ενεργή') {
     throw new Error(`Η μερίδα ${item.shareNumber} δεν βρέθηκε.`);
   }
+  assertShareMatchesItem(share, item);
+  assertSufficientBalance(share, item, isToolCollectionReason(exhp.issueReason));
   if (!share) {
-    const canCreateZeroComposition = item.quantity === 0
-      && isToolCollectionReason(exhp.issueReason)
-      && Boolean(item.createComposition && item.createComposition.length);
-    if (item.transactionType === 'Πίστωση' && !canCreateZeroComposition) {
-      throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
-    }
     share = repository.createShare({
       shareNumber: item.shareNumber,
       nominalNumber: item.nominalNumber,
@@ -44,9 +57,7 @@ function saveRegularExhpItem(repository, exhp, documentId, registryNumber, item,
   if (item.quantity === 0 && !zeroCompositionMovement) {
     throw new Error('Η ποσότητα πρέπει να είναι θετικός αριθμός.');
   }
-  if (item.transactionType === 'Πίστωση' && item.quantity > Number(share.accounting_balance || 0)) {
-    throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
-  }
+  assertSufficientBalance(share, item, isToolCollectionReason(exhp.issueReason));
   let shareTransactionId = null;
   let ledgerSerial = 'Φ.Μ.';
   if (!zeroCompositionMovement) {
@@ -93,7 +104,7 @@ function saveToolCollectionTransfers(repository, exhp, documentId, registryNumbe
     );
     if (!charge) throw new Error(`Δεν βρέθηκε νέα μερίδα για το υλικό ${credit.nominalNumber}.`);
     if (repository.findShareByNumber(charge.shareNumber)) {
-      throw new Error(`Ο Αριθμός Μερίδας ${charge.shareNumber} χρησιμοποιείται ήδη.`);
+      throw new AppError(`Ο Αριθμός Μερίδας ${charge.shareNumber} χρησιμοποιείται ήδη.`, 'VALIDATION_ERROR');
     }
 
     let sourceShare = null;
@@ -102,7 +113,7 @@ function saveToolCollectionTransfers(repository, exhp, documentId, registryNumbe
     if (!credit.collectionVirtualCredit) {
       sourceShare = repository.findShareByNumber(credit.shareNumber);
       if (!sourceShare || Number(credit.quantity) > Number(sourceShare.accounting_balance || 0)) {
-        throw new Error(`Η χρεωμένη ποσότητα δεν επαρκεί για το υλικό ${credit.nominalNumber}.`);
+        throw new AppError(`Το διαθέσιμο υπόλοιπο της μερίδας ${credit.shareNumber} δεν επαρκεί για τη δοσοληψία.`, 'VALIDATION_ERROR');
       }
       repository.adjustAccountingBalance(sourceShare.id, -credit.quantity);
       creditTransactionId = repository.createShareTransaction({
@@ -207,11 +218,11 @@ function saveNominalNumberTransfer(repository, exhp, documentId, registryNumber,
       throw new Error(`Η μερίδα ${creditInput.shareNumber} δεν βρέθηκε.`);
     }
     if (repository.findShareByNumber(chargeInput.shareNumber)) {
-      throw new Error(`Ο Αριθμός Μερίδας ${chargeInput.shareNumber} χρησιμοποιείται ήδη.`);
+      throw new AppError(`Ο Αριθμός Μερίδας ${chargeInput.shareNumber} χρησιμοποιείται ήδη.`, 'VALIDATION_ERROR');
     }
     const balance = Number(sourceShare.accounting_balance || 0);
     if (Math.abs(Number(creditInput.quantity) - balance) > 0.000001) {
-      throw new Error(`Η μερίδα ${sourceShare.share_number} πρέπει να πιστωθεί με ολόκληρο το υπόλοιπο ${balance}.`);
+      throw new AppError(`Η μερίδα ${sourceShare.share_number} πρέπει να πιστωθεί με ολόκληρο το υπόλοιπο ${balance}.`, 'VALIDATION_ERROR');
     }
 
     const composition = buildCompositionSnapshot(repository, sourceShare.id, balance, sourceShare.material_type);
@@ -435,6 +446,8 @@ module.exports = {
   addChangeSheetCompositionCharges,
   compositionChargeKey,
   saveNominalNumberTransfer,
+  assertShareMatchesItem,
+  assertSufficientBalance,
   buildCompositionSnapshot,
   readTransactionArchive,
   mapExhpDocumentSupport,

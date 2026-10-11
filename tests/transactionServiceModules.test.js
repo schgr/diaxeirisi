@@ -84,7 +84,8 @@ const currentApi = Array.from(
 );
 const expectedApi = [...publicApi];
 expectedApi.splice(expectedApi.indexOf('getAddyReferenceData') + 1, 0, 'createCommerceCompany');
-expectedApi.splice(expectedApi.indexOf('createCommerceCompany') + 1, 0, 'updateCommerceCompany');
+expectedApi.splice(expectedApi.indexOf('createCommerceCompany') + 1, 0, 'listCommerceCompanies');
+expectedApi.splice(expectedApi.indexOf('listCommerceCompanies') + 1, 0, 'updateCommerceCompany');
 expectedApi.splice(expectedApi.indexOf('updateCommerceCompany') + 1, 0, 'deleteCommerceCompany');
 expectedApi.splice(expectedApi.indexOf('saveAddy') + 1, 0, 'saveAddyDepartmentAllocations');
 expectedApi.splice(expectedApi.indexOf('saveAddyDepartmentAllocations') + 1, 0, 'saveExhpDepartmentAllocations');

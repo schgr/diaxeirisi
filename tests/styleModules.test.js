@@ -17,7 +17,8 @@ const expectedImports = [
   './styles/modals-tables.css',
   './styles/official-prints.css',
   './styles/registries-legacy.css',
-  './styles/share-print-ui.css'
+  './styles/share-print-ui.css',
+  './styles/document-preview.css'
 ];
 const actualImports = Array.from(
   entry.matchAll(/@import url\(['"](.+?)['"]\);/g),
@@ -40,34 +41,42 @@ const modules = actualImports.map((relativePath) => {
   };
 });
 const baselineModules = modules.filter(
-  ({ relativePath }) => relativePath !== './styles/share-print-ui.css'
+  ({ relativePath }) => !['./styles/share-print-ui.css', './styles/document-preview.css'].includes(relativePath)
 );
 const combined = baselineModules.map(({ relativePath, contents }) =>
   ['./styles/base-layout.css', './styles/transactions-settings.css', './styles/official-prints.css'].includes(relativePath)
-    ? contents.replace(/\r?\n$/, '')
-    : contents
+    ? contents.replace(/\r\n/g, '\n').replace(/\n$/, '')
+    : contents.replace(/\r\n/g, '\n')
 ).join('');
 assert.strictEqual(
   crypto.createHash('sha256').update(combined).digest('hex'),
-  '58990e8006acb32957b7a4791995b5e8979c52c7220a9cbc5eef694225e0697f',
+  'e016a4068da057ee16637bbb7abc31f2e4b06fbcdcb52c376d8ede2a1957d41e',
   'The ordered stylesheet-module snapshot changed unexpectedly.'
 );
 
 const sharePrintUi = modules.find(
   ({ relativePath }) => relativePath === './styles/share-print-ui.css'
 ).contents;
+const documentPreview = modules.find(
+  ({ relativePath }) => relativePath === './styles/document-preview.css'
+).contents;
 const officialPrints = modules.find(
   ({ relativePath }) => relativePath === './styles/official-prints.css'
 ).contents;
 assert.match(
   officialPrints,
-  /\.exhp-supporting-documents-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,[\s\S]*grid-template-rows:\s*repeat\(3,[\s\S]*grid-auto-flow:\s*column/,
-  'EXHP supporting documents must retain their 3x3 column-first layout.'
+  /\.exhp-supporting-documents-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,[\s\S]*grid-template-rows:\s*repeat\(5,[\s\S]*grid-auto-flow:\s*column/,
+  'EXHP supporting documents must use a 5x2 column-first layout.'
 );
 assert.match(
   sharePrintUi,
   /\.legacy-offline-badge\s*\{[\s\S]*display:\s*none\s*!important/,
   'The legacy/offline badge must remain hidden in every build.'
+);
+assert.match(
+  documentPreview,
+  /Shared on-screen document viewer[\s\S]*100dvh/,
+  'Every document preview must use the shared viewport-aware viewer.'
 );
 assert.match(
   sharePrintUi,

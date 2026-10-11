@@ -23,13 +23,10 @@ export function renderOfficialHandoverProtocol(settings, handover) {
       <p>Οι παραπάνω μερίδες, αριθμημένες από τον αύξ. αριθμό ${fill(data.shareRangeFrom)} έως ${fill(data.shareRangeTo)}, ελέγχθηκαν με αντιπαραβολή προς το Μητρώο Μερίδων και βρέθηκαν να είναι «ΚΑΛΩΣ», καλύπτουν δε το σύνολο του υλικού.</p>
       <p>β. Τα παραδιδόμενα υπόλοιπα είναι κατανεμημένα στους παρακάτω Βοηθούς Γενικού Διαχειριστή:</p>
       <table class="official-handover-table">
-        <thead><tr><th>Α/Α</th><th>Βαθμός</th><th>Ονοματεπώνυμο Βοηθού</th><th>Κατηγορίες Υλικού</th><th>Σύνολο Μερίδων</th></tr></thead>
+        <colgroup><col style="width:6%"><col style="width:18%"><col style="width:34%"><col style="width:23%"><col style="width:19%"></colgroup>
+        <thead><tr><th>Α/Α</th><th>Βαθμός</th><th>Ονοματεπώνυμο<br>Βοηθού</th><th>Κατηγορίες Υλικού</th><th>Σύνολο Μερίδων</th></tr></thead>
         <tbody>${assistants.map((item, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(item.rank || '')}</td><td>${escapeHtml(item.name || '')}</td><td>${escapeHtml(item.categories || '')}</td><td>Από ${escapeHtml(item.shareRangeFrom || '')}<br />Έως ${escapeHtml(item.shareRangeTo || '')}</td></tr>`).join('')}</tbody>
       </table>
-    </article>
-
-    <article class="official-handover-page print-document-area">
-      ${pageHeader(serviceName)}
       <p>Τα παραδιδόμενα υπόλοιπα περιλαμβάνουν το σύνολο του υλικού που βρίσκεται στην αποθήκη του παραδίδοντος και αυτό που είναι χρεωμένο με Δελτία Δοσοληψιών στους Μερικούς Διαχειριστές.</p>
       <p>γ. Οι παραπάνω βοηθοί βεβαιώνουν την ύπαρξη του υλικού που είναι χρεωμένο σε αυτούς.</p>
       <p>δ. Έγινε δειγματοληπτική καταμέτρηση του υλικού των Μερίδων:</p>
@@ -37,6 +34,10 @@ export function renderOfficialHandoverProtocol(settings, handover) {
       <p>δηλαδή σε ποσοστό ${fill(data.samplePercentageWords)} (ολογράφως) ${fill(data.samplePercentageNumber)} (αριθμητικώς) επί του συνόλου των Μερίδων.</p>
       <p class="official-choice"><span class="official-box ${data.fullCountCompleted ? 'checked' : ''}"></span> Καταμετρήθηκε το σύνολο του υλικού και διαπιστώθηκαν οι αναγραφόμενες διαφορές.</p>
       <p>ε. Παραδόθηκαν στον παραλαμβάνοντα τα Δελτία Δοσοληψιών των Μερικών Διαχειρίσεων και τα εκκρεμούντα αντίτυπα των Δελτίων Χορηγήσεως.</p>
+    </article>
+
+    <article class="official-handover-page print-document-area">
+      ${pageHeader('')}
       <h2>2. ΔΙΑΦΟΡΕΣ</h2>
       <p>α. <strong>Πλεονάσματα:</strong> ${fill(data.surplusesReference, 'long')}</p>
       <p>β. <strong>Ελλείμματα:</strong> ${fill(data.deficitsReference, 'long')}</p>
@@ -51,31 +52,32 @@ export function renderOfficialHandoverProtocol(settings, handover) {
       <p>Εφόσον ΝΑΙ, περιγραφή: ${fill(data.separateStorageDescription, 'long')}</p>
       <p>(2) Ασφαλής διαφύλαξη Υλικών Υψηλής Αξίας: ${fill(data.highValueSecurity, 'long')}</p>
       <p>(3) Ειδικά μέτρα ασφαλείας καυσίμων: ${fill(data.fuelSecurity, 'long')}</p>
-    </article>
-
-    <article class="official-handover-page print-document-area">
-      ${pageHeader(serviceName)}
       <h2>6. ΔΙΑΧΕΙΡΙΣΗ ΥΛΙΚΟΥ</h2>
       <p>Εκκρεμότητες: ${fill(data.managementPending || handover.pendingDocuments, 'long')}</p>
       <h2>4. ΠΑΡΑΤΗΡΗΣΕΙΣ ΠΑΡΑΛΑΜΒΑΝΟΝΤΟΣ</h2>
       <div class="official-handover-writing">${multiline(data.receivingObservations || handover.incomingObservations, 5)}</div>
+    </article>
+
+    <article class="official-handover-page print-document-area">
+      ${pageHeader('')}
       <h2>5. ΠΑΡΑΤΗΡΗΣΕΙΣ ΠΑΡΑΔΙΔΟΝΤΟΣ</h2>
       <div class="official-handover-writing">${multiline(data.outgoingObservations || handover.outgoingObservations, 5)}</div>
       <div class="official-handover-approval">
-        <div><strong>ΘΕΩΡΗΘΗΚΕ</strong><span>Ο ΔΙΟΙΚΗΤΗΣ</span>${identity(financialOfficers.commander)}</div>
-        <div><span>Ο ΠΕΔ</span>${identity(financialOfficers.ped)}</div>
-        <div><span>Ο ΠΡΟΪΣΤ. ΛΟΓΙΣΤ.</span>${identity(data.accountingSupervisor)}</div>
-        <div><span>ΟΙ ΒΟΗΘΟΙ ΓΕΝ. ΔΧΣΤΗ</span>${identity(data.generalManagerAssistants || data.inventoryCommitteePresident)}</div>
+        <div class="official-handover-commander-signature"><span class="official-handover-signature-title"><strong>ΘΕΩΡΗΘΗΚΕ</strong><br />Ο ΔΙΟΙΚΗΤΗΣ</span>${identity(financialOfficers.commander)}</div>
+        <div class="official-handover-ped-signature"><span class="official-handover-signature-title">Ο ΠΕΔ</span>${identity(financialOfficers.ped)}</div>
+        <div><span class="official-handover-signature-title">Ο ΠΡΟΪΣΤ. ΛΟΓΙΣΤ.</span>${identity(data.accountingSupervisor)}</div>
+        <div><span class="official-handover-signature-title">ΟΙ ΒΟΗΘΟΙ ΓΕΝ. ΔΧΣΤΗ</span>${identity(data.generalManagerAssistants || data.inventoryCommitteePresident)}</div>
       </div>
       <div class="official-handover-signatures">
-        <div><span>Ο ΠΑΡΑΛΑΜΒΑΝΩΝ</span>${identity(handover.incomingOfficer)}</div>
-        <div><span>Ο ΠΑΡΑΔΙΔΩΝ</span>${identity(outgoingOfficer)}</div>
+        <div><span class="official-handover-signature-title">Ο ΠΑΡΑΛΑΜΒΑΝΩΝ</span>${identity(handover.incomingOfficer)}</div>
+        <div><span class="official-handover-signature-title">Ο ΠΑΡΑΔΙΔΩΝ</span>${identity(outgoingOfficer)}</div>
       </div>
     </article>
   `;
 }
 
 function pageHeader(serviceName) {
+  if (!serviceName) return '<div class="official-handover-top official-handover-continuation-header"></div>';
   return `<div class="official-handover-top"><span>1. ΜΟΝΑΔΑ ${escapeHtml(serviceName)}</span><span><strong>Κ 2329/ΔΥΠ</strong><br />ΕΦΕΔ 500</span></div>`;
 }
 

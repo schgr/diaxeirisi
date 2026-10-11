@@ -18,8 +18,11 @@ assert.match(registryStyles, /\.serial-number-registry-table th:nth-child\(4\) \
 assert.match(registryStyles, /\.serial-number-registry-print-table th:nth-child\(4\) \{ width: 30%; \}/u);
 assert.match(registryStyles, /\.serial-number-registry-table th:nth-child\(5\) \{ width: 9%; \}/u);
 assert.match(registryStyles, /\.serial-number-registry-table th:nth-child\(6\) \{ width: 14%; \}/u);
-assert.match(indexStyles, /\.ammunition-batch-registry-table th:nth-child\(4\) \{ width: 24%; \}/u);
-assert.match(indexStyles, /\.ammunition-batch-registry-table th:nth-child\(9\) \{ width: 11%; \}/u);
+assert.match(indexStyles, /\.ammunition-batch-registry-table \{[\s\S]*min-width: 1380px;/u);
+assert.match(indexStyles, /\.ammunition-batch-registry-table th:nth-child\(4\) \{ width: 20%; \}/u);
+assert.match(indexStyles, /\.ammunition-batch-registry-table th:nth-child\(9\) \{ width: 16%; \}/u);
+assert.match(indexStyles, /\.ammunition-batch-actions-cell \.row-actions \{[\s\S]*flex-wrap: nowrap;[\s\S]*white-space: nowrap;/u);
+assert.doesNotMatch(indexStyles, /@media \(max-width: 1100px\)[\s\S]*?\.ammunition-batch-actions-cell/u);
 assert.match(indexStyles, /\.ammunition-batch-preview-page \.ammunition-batch-registry-table th:nth-child\(4\),[\s\S]*width: 31%;/u);
 assert.match(bookStyles, /\.controlled-materials-table th:nth-child\(4\) \{ width: 32%; \}/u);
 assert.match(bookStyles, /\.controlled-materials-table th:nth-child\(5\) \{ width: 10%; \}/u);

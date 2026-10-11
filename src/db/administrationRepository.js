@@ -87,8 +87,13 @@ function createAdministrationRepository(db) {
         LEFT JOIN inventory_sessions inventory ON inventory.id = handover.inventory_session_id
         LEFT JOIN general_management_handover_checks checks ON checks.handover_id = handover.id
         GROUP BY handover.id
-        ORDER BY handover.start_date DESC, handover.serial_number DESC
+        ORDER BY handover.fiscal_year ASC, handover.serial_number ASC, handover.id ASC
       `).all();
+    },
+
+    deleteHandover(id) {
+      db.prepare('DELETE FROM general_management_handover_checks WHERE handover_id = ?').run(id);
+      db.prepare('DELETE FROM general_management_handovers WHERE id = ?').run(id);
     },
 
     getHandover(id) {
@@ -204,7 +209,7 @@ function createAdministrationRepository(db) {
     listShareBalanceDifferences() {
       return db.prepare(`
         SELECT id, share_number, nominal_number, description, measurement_unit,
-               accounting_balance, charged_quantity
+               accounting_balance, charged_quantity, requires_composition
         FROM shares
         WHERE archive_status = 'Ενεργή'
           AND ABS(charged_quantity - accounting_balance) > 0.000001

@@ -221,6 +221,7 @@ export function openNewToolCollectionCompositionDialog(
         <div class="addy-save-row">
           <button class="secondary-button" data-add-new-tool-component type="button">Προσθήκη γραμμής</button>
           <button class="secondary-button" data-cancel-new-tool-composition type="button">Άκυρο</button>
+          <button class="secondary-button" data-skip-new-tool-composition type="button">Παράβλεψη σύνθεσης</button>
           <button class="primary-button" data-confirm-new-tool-composition type="button">Καταχώριση σύνθεσης</button>
         </div>
       </section>`;
@@ -268,6 +269,7 @@ export function openNewToolCollectionCompositionDialog(
     });
     modal.addEventListener('click', (event) => {
       if (event.target === modal || event.target.closest('[data-cancel-new-tool-composition]')) return close(null);
+      if (event.target.closest('[data-skip-new-tool-composition]')) return close([]);
       if (event.target.closest('[data-add-new-tool-component]')) {
         addRow();
         return;
@@ -494,14 +496,15 @@ export function renderSavedExhpRows(documents) {
 
 export function renderState(container, state) {
   const controls = getControls(container);
-  controls.body.innerHTML = renderAddyRows(state.items);
+  controls.body.innerHTML = renderAddyRows(state.items, state.addyListEditing);
   controls.limitText.textContent = `${state.items.length}/10 καταχωρήσεις`;
   controls.save.disabled = !state.items.length;
+  container.querySelector('[data-addy-list-actions-heading]').hidden = !state.addyListEditing;
 }
 
-export function renderAddyRows(items) {
+export function renderAddyRows(items, editing = false) {
   if (!items.length) {
-    return '<tr><td colspan="10" class="empty-table">Δεν έχουν προστεθεί υλικά.</td></tr>';
+    return `<tr><td colspan="${editing ? 11 : 10}" class="empty-table">Δεν έχουν προστεθεί υλικά.</td></tr>`;
   }
 
   return items
@@ -518,6 +521,10 @@ export function renderAddyRows(items) {
           <td>${escapeHtml(item.transactionType)}</td>
           <td>${escapeHtml(item.transactionUnit)}</td>
           <td>${escapeHtml(item.materialType)}</td>
+          ${editing ? `<td class="row-actions">
+            <button class="secondary-button" data-edit-addy-item="${index}" type="button">Επεξεργασία</button>
+            <button class="danger-button" data-remove-addy-item="${index}" type="button">Διαγραφή</button>
+          </td>` : ''}
         </tr>
       `
     )
@@ -538,17 +545,25 @@ export function clearLineControls(controls) {
   controls.materialType.value = '';
 }
 
-export function openAddyCompositionDialog(share, addyQuantity) {
+export function openAddyCompositionDialog(share, addyQuantity, options = {}) {
   return new Promise((resolve) => {
+    const internalSettlement = Boolean(options.internalSettlement);
+    const transactionLabel = options.transactionType || 'Πίστωση';
+    const departmentLabel = options.departmentName ? ` · ${options.departmentName}` : '';
+    const quantityLabel = internalSettlement
+      ? `Ποσότητα για ${transactionLabel === 'Χρέωση' ? 'Χρέωση' : 'Επιστροφή'}`
+      : 'Μη Χορηγηθείσα';
     const modal = window.document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
       <section class="material-card-modal addy-composition-modal" role="dialog" aria-modal="true">
         <header class="material-card-header">
           <div>
-            <p class="eyebrow">ΠΙΣΤΩΣΗ ΑΔΔΥ</p>
-            <h2>Σύνθεση ${escapeHtml(share.description)}</h2>
-            <p class="muted">Συμπλήρωσε τη μη χορηγηθείσα ποσότητα για κάθε είδος.</p>
+            <p class="eyebrow">${internalSettlement ? 'ΤΑΚΤΟΠΟΙΗΣΗ ΠΛΕΟΝΑΣΜΑΤΟΣ - ΕΛΛΕΙΜΜΑΤΟΣ' : 'ΠΙΣΤΩΣΗ ΑΔΔΥ'}</p>
+            <h2>Σύνθεση ${escapeHtml(share.description)}${escapeHtml(departmentLabel)}</h2>
+            <p class="muted">${internalSettlement
+              ? `Συμπλήρωσε την ποσότητα κάθε υλικού της σύνθεσης για ${transactionLabel.toLocaleLowerCase('el-GR')}.`
+              : 'Συμπλήρωσε τη μη χορηγηθείσα ποσότητα για κάθε είδος.'}</p>
           </div>
         </header>
         <div class="card-table-wrap">
@@ -559,7 +574,7 @@ export function openAddyCompositionDialog(share, addyQuantity) {
                 <th>Περιγραφή</th>
                 <th>Μ/Μ</th>
                 <th>Προβλεπόμενη Ποσότητα</th>
-                <th>Μη Χορηγηθείσα</th>
+                <th>${quantityLabel}</th>
               </tr>
             </thead>
             <tbody>
@@ -576,7 +591,7 @@ export function openAddyCompositionDialog(share, addyQuantity) {
                     <td class="material-description-cell">${escapeHtml(item.componentDescription)}</td>
                     <td>${escapeHtml(item.measurementUnit)}</td>
                     <td class="number-cell">${formatQuantity(projectedQuantity)}</td>
-                    <td><input data-not-issued type="number" min="0" max="${projectedQuantity}" step="0.001" value="0" /></td>
+                    <td><input data-not-issued type="number" min="0" max="${projectedQuantity}" step="0.001" value="${internalSettlement ? projectedQuantity : 0}" /></td>
                   </tr>
                 `;
               }).join('')}
@@ -585,7 +600,7 @@ export function openAddyCompositionDialog(share, addyQuantity) {
         </div>
         <div class="addy-save-row">
           <button class="secondary-button" data-cancel-composition type="button">Ακύρωση</button>
-          <button class="primary-button" data-confirm-composition type="button">Καταχώριση Σύνθεσης</button>
+          <button class="primary-button" data-confirm-composition type="button">${internalSettlement ? `Καταχώριση ${transactionLabel}` : 'Καταχώριση Σύνθεσης'}</button>
         </div>
       </section>
     `;
@@ -608,14 +623,17 @@ export function openAddyCompositionDialog(share, addyQuantity) {
       });
       if (invalid) return;
 
-      close(rows.map((row) => ({
+      const composition = rows.map((row) => ({
         componentNominalNumber: row.dataset.nominal,
         componentDescription: row.dataset.description,
         measurementUnit: row.dataset.unit,
         projectedQuantity: Number(row.dataset.projected),
         notIssuedQuantity: Number(row.querySelector('[data-not-issued]').value || 0),
         notes: row.dataset.notes
-      })));
+      }));
+      close(internalSettlement
+        ? composition.map((item) => ({ ...item, quantity: item.notIssuedQuantity }))
+        : composition);
     });
     window.document.body.appendChild(modal);
   });

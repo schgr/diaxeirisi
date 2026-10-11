@@ -3,6 +3,7 @@ const { AppError } = require('../../core/errorHandler');
 function createAddyService(dependencies) {
   const { repository, settingsService, validateAddy, requirePositiveId } = dependencies;
   const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatAddyDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
+  const { assertShareMatchesItem, assertSufficientBalance } = dependencies.shared;
 
   return {
     saveAddy(payload) {
@@ -43,12 +44,10 @@ function createAddyService(dependencies) {
 
         for (const item of addy.items) {
           let share = repository.findShareByNumber(item.shareNumber);
+          assertShareMatchesItem(share, item);
+          assertSufficientBalance(share, item);
 
           if (!share) {
-            if (item.transactionType === 'Πίστωση') {
-              throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
-            }
-
             share = repository.createShare({
               shareNumber: item.shareNumber,
               nominalNumber: item.nominalNumber,
@@ -65,10 +64,6 @@ function createAddyService(dependencies) {
               repository.replaceCompositionItems(share.id, item.createComposition);
               share = repository.findShareByNumber(item.shareNumber);
             }
-          }
-
-          if (share && item.transactionType === 'Πίστωση' && Number(item.quantity) > Number(share.accounting_balance || 0)) {
-            throw new Error('Το υπόλοιπο δεν επαρκεί για την πραγματοποίηση της δοσοληψίας.');
           }
 
           let transactionId = null;

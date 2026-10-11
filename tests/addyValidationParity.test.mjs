@@ -46,6 +46,12 @@ function payload(overrides = {}) {
 
 assert.ok(canAddItem(controls(), { items: [], addyEditingIndex: null }));
 assert.doesNotThrow(() => validateAddy(payload()));
+assert.throws(() => validateAddy({
+  ...payload(),
+  items: [payload().items[0], {
+    ...payload().items[0], shareNumber: '2', transactionType: 'Πίστωση'
+  }]
+}), /μαζί χρεώσεις και πιστώσεις/u);
 
 assert.ok(!canAddItem(controls({ quantity: '0' }), { items: [], addyEditingIndex: null }));
 assert.throws(() => validateAddy(payload({ item: { quantity: 0 } })), /θετικός αριθμός/u);

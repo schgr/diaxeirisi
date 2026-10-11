@@ -1,6 +1,7 @@
 const ExcelJS = require('exceljs');
 const { AppError } = require('../core/errorHandler');
 const { createSharesService } = require('./sharesService');
+const { createSharesRepository } = require('../db/sharesRepository');
 
 const COMPOSITION_HEADERS = [
   'Αριθμός Μερίδας',
@@ -13,6 +14,7 @@ const COMPOSITION_HEADERS = [
 
 function createCompositionImportService(db) {
   const sharesService = createSharesService(db);
+  const repository = createSharesRepository(db);
 
   return {
     async writeTemplate(filePath) {
@@ -58,53 +60,54 @@ function createCompositionImportService(db) {
       const groups = new Map();
 
       rows.forEach((row) => {
-        let share = sharesByNumber.get(normalizeKey(row.shareNumber));
+        const share = sharesByNumber.get(normalizeKey(row.shareNumber));
         if (!share) throw new AppError(`Δεν βρέθηκε η μερίδα ${row.shareNumber}.`, 'VALIDATION_ERROR');
-        if (!share.requiresComposition) {
-          share = sharesService.updateShareDetails(share.id, { requiresComposition: true });
-          sharesByNumber.set(normalizeKey(row.shareNumber), share);
-        }
         if (!groups.has(share.id)) groups.set(share.id, { share, rows: [] });
         groups.get(share.id).rows.push(row);
       });
 
       let importedRows = 0;
-      for (const { share, rows: groupRows } of groups.values()) {
-        const card = sharesService.getShareCard(share.id, Number(openingDate.slice(0, 4)) + 1);
-        const existingByComponent = new Map(
-          card.compositionItems.map((item) => [componentKey(item.componentNominalNumber, item.componentDescription, item.measurementUnit), item])
-        );
-        const balance = Number(card.share.accountingBalance || 0);
-        const items = groupRows.map((row) => {
-          const existing = existingByComponent.get(componentKey(row.nominalNumber, row.description, row.measurementUnit));
-          const componentShare = row.nominalNumber ? sharesByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
-          const projectedTotal = row.projectedQuantity * balance;
-          return {
-            componentNominalNumber: row.nominalNumber,
-            componentDescription: row.description,
-            measurementUnit: row.measurementUnit || existing?.measurementUnit || componentShare?.measurementUnit || '',
-            projectedQuantity: row.projectedQuantity,
-            notIssuedQuantity: Math.max(projectedTotal - row.existingQuantity, 0),
-            notes: existing?.notes || ''
-          };
-        });
-        sharesService.saveComposition(share.id, items);
-        sharesService.saveChangeSheet(
-          share.id,
-          groupRows.map((row, index) => ({
-            changeDate: openingDate,
-            orderReference: 'Απογραφή',
-            previousValue: '',
-            newValue: String(row.existingQuantity),
-            changeReason: 'Αρχική ενημέρωση σύνθεσης από Excel',
-            notes: 'COMPOSITION_IMPORT_OPENING',
-            componentLineNumber: index + 1,
-            movementType: 'ΧΡΕΩΣΗ',
-            quantity: row.existingQuantity
-          }))
-        );
-        importedRows += items.length;
-      }
+      repository.transaction(() => {
+        for (const { share, rows: groupRows } of groups.values()) {
+          if (!share.requiresComposition) {
+            sharesService.updateShareDetails(share.id, { requiresComposition: true });
+          }
+          const card = sharesService.getShareCard(share.id, Number(openingDate.slice(0, 4)) + 1);
+          const existingByComponent = new Map(
+            card.compositionItems.map((item) => [componentKey(item.componentNominalNumber, item.componentDescription, item.measurementUnit), item])
+          );
+          const balance = Number(card.share.accountingBalance || 0);
+          const items = groupRows.map((row) => {
+            const existing = existingByComponent.get(componentKey(row.nominalNumber, row.description, row.measurementUnit));
+            const componentShare = row.nominalNumber ? sharesByNominal.get(normalizeKey(row.nominalNumber)) : undefined;
+            const projectedTotal = row.projectedQuantity * balance;
+            return {
+              componentNominalNumber: row.nominalNumber,
+              componentDescription: row.description,
+              measurementUnit: row.measurementUnit || existing?.measurementUnit || componentShare?.measurementUnit || '',
+              projectedQuantity: row.projectedQuantity,
+              notIssuedQuantity: Math.max(projectedTotal - row.existingQuantity, 0),
+              notes: existing?.notes || ''
+            };
+          });
+          sharesService.saveComposition(share.id, items);
+          sharesService.saveChangeSheet(
+            share.id,
+            groupRows.map((row, index) => ({
+              changeDate: openingDate,
+              orderReference: 'Απογραφή',
+              previousValue: '',
+              newValue: String(row.existingQuantity),
+              changeReason: 'Αρχική ενημέρωση σύνθεσης από Excel',
+              notes: 'COMPOSITION_IMPORT_OPENING',
+              componentLineNumber: index + 1,
+              movementType: 'ΧΡΕΩΣΗ',
+              quantity: row.existingQuantity
+            }))
+          );
+          importedRows += items.length;
+        }
+      });
 
       return {
         updatedShares: groups.size,

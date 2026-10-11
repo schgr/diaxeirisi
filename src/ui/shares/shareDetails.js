@@ -21,6 +21,18 @@ function detailField(label, name, value, type = 'text', readonly = false) {
   `;
 }
 
+function selectDetailField(label, name, value, options = [], disabled = false) {
+  const values = [...new Set([value, ...options].filter(Boolean))];
+  return `
+    <label class="summary-item material-detail-field">
+      <span>${label}</span>
+      <select data-share-detail="${name}"${disabled ? ' disabled' : ''}>
+        ${values.map((option) => `<option value="${escapeHtml(option)}"${option === value ? ' selected' : ''}>${escapeHtml(option)}</option>`).join('')}
+      </select>
+    </label>
+  `;
+}
+
 function toggleField(label, name, checked, disabled = false) {
   return `
     <label class="summary-item material-detail-toggle">
@@ -78,4 +90,4 @@ function renderAssignmentRows(assignments) {
     .join('');
 }
 
-export { summaryItem, detailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows };
+export { summaryItem, detailField, selectDetailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows };

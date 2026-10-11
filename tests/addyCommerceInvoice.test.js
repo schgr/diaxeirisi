@@ -64,6 +64,21 @@ async function run() {
     assert.deepEqual(repository.listCommerceCompanies(), [company]);
     assert.deepEqual(transactions.getAddyReferenceData().commerceCompanies, [company]);
 
+    const unusedCompany = transactions.createCommerceCompany({ name: 'Προσωρινή Ο.Ε.' });
+    const updatedCompany = transactions.updateCommerceCompany(unusedCompany.id, {
+      name: '  Διορθωμένη Ο.Ε.  ',
+      taxNumber: '  987654321  ',
+      address: '  Οδός Νέα 2  '
+    });
+    assert.deepEqual(updatedCompany, {
+      id: unusedCompany.id,
+      name: 'Διορθωμένη Ο.Ε.',
+      taxNumber: '987654321',
+      address: 'Οδός Νέα 2'
+    });
+    transactions.deleteCommerceCompany(unusedCompany.id);
+    assert.deepEqual(transactions.listCommerceCompanies(), [company]);
+
     assert.throws(
       () => transactions.saveAddy(commercePayload({
         invoiceNumber: '',
@@ -89,6 +104,13 @@ async function run() {
     assert.equal(listed.invoiceNumber, 'INV-42');
     assert.deepEqual(listed.commerceCompany, company);
     assert.equal(listed.canPrint, true);
+
+    assert.throws(
+      () => transactions.deleteCommerceCompany(company.id),
+      (error) => error?.code === 'COMMERCE_COMPANY_IN_USE' &&
+        error.message.includes('δεν μπορεί να διαγραφεί')
+    );
+    assert.deepEqual(transactions.listCommerceCompanies(), [company]);
     console.log('ADDY commerce invoice validation, company catalogue and persistence tests passed.');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

@@ -85,6 +85,7 @@ export function renderNewSupportDocumentPrint(data) {
 }
 
 export function saveNewSupportDocumentDraft(documentsState, data) {
+  syncSupportDocumentMaterialsToExhpItems(documentsState.currentItems || [], data);
   documentsState.newModuleDrafts ||= {};
   const docAKey = `${data.committeeTier || 'primary'}_${data.formKey || 'a'}`;
   documentsState.newModuleDrafts[data.aitiologiaCode === 'a' ? `a_${docAKey}` : data.aitiologiaCode] = data;
@@ -105,6 +106,7 @@ export function saveNewSupportDocumentDraft(documentsState, data) {
 }
 
 export async function saveNewSupportDocument(exhpDocsApi, documentsState, selectedExhp, data) {
+  syncSupportDocumentMaterialsToExhpItems(documentsState.currentItems || [], data);
   if (!selectedExhp?.id) {
     saveNewSupportDocumentDraft(documentsState, data);
     return { message: 'Το δικαιολογητικό θα αποθηκευτεί μαζί με τη νέα ΕΧΠ.' };
@@ -553,21 +555,20 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
   const legacyPrimarySource = data?.aitiologiaCode === 'a' && (data.committeeTier || 'primary') === 'primary'
     ? `docA_axristo_${data.formKey || 'a'}`
     : '';
-  const retained = existingItems.filter((item) =>
-    item.supportModuleSource !== 'docZ_analosimo' &&
-    item.supportModuleSource !== 'docD_metasximatismos_used' &&
-    item.supportModuleSource !== 'docD_metasximatismos_produced' &&
-    item.supportModuleSource !== 'docST_clothing_summary' &&
-    item.supportModuleSource !== currentDocASource &&
-    item.supportModuleSource !== legacyPrimarySource
-  );
+  const replacedSources = {
+    z: ['docZ_analosimo'],
+    d: ['docD_metasximatismos_used', 'docD_metasximatismos_produced'],
+    st: ['docST_clothing_summary'],
+    a: [currentDocASource, legacyPrimarySource].filter(Boolean)
+  }[data.aitiologiaCode] || [];
+  const retained = existingItems.filter((item) => !replacedSources.includes(item.supportModuleSource));
   if (data?.aitiologiaCode === 'a') {
     if ((data.committeeTier || 'primary') === 'primary') return retained;
     const credits = mapSupportMaterialsToExhpItems(data.materials, 'Πίστωση', `docA_axristo_${docAKey}`);
-    return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
+    return mergeUniqueSupportItems(retained, credits);
   }
   if (data?.aitiologiaCode === 'd') {
-    return [...retained, ...mapDocDMaterialsToExhpItems(data)].sort(compareShareNumbersForExhpItems);
+    return mergeUniqueSupportItems(retained, mapDocDMaterialsToExhpItems(data));
   }
   if (data?.aitiologiaCode === 'st') {
     const grouped = new Map();
@@ -593,7 +594,7 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
       supportingDocuments: 'Συγκεντρωτική κατάσταση ΔΥΠ/189',
       supportModuleSource: 'docST_clothing_summary'
     }));
-    return [...retained, ...syncedItems].sort(compareShareNumbersForExhpItems);
+    return mergeUniqueSupportItems(retained, syncedItems);
   }
   if (data?.aitiologiaCode !== 'z') return retained;
 
@@ -612,7 +613,22 @@ export function syncSupportDocumentMaterialsToExhpItems(items = [], data = {}) {
       supportModuleSource: 'docZ_analosimo'
     }));
 
-  return [...retained, ...credits].sort(compareShareNumbersForExhpItems);
+  return mergeUniqueSupportItems(retained, credits);
+}
+
+function mergeUniqueSupportItems(retained, incoming) {
+  const seen = new Map(retained.map((item) => [String(item.shareNumber || '').trim().toLocaleLowerCase('el-GR'), item]));
+  for (const item of incoming) {
+    const number = String(item.shareNumber || '').trim();
+    const key = number.toLocaleLowerCase('el-GR');
+    const existing = seen.get(key);
+    if (existing) {
+      const side = ['Χρέωση', 'Πίστωση'].includes(existing.transactionType) ? ` στη ${existing.transactionType}` : ' στην ΕΧΠ';
+      throw new Error(`Η μερίδα ${number} υπάρχει ήδη${side}. Δεν επιτρέπεται δεύτερη εισαγωγή από δικαιολογητικό.`);
+    }
+    seen.set(key, item);
+  }
+  return [...retained, ...incoming].sort(compareShareNumbersForExhpItems);
 }
 
 function copyPrimaryMaterialsToSecondary(documentsState, data) {

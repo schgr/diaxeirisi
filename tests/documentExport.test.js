@@ -44,7 +44,6 @@ async function run() {
     await writeExcelExport(continuousExcelPath, {
       title: 'Κ2310',
       orientation: 'landscape',
-      singleWorksheet: true,
       tables: [
         { name: 'Σελίδα 1', rows: [['Α'], ['1']] },
         { name: 'Σελίδα 2', rows: [['Β'], ['2']] }
@@ -55,6 +54,8 @@ async function run() {
     assert.strictEqual(continuousWorkbook.worksheets.length, 1);
     assert.strictEqual(continuousWorkbook.worksheets[0].getCell('A1').value, 'Α');
     assert.strictEqual(continuousWorkbook.worksheets[0].getCell('A3').value, 'Β');
+    assert.strictEqual(continuousWorkbook.worksheets[0].getCell('A4').value, '2');
+    assert.strictEqual(continuousWorkbook.worksheets[0].rowCount, 4);
 
     const wordPath = path.join(directory, 'Κατάσταση.doc');
     writeWordExport(wordPath, {

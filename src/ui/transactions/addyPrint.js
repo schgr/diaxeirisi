@@ -56,16 +56,23 @@ export function openAddyDocument(documentData) {
 
 
 export function renderAddyCompositionDocument(documentData, items) {
-  const compositionRows = items.flatMap((item) =>
-    item.composition.map((component) => ({ item, component }))
-  );
-  const compositionNumbers = items.map((item) => item.column24).filter(Boolean).join(', ');
-  const compositionTitles = items
-    .map((item) => `Α/Ο ${item.column12} - ${item.column13}`)
-    .join(' · ');
+  return items.map((item) => renderAddyItemCompositionDocument(documentData, item)).join('');
+}
 
-  return `
+function renderAddyItemCompositionDocument(documentData, item) {
+  const compositionRows = item.composition;
+  const compositionNumbers = item.column24 || '';
+  const compositionTitles = `Α/Ο ${item.column12} - ${item.column13}`;
+  const firstPageRows = 26;
+  const continuationRows = 33;
+  const pageCount = 1 + Math.ceil(Math.max(0, compositionRows.length - firstPageRows) / continuationRows);
+
+  return Array.from({ length: pageCount }, (_, pageIndex) => {
+    const startIndex = pageIndex === 0 ? 0 : firstPageRows + (pageIndex - 1) * continuationRows;
+    const pageRows = compositionRows.slice(startIndex, startIndex + (pageIndex === 0 ? firstPageRows : continuationRows));
+    return `
     <article class="composition-document-page print-document-area addy-composition-document">
+      ${pageIndex === 0 ? `
       <div class="material-form-code">ΔΥΠ/190</div>
       <h1>ΚΑΤΑΣΤΑΣΗ ΣΥΝΘΕΣΕΩΣ</h1>
       <div class="composition-document-details">
@@ -77,6 +84,7 @@ export function renderAddyCompositionDocument(documentData, items) {
         <p class="composition-title"><span>4.</span>
           ΣΥΝΘΕΣΗ (<strong>${escapeHtml(compositionTitles)}</strong>)</p>
       </div>
+      ` : ''}
       <table class="composition-document-table">
         <thead>
           <tr>
@@ -91,9 +99,9 @@ export function renderAddyCompositionDocument(documentData, items) {
           </tr>
         </thead>
         <tbody>
-          ${compositionRows.map(({ component }, index) => `
+          ${pageRows.map((component, index) => `
             <tr>
-              <td>${index + 1}</td>
+              <td>${startIndex + index + 1}</td>
               <td>${escapeHtml(component.componentNominalNumber)}</td>
               <td class="material-description-cell">${escapeHtml(component.componentDescription)}</td>
               <td>${escapeHtml(component.measurementUnit)}</td>
@@ -105,10 +113,11 @@ export function renderAddyCompositionDocument(documentData, items) {
           `).join('')}
         </tbody>
       </table>
-      ${renderCompositionDocumentFooter({ financialOfficers: documentData.financialOfficers })}
-      <div class="material-form-page-number">Σελίδα 1 από 1</div>
+      ${pageIndex === pageCount - 1 ? renderCompositionDocumentFooter({ financialOfficers: documentData.financialOfficers }) : ''}
+      <div class="material-form-page-number">Σελίδα ${pageIndex + 1} από ${pageCount}</div>
     </article>
   `;
+  }).join('');
 }
 
 
@@ -141,14 +150,14 @@ export function renderAddyDocument(documentData) {
   return `
     <article class="addy-document-page print-document-area" style="position:relative;padding:0;overflow:hidden;">
       <img src="./assets/official-forms/addy-k2300-clean.png" alt="Αίτηση - Δικαιολογητικό Δοσοληψιών Υλικού" style="display:block;width:100%;height:100%;object-fit:fill;" />
-      ${addyDocumentOverlay(firstValue(rows, 'column1'), 4.2, 21.4, 7.5, 10.1, 'addy-field-1')}
-      ${addyDocumentOverlay(hasOnlyCredit || hasCommerceChargeDocument ? '' : leftDocumentReference, 11.7, 21.4, 11.1, 10.1, 'addy-field-2')}
+      ${addyDocumentOverlay(firstValue(rows, 'column1'), 4.55, 21.1, 7.5, 10.1, 'addy-field-1')}
+      ${addyDocumentOverlay(hasOnlyCredit || hasCommerceChargeDocument ? '' : leftDocumentReference, 11.7, 21.1, 11.1, 10.1, 'addy-field-2 addy-field-2-overlay')}
       ${addyDocumentOverlay(leftNotes, 4.2, 31.5, 42.0, 10.3, 'addy-field-6')}
       ${addyDocumentOverlay(firstValue(rows, 'column18'), 56.7, 21.4, 10.8, 10.1, 'addy-field-18')}
       ${addyDocumentOverlay(field19Reference, 67.5, 21.4, 14.3, 10.1, 'addy-field-19')}
       ${isCommerceDocument
         ? addyCommerceInformationOverlay(documentData.commerceCompany)
-        : addyDocumentOverlay(field21Information, 56.7, 31.5, 39.1, 10.3, 'addy-field-21')}
+        : addyDocumentOverlay(field21Information, 56.7, 32.0, 39.1, 9.8, 'addy-field-21')}
       ${renderAddyDocumentRowsOverlay(rows)}
       ${renderAddySignatureOverlay(leftPed, 4.2, 83.2, 12.6, 5.7, 'addy-field-15')}
       ${renderAddySignatureOverlay(leftManager, 16.8, 83.2, 13.6, 5.7, 'addy-field-16')}
@@ -189,7 +198,8 @@ function renderAddyDocumentRowsOverlay(rows) {
 
 function addyDocumentOverlay(value, left, top, width, height, className = '') {
   const isDescription = className.includes('addy-document-description-overlay');
-  return `<div class="addy-document-overlay ${className}" style="position:absolute;display:flex;align-items:center;justify-content:${isDescription ? 'flex-start' : 'center'};left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px ${isDescription ? '4px' : '2px'};color:#000;font-family:Arial,sans-serif;font-size:clamp(10px,calc(0.8vw + 2px),14px);line-height:1.05;text-align:${isDescription ? 'left' : 'center'};box-sizing:border-box;overflow:hidden;">${escapeHtml(value ?? '')}</div>`;
+  const fontSize = isDescription ? 'clamp(8px,calc(0.8vw),12px)' : 'clamp(9px,calc(0.8vw + 1px),13px)';
+  return `<div class="addy-document-overlay ${className}" style="position:absolute;display:flex;align-items:center;justify-content:${isDescription ? 'flex-start' : 'center'};left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px ${isDescription ? '4px' : '2px'};color:#000;font-family:Arial,sans-serif;font-size:${fontSize};line-height:1.05;text-align:${isDescription ? 'left' : 'center'};box-sizing:border-box;overflow:hidden;">${escapeHtml(value ?? '')}</div>`;
 }
 
 
@@ -201,7 +211,7 @@ function renderAddySignatureOverlay(value, left, top, width, height, className) 
   }
   return `
     <div class="addy-document-overlay addy-document-signature-overlay ${className}"
-      style="position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px 2px;color:#000;font-family:Arial,sans-serif;font-size:${className.includes('addy-field-15') ? '9px' : 'clamp(10px,calc(0.8vw + 2px),14px)'};line-height:1.1;text-align:center;box-sizing:border-box;overflow:hidden;">
+      style="position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;left:${left}%;top:${top}%;width:${width}%;height:${height}%;padding:1px 2px;color:#000;font-family:Arial,sans-serif;font-size:${className.includes('addy-field-15') ? '8px' : className.includes('addy-field-33') ? 'clamp(8px,calc(0.8vw),12px)' : 'clamp(9px,calc(0.8vw + 1px),13px)'};line-height:1.1;text-align:center;box-sizing:border-box;overflow:hidden;">
       <strong class="addy-document-signature-name">${escapeHtml(signature.name)}</strong>
       <span class="addy-document-signature-rank">${escapeHtml(signature.rank)}</span>
     </div>
@@ -218,7 +228,7 @@ function addyCommerceInformationOverlay(company = {}) {
   ];
   return `
     <div class="addy-document-overlay addy-field-21 addy-commerce-information-overlay"
-      style="position:absolute;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;left:56.7%;top:34.0%;width:39.1%;height:7.8%;padding:2px 5px;color:#000;font-family:Arial,sans-serif;font-size:clamp(10px,calc(0.8vw + 2px),14px);line-height:1.15;text-align:left;box-sizing:border-box;overflow:hidden;">
+      style="position:absolute;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;left:56.7%;top:34.0%;width:39.1%;height:7.8%;padding:2px 5px;color:#000;font-family:Arial,sans-serif;font-size:clamp(9px,calc(0.8vw + 1px),13px);line-height:1.15;text-align:left;box-sizing:border-box;overflow:hidden;">
       ${lines.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}
     </div>
   `;
@@ -295,11 +305,11 @@ export function addySignatureCell(label, number, value = '') {
 export async function printAddyDocument(target) {
   const body = window.document.body;
   const selector = target === 'addy' ? '.addy-document-page' : '.addy-composition-document';
-  const source = window.document.querySelector(`.addy-document-backdrop ${selector}`);
-  if (!source) return;
+  const sources = window.document.querySelectorAll(`.addy-document-backdrop ${selector}`);
+  if (!sources.length) return;
   const printRoot = window.document.createElement('div');
   printRoot.className = 'isolated-print-root addy-isolated-print-root';
-  printRoot.innerHTML = source.outerHTML;
+  printRoot.innerHTML = Array.from(sources, (source) => source.outerHTML).join('');
   body.dataset.addyPrintTarget = target;
   body.dataset.isolatedDocumentPrint = 'true';
   body.appendChild(printRoot);

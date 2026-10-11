@@ -13,6 +13,7 @@ import {
   ensureExhpSupportDocument,
   isAmmoConsumptionReason,
   isUselessMaterialReason,
+  isLandscapeExhpDocument,
   openExhpDocumentModal,
   openUselessMaterialFormModal,
   prepareUselessProtocolData,
@@ -203,6 +204,7 @@ export function bindExhpDocumentsWizard(container, state, settings, showToast) {
           showToast(validation.errors[0]?.message || 'Συμπλήρωσε τα υποχρεωτικά πεδία.', 'error');
           return;
         }
+        documentsState.currentItems = documentsState.selectedExhp ? documentsState.currentItems : state.exhpItems;
         const result = await saveNewSupportDocument(exhpDocsApi, documentsState, documentsState.selectedExhp, data);
         if (data.aitiologiaCode === 'a' && (data.committeeTier || 'primary') === 'primary') {
           copyPrimaryMaterialsIntoSecondaryEditor(editor, data);
@@ -580,7 +582,11 @@ export function captureNewSupportModuleDraft(editor, documentsState, issueReason
   });
   const validation = validateNewSupportDocumentData(data);
   if (!validation.valid) return { data, validation };
-  saveNewSupportDocumentDraft(documentsState, data);
+  try {
+    saveNewSupportDocumentDraft(documentsState, data);
+  } catch (error) {
+    return { data, validation: { valid: false, errors: [{ message: error.message }] } };
+  }
   return { data, validation };
 }
 
@@ -614,7 +620,7 @@ function openNewSupportPreview(html) {
       document.body.dataset.isolatedDocumentPrint = 'true';
       document.body.appendChild(printRoot);
       try {
-        await window.appApi.print.currentDocument({ landscape: false });
+        await window.appApi.print.currentDocument({ landscape: isLandscapeExhpDocument(printRoot) });
       } finally {
         printRoot.remove();
         delete document.body.dataset.isolatedDocumentPrint;

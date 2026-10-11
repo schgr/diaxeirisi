@@ -52,7 +52,7 @@ assert.ok(
   'The commerce company must print as name, tax number and address on separate ordered lines.'
 );
 assert.match(commerceHtml, /text-align:left/u);
-assert.match(commerceHtml, /font-size:clamp\(10px,calc\(0\.8vw \+ 2px\),14px\)/u);
+assert.match(commerceHtml, /font-size:clamp\(9px,calc\(0\.8vw \+ 1px\),13px\)/u);
 assert.match(commerceHtml, /addy-document-description-overlay[^>]+justify-content:flex-start/u);
 assert.match(commerceHtml, /addy-document-signature-name[^>]*>Πέτρος Ελεγκτής</u);
 assert.match(commerceHtml, /addy-document-signature-rank[^>]*>Λγός \(ΠΒ\)</u);
@@ -63,7 +63,7 @@ assert.ok(
 assert.match(commerceHtml, /addy-description-top-line/u);
 assert.match(commerceHtml, /addy-description-bottom-line/u);
 assert.match(commerceHtml, /addy-field-13-border[^>]+border:2px solid #000/u);
-assert.match(commerceHtml, /addy-field-15[^>]+font-size:9px/u);
+assert.match(commerceHtml, /addy-field-15[^>]+font-size:8px/u);
 assert.match(commerceHtml, /addy-field-5-right-line/u);
 
 const nonCommerceHtml = renderAddyDocument({

@@ -72,6 +72,26 @@ assert.match(addyDocument, /material-form-page-number">Σελίδα 1 από 1</
 assert.ok(addyDocument.includes(footer), 'The ADDY composition must use the complete official footer.');
 assert.match(addyDocument, /class="composition-column-numbers"/);
 
+const separateAddyCompositions = renderAddyCompositionDocument(
+  { id: 1, documentDate: '2026-07-17', transactionUnit: 'ΜΟΝΑΔΑ ΔΟΚΙΜΗΣ' },
+  [
+    { column12: 'MAIN-A', column13: 'ΥΛΙΚΟ Α', column24: '13',
+      composition: [{ ...compositionItem(0), componentNominalNumber: 'COMP-A' }] },
+    { column12: 'MAIN-B', column13: 'ΥΛΙΚΟ Β', column24: '14',
+      composition: [{ ...compositionItem(1), componentNominalNumber: 'COMP-B' }] }
+  ]
+);
+assert.equal(countPages(separateAddyCompositions), 2, 'Each ADDY material share must have its own composition document.');
+const separatePages = separateAddyCompositions.split('</article>');
+assert.match(separatePages[0], /MAIN-A/);
+assert.match(separatePages[0], /COMP-A/);
+assert.doesNotMatch(separatePages[0], /MAIN-B|COMP-B/);
+assert.match(separatePages[1], /MAIN-B/);
+assert.match(separatePages[1], /COMP-B/);
+assert.doesNotMatch(separatePages[1], /MAIN-A|COMP-A/);
+assert.match(separatePages[0], /<td>1<\/td>/);
+assert.match(separatePages[1], /<td>1<\/td>/);
+
 const compactRows = renderRows([{
   id: 13,
   shareNumber: '13',

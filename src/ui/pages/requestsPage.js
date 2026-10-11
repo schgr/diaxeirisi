@@ -1,7 +1,6 @@
 import { escapeHtml, field } from '../components/forms.js';
 import { listRequestPriorityOptionGroups } from '../requestPriorities.js';
 import { splitOfficerSignature } from '../officerSignature.js';
-import { renderRequestItemBarcode } from '../barcode/code128.js';
 import {
   bindRequestSettings,
   renderNamedList,
@@ -53,7 +52,7 @@ export async function renderRequestsPage(container, requestsApi, settingsApi, sh
             ${catalogueStatus.configured ? 'Αλλαγή φακέλου καταλόγου' : 'Επιλογή φακέλου καταλόγου'}
           </button>
           <label class="field key-catalogue-search-field">
-            <span>Α/Ο, P/N ή περιγραφή</span>
+            <span>Α/Ο ή περιγραφή</span>
             <input id="key-catalogue-search" autocomplete="off"
               ${catalogueStatus.configured ? '' : 'disabled'}
               placeholder="${catalogueStatus.configured ? 'Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες' : 'Δεν έχει επιλεγεί κατάλογος'}" />
@@ -339,9 +338,6 @@ function bindKeyCatalogue(container, requestsApi, controls, state, showToast) {
     const item = JSON.parse(button.dataset.keyCatalogueResult);
     controls.line.nominal.value = item.nominalNumber;
     controls.line.description.value = item.description;
-    if (item.partNumber && !controls.line.notes.value.trim()) {
-      controls.line.notes.value = `P/N: ${item.partNumber}`;
-    }
     updateRequestAddButton(controls, state);
     controls.line.quantity.focus();
   });
@@ -368,7 +364,7 @@ function renderKeyCatalogueResults(container, items) {
     const description = document.createElement('span');
     description.textContent = item.description;
     const details = document.createElement('small');
-    details.textContent = [item.partNumber && `P/N ${item.partNumber}`, item.equipment, item.catalogue]
+    details.textContent = [item.equipment, item.catalogue]
       .filter(Boolean)
       .join(' · ');
     button.append(title, description, details);
@@ -425,12 +421,21 @@ function openRequestDocument(request, printImmediately) {
   if (printImmediately) window.setTimeout(printRequestDocument, 100);
 }
 
-function printRequestDocument() {
+async function printRequestDocument() {
   const style = document.createElement('style');
   style.textContent = '@page { size: A4 landscape; margin: 0; }';
   document.head.appendChild(style);
-  window.print();
-  window.setTimeout(() => style.remove(), 500);
+  try {
+    // Χρησιμοποιούμε την ενιαία διαδρομή Electron ώστε να περάσει ρητά το
+    // landscape και στους οδηγούς εκτυπωτών των Windows 7.
+    if (window.appApi?.print?.currentDocument) {
+      await window.appApi.print.currentDocument({ landscape: true });
+    } else {
+      window.print();
+    }
+  } finally {
+    window.setTimeout(() => style.remove(), 500);
+  }
 }
 
 function getControls(container) {
@@ -577,7 +582,6 @@ function renderSignatureCell(title, value) {
 
 function renderRequestDocumentRow(item, index, rows) {
   const fulfilledClass = item && item.isFulfilled ? ' class="request-fulfilled-row"' : '';
-  const barcode = item ? renderRequestItemBarcode(item) : '';
   return `
     <tr${fulfilledClass}>
       <td></td>
@@ -590,7 +594,6 @@ function renderRequestDocumentRow(item, index, rows) {
       <td>${item ? escapeHtml(item.priorityCode) : ''}</td>
       <td></td>
       <td class="request-document-notes-cell">
-        ${barcode}
         ${item && item.notes ? `<span>${escapeHtml(item.notes)}</span>` : ''}
       </td>
     </tr>

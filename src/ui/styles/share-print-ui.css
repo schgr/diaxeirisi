@@ -233,6 +233,25 @@
   max-height: calc(100vh - 310px);
 }
 
+@media screen {
+  .controlled-materials-panel [data-controlled-material-panel] {
+    padding: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .controlled-materials-panel .controlled-materials-table :is(th, td),
+  .controlled-materials-panel .controlled-material-settings-table :is(th, td) {
+    background: var(--panel);
+  }
+
+  .controlled-materials-panel .controlled-materials-table thead th,
+  .controlled-materials-panel .controlled-material-settings-table thead th {
+    background: var(--panel-strong);
+  }
+}
+
 .controlled-materials-table th,
 .controlled-materials-table td {
   color: #fff;
@@ -355,8 +374,17 @@
   font-size: 8pt;
 }
 
+.weapon-registry-print .weapon-registry-form-table th,
+.weapon-registry-print .weapon-registry-form-table td {
+  border-color: #000;
+  padding: 1px 3px;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .weapon-registry-print .weapon-registry-form-table tr {
-  height: 10mm;
+  height: 7.5mm;
 }
 
 .weapon-registry-print footer {
@@ -383,6 +411,20 @@
 
 .weapon-registry-document-preview .weapon-registry-print + .weapon-registry-print {
   margin-top: 18px;
+}
+
+@media screen {
+  /* Οι δεκαπέντε διπλές γραμμές διατηρούν το ύψος τους εντός του A4. */
+  .weapon-registry-document-preview .weapon-registry-print .weapon-registry-form-table tr {
+    height: 7.5mm;
+  }
+
+  .weapon-registry-document-preview .weapon-registry-print .weapon-registry-form-table th {
+    padding: 1px;
+    font-size: 7pt;
+    line-height: 1.05;
+    white-space: normal;
+  }
 }
 
 .controlled-materials-table .material-description-cell {
@@ -424,11 +466,16 @@
   left: 0;
   margin-top: 0;
   text-align: center;
+  align-items: start;
 }
 
 .composition-footer-field {
   position: relative;
   min-height: 45mm;
+}
+
+.composition-footer-field-13 .composition-footer-signatures {
+  top: 10mm;
 }
 
 .composition-signature {
@@ -437,6 +484,8 @@
   min-height: 18mm;
   flex-direction: column;
   align-items: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .composition-signature > span {
@@ -447,8 +496,10 @@
 .composition-signature strong,
 .composition-signature em {
   display: block;
+  width: 100%;
   min-height: 1.2em;
   font-style: normal;
+  text-align: center;
 }
 
 .composition-footer-signatures-blank strong,
@@ -465,12 +516,20 @@
   text-align: center;
 }
 
+.composition-signature .composition-signature-considered {
+  top: -4mm;
+  margin-top: 0;
+}
+
 .balance-differences-page {
   position: relative;
   box-sizing: border-box;
   width: 297mm;
   min-height: 210mm;
-  padding-bottom: 18mm;
+  height: 210mm;
+  padding: 7mm 10mm 12mm;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   break-after: page;
   page-break-after: always;
 }
@@ -483,7 +542,7 @@
 .balance-differences-page-number {
   position: absolute;
   right: 12mm;
-  bottom: 8mm;
+  bottom: 4mm;
   font-size: 9pt;
 }
 
@@ -511,8 +570,9 @@
 .controlled-material-print {
   box-sizing: border-box;
   width: 297mm;
+  height: 210mm;
   min-height: 210mm;
-  padding: 10mm;
+  padding: 6mm 8mm 5mm;
   color: #000;
   background: #fff;
   font-family: Arial, sans-serif;
@@ -532,6 +592,7 @@
 
 .controlled-material-print table {
   width: 100%;
+  height: calc(100% - 10mm);
   min-width: 0;
   border-collapse: collapse;
   font-size: 9pt;
@@ -544,10 +605,37 @@
 }
 
 .controlled-material-print footer {
-  margin-top: 5mm;
+  margin-top: 2mm;
   text-align: right;
   font-size: 9pt;
 }
+
+.balance-differences-page h1 {
+  margin: 0 0 5mm;
+}
+
+.balance-differences-page .balance-differences-table {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Μεγάλοι αριθμοί ονομαστικού δεν επιτρέπεται να περνούν στην Περιγραφή. */
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(3),
+.ammunition-batch-preview-page .ammunition-batch-registry-table td:nth-child(3),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(3),
+.ammunition-batch-print .ammunition-batch-registry-table td:nth-child(3) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ammunition-batch-preview-page .ammunition-batch-registry-table th:nth-child(3),
+.ammunition-batch-print .ammunition-batch-registry-table th:nth-child(3) {
+  width: 14% !important;
+}
+
+.index-page { position: relative; }
+.index-page-number { position: absolute; right: 12mm; bottom: 7mm; color: #000; font-size: 9pt; }
 
 .controlled-material-document-preview .controlled-material-print + .controlled-material-print {
   margin-top: 18px;
@@ -571,6 +659,7 @@
   .controlled-material-print.print-document-area {
     page: landscape;
     width: 297mm;
+    height: 210mm;
     min-height: 210mm;
     break-after: page;
     page-break-after: always;
@@ -616,6 +705,50 @@
 .balance-differences-table th:nth-child(9) { width: 8%; }
 .balance-differences-table th:nth-child(10) { width: 9%; }
 
+.balance-difference-action-list {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.balance-difference-action-list h3 {
+  margin: 0 0 4px;
+}
+
+.balance-difference-action-table {
+  width: 100%;
+  min-width: 840px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.balance-difference-action-table th,
+.balance-difference-action-table td {
+  padding: 8px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.balance-difference-action-table select {
+  width: 100%;
+  min-width: 170px;
+}
+
+.balance-difference-action-list .table-wrap {
+  max-height: min(65vh, 680px);
+  overflow: auto;
+}
+
+.balance-difference-action-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+
 @media screen {
   .generic-print-preview-backdrop .share-card-preview .official-share-page,
   .share-back-preview-backdrop .official-share-page {
@@ -634,5 +767,28 @@
 
   .share-back-preview-backdrop .official-share-back-table th:last-child {
     font-size: clamp(7px, 0.68vw, 10px);
+  }
+
+  /* Στα 1366×768 η γραμματοσειρά υπολογίζεται από το πλάτος της οθόνης,
+     όχι από το κλιμακωμένο φύλλο. Τη συγκρατούμε στην προεπισκόπηση. */
+  .share-back-preview-backdrop .official-share-back-table tbody tr:not(.official-share-back-transfer-row),
+  .generic-print-preview-backdrop .share-card-preview .official-share-back-table tbody tr:not(.official-share-back-transfer-row) {
+    font-size: clamp(6px, calc(0.72vw - 2px), 8px);
+  }
+
+  .share-back-preview-backdrop .official-share-back-summary {
+    font-size: clamp(6px, calc(0.76vw - 2px), 8px);
+  }
+
+  .share-back-preview-backdrop .official-share-back-summary th {
+    font-size: clamp(8px, calc(1vw - 2px), 12px);
+  }
+
+  .inventory-modal-preview .official-inventory-overlay.inventory-ped-signature {
+    font-size: clamp(6px, calc(0.78vw - 2px), 9px);
+  }
+
+  .inventory-modal-preview .official-inventory-overlay.inventory-field-3 {
+    font-size: clamp(7px, calc(0.8vw - 1px), 10px);
   }
 }

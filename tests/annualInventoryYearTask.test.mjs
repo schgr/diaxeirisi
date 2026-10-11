@@ -13,6 +13,7 @@ assert.match(source, /renderInventoryStatement\(settings, session\)/u);
 assert.match(source, /inventoryApi\.createSession/u);
 assert.match(renderer, /window\.appApi\.settings,[\s\S]*window\.appApi\.inventory,[\s\S]*showToast/u);
 assert.match(source, /data-annual-document-pages/u);
+assert.match(source, /mixedOrientation \? `[\s\S]*@page portrait \{ size: A4 portrait; margin: 0; \}[\s\S]*@page landscape \{ size: A4 landscape; margin: 0; \}/u);
 assert.match(styles, /\.annual-share-print-preview \[data-annual-document-pages\][\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column;/u);
 assert.match(styles, /data-annual-document-pages\] > \.official-share-page[\s\S]*flex:\s*0 0 auto;[\s\S]*aspect-ratio:\s*210 \/ 297;/u);
 

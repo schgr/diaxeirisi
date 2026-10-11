@@ -1,5 +1,5 @@
 function createTransactionQueryService(dependencies) {
-  const { repository, settingsService, transactionSections } = dependencies;
+  const { repository, settingsService, transactionSections, sharesService } = dependencies;
   const { mapExhpSupportTemplate, saveRegularExhpItem, saveToolCollectionTransfers, isToolCollectionReason, aggregateCompositionCharges, addChangeSheetCompositionCharges, compositionChargeKey, saveNominalNumberTransfer, buildCompositionSnapshot, readTransactionArchive, mapExhpDocumentSupport, collectMaterialTypes, addMaterialType, mapAddyDocumentItem, formatDate, normalize, isConsumableMaterial, isNonScalingCompositionMaterial, compareShareNumbers } = dependencies.shared;
 
   return {
@@ -9,18 +9,38 @@ function createTransactionQueryService(dependencies) {
 
     getAddyReferenceData() {
       const shares = repository.listShares();
-      const compositionCharges = aggregateCompositionCharges(
-        repository.listInternalCompositionMovements()
-      );
-      addChangeSheetCompositionCharges(
-        compositionCharges,
-        repository.listCompositionChangeSheetEntries()
-      );
+      const settings = settingsService ? settingsService.getSettings() : null;
+      const fiscalYear = settings ? settings.serviceInfo.activeFiscalYear : new Date().getFullYear();
+      const compositionCharges = new Map();
+      if (shares.some((share) => Boolean(share.requires_composition))) {
+        const cards = sharesService.getShareCardsBatch({ mode: 'all', year: fiscalYear });
+        cards.forEach((card) => {
+          const entries = card.changeSheetEntries || [];
+          const hasOpeningInventory = entries.some((entry) =>
+            String(entry.orderReference || '').toLocaleUpperCase('el-GR').includes('ΑΠΟΓΡΑΦ')
+          );
+          (card.compositionItems || []).forEach((component, index) => {
+            const openingQuantity = card.openingTransfer?.inventoryDate && !hasOpeningInventory
+              ? Number(component.quantityPerMaterial || component.quantity || 0)
+                * Number(card.openingTransfer.balance || 0)
+              : 0;
+            const balance = entries
+              .filter((entry) => Number(entry.componentLineNumber || 1) === index + 1)
+              .reduce((total, entry) => {
+                const movement = String(entry.movementType || 'ΧΡΕΩΣΗ').toLocaleUpperCase('el-GR');
+                return total + (movement === 'ΠΙΣΤΩΣΗ' ? -1 : movement === 'ΧΡΕΩΣΗ' ? 1 : 0)
+                  * Number(entry.quantity || 0);
+              }, openingQuantity);
+            compositionCharges.set(compositionChargeKey(
+              card.share.id, component.componentNominalNumber, component.componentDescription
+            ), balance);
+          });
+        });
+      }
       const measurementUnits = repository.listMeasurementUnits();
       const transactionUnits = repository.listTransactionUnits();
       const materialCategories = repository.listMaterialCategories();
       const materialTypes = collectMaterialTypes(materialCategories, shares);
-      const settings = settingsService ? settingsService.getSettings() : null;
 
       return {
         shares: shares.map((share) => ({
@@ -78,6 +98,10 @@ function createTransactionQueryService(dependencies) {
 
     createCommerceCompany(payload) {
       return repository.createCommerceCompany(payload);
+    },
+
+    listCommerceCompanies() {
+      return repository.listCommerceCompanies();
     },
 
     updateCommerceCompany(id, payload) {

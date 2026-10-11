@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+
 const CHANNELS = Object.freeze([
   "backup:list",
   "backup:create-automatic",
@@ -42,14 +44,16 @@ function registerBackupHandlers({
         });
       })
     );
-  register('backup:restore', async (event, taskId) =>
+  register('backup:restore', async (event, taskId, source = 'folder') =>
       safeInvoke(async () => {
         const result = await dialog.showOpenDialog({
-          title: 'Επιλογή αντιγράφου για επαναφορά',
-          properties: ['openDirectory']
+          title: source === 'file' ? 'Επιλέξτε το backup-manifest.json του αποθηκευμένου αντιγράφου' : 'Επιλογή φακέλου αντιγράφου για επαναφορά',
+          properties: [source === 'file' ? 'openFile' : 'openDirectory'],
+          ...(source === 'file' ? { filters: [{ name: 'Αρχείο αντιγράφου (backup-manifest.json)', extensions: ['json'] }] } : {})
         });
         if (result.canceled || !result.filePaths.length) return null;
-        const prepared = await backupService.prepareRestore(result.filePaths[0], {
+        const backupPath = source === 'file' ? path.dirname(result.filePaths[0]) : result.filePaths[0];
+        const prepared = await backupService.prepareRestore(backupPath, {
           taskId,
           timeoutMs: 10 * 60 * 1000,
           onProgress: (progress) => sendProgress(event, progress)

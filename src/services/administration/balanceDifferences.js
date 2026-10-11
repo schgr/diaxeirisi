@@ -10,6 +10,7 @@ function buildBalanceDifferences(shareRows, compositionRows, movementRows) {
     nominalNumber: row.nominal_number,
     description: row.description,
     measurementUnit: row.measurement_unit,
+    requiresComposition: Boolean(row.requires_composition),
     existingQuantity: Number(row.accounting_balance || 0),
     chargedQuantity: Number(row.charged_quantity || 0)
   }));

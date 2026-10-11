@@ -3,7 +3,7 @@ const ALLOWED_TABLE_NAMES = new Set([
   'ranks',
   'measurement_units',
   'transaction_units',
-  'commerce_businesses',
+  'commerce_companies',
   'material_categories',
   'request_issuing_units',
   'exhp_issue_reasons'
@@ -126,6 +126,32 @@ function createSettingsRepository(db) {
       db.prepare('DELETE FROM ranks WHERE id = ?').run(id);
     },
 
+    listCommerceCompanies() {
+      return db.prepare(`
+        SELECT id, name, tax_number, address, sort_order
+        FROM commerce_companies
+        ORDER BY sort_order ASC, id ASC
+      `).all();
+    },
+
+    createCommerceCompany(payload) {
+      const nextOrder = getNextOrder(db, 'commerce_companies');
+      const result = db
+        .prepare('INSERT INTO commerce_companies (name, tax_number, address, sort_order) VALUES (?, ?, ?, ?)')
+        .run(payload.name, payload.taxNumber || '', payload.address || '', nextOrder);
+      return getById(db, 'commerce_companies', result.lastInsertRowid);
+    },
+
+    updateCommerceCompany(id, payload) {
+      db.prepare('UPDATE commerce_companies SET name = ?, tax_number = ?, address = ? WHERE id = ?')
+        .run(payload.name, payload.taxNumber || '', payload.address || '', id);
+      return getById(db, 'commerce_companies', id);
+    },
+
+    deleteCommerceCompany(id) {
+      db.prepare('DELETE FROM commerce_companies WHERE id = ?').run(id);
+    },
+
     listMeasurementUnits() {
       return db
         .prepare(
@@ -173,18 +199,6 @@ function createSettingsRepository(db) {
 
     deleteTransactionUnit(id) {
       db.prepare('DELETE FROM transaction_units WHERE id = ?').run(id);
-    },
-
-    listCommerceBusinesses() {
-      return listNamedRecords(db, 'commerce_businesses');
-    },
-
-    createCommerceBusiness(name) {
-      return createNamedRecord(db, 'commerce_businesses', name);
-    },
-
-    deleteCommerceBusiness(id) {
-      db.prepare('DELETE FROM commerce_businesses WHERE id = ?').run(id);
     },
 
     listMaterialCategories() {

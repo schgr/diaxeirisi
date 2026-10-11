@@ -72,6 +72,10 @@ for (const name of originalNames) {
     new RegExp(`(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*\\(`, 'u').test(source)
   );
   assert.strictEqual(matches.length, 1, `${name} must have exactly one implementation; found ${matches.length}.`);
+  if (name === 'printExhpDocument' || name === 'previewExhpDocument') {
+    assert.match(extractFunction(matches[0].source, name), /landscape: isLandscapeExhpDocument\(/u);
+    continue;
+  }
   assert.strictEqual(
     extractFunction(matches[0].source, name),
     extractFunction(previousSource, name),
@@ -87,6 +91,7 @@ assert.deepStrictEqual(Object.keys(api).sort(), [
   'collectExhpDocumentPreviewData',
   'ensureExhpSupportDocument',
   'isAmmoConsumptionReason',
+  'isLandscapeExhpDocument',
   'isUselessMaterialReason',
   'openExhpDocumentModal',
   'openUselessMaterialFormModal',

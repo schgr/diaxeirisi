@@ -148,6 +148,24 @@ function bindPage(container, internalApi, referenceData, state, showToast) {
         showToast('ΣΥΜΠΛΗΡΩΣΕ ΜΕΡΙΚΗ ΔΙΑΧΕΙΡΙΣΗ, ΚΙΝΗΣΗ, ΜΕΡΙΔΑ ΚΑΙ ΠΟΣΟΤΗΤΑ.', 'error');
         return;
       }
+      if (movementType === 'Επιστροφή' && quantity > 0) {
+        try {
+          const balances = await internalApi.listDepartmentBalances(departmentId);
+          const saved = Number(balances.find((entry) => Number(entry.shareId) === shareId)?.finalQuantity || 0);
+          const pending = state.drafts.reduce((sum, entry) => {
+            if (Number(entry.departmentManagerId) !== departmentId || Number(entry.shareId) !== shareId) return sum;
+            return sum + (entry.movementType === 'Χορήγηση' ? 1 : -1) * Number(entry.quantity || 0);
+          }, 0);
+          const available = saved + pending;
+          if (quantity - available > 0.000001) {
+            showToast(`Η επιστροφή ${formatQuantity(quantity)} από το τμήμα ${department.departmentName} υπερβαίνει τη διαθέσιμη ποσότητα ${formatQuantity(available)} της μερίδας ${share.shareNumber}.`, 'error');
+            return;
+          }
+        } catch (error) {
+          showToast(error.message || 'Δεν ήταν δυνατός ο έλεγχος του υπολοίπου του τμήματος.', 'error');
+          return;
+        }
+      }
       let composition = state.pendingComposition || [];
       if (share.requiresComposition && (!composition.length || state.pendingCompositionShareId !== share.id)) {
         composition = await openInternalCompositionDialog(share, quantity);
@@ -311,7 +329,7 @@ function openK2310Document(serviceName, department, balances, financialManager) 
           <button class="primary-button" data-print-k2310 type="button">ΕΚΤΥΠΩΣΗ</button>
         </div>
       </header>
-      <div data-k2310-pages></div>
+      <div class="request-document-preview" data-k2310-pages></div>
     </section>
   `;
   const renderPreview = () => {
@@ -404,7 +422,7 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
               <th colspan="17" class="k2310-integrated-meta">
                 <div class="k2310-meta-grid">
                   <span><strong>ΧΟΡΗΓΗΘΗΚΑΝ</strong><br />(1) ΑΠΟ: ${escapeHtml(serviceName || '')}</span>
-                  <span>(2) ΠΡΟΣ: ${escapeHtml(department.departmentName)}${departmentRecipient ? ` (${escapeHtml(departmentRecipient)})` : ''}</span>
+                  <span class="k2310-meta-to">(2) ΠΡΟΣ: ${escapeHtml(department.departmentName)}${departmentRecipient ? ` <span class="k2310-meta-recipient">${escapeHtml(departmentRecipient)}</span>` : ''}</span>
                   <span>(3) ΑΡΙΘΜΟΣ ΔΕΛΤΙΟΥ: ${pageIndex + 1}</span>
                 </div>
               </th>
@@ -427,7 +445,7 @@ export function renderK2310Pages(serviceName, department, balances, options = {}
             </tr>
             <tr class="k2310-date-row">
               ${'<td class="k2310-dark-cell"></td>'.repeat(6)}
-              <td>${escapeHtml(documentDate)}</td>
+              <td>${escapeHtml(documentDate.slice(0, documentDate.lastIndexOf('/')))}<br />${escapeHtml(documentDate.slice(documentDate.lastIndexOf('/') + 1))}</td>
               ${'<td></td>'.repeat(9)}
               <td class="k2310-dark-cell"></td>
             </tr>
@@ -478,7 +496,7 @@ function renderK2310SignatureRow(mode, financialManager, departmentHead) {
   const showManager = mode === 'manager' || mode === 'all';
   const showDepartment = mode === 'department' || mode === 'all';
   return `
-    <td colspan="17" class="k2310-signatures">
+    <td colspan="6" class="k2310-signatures">
       <span class="k2310-signature-label">(14) ΥΠΟΓΡΑΦΕΣ</span>
       <div class="k2310-horizontal-signatures k2310-signature-mode-${escapeHtml(mode)}">
         <div class="k2310-signature-manager">
@@ -489,6 +507,8 @@ function renderK2310SignatureRow(mode, financialManager, departmentHead) {
         </div>
       </div>
     </td>
+    <td class="k2310-signature-movement-cell"></td>
+    ${'<td></td>'.repeat(10)}
   `;
 }
 

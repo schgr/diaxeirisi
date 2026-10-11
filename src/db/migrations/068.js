@@ -19,7 +19,7 @@ const migrations068 = [
       ADD COLUMN invoice_date TEXT;
 
       ALTER TABLE addy_documents
-      ADD COLUMN commerce_company_id INTEGER;
+      ADD COLUMN commerce_company_id INTEGER REFERENCES commerce_companies(id);
     `
   }
 ];

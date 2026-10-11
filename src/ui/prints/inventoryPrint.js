@@ -2,6 +2,13 @@ import { escapeHtml } from '../components/forms.js';
 import { formatOfficerName, formatOfficerRank, splitOfficerSignature } from '../officerSignature.js';
 import { formatDate, formatNumber } from './shared.js';
 
+// The official sheet has exactly twenty-eight usable data bands.  Keep the row
+// geometry in one place so the printed sheet and the in-app preview place
+// every value in the same band.
+const INVENTORY_ROWS_PER_PAGE = 28;
+const INVENTORY_FIRST_ROW_TOP = 35.1;
+const INVENTORY_ROW_HEIGHT = 1.7;
+
 function renderInventoryPrintControls(sessions, state) {
   return `
     <div class="registry-controls inventory-print-controls">
@@ -30,24 +37,26 @@ function bindInventoryPrintControls(container, state, renderActiveTab) {
 }
 
 function renderInventoryStatement(settings, session) {
-  const rowsPerPage = 28;
-  const pageCount = Math.max(1, Math.ceil(session.items.length / rowsPerPage));
+  const pageCount = Math.max(1, Math.ceil(session.items.length / INVENTORY_ROWS_PER_PAGE));
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
-    const rows = session.items.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage);
+    const rows = session.items.slice(
+      pageIndex * INVENTORY_ROWS_PER_PAGE,
+      pageIndex * INVENTORY_ROWS_PER_PAGE + INVENTORY_ROWS_PER_PAGE
+    );
     return `
       <article class="official-inventory-page print-document-area">
         <img src="./assets/official-forms/inventory-statement-clean.png" alt="Κατάσταση Απογραφής" />
         ${inventoryDocumentOverlay(pageIndex + 1, 74.5, 9.45, 10.0, 1.8, 'inventory-meta-overlay')}
         ${inventoryDocumentOverlay(pageCount, 74.5, 11.05, 10.0, 1.8, 'inventory-meta-overlay')}
-        ${inventoryDocumentOverlay(settings.serviceInfo.serviceName || '', 20.0, 13.15, 13.5, 2.2, 'inventory-meta-overlay')}
+        ${inventoryDocumentOverlay(settings.serviceInfo.serviceName || '', 20.0, 13.15, 13.5, 2.2, 'inventory-meta-overlay inventory-field-3')}
         ${inventoryDocumentOverlay(settings.serviceInfo.managementType || '', 42.0, 13.45, 12.0, 1.8, 'inventory-meta-overlay')}
         ${inventoryDocumentOverlay(formatDate(session.periodStart || session.inventoryDate), 64.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
         ${inventoryDocumentOverlay(formatDate(session.periodEnd || session.inventoryDate), 82.0, 14.45, 12.0, 2.0, 'inventory-date-overlay')}
-        ${renderOfficialInventoryRows(rows, pageIndex * rowsPerPage)}
+        ${renderOfficialInventoryRows(rows, pageIndex * INVENTORY_ROWS_PER_PAGE)}
         ${renderInventoryOfficerSignature(settings.financialOfficers?.commander, 9.0, 86.0, 20.8, 4.8)}
         ${renderInventoryCommitteeSignatures(session, 31.0, 85.6, 20.5, 5.4)}
         ${renderInventoryOfficerSignature(settings.financialOfficers?.manager, 53.0, 86.0, 20.5, 4.8)}
-        ${renderInventoryOfficerSignature(settings.financialOfficers?.ped, 75.0, 86.0, 20.5, 4.8)}
+        ${renderInventoryOfficerSignature(settings.financialOfficers?.ped, 75.0, 86.0, 20.5, 4.8, 'inventory-ped-signature')}
       </article>
     `;
   }).join('');
@@ -69,9 +78,9 @@ function renderOfficialInventoryRows(rows, offset) {
   return rows.map((item, rowIndex) => columns.map((column) => inventoryDocumentOverlay(
     column.value(item, rowIndex),
     column.left,
-    35.15 + rowIndex * 1.7,
+    INVENTORY_FIRST_ROW_TOP + rowIndex * INVENTORY_ROW_HEIGHT,
     column.width,
-    1.7,
+    INVENTORY_ROW_HEIGHT,
     `inventory-row-overlay ${column.className || ''}`.trim()
   )).join('')).join('');
 }
@@ -88,14 +97,14 @@ function formatInventoryDeficit(difference) {
   return Number(difference) < 0 ? formatNumber(Math.abs(difference)) : '0';
 }
 
-function renderInventoryOfficerSignature(value, left, top, width, height) {
+function renderInventoryOfficerSignature(value, left, top, width, height, customClass = '') {
   const officer = splitOfficerSignature(value);
-  return renderInventorySignature(officer.name, officer.rank, left, top, width, height);
+  return renderInventorySignature(officer.name, officer.rank, left, top, width, height, customClass);
 }
 
-function renderInventorySignature(name, rank, left, top, width, height) {
+function renderInventorySignature(name, rank, left, top, width, height, customClass = '') {
   return `
-    <div class="official-inventory-overlay inventory-signature-overlay" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;">
+    <div class="official-inventory-overlay inventory-signature-overlay ${customClass}" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;">
       <strong>${escapeHtml(name || '')}</strong>
       <em>${escapeHtml(rank || '')}</em>
     </div>

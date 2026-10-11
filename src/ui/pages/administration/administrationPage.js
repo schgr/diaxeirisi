@@ -1,3 +1,4 @@
+import { confirmDialog } from '../../components/confirmDialog.js';
 import { escapeHtml } from '../../components/forms.js';
 import { splitOfficerSignature } from '../../officerSignature.js';
 import { renderOfficialHandoverProtocol } from '../../handoverProtocol.js';
@@ -44,6 +45,7 @@ export async function renderAdministrationPage(container, api, annualAccountsApi
         <button class="home-tile transaction-flow-tile" data-administration-subtab="training-ammunition-batches" type="button"><span class="home-tile-icon">ΠΕ</span><span class="home-tile-title">Βιβλίο Μερίδων Πυρομαχικών Εκπαιδεύσεως</span><span class="home-tile-code">§ ΒΜ-3</span></button>
         <button class="home-tile transaction-flow-tile" data-administration-subtab="controlled-materials" type="button"><span class="home-tile-icon">ΕΥ</span><span class="home-tile-title">Βιβλίο Ελεγχομένων Υλικών</span><span class="home-tile-code">§ ΒΜ-4</span></button>
         <button class="home-tile transaction-flow-tile" data-administration-subtab="weapon-registry" type="button"><span class="home-tile-icon">ΜΟ</span><span class="home-tile-title">Μητρώο Οπλισμού</span><span class="home-tile-code">§ ΒΜ-5</span></button>
+        <button class="home-tile transaction-flow-tile" data-administration-open-material-registry type="button"><span class="home-tile-icon">ΜΜ</span><span class="home-tile-title">Μητρώο Μερίδων</span><span class="home-tile-code">§ ΒΜ-6</span></button>
       </nav>
       <div data-administration-subpanel="serial-numbers" hidden>${renderBooksRegistryBackButton()}${renderSerialNumberRegistry(serialRegistry)}</div>
       <div data-administration-subpanel="ammunition-batches" hidden>${renderBooksRegistryBackButton()}${renderAmmunitionBatchRegistry(ammunitionBatchRegistry)}</div>
@@ -262,7 +264,7 @@ function renderHandoverPanel(data, selected, settings) {
       <h3>Πρωτόκολλα Παράδοσης</h3>
       <div class="table-wrap">
         <table class="index-table administration-table">
-          <thead><tr><th>Α/Α</th><th>Ημερομηνία Παράδοσης</th><th>Παραδίδων</th><th>Παραλαμβάνων</th><th>Απογραφή</th><th>Έλεγχοι</th><th>Κατάσταση</th><th>Άνοιγμα</th><th>Επεξεργασία</th></tr></thead>
+          <thead><tr><th>Α/Α</th><th>Ημερομηνία Παράδοσης</th><th>Παραδίδων</th><th>Παραλαμβάνων</th><th>Απογραφή</th><th>Έλεγχοι</th><th>Κατάσταση</th><th>Άνοιγμα</th><th>Επεξεργασία</th><th>Διαγραφή</th></tr></thead>
           <tbody>
             ${data.handovers.length ? data.handovers.map((item) => `
               <tr>
@@ -273,8 +275,9 @@ function renderHandoverPanel(data, selected, settings) {
                 <td><span class="status-pill ${item.status === 'Ολοκληρωμένη' ? 'balanced' : 'pending'}">${escapeHtml(item.status)}</span></td>
                 <td><button data-preview-handover="${item.id}" class="secondary-button" type="button">Άνοιγμα</button></td>
                 <td><button data-open-handover="${item.id}" class="secondary-button" type="button">Επεξεργασία</button></td>
+                <td><button data-delete-handover="${item.id}" class="secondary-button" type="button">Διαγραφή</button></td>
               </tr>
-            `).join('') : '<tr><td colspan="9" class="empty-table">Δεν υπάρχουν πρωτόκολλα παράδοσης.</td></tr>'}
+            `).join('') : '<tr><td colspan="10" class="empty-table">Δεν υπάρχουν πρωτόκολλα παράδοσης.</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -567,6 +570,12 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
     });
   });
 
+  container.querySelector('[data-administration-open-material-registry]')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('diaxeirisi:navigate', {
+      detail: { sectionId: 'material-registry' }
+    }));
+  });
+
   container.querySelectorAll('[data-back-to-books-registries]').forEach((button) => {
     button.addEventListener('click', () => {
       container.querySelectorAll('[data-administration-subpanel]').forEach((panel) => { panel.hidden = true; });
@@ -739,15 +748,23 @@ function bindAdministrationPage(container, api, annualAccountsApi, settingsApi, 
   }, showToast));
 
   container.addEventListener('click', async (event) => {
+    const deleteHandover = event.target.closest('[data-delete-handover]');
     const openHandover = event.target.closest('[data-open-handover]');
     const previewHandover = event.target.closest('[data-preview-handover]');
     const restoreShare = event.target.closest('[data-restore-share]');
     const complete = event.target.closest('#handover-complete');
     const saveProtocol = event.target.closest('#handover-protocol-save');
     const previewProtocol = event.target.closest('#handover-protocol-preview');
-    if (!openHandover && !previewHandover && !restoreShare && !complete && !saveProtocol && !previewProtocol) return;
+    if (!deleteHandover && !openHandover && !previewHandover && !restoreShare && !complete && !saveProtocol && !previewProtocol) return;
     await run(async () => {
-      if (openHandover) {
+      if (deleteHandover) {
+        const id = Number(deleteHandover.dataset.deleteHandover);
+        const handover = data.handovers.find((item) => item.id === id);
+        if (!await confirmDialog({ message: `Να διαγραφεί οριστικά το πρωτόκολλο παράδοσης ${handover.serialNumber};`, confirmLabel: 'Διαγραφή' })) return;
+        const result = await api.deleteHandover(id);
+        showToast(result.message);
+        await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, null, 'handover', sharesApi);
+      } else if (openHandover) {
         await renderAdministrationPage(container, api, annualAccountsApi, settingsApi, showToast, Number(openHandover.dataset.openHandover));
       } else if (previewHandover) {
         const handoverId = Number(previewHandover.dataset.previewHandover);
@@ -967,10 +984,7 @@ function renderArchivedSharesDocument(table) {
   documentTable.querySelectorAll('.no-print').forEach((element) => element.remove());
   return `
     <article class="archived-shares-document print-document-area">
-      <div class="archived-shares-document-heading">
-        <span>ΑΡΧΕΙΟ ΜΕΡΙΔΩΝ ΥΛΙΚΟΥ</span>
-        <h2>Αρχειοθετημένες Μερίδες</h2>
-      </div>
+      <div class="archived-shares-document-heading"><h2>Αρχειοθετημένες Μερίδες</h2></div>
       ${documentTable.outerHTML}
     </article>
   `;
@@ -992,19 +1006,31 @@ async function printAmmunitionBatchTable(table, title = 'Βιβλίο Μερίδ
   });
   printRoot.innerHTML = `
     <style>
-      @page { size: A4 landscape; margin: 10mm; }
-      .ammunition-batch-print { color: #000; background: #fff; font-family: Arial, sans-serif; }
-      .ammunition-batch-print table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-      .ammunition-batch-print th, .ammunition-batch-print td { border: 1px solid #555; padding: 2mm; text-align: left; }
+      @page { size: A4 landscape; margin: 0; }
+      body { margin: 0; padding: 0; }
+      .ammunition-batch-print { box-sizing: border-box; color: #000; background: #fff; font-family: Arial, sans-serif; width: 297mm; height: 210mm; margin: 0; padding: 5mm; }
+      .ammunition-batch-print table { width: 100%; height: 100%; border-collapse: collapse; font-size: 10pt; }
+      .ammunition-batch-print th, .ammunition-batch-print td { border: 1px solid #555; padding: 2mm; text-align: center; }
       .ammunition-batch-print th { background: #e8eef5; }
       .ammunition-batch-print .no-print { display: none !important; }
     </style>
     <section class="ammunition-batch-print print-document-area">${printableTable.outerHTML}</section>`;
+
+  // Add landscape CSS to head for better print support
+  let styleElement = null;
+  styleElement = document.createElement('style');
+  styleElement.id = 'temp-ammunition-landscape-style';
+  styleElement.textContent = '@media print { @page { size: A4 landscape; margin: 0; } }';
+  document.head.appendChild(styleElement);
+
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {
     await window.appApi.print.currentDocument({ landscape: true });
   } finally {
+    if (styleElement) {
+      styleElement.remove();
+    }
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }
@@ -1056,10 +1082,11 @@ function openAmmunitionBatchPreview(table, title) {
           .ammunition-batch-preview-pages { display: grid; gap: 18px; }
           .ammunition-batch-preview-page { position: relative; box-sizing: border-box; width: min(100%, 297mm); min-height: 210mm; padding: 12mm 12mm 15mm; background: #fff; color: #000; font-family: Arial, sans-serif; }
           .ammunition-batch-preview-page table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; }
-          .ammunition-batch-preview-page th, .ammunition-batch-preview-page td { padding: 2mm; border: 1px solid #555; color: #000; text-align: left; }
+          .ammunition-batch-preview-page th, .ammunition-batch-preview-page td { padding: 2mm; border: 1px solid #555; color: #000; text-align: center; }
           .ammunition-batch-preview-page th { background: #e8eef5; }
           .ammunition-batch-preview-page footer { position: absolute; right: 12mm; bottom: 7mm; font-size: 9pt; }
           .ammunition-batch-preview-page:not(:last-child) { break-after: page; page-break-after: always; }
+          .ammunition-batch-preview-page table { break-inside: avoid; }
         </style>
         <section class="ammunition-batch-preview-pages print-document-area">${pages}</section>
       </div>
@@ -1081,12 +1108,23 @@ async function printAmmunitionBatchPreview(previewContent) {
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root ammunition-batch-preview-print-root';
   printRoot.innerHTML = previewContent.innerHTML;
+
+  // Add landscape CSS to head for better print support
+  let styleElement = null;
+  styleElement = document.createElement('style');
+  styleElement.id = 'temp-ammunition-landscape-style';
+  styleElement.textContent = '@media print { @page { size: A4 landscape; margin: 0; } .ammunition-batch-preview-print-root .ammunition-batch-preview-page { box-sizing: border-box !important; width: 297mm !important; height: 210mm !important; min-height: 210mm !important; padding: 5mm !important; } .ammunition-batch-preview-print-root .ammunition-batch-preview-page table { height: 100% !important; } .ammunition-batch-preview-print-root .ammunition-batch-preview-page footer { right: 5mm !important; bottom: 1mm !important; } }';
+  document.head.appendChild(styleElement);
+
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {
     await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
     await window.appApi.print.currentDocument({ landscape: true });
   } finally {
+    if (styleElement) {
+      styleElement.remove();
+    }
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
   }

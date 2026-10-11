@@ -30,8 +30,8 @@ function renderSharesTableHeader(compositionOnly) {
   if (compositionOnly) {
     return `
       <tr>
-        <th>Αριθμός μερίδας</th>
-        <th>Αριθμός ονομαστικού</th>
+        <th>Αριθμός Μερίδας</th>
+        <th>Αριθμός Ονομαστικού</th>
         <th class="share-description-column">Περιγραφή</th>
         <th class="number-cell">Λογιστικό</th>
       </tr>
@@ -40,13 +40,13 @@ function renderSharesTableHeader(compositionOnly) {
 
   return `
     <tr>
-      <th>Αριθμός μερίδας</th>
-      <th>Αριθμός ονομαστικού</th>
+      <th>Αριθμός Μερίδας</th>
+      <th>Αριθμός Ονομαστικού</th>
       <th>Αριθμός Κυρίου Υλικού</th>
       <th class="share-description-column">Περιγραφή</th>
-      <th>Είδος υλικού</th>
+      <th>Είδος<br>Υλικού</th>
       <th class="number-cell">Λογιστικό</th>
-      <th class="number-cell">Σε Μερικές Διαχειρίσεις</th>
+      <th class="number-cell">Σε Μερικές<br>Διαχειρίσεις</th>
       <th class="number-cell">Διαφορά</th>
       <th>Κατάσταση</th>
     </tr>

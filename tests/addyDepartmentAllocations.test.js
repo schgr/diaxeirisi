@@ -33,6 +33,21 @@ async function run() {
     const internal = createInternalService(db);
     const departments = internal.getReferenceData().departmentManagers;
     const transactions = createTransactionsService(db, settings);
+    assert.throws(() => transactions.saveAddy({
+      documentDate: '2026-08-08', transactionUnit: 'Μονάδα', items: [
+        {
+          shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
+          materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 1,
+          transactionType: 'Χρέωση'
+        },
+        {
+          shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
+          materialType: 'Υλικό', measurementUnit: 'Τεμάχια', quantity: 1,
+          transactionType: 'Πίστωση'
+        }
+      ]
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('μαζί'));
+    assert.equal(db.prepare('SELECT COUNT(*) AS total FROM addy_documents').get().total, 0);
     const chargedAddy = transactions.saveAddy({
       documentDate: '2026-08-08', transactionUnit: 'Μονάδα', notes: '', items: [{
         shareNumber: '500', nominalNumber: 'TEST-500', description: 'Σύνθετο υλικό',
@@ -51,6 +66,14 @@ async function run() {
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].finalQuantity, 4);
     assert.equal(internal.listDepartmentBalances(departments[1].id)[0].finalQuantity, 2);
     assert.equal(internal.listDepartmentBalances(departments[0].id)[0].composition[0].finalQuantity, 8);
+    const internalDocumentCount = db.prepare('SELECT COUNT(*) AS total FROM internal_documents').get().total;
+    assert.throws(() => internal.saveMovement({
+      documentDate: '2026-08-08', departmentManagerId: departments[0].id,
+      shareId: share.id, movementType: 'Επιστροφή', quantity: 5,
+      composition: [{ quantity: 10 }]
+    }), (error) => error.code === 'VALIDATION_ERROR' &&
+      error.message.includes('Τμήμα Α') && error.message.includes('ποσότητα 4'));
+    assert.equal(db.prepare('SELECT COUNT(*) AS total FROM internal_documents').get().total, internalDocumentCount);
 
     const creditedAddy = transactions.saveAddy({
       documentDate: '2026-08-08', transactionUnit: 'Μονάδα', notes: '', items: [{

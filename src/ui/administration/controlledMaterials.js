@@ -130,7 +130,7 @@ function renderWeaponRegistryEditor(item, index) {
 }
 
 function weaponRegistryHead() {
-  return `<thead><tr><th rowspan="2">Α/Α</th><th>Στοιχεία</th><th>Μονάδα από την οποία Περιήλθε</th><th>Σε ποιο Τμήμα της Μονάδας Βρίσκεται</th><th>Παραδ. (εκτός της Μονάδας)</th><th rowspan="2">Μεταβολές, Παρατηρήσεις κ.λπ.</th></tr><tr><th>Αριθ. Μητρώου</th><th>Χρονολογία Εισόδου</th><th>Από (Ημερομηνία)</th><th>Την (Ημερομηνία)</th></tr></thead>`;
+  return `<thead><tr><th rowspan="2">Α/Α</th><th>Στοιχεία</th><th>Μονάδα από την οποία<br />Περιήλθε</th><th>Σε ποιο Τμήμα της Μονάδας<br />Βρίσκεται</th><th>Παραδ. (εκτός της<br />Μονάδας)</th><th rowspan="2">Μεταβολές,<br />Παρατηρήσεις κ.λπ.</th></tr><tr><th>Αριθ.<br />Μητρώου</th><th>Χρονολογία<br />Εισόδου</th><th>Από<br />(Ημερομηνία)</th><th>Την<br />(Ημερομηνία)</th></tr></thead>`;
 }
 
 function renderWeaponRegistryEntry(entry, index) {
@@ -180,7 +180,7 @@ function openWeaponRegistryPages(pages, showToast) {
 function buildWeaponRegistryPages(book) {
   const entries = sortedWeaponRegistryEntries(collectWeaponRegistryEntries(book));
   const title = book.querySelector('.weapon-registry-title-row > div')?.innerHTML || '';
-  const rowsPerPage = 10;
+  const rowsPerPage = 15;
   const pageCount = Math.max(1, Math.ceil(entries.length / rowsPerPage));
   return Array.from({ length: pageCount }, (_, pageIndex) => {
     const rows = entries.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
@@ -195,7 +195,8 @@ function numberWeaponRegistryPages(pages) {
 
 function renderWeaponRegistryPrintEntry(entry, index) {
   const cell = (value) => `<span>${escapeHtml(value || '')}</span>`;
-  return `<tr><td rowspan="2" class="weapon-registry-index">${entry ? index + 1 : ''}</td><td>${cell(entry?.details)}</td><td>${cell(entry?.sourceUnit)}</td><td>${cell(entry?.currentDepartment)}</td><td>${cell(entry?.deliveredOutsideUnit)}</td><td rowspan="2">${cell(entry?.notes)}</td></tr><tr><td>${cell(entry?.registryNumber)}</td><td>${cell(entry?.entryYear)}</td><td>${cell(entry?.fromDate)}</td><td>${cell(entry?.deliveredDate)}</td></tr>`;
+  const fromDate = String(entry?.fromDate || '').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1');
+  return `<tr><td rowspan="2" class="weapon-registry-index">${entry ? index + 1 : ''}</td><td>${cell(entry?.details)}</td><td>${cell(entry?.sourceUnit)}</td><td>${cell(entry?.currentDepartment)}</td><td>${cell(entry?.deliveredOutsideUnit)}</td><td rowspan="2">${cell(entry?.notes)}</td></tr><tr><td>${cell(entry?.registryNumber)}</td><td>${cell(entry?.entryYear)}</td><td>${cell(fromDate)}</td><td>${cell(entry?.deliveredDate)}</td></tr>`;
 }
 
 async function printWeaponRegistryPages(pages, showToast) {
@@ -370,7 +371,8 @@ async function printControlledMaterialPages(pages, showToast) {
   document.body.dataset.isolatedDocumentPrint = 'true';
   try {
     await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
-    await window.appApi.print.currentDocument({ landscape: true });
+    // Το έντυπο παραμένει portrait στην εκτύπωση· μόνο η προεπισκόπηση είναι landscape.
+    await window.appApi.print.currentDocument({ landscape: false });
   } catch (error) {
     showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση του Βιβλίου Ελεγχομένων Υλικών.', 'error');
   } finally {

@@ -32,11 +32,25 @@ export function scheduleExhpDraftSave(container, state) {
   const exhpDate = container.querySelector('#exhp-date')?.value || '';
   const exhpUnit = container.querySelector('#exhp-unit')?.value || '';
   const exhpReasonValue = container.querySelector('#exhp-reason')?.value || '';
+  const supports = Array.from(state.exhpDraftSupports?.values?.() || []);
+  const manualSupportDocuments = Array.from(container.querySelectorAll('[data-manual-exhp-support]'))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+  const documentsState = state.exhpDocumentsState || {};
   return window.appApi.drafts.save(exhpDraftKey(exhpReasonValue), {
     exhpDate,
     exhpUnit,
     exhpReason: exhpReasonValue,
-    items: state.exhpItems
+    items: state.exhpItems,
+    supports,
+    manualSupportDocuments,
+    documentDrafts: {
+      draftUselessA: documentsState.draftUselessA,
+      draftUselessB: documentsState.draftUselessB,
+      draftAmmo: documentsState.draftAmmo,
+      newModuleDrafts: documentsState.newModuleDrafts,
+      uselessStatements: documentsState.uselessStatements
+    }
   }).catch((error) => console.error('Αποτυχία αποθήκευσης πρόχειρου ΕΧΠ:', error));
 }
 

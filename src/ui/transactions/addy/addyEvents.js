@@ -25,13 +25,25 @@ import {
 import { syncExhpIssueReasonSettings } from '../../pages/settingsPage.js';
 import { buildToolCompositionChargeItems } from './addyCalculations.js';
 import {
-  openAddyDepartmentAllocationDialog, openAddyEditDialog, openAddyShareSelectionDialog,
+  openAddyDepartmentAllocationDialog, openAddyDraftItemsDialog, openAddyEditDialog, openAddyShareSelectionDialog,
   restoreAddyEntryFocus, confirmAddyAction
 } from './addyDom.js';
 import {
   ADDY_DRAFT_KEY, EXHP_DRAFT_KEY, clearIssuedExhpDraftState, exhpDraftKey,
   scheduleAddyDraftSave, scheduleExhpDraftSave
 } from './addyState.js';
+
+function duplicateExhpShare(existingItems, newItems) {
+  const seen = new Set(existingItems.map((item) => String(item.shareNumber || '').trim().toLocaleLowerCase('el-GR')).filter(Boolean));
+  for (const item of newItems) {
+    const number = String(item.shareNumber || '').trim();
+    if (!number) continue;
+    const key = number.toLocaleLowerCase('el-GR');
+    if (seen.has(key)) return number;
+    seen.add(key);
+  }
+  return '';
+}
 
 export function bindAddyForm(container, transactionsApi, settingsApi, referenceData, settings, state, showToast, rerender) {
   if (container.__addyInputHandler) {
@@ -124,6 +136,17 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         reasonDraft = existingReasonDraft.data;
       }
       state.exhpDraftSupports.clear();
+      for (const support of reasonDraft?.supports || []) {
+        if (Number(support?.templateId)) state.exhpDraftSupports.set(Number(support.templateId), support);
+      }
+      Object.assign(state.exhpDocumentsState, {
+        draftUselessA: null,
+        draftUselessB: null,
+        draftAmmo: null,
+        newModuleDrafts: {},
+        uselessStatements: {}
+      });
+      Object.assign(state.exhpDocumentsState, reasonDraft?.documentDrafts || {});
       state.exhpItems = Array.isArray(reasonDraft?.items) ? reasonDraft.items : [];
       state.exhpDocumentsState.currentItems = state.exhpItems;
       if (reasonDraft?.exhpDate) container.querySelector('#exhp-date').value = reasonDraft.exhpDate;
@@ -159,6 +182,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       state.exhpDraftSupports,
       { showOfficialForms: shouldShowOfficialExhpForms(reason, reasonCode) }
     );
+    setManualExhpSupportRows(container, reasonDraft?.manualSupportDocuments || []);
     syncExhpIssueReasonSettings(container, settings.exhpIssueReasons, reason);
     await loadExhpDocumentsEditor(
       exhpSelector,
@@ -229,6 +253,10 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   });
 
   const inputHandler = (event) => {
+    if (event.target.closest('[data-manual-exhp-support]')) {
+      scheduleExhpDraftSave(container, state);
+      return;
+    }
     const transferInput = event.target.closest('[data-exhp-transfer-share-number]');
     const nominalInput = event.target.closest('[data-exhp-transfer-nominal-number]');
     if (!transferInput && !nominalInput) return;
@@ -237,7 +265,16 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       ?? nominalInput.dataset.exhpTransferNominalNumber
     );
     const item = state.exhpItems[itemIndex];
-    if (item && transferInput) item.shareNumber = transferInput.value.trim();
+    if (item && transferInput) {
+      const number = transferInput.value.trim();
+      const duplicate = duplicateExhpShare(state.exhpItems.filter((_, index) => index !== itemIndex), [{ shareNumber: number }]);
+      if (duplicate) {
+        showToast(`Η μερίδα ${duplicate} υπάρχει ήδη στην ΕΧΠ.`, 'error');
+        transferInput.value = item.shareNumber;
+        return;
+      }
+      item.shareNumber = number;
+    }
     if (item && nominalInput) item.nominalNumber = nominalInput.value.trim();
     container.querySelector('#exhp-save').disabled = state.exhpItems.some((entry) =>
       entry.sourceShareNumber && (
@@ -249,6 +286,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   container.__addyInputHandler = inputHandler;
 
   exhpControls.addItem.addEventListener('click', async () => {
+    const existingShare = duplicateExhpShare(state.exhpItems, [{ shareNumber: exhpControls.shareNumber.value }]);
+    if (existingShare) {
+      showToast(`Η μερίδα ${existingShare} υπάρχει ήδη στην ΕΧΠ.`, 'error');
+      return;
+    }
     const share = findShareByNumber(referenceData.shares, exhpControls.shareNumber.value);
     const quantityText = exhpControls.quantity.value.trim();
     const quantity = Number(quantityText);
@@ -277,6 +319,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       if (collectionTransfer && !newComposition) return;
       if (state.exhpItems.length + 1 > 1000) {
         showToast('Η ΕΧΠ δέχεται έως 1000 υλικά.', 'error');
+        return;
+      }
+      const duplicate = duplicateExhpShare(state.exhpItems, [{ shareNumber: exhpControls.shareNumber.value }]);
+      if (duplicate) {
+        showToast(`Η μερίδα ${duplicate} υπάρχει ήδη στην ΕΧΠ.`, 'error');
         return;
       }
       state.exhpItems.push({
@@ -362,6 +409,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         showToast('Η ΕΧΠ δέχεται έως 1000 υλικά.', 'error');
         return;
       }
+      const duplicate = duplicateExhpShare(state.exhpItems, [{ shareNumber: share.shareNumber }, ...componentCharges]);
+      if (duplicate) {
+        showToast(`Η μερίδα ${duplicate} υπάρχει ήδη στην ΕΧΠ.`, 'error');
+        return;
+      }
       state.exhpItems.push({
         shareNumber: share.shareNumber,
         nominalNumber: share.nominalNumber,
@@ -403,10 +455,9 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       return;
     }
 
-    if (nominalTransfer && state.exhpItems.some((item) =>
-      item.transactionType === 'Πίστωση' && item.shareNumber === share.shareNumber
-    )) {
-      showToast('Η συγκεκριμένη μερίδα έχει ήδη προστεθεί.', 'error');
+    const duplicate = duplicateExhpShare(state.exhpItems, [{ shareNumber: share.shareNumber }]);
+    if (duplicate) {
+      showToast(`Η μερίδα ${duplicate} υπάρχει ήδη στην ΕΧΠ.`, 'error');
       return;
     }
 
@@ -589,8 +640,22 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   controls.addItem.addEventListener('click', async () => {
     await maybeSuggestShareNumber(transactionsApi, referenceData, controls, showToast);
+    const addyShareNumber = controls.shareNumber.value.trim();
+    if (state.items.some((item, index) =>
+      index !== state.addyEditingIndex &&
+      String(item.shareNumber || '').trim().toLocaleLowerCase('el-GR') === addyShareNumber.toLocaleLowerCase('el-GR')
+    )) {
+      showToast(`Η μερίδα ${addyShareNumber} υπάρχει ήδη στη λίστα υλικών.`, 'error');
+      return;
+    }
     if (!canAddItem(controls, state)) {
       updateAddButton(controls, state);
+      return;
+    }
+    if (state.items.some((item, index) =>
+      index !== state.addyEditingIndex && item.transactionType !== controls.transactionType.value
+    )) {
+      showToast('Το ίδιο ΑΔΔΥ δεν μπορεί να περιέχει μαζί χρεώσεις και πιστώσεις.', 'error');
       return;
     }
 
@@ -665,6 +730,34 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
   });
 
   const clickHandler = async (event) => {
+    if (event.target.closest('#addy-edit-list')) {
+      openAddyDraftItemsDialog(state.items, (updatedItems) => {
+        state.items.splice(0, state.items.length, ...updatedItems);
+        state.addyListEditing = false;
+        state.addyEditingIndex = null;
+        controls.addItem.textContent = 'Προσθήκη';
+        clearLineControls(controls);
+        renderState(container, state);
+        scheduleAddyDraftSave(controls, state);
+        updateAddButton(controls, state);
+      });
+      return;
+    }
+
+    const removeDraftItem = event.target.closest('[data-remove-addy-item]');
+    if (removeDraftItem) {
+      const index = Number(removeDraftItem.dataset.removeAddyItem);
+      if (!Number.isInteger(index) || index < 0 || index >= state.items.length) return;
+      state.items.splice(index, 1);
+      state.addyEditingIndex = null;
+      controls.addItem.textContent = 'Προσθήκη';
+      clearLineControls(controls);
+      renderState(container, state);
+      scheduleAddyDraftSave(controls, state);
+      updateAddButton(controls, state);
+      return;
+    }
+
     const editButton = event.target.closest('[data-edit-addy-item]');
     if (editButton) {
       const editIndex = Number(editButton.dataset.editAddyItem);
@@ -682,7 +775,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       controls.materialType.value = item.materialType || '';
       controls.addItem.textContent = 'Αποθήκευση αλλαγών';
       updateAddButton(controls, state);
-      controls.shareNumber.focus();
+      controls.quantity.focus();
       return;
     }
 
@@ -791,6 +884,11 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           showToast('\u03a0\u03c1\u03cc\u03c3\u03b8\u03b5\u03c3\u03b5 \u03c4\u03bf\u03c5\u03bb\u03ac\u03c7\u03b9\u03c3\u03c4\u03bf\u03bd \u03ad\u03bd\u03b1 \u03c5\u03bb\u03b9\u03ba\u03cc \u03c3\u03c4\u03b7\u03bd \u0395\u03a7\u03a0.', 'error');
           return;
         }
+        const duplicate = duplicateExhpShare([], saveExhpItems);
+        if (duplicate) {
+          showToast(`Η μερίδα ${duplicate} υπάρχει ήδη στην ΕΧΠ.`, 'error');
+          return;
+        }
         const supports = collectExhpSupports(container, state.exhpDraftSupports);
         const result = await transactionsApi.saveExhp({
           documentDate: exhpDate,
@@ -801,10 +899,6 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           supports,
           items: saveExhpItems
         });
-        state.exhpItems = saveExhpItems;
-        state.exhpDocumentsState.currentItems = state.exhpItems;
-        renderExhpEntryState(container, state);
-        scheduleExhpDraftSave(container, state);
         try {
           await saveDraftExhpDocuments(
             window.appApi?.exhpDocs,
@@ -813,17 +907,20 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
             container.querySelector('#exhp-documents-editor'),
             state.exhpDocumentsState
           );
-          clearIssuedExhpDraftState(state);
-          clearTimeout(exhpSaveDraftTimeout);
-          await window.appApi.drafts.clear(exhpDraftKey(exhpReason.value));
         } catch (documentsError) {
           console.error('EXHP supporting documents save failed:', documentsError);
           showToast('Η ΕΧΠ αποθηκεύτηκε, αλλά ορισμένα δικαιολογητικά δεν αποθηκεύτηκαν.', 'error');
         }
+        clearIssuedExhpDraftState(state);
+        renderExhpEntryState(container, state);
+        await window.appApi.drafts.clear(exhpDraftKey(exhpReason.value));
         showToast(result.message || 'Η ΕΧΠ αποθηκεύτηκε.');
         const savedDocument = await transactionsApi.getExhpDocument(result.documentId);
         try {
-          for (const item of savedDocument.items.filter((entry) => Number(entry.quantity) > 0)) {
+          // The nominal-number transfer already moves every department's current
+          // balance to the new share while saving the ΕΧΠ.
+          for (const item of (issueReasonCode === 'g' ? [] : savedDocument.items)
+            .filter((entry) => Number(entry.quantity) > 0)) {
             const share = findShareByNumber(referenceData.shares, item.shareNumber);
             const allocations = await openAddyDepartmentAllocationDialog({
               departments: referenceData.departmentManagers || [],
@@ -834,9 +931,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
               quantity: item.quantity
             });
             if (allocations === null) break;
+            if (allocations.skipped) {
+              continue;
+            }
             const allocationResult = await transactionsApi.saveExhpDepartmentAllocations(
               result.documentId,
-              { entries: [{ exhpItemId: item.id, allocations }] }
+              { entries: [{ exhpItemId: item.id, allocations: allocations.allocations }] }
             );
             showToast(allocationResult.message);
           }
@@ -859,6 +959,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
       event.preventDefault();
       event.stopImmediatePropagation();
       addManualExhpSupportRow(container);
+      scheduleExhpDraftSave(container, state);
       return;
     }
 
@@ -871,6 +972,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
         const input = removeManualSupport.closest('[data-manual-exhp-support-row]')?.querySelector('input');
         if (input) input.value = '';
       }
+      scheduleExhpDraftSave(container, state);
       return;
     }
 
@@ -927,6 +1029,7 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
             }
           );
           setManualExhpSupportRows(container, manualSupportDocuments);
+          scheduleExhpDraftSave(container, state);
           showToast('Το επίσημο έντυπο προετοιμάστηκε και θα αποθηκευτεί μαζί με την ΕΧΠ.');
         }
       });
@@ -945,6 +1048,10 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
 
   controls.save.addEventListener('click', async () => {
     try {
+      if (new Set(state.items.map((item) => item.transactionType)).size > 1) {
+        showToast('Το ίδιο ΑΔΔΥ δεν μπορεί να περιέχει μαζί χρεώσεις και πιστώσεις.', 'error');
+        return;
+      }
       if (isCommerceUnit(controls.unit.value) && !(await openCommerceDialog())) return;
       if (!(await confirmFutureTransactionDate(controls.date.value))) return;
       const result = await transactionsApi.saveAddy({
@@ -972,9 +1079,12 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
               quantity: Number(item.column22)
             });
             if (allocations === null) break;
+            if (allocations.skipped) {
+              continue;
+            }
             const allocationResult = await transactionsApi.saveAddyDepartmentAllocations(
               result.documentId,
-              { entries: [{ addyItemId: item.addyItemId, allocations }] }
+              { entries: [{ addyItemId: item.addyItemId, allocations: allocations.allocations }] }
             );
             showToast(allocationResult.message);
           }
@@ -988,6 +1098,8 @@ export function bindAddyForm(container, transactionsApi, settingsApi, referenceD
           openAddyDocument(result.document);
         }
         state.items.length = 0;
+        state.addyListEditing = false;
+        state.addyEditingIndex = null;
         await window.appApi.drafts.clear(ADDY_DRAFT_KEY);
         await rerender(container, transactionsApi, settingsApi, showToast, 'addy');
     } catch (error) {

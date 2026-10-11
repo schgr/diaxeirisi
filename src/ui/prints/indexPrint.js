@@ -269,8 +269,9 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}, o
 
   const renderPreviewContent = () => {
     content.innerHTML = singleMaterialVisible ? options.singleMaterialHtml : documentHtml;
+    fitExternalIndexCells(content);
     if (signaturesVisible) {
-      content.querySelector('.official-index-page:last-child')?.insertAdjacentHTML(
+      content.querySelector('.official-index-page:last-child, .external-excel-index-page:last-child')?.insertAdjacentHTML(
         'beforeend',
         renderIndexAnnualSignatures(financialOfficers)
       );
@@ -291,12 +292,31 @@ function openIndexDocumentPreview(title, documentHtml, financialOfficers = {}, o
     signaturesButton.classList.toggle('active', signaturesVisible);
     renderPreviewContent();
   });
-  backdrop.querySelector('[data-close-index-preview]').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('[data-close-index-preview]').addEventListener('click', () => {
+    backdrop.remove();
+  });
   backdrop.querySelector('[data-print-index-preview]').addEventListener('click', () => {
     void printIsolatedPreview(content, true);
   });
   backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.remove(); });
   document.body.appendChild(backdrop);
+  fitExternalIndexCells(content);
+}
+
+function fitExternalIndexCells(root) {
+  const cells = root.querySelectorAll('.external-excel-index-page tbody td .external-index-cell-text');
+  if (!cells.length) return;
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  for (const text of cells) {
+    const cell = text.parentElement;
+    const available = cell.clientWidth - 6;
+    if (available <= 0) continue;
+    context.font = `11px Arial`;
+    const measured = context.measureText(text.textContent).width;
+    text.style.fontSize = `${Math.min(11, 11 * available / Math.max(measured, 1))}px`;
+  }
 }
 
 function renderIndexAnnualSignatures(financialOfficers = {}) {
@@ -341,38 +361,35 @@ function bindFiscalYearControls(container, state, renderActiveTab) {
   });
 }
 function renderExternalTransactionsIndex(settings, entries) {
-  return renderOfficialIndexPages({
-    pageClassName: 'external-official-index-page',
-    unit: settings.serviceInfo.serviceName,
-    image: 'te34-254-page-227.png',
-    rowsPerPage: 22,
-    rowTop: 38.45,
-    rowStep: 2.08,
-    columns: [
-      { left: 6.1, width: 3.8 },
-      { left: 9.95, width: 10.5 },
-      { left: 20.5, width: 10.1 },
-      { left: 30.65, width: 10.05 },
-      { left: 40.75, width: 11.65 },
-      { left: 52.45, width: 11.95 },
-      { left: 64.45, width: 9.7 },
-      { left: 74.2, width: 9.65 },
-      { left: 83.95, width: 10.3, className: 'official-index-left-cell' }
-    ],
-    rows: entries.map((entry) => {
-      return [
-        entry.serial,
-        formatAddyDate(entry.date),
-        entry.unit,
-        entry.documentType,
-        entry.nominalNumber,
-        entry.indexField7 || '',
-        entry.indexField8 || '',
-        entry.indexField9 || '',
-        entry.notes
-      ];
-    })
-  });
+  const headers = ['Α/Α', 'ΗΜΕΡΟΜΗΝΙΑ', 'ΜΟΝΑΔΑ', 'ΕΙΔΟΣ ΔΙΚ/ΚΟΥ', 'Α/Ο ΥΛΙΚΟΥ',
+    'ΑΡΙΘΜΟΣ / ΗΜΕΡΟΜΗΝΙΑ ΔΙΚΑΙΟΛΟΓΗΤΙΚΟΥ',
+    'ΗΜΕΡΟΜΗΝΙΑ ΠΑΡΑΛΑΒΗΣ Ή (ΔΙΑΖ) ΑΠΟΣΤΟΛΗΣ ΥΛΙΚΟΥ',
+    'ΗΜΕΡΟΜΗΝΙΑ ΕΠΙΣΤΡΟΦΗΣ Ή (ΔΙΑΖ) ΠΑΡΑΛΑΒΗΣ ΟΡΙΣΤΙΚΟΥ «Π»-«Χ» ΔΙΚΑΙΟΛΟΓΗΤΙΚΟΥ ΔΟΣΟΛΗΨΙΑΣ',
+    'ΠΑΡΑΤΗΡΗΣΕΙΣ'];
+  const rowsPerPage = 24;
+  const lastPageRows = 22;
+  const pageCount = 1 + Math.ceil(Math.max(0, entries.length - lastPageRows) / rowsPerPage);
+  let entryOffset = 0;
+  return Array.from({ length: pageCount }, (_unused, pageIndex) => {
+    const isLastPage = pageIndex === pageCount - 1;
+    const rowCount = isLastPage ? lastPageRows : rowsPerPage;
+    // Keep an entry for the final page when a full preceding page would empty it.
+    const entryCount = isLastPage
+      ? entries.length - entryOffset
+      : Math.min(rowCount, entries.length - entryOffset - 1);
+    const rows = Array.from({ length: rowCount }, (_unusedRow, index) =>
+      index < entryCount ? entries[entryOffset + index] : null);
+    entryOffset += entryCount;
+    return `<article class="external-excel-index-page print-document-area">
+    <div class="external-excel-index-unit">ΜΟΝΑΔΑ : ${escapeHtml(settings.serviceInfo.serviceName || '')}</div>
+    <div class="external-excel-index-code">Κ2312/ΔΥΠ</div>
+    <h1>ΕΥΡΕΤΗΡΙΟ<br />ΔΙΚΑΙΟΛΟΓΗΤΙΚΩΝ ΕΞΩΤΕΡΙΚΩΝ ΔΟΣΟΛΗΨΙΩΝ</h1>
+    <table><thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr><tr>${headers.map((_header, i) => `<th>${i + 2}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map((entry) => `<tr>${entry ? [entry.serial, formatAddyDate(entry.date), entry.unit, entry.documentType, entry.nominalNumber, entry.indexField7, entry.indexField8, entry.indexField9, entry.notes].map((value) => `<td><span class="external-index-cell-text">${escapeHtml(value || '')}</span></td>`).join('') : headers.map(() => '<td></td>').join('')}</tr>`).join('')}</tbody>
+    </table>
+    <div class="external-excel-index-page-number">Σελίδα ${pageIndex + 1} από Σελίδα ${pageCount}</div>
+  </article>`;
+  }).join('');
 }
 
 function renderChargeCreditOrdersIndex(settings, entries) {
@@ -415,7 +432,7 @@ function renderOfficialIndexPages(config) {
 
 function renderOfficialIndexPage({ unit, image, rows, rowsPerPage, rowTop, rowStep, columns, pageClassName = '', pageNumber, pageCount }) {
   const overlays = [
-    officialIndexOverlay(unit, 13.2, 11.75, 16, 2.7, 'official-index-unit')
+    officialIndexOverlay(unit, 13.4, 11.75, 20, 2.7, 'official-index-unit')
   ];
   const pageRows = Array.from({ length: rowsPerPage }, (_unused, index) => rows[index] || null);
   pageRows.forEach((row, rowIndex) => {
@@ -453,12 +470,14 @@ function renderIndexPages(config) {
     renderIndexPage({
       ...config,
       rows: (config.rows || []).slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage),
-      rowsPerPage
+      rowsPerPage,
+      pageNumber: pageIndex + 1,
+      pageCount
     })
   ).join('');
 }
 
-function renderIndexPage({ unit, code, subCode, title, subtitle, columns, numbers, rows = [], rowsPerPage = ROWS_PER_INDEX_PAGE }) {
+function renderIndexPage({ unit, code, subCode, title, subtitle, columns, numbers, rows = [], rowsPerPage = ROWS_PER_INDEX_PAGE, showPageNumber = false, pageNumber = 1, pageCount = 1 }) {
   const pageRows = Array.from({ length: rowsPerPage }, (_unused, index) => rows[index] || null);
   return `
     <article class="index-page print-document-area">
@@ -477,6 +496,7 @@ function renderIndexPage({ unit, code, subCode, title, subtitle, columns, number
           ${pageRows.map((row) => `<tr>${columns.map((_column, index) => `<td>${row ? escapeHtml(row[index] || '') : ''}</td>`).join('')}</tr>`).join('')}
         </tbody>
       </table>
+      ${showPageNumber ? `<footer class="index-page-number">Σελίδα ${pageNumber} από ${pageCount}</footer>` : ''}
     </article>
   `;
 }

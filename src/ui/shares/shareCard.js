@@ -1,6 +1,7 @@
 import { escapeHtml, renderFiscalYearOptions } from '../components/forms.js';
 import { confirmDialog } from '../components/confirmDialog.js';
-import { summaryItem, detailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows } from './shareDetails.js';
+import { summaryItem, detailField, selectDetailField, toggleField, getShareDetailControls, renderTransactionRows, renderAssignmentRows } from './shareDetails.js';
+import { collectMaterialTypes } from './shareList.js';
 import { renderCompositionRows, setCompositionLocked, renderChangeSheetRows, setChangeSheetLocked, collectCompositionRows, collectChangeSheetRows, collectRecordRow, renderCompositionDocument } from './shareComposition.js';
 import { openMaterialFormPreview, printMaterialFormDocument, renderChangeSheetDocument, openSharePrintDocument } from './sharePrint.js';
 import { formatQuantity, formatDate, pathToFileUrl, formatDifference } from './shared.js';
@@ -13,6 +14,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
 
   const modal = document.createElement('div');
   const compositionEditor = Boolean(options.compositionOnly);
+  const materialTypes = collectMaterialTypes([{ materialType: card.share.materialType }], settings?.materialCategories);
   const compositionLocked = !compositionEditor || card.compositionItems.length > 0;
   const changeSheetLocked = !compositionEditor || card.changeSheetEntries.length > 0;
   modal.className = 'modal-backdrop';
@@ -24,7 +26,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           <h2>${escapeHtml(card.share.description)}</h2>
         </div>
         <div class="row-actions">
-          ${!options.compositionOnly ? '<button class="secondary-button" data-edit-share-details type="button">Επεξεργασία</button><button class="primary-button" data-save-share-details type="button" hidden>Αποθήκευση</button>' : ''}
+          ${!options.compositionOnly ? '<button class="secondary-button" data-edit-share-details type="button">Επεξεργασία</button><button class="secondary-button" data-cancel-share-details type="button" hidden>Άκυρο</button><button class="primary-button" data-save-share-details type="button" hidden>Αποθήκευση</button>' : ''}
           ${!options.compositionOnly ? '<button class="danger-button" data-delete-share type="button">Διαγραφή</button>' : ''}
           <button class="secondary-button" data-close-card type="button">Κλείσιμο</button>
         </div>
@@ -36,7 +38,7 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
           ${detailField('Αριθμός ονομαστικού', 'nominalNumber', card.share.nominalNumber, 'text', true)}
           ${detailField('Αριθμός Κυρίου Υλικού', 'mainMaterialNumber', card.share.mainMaterialNumber, 'text', true)}
           ${detailField('Περιγραφή', 'description', card.share.description, 'text', true)}
-          ${detailField('Είδος υλικού', 'materialType', card.share.materialType, 'text', true)}
+          ${selectDetailField('Είδος υλικού', 'materialType', card.share.materialType, materialTypes, true)}
           ${detailField('Προβλεπόμενη Ποσότητα', 'projectedQuantity', card.share.projectedQuantity, 'number', true)}
           ${detailField('Λογιστικό υπόλοιπο', 'accountingBalance', card.share.accountingBalance, 'number', true)}
           ${detailField('Τιμή', 'unitPrice', card.share.unitPrice ?? '', 'number', true)}
@@ -202,11 +204,19 @@ function openShareCard(card, sharesApi, showToast, settings, options = {}) {
 
     if (event.target.closest('[data-edit-share-details]')) {
       modal.querySelectorAll(
-        '[data-share-detail="nominalNumber"], [data-share-detail="description"], [data-share-detail="materialType"]'
+        '[data-share-detail="nominalNumber"], [data-share-detail="description"], [data-share-detail="projectedQuantity"]'
       ).forEach((control) => { control.readOnly = false; });
+      modal.querySelector('[data-share-detail="materialType"]').disabled = false;
       modal.querySelector('[data-edit-share-details]').hidden = true;
+      modal.querySelector('[data-cancel-share-details]').hidden = false;
       modal.querySelector('[data-save-share-details]').hidden = false;
       modal.querySelector('[data-share-detail="nominalNumber"]')?.focus();
+      return;
+    }
+
+    if (event.target.closest('[data-cancel-share-details]')) {
+      modal.remove();
+      openShareCard(card, sharesApi, showToast, settings, options);
       return;
     }
 

@@ -260,6 +260,15 @@
   margin: 48px auto;
 }
 
+.addy-draft-edit-table-wrap {
+  max-height: min(55vh, 480px);
+  overflow: auto;
+}
+
+.addy-draft-edit-actions {
+  justify-content: flex-end;
+}
+
 .editable-records-table td {
   vertical-align: middle;
 }

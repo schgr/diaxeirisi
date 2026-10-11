@@ -287,8 +287,6 @@ export function renderProtocolDocument(protocol) {
   const isDeficit = protocol.differenceType === 'Έλλειμμα';
   return `
     <article class="official-movement-protocol-page print-document-area">
-      <div class="official-protocol-page-number">-214-</div>
-      <div class="official-protocol-side-label">(Εμπρός Πλευρά)</div>
       <div class="official-protocol-code"><strong>Κ 2303/ΔΥΠ</strong><span>ΕΦΕΔ 104</span></div>
       <header class="official-protocol-heading">
         <h1>ΠΡΩΤΟΚΟΛΛΟ</h1>
@@ -303,8 +301,8 @@ export function renderProtocolDocument(protocol) {
         <tbody>
           <tr><td><strong>4. ΜΟΝΑΔΑ ΧΟΡΗΓΗΣΗΣ:</strong><span>${escapeHtml(issuingUnit)}</span></td><td><strong>5. ΜΟΝΑΔΑ ΠΑΡΑΛΑΒΗΣ:</strong><span>${escapeHtml(receivingUnit)}</span></td></tr>
           <tr><td><strong>6. ΑΡΙΘ. - ΗΜΕΡ. ΔΙΚ/ΚΟΥ ΧΟΡΗΓ.</strong><span>${protocol.addyDocumentId ? `ΑΔΔΥ ${escapeHtml(protocol.addyDocumentId)}` : ''}</span></td><td><strong>9. ΑΡΙΘ. - ΗΜΕΡ. ΔΕΛΤΙΟΥ ΣΥΝΟΔΕΙΑΣ</strong><span></span></td></tr>
-          <tr><td><strong>7. ΑΡΙΘ. ΦΟΡΤΩΤΙΚΗΣ</strong><span></span></td><td rowspan="2"></td></tr>
-          <tr><td><strong>8. ΜΕΣΟ ΜΕΤΑΦΟΡΑΣ</strong><span></span></td></tr>
+          <tr><td><strong>7. ΑΡΙΘ. ΦΟΡΤΩΤΙΚΗΣ</strong><span></span></td><td></td></tr>
+          <tr><td><strong>8. ΜΕΣΟ ΜΕΤΑΦΟΡΑΣ</strong><span></span></td><td></td></tr>
         </tbody>
       </table>
       <table class="official-protocol-material-table">
@@ -312,11 +310,11 @@ export function renderProtocolDocument(protocol) {
           <tr>
             <th>Α/Α</th><th>ΑΡΙΘΜΟΣ ΟΝΟΜΑΣΤΙΚΟΥ</th><th>ΠΕΡΙΓΡΑΦΗ</th>
             <th class="vertical-table-heading">ΜΟΝΑΔΑ ΜΕΤΡΗΣΗΣ</th>
-            <th class="vertical-table-heading">ΧΟΡΗΓΗΘΕΙΣΑ</th>
-            <th class="vertical-table-heading">ΠΑΡΑΛΗΦΘΕΙΣΑ</th>
-            <th class="vertical-table-heading">ΠΛΕΟΝΑΣΜΑ</th>
+            <th class="vertical-table-heading">ΧΟΡΗΓΗΘΕ-<br>ΝΤΑ</th>
+            <th class="vertical-table-heading">ΠΑΡΑΛΗΦ-<br>ΘΕΝΤΑ</th>
+            <th class="vertical-table-heading">ΠΛΕΟΝ.</th>
             <th class="vertical-table-heading">ΕΛΛΕΙΜΜΑ</th>
-            <th class="vertical-table-heading">Α/Α ΔΙΑΦΟΡΑΣ ΣΕ €</th>
+            <th class="vertical-table-heading">ΑΞΙΑ ΔΙΑΦΟΡΑΣ ΣΕ €</th>
           </tr>
           <tr class="official-protocol-field-numbers">${[10, 11, 12, 13, 14, 15, 16, 17, 18].map((number) => `<td>${number}</td>`).join('')}</tr>
         </thead>
@@ -330,37 +328,36 @@ export function renderProtocolDocument(protocol) {
             <td>${isSurplus ? formatQuantity(protocol.differenceQuantity) : ''}</td>
             <td>${isDeficit ? formatQuantity(protocol.differenceQuantity) : ''}</td><td></td>
           </tr>
-          ${Array.from({ length: 13 }, () => `<tr>${'<td></td>'.repeat(9)}</tr>`).join('')}
+          ${Array.from({ length: 15 }, () => `<tr>${'<td></td>'.repeat(9)}</tr>`).join('')}
         </tbody>
       </table>
       <div class="official-protocol-notes"><strong>19. ΠΑΡΑΤΗΡΗΣΕΙΣ</strong><span>${escapeHtml(protocol.notes)}</span></div>
-      <div class="official-protocol-acceptance">
-        <div><strong>20. ΜΟΝΑΔΑ ΧΟΡΗΓΗΣΗΣ</strong><span>ΠΑΡΑΔΕΚΤΟ Ή ΑΠΑΡΑΔΕΚΤΟ</span></div>
-        <div><strong>21. ΜΟΝΑΔΑ ΠΑΡΑΛΑΒΗΣ</strong><span>Η ΕΠΙΤΡΟΠΗ ΑΠΟΣΥΣΚΕΥΑΣΙΑΣ &nbsp;&nbsp; Ο ΣΥΝΟΔΟΣ &nbsp;&nbsp; Ο ΔΙΑΧΕΙΡΙΣΤΗΣ &nbsp;&nbsp; Ο ΠΕΔ</span></div>
+      <div class="official-protocol-signoff"><div class="official-protocol-acceptance">
+        <div><strong>20. ΜΟΝΑΔΑ ΧΟΡΗΓΗΣΗΣ</strong><span>ΠΑΡΑΔΕΚΤΟ Ή ΑΠΑΡΑΔΕΚΤΟ</span></div><div class="official-protocol-committee">Η ΕΠΙΤΡΟΠΗ<br>ΑΠΟΣΥΣΚΕΥΑΣΙΑΣ</div>
+        <div><strong>21. ΜΟΝΑΔΑ ΠΑΡΑΛΑΒΗΣ</strong><span class="official-protocol-receivers"><span>Ο<br>ΣΥΝΟΔΟΣ</span><span>Ο<br>ΔΙΑΧΕΙΡΙΣΤΗΣ</span><span>Ο<br>ΠΕΔ</span></span></div>
       </div>
       <div class="official-protocol-footer-fields">
         <div><strong>22. ΣΤΟΙΧΕΙΑ ΧΡΕΩΣΕΩΣ</strong></div>
-        <div><strong>23. ΕΓΚΡΙΣΗ</strong><span>ΑΡΙΘ. ΗΜΕΡ. &nbsp;&nbsp;&nbsp;&nbsp; ΣΦΡΑΓΙΔΑ - ΥΠΟΓΡΑΦΗ</span></div>
+        <div><strong>23. ΕΓΚΡΙΣΗ</strong><span>ΑΡΙΘ. ΗΜΕΡ.</span></div><div>ΣΦΡΑΓΙΔΑ - ΥΠΟΓΡΑΦΗ</div>
       </div>
-      <div class="official-protocol-side-label official-protocol-back-label">(Πίσω Πλευρά)</div>
+      </div>
     </article>
     <article class="official-movement-protocol-page official-movement-protocol-back print-document-area">
-      <div class="official-protocol-page-number">-215-</div>
       <div class="official-protocol-code"><strong>Κ 2303/ΔΥΠ</strong><span>ΕΦΕΔ 104</span></div>
       <h1>ΓΝΩΜΑΤΕΥΣΗ ΠΑΡΑΛΗΠΤΗ</h1>
       <div class="official-protocol-opinion">
         <p>Καθορισμός:</p>
         <p>α. Διακριτικά δεμάτων που παρουσιάζουν διαφορές....................................................................</p>
         <p>β. Δέματα άθικτο/α................ Δέμα/τα παραβιασμένο/α............................................................</p>
-        <p>γ. Αν το περιεχόμενο του παραβιασμένου δέματος ελέγχθηκε παρουσία του συνοδού<br>ή του αντιπροσώπου του μεταφορέα και ποια τα στοιχεία αυτού...................................................</p>
+        <p>γ. Αν το περιεχόμενο του παραβιασμένου δέματος ελέγχθηκε παρουσία του συνοδού<br>ή του αντιπροσώπου του μεταφορέα και ποια τα στοιχεία αυτού...................................................<br><span class="official-protocol-writing-line"></span></p>
         <p>δ. Αριθμός βαγονιού ή σφραγίδας, αν υπάρχει........................................................................</p>
-        <p>ε. Όνομα πλοίου - αν υπάρχει - και αν έχει καταχωρηθεί στο πίσω μέρος της φορτωτικής<br>το έλλειμμα........................................................................ ΝΑΙ □ &nbsp;&nbsp;&nbsp; ΟΧΙ □</p>
-        <p>στ. Εάν πρέπει το έλλειμμα να θεωρηθεί ότι οφείλεται σε:<br>Απώλεια ΝΑΙ □ &nbsp; ΟΧΙ □ &nbsp;&nbsp; Καταστροφή από μεταφορά: ΝΑΙ □ &nbsp; ΟΧΙ □<br>Λάθος κατά τη συσκευασία: ΝΑΙ □ &nbsp; ΟΧΙ □</p>
+        <p>ε. Όνομα πλοίου - αν υπάρχει - και αν έχει καταχωρηθεί στο πίσω μέρος της φορτωτικής<br>το έλλειμμα........................................................................ ΝΑΙ <span class="official-protocol-checkbox"></span> &nbsp;&nbsp;&nbsp; ΟΧΙ <span class="official-protocol-checkbox"></span></p>
+        <p>στ. Εάν πρέπει το έλλειμμα να θεωρηθεί ότι οφείλεται σε:<br>Απώλεια ΝΑΙ <span class="official-protocol-checkbox"></span> &nbsp; ΟΧΙ <span class="official-protocol-checkbox"></span> &nbsp;&nbsp; Καταστροφή από μεταφορά: ΝΑΙ <span class="official-protocol-checkbox"></span> &nbsp; ΟΧΙ <span class="official-protocol-checkbox"></span><br>Λάθος κατά τη συσκευασία: ΝΑΙ <span class="official-protocol-checkbox"></span> &nbsp; ΟΧΙ <span class="official-protocol-checkbox"></span></p>
         <p>ζ. Βάρος κιβωτίου όπως αναγράφεται στο δικαιολογητικό.........................................................</p>
         <p>η. Βάρος όπως βρέθηκε από την επιτροπή αποσυσκευασίας.......................................................</p>
-        <p>θ. Αν βρέθηκε Δελτίο Συσκευασίας ή Πρωτόκολλο Επιτροπής και ποια τα στοιχεία των<br>συσκευαστών ή της Επιτροπής............................................................................................</p>
-        <p>ι. Οποιαδήποτε άλλη σχετική πληροφορία................................................................................<br>${escapeHtml(protocol.notes)}</p>
-        <p>ια. Είναι απαραίτητη η αντικατάσταση των ελλειπόντων ΝΑΙ □ &nbsp;&nbsp;&nbsp; ΟΧΙ □<br>Δικαιολόγηση.....................................................................................................................</p>
+        <p>θ. Αν βρέθηκε Δελτίο Συσκευασίας ή Πρωτόκολλο Επιτροπής και ποια τα στοιχεία των<br>συσκευαστών ή της Επιτροπής............................................................................................<br><span class="official-protocol-writing-line"></span></p>
+        <p>ι. Οποιαδήποτε άλλη σχετική πληροφορία................................................................................<br><span class="official-protocol-writing-line">${escapeHtml(protocol.notes)}</span></p>
+        <p>ια. Είναι απαραίτητη η αντικατάσταση των ελλειπόντων ΝΑΙ <span class="official-protocol-checkbox"></span> &nbsp;&nbsp;&nbsp; ΟΧΙ <span class="official-protocol-checkbox"></span><br>Δικαιολόγηση.....................................................................................................................<br><span class="official-protocol-writing-line"></span></p>
       </div>
     </article>
   `;

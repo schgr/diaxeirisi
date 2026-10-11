@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, session, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, session, nativeImage, shell } = require('electron');
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
@@ -186,6 +186,7 @@ function registerIpcHandlers() {
 
 async function printCurrentDocument(webContents, options) {
   const landscape = Boolean(options && options.landscape);
+  let legacyPrintStyleId;
   const requestedTitle = sanitizeExportFilename(options && options.title);
   const previousTitle = await webContents.executeJavaScript('document.title', true).catch(() => '');
   const ownerWindow = BrowserWindow.fromWebContents(webContents);
@@ -197,36 +198,130 @@ async function printCurrentDocument(webContents, options) {
     ).catch(() => {});
     ownerWindow?.setTitle(requestedTitle);
   }
-  const result = await new Promise((resolve) => {
-    webContents.print(
-      {
-        silent: false,
-        printBackground: true,
-        color: true,
-        margins: { marginType: 'none' },
-        landscape,
-        scaleFactor: 100,
-        pagesPerSheet: 1
-      },
-      (success, failureReason) => {
-        if (!success) {
-          resolve({ printed: false, failureReason: failureReason || '' });
-          return;
+  try {
+    if (isWindows7Legacy) {
+      if (options?.mixedOrientation === true) {
+        // Electron 22 uses one paper size per PDF. Keep mixed annual packets
+        // as two correctly sized PDFs, without adding a PDF merging runtime.
+        const orientations = await webContents.executeJavaScript(`(() => {
+          const pages = [...document.querySelectorAll('.isolated-print-root .print-document-area')];
+          return [...new Set(pages.map(page => {
+            const orientation = page.matches('.change-sheet-document-page, .addy-document-page, .faithful-form-page-landscape, .exhp-faithful-page, .official-index-page, .serial-registry-print-page, .balance-differences-page, .controlled-material-print') ? 'landscape' : 'portrait';
+            page.dataset.legacyPdfOrientation = orientation;
+            return orientation;
+          }))];
+        })()`, true);
+        if (!orientations.length) throw new AppError('Δεν βρέθηκαν σελίδες για εκτύπωση.', 'PRINT_PAGES_MISSING');
+        const filePaths = [];
+        try {
+          for (const orientation of orientations) {
+            const hiddenOrientation = orientation === 'landscape' ? 'portrait' : 'landscape';
+            await webContents.executeJavaScript(`(() => {
+              document.getElementById('legacy-print-mixed-filter')?.remove();
+              const style = document.createElement('style');
+              style.id = 'legacy-print-mixed-filter';
+              style.textContent = ${JSON.stringify(`@media print { body[data-isolated-document-print='true'] .isolated-print-root .print-document-area[data-legacy-pdf-orientation='${hiddenOrientation}'] { display: none !important; } }`)};
+              document.head.appendChild(style);
+            })()`, true);
+            const result = await printCurrentDocument(webContents, {
+              ...options, mixedOrientation: false, landscape: orientation === 'landscape',
+              title: `${requestedTitle} - ${orientation === 'landscape' ? 'Οριζόντια' : 'Όρθια'}`
+            });
+            filePaths.push(result.filePath);
+          }
+        } finally {
+          await webContents.executeJavaScript(`(() => {
+            document.getElementById('legacy-print-mixed-filter')?.remove();
+            document.querySelectorAll('[data-legacy-pdf-orientation]').forEach(page => delete page.dataset.legacyPdfOrientation);
+          })()`, true).catch(() => {});
         }
-        resolve({ printed: true });
+        return { printed: false, openedPdf: true, filePaths };
       }
-    );
-  });
-  if (previousTitle) {
-    await webContents.executeJavaScript(
-      `document.title = ${JSON.stringify(previousTitle)}`,
-      true
-    ).catch(() => {});
+      // Legacy Chromium can keep the document's named portrait page even when
+      // the native print options request landscape. Use one unnamed page for
+      // this job and override both named rules until the print dialog closes.
+      const orientation = landscape ? 'landscape' : 'portrait';
+      const printCss = '@media print { '
+          + `@page { size: A4 ${orientation}; margin: 0; } `
+          + `@page landscape { size: A4 ${orientation}; margin: 0; } `
+          + `@page portrait { size: A4 ${orientation}; margin: 0; } `
+          + '.isolated-print-root, .isolated-print-root * { page: auto !important; } '
+          + '}';
+      // insertCSS does not reliably override @page in Electron 22's PDF
+      // renderer. Append a real stylesheet after the application's styles.
+      legacyPrintStyleId = 'legacy-print-page-orientation';
+      await webContents.executeJavaScript(`(() => {
+        document.getElementById(${JSON.stringify(legacyPrintStyleId)})?.remove();
+        const style = document.createElement('style');
+        style.id = ${JSON.stringify(legacyPrintStyleId)};
+        style.textContent = ${JSON.stringify(printCss)};
+        document.head.appendChild(style);
+        void document.body.offsetHeight;
+      })()`, true);
+      // The Windows 7 native HTML print dialog may still replace landscape
+      // with the driver's portrait default. A PDF fixes the paper geometry
+      // before handing the document to the installed PDF reader.
+      const pdf = await webContents.printToPDF({
+        landscape,
+        pageSize: 'A4',
+        preferCSSPageSize: true,
+        printBackground: true,
+        displayHeaderFooter: false,
+        scale: 1,
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }
+      });
+      const directory = await fs.promises.mkdtemp(path.join(app.getPath('temp'), 'dchsi-print-'));
+      const filePath = path.join(directory, `Εκτύπωση-${requestedTitle.slice(0, 100)}.pdf`);
+      await fs.promises.writeFile(filePath, pdf);
+      const openError = await shell.openPath(filePath);
+      if (openError) {
+        throw new AppError(
+          `Το PDF αποθηκεύτηκε στο «${filePath}», αλλά δεν άνοιξε. Ανοίξτε το με πρόγραμμα ανάγνωσης PDF και επιλέξτε Εκτύπωση.`,
+          'PRINT_PDF_OPEN_FAILED'
+        );
+      }
+      return { printed: false, openedPdf: true, filePath };
+    }
+    return await new Promise((resolve) => {
+      webContents.print(
+        {
+          silent: false,
+          printBackground: true,
+          color: true,
+          margins: { marginType: 'none' },
+          // Ρητή επιλογή μεγέθους μαζί με τον προσανατολισμό: οι παλαιότεροι
+          // Windows print drivers (ιδίως Windows 7) διαφορετικά αγνοούν συχνά
+          // το landscape και χρησιμοποιούν το προεπιλεγμένο portrait.
+          pageSize: 'A4',
+          landscape,
+          scaleFactor: 100,
+          pagesPerSheet: 1
+        },
+        (success, failureReason) => {
+          if (!success) {
+            resolve({ printed: false, failureReason: failureReason || '' });
+            return;
+          }
+          resolve({ printed: true });
+        }
+      );
+    });
+  } finally {
+    if (legacyPrintStyleId) {
+      await webContents.executeJavaScript(
+        `document.getElementById(${JSON.stringify(legacyPrintStyleId)})?.remove()`, true
+      ).catch(() => {});
+    }
+    if (previousTitle) {
+      await webContents.executeJavaScript(
+        `document.title = ${JSON.stringify(previousTitle)}`,
+        true
+      ).catch(() => {});
+    }
+    if (ownerWindow && previousWindowTitle) {
+      ownerWindow.setTitle(previousWindowTitle);
+    }
   }
-  if (ownerWindow && previousWindowTitle) {
-    ownerWindow.setTitle(previousWindowTitle);
-  }
-  return result;
 }
 
 async function safeInvoke(operation, allowLocked = false) {

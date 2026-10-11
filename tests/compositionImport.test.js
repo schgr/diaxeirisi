@@ -65,6 +65,61 @@ async function run() {
     assert.strictEqual(zeroQuantityCard.changeSheetEntries[0].orderReference, 'Απογραφή');
     assert.strictEqual(zeroQuantityCard.changeSheetEntries[0].quantity, 0);
 
+    const preflightShareA = shares.addShare({
+      shareNumber: 'PRE-A', nominalNumber: 'PRE-A-MAIN', description: 'Μερίδα preflight A',
+      materialType: 'Αναλώσιμα', projectedQuantity: 1, accountingBalance: 1, chargedQuantity: 0
+    }).find((item) => item.shareNumber === 'PRE-A');
+    const preflightShareB = shares.addShare({
+      shareNumber: 'PRE-B', nominalNumber: 'PRE-B-MAIN', description: 'Μερίδα preflight B',
+      materialType: 'Αναλώσιμα', projectedQuantity: 1, accountingBalance: 1, chargedQuantity: 0
+    }).find((item) => item.shareNumber === 'PRE-B');
+    assert.throws(
+      () => importer.importMatrix([
+        COMPOSITION_HEADERS,
+        ['PRE-A', 'PRE-A-COMP', 'Έγκυρο εξάρτημα', 'Τεμάχια', 1, 1],
+        ['UNKNOWN-SHARE', 'UNKNOWN-COMP', 'Ανύπαρκτη μερίδα', 'Τεμάχια', 1, 1]
+      ], inventoryDate),
+      (error) => error && error.code === 'VALIDATION_ERROR'
+    );
+    [preflightShareA, preflightShareB].forEach((candidate) => {
+      const card = shares.getShareCard(candidate.id, new Date().getFullYear());
+      assert.strictEqual(card.share.requiresComposition, false);
+      assert.strictEqual(card.compositionItems.length, 0);
+      assert.strictEqual(card.changeSheetEntries.length, 0);
+    });
+
+    const rollbackShares = ['ROLLBACK-1', 'ROLLBACK-2', 'ROLLBACK-3'].map((shareNumber) =>
+      shares.addShare({
+        shareNumber,
+        nominalNumber: `${shareNumber}-MAIN`,
+        description: `Μερίδα ${shareNumber}`,
+        materialType: 'Αναλώσιμα', projectedQuantity: 1, accountingBalance: 1, chargedQuantity: 0
+      }).find((item) => item.shareNumber === shareNumber)
+    );
+    db.exec(`
+      CREATE TRIGGER fail_composition_import_change_sheet
+      BEFORE INSERT ON share_change_sheet_entries
+      WHEN NEW.share_id = ${rollbackShares[2].id}
+      BEGIN
+        SELECT RAISE(ABORT, 'FORCED_COMPOSITION_IMPORT_FAILURE');
+      END
+    `);
+    assert.throws(
+      () => importer.importMatrix([
+        COMPOSITION_HEADERS,
+        ['ROLLBACK-1', 'ROLLBACK-1-COMP', 'Εξάρτημα 1', 'Τεμάχια', 1, 1],
+        ['ROLLBACK-2', 'ROLLBACK-2-COMP', 'Εξάρτημα 2', 'Τεμάχια', 1, 1],
+        ['ROLLBACK-3', 'ROLLBACK-3-COMP', 'Εξάρτημα 3', 'Τεμάχια', 1, 1]
+      ], inventoryDate),
+      /FORCED_COMPOSITION_IMPORT_FAILURE/
+    );
+    rollbackShares.forEach((candidate) => {
+      const card = shares.getShareCard(candidate.id, new Date().getFullYear());
+      assert.strictEqual(card.share.requiresComposition, false);
+      assert.strictEqual(card.compositionItems.length, 0);
+      assert.strictEqual(card.changeSheetEntries.length, 0);
+    });
+
     const output = path.join(root, 'composition-template.xlsx');
     await importer.writeTemplate(output);
     const exported = new ExcelJS.Workbook();

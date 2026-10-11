@@ -180,9 +180,11 @@ export async function renderSettingsPage(container, settingsApi, clothingApi, sh
           <div class="backup-actions">
             <button class="primary-button" data-backup-now type="button">Αυτόματο αντίγραφο τώρα</button>
             <button class="secondary-button" data-backup-export type="button">Αποθήκευση σε φάκελο</button>
-            <button class="danger-button" data-backup-restore type="button">Επαναφορά αντιγράφου</button>
+            <button class="danger-button" data-backup-restore type="button">Επαναφορά από φάκελο</button>
+            <button class="danger-button" data-backup-restore="file" type="button">Επαναφορά από αποθηκευμένο αντίγραφο</button>
             <button class="secondary-button" data-backup-cancel type="button" hidden>Ακύρωση</button>
           </div>
+          <p class="muted">Για επαναφορά αποθηκευμένου αντιγράφου, ανοίξτε τον φάκελο Diaxeirisi-Backup-… που δημιουργήθηκε και επιλέξτε το backup-manifest.json. Διατηρήστε μαζί όλα τα αρχεία του φακέλου.</p>
           <p class="muted" data-backup-status aria-live="polite"></p>
           <div class="backup-list">
             ${backups.length ? backups.map((backup) => `
@@ -761,21 +763,24 @@ function bindSettingsEvents(container, settingsApi, clothingApi, sharesApi, show
   container.querySelector('[data-backup-export]')?.addEventListener('click', async () => {
     try {
       const backup = await runBackupAction((taskId) => window.appApi.backup.createManual(taskId));
-      if (backup) showToast('Το αντίγραφο ασφαλείας αποθηκεύτηκε στον επιλεγμένο φάκελο.');
+      if (backup) {
+        if (backupStatus) backupStatus.textContent = `Το αντίγραφο αποθηκεύτηκε: ${backup.path}. Για επαναφορά, επιλέξτε το backup-manifest.json μέσα σε αυτόν τον φάκελο.`;
+        showToast('Το αντίγραφο ασφαλείας αποθηκεύτηκε στον επιλεγμένο φάκελο.');
+      }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση του αντιγράφου.', 'error');
     }
   });
 
-  container.querySelector('[data-backup-restore]')?.addEventListener('click', async () => {
+  container.querySelectorAll('[data-backup-restore]').forEach((button) => button.addEventListener('click', async () => {
     if (!(await confirmDialog({ message: 'Η εφαρμογή θα επανεκκινηθεί και τα τρέχοντα δεδομένα θα αντικατασταθούν. Θα δημιουργηθεί πρώτα αντίγραφο ασφαλείας. Συνέχεια;' }))) return;
     try {
-      const result = await runBackupAction((taskId) => window.appApi.backup.restore(taskId));
+      const result = await runBackupAction((taskId) => window.appApi.backup.restore(taskId, button.dataset.backupRestore === 'file' ? 'file' : 'folder'));
       if (result) showToast('Το αντίγραφο ετοιμάστηκε. Η εφαρμογή επανεκκινείται.');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η επαναφορά του αντιγράφου.', 'error');
     }
-  });
+  }));
 
   bindDeletes(container, settingsApi, showToast);
 
@@ -1049,11 +1054,6 @@ function bindDeletes(container, settingsApi, showToast) {
         await settingsApi.deleteTransactionUnit(id);
         await refresh(container, settingsApi, showToast, 'Η μονάδα δοσοληψιών διαγράφηκε.');
         return;
-      }
-
-      if (action === 'delete-commerce-business') {
-        await settingsApi.deleteCommerceBusiness(id);
-        await refresh(container, settingsApi, showToast, 'Η επιχείρηση εμπορίου διαγράφηκε.');
       }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενέργεια.', 'error');

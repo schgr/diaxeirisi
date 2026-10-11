@@ -644,6 +644,10 @@ select {
   overflow: hidden;
 }
 
+.content:has([data-balance-difference-action-panel]:not([hidden])) {
+  overflow-y: auto;
+}
+
 .window-options-modal {
   width: min(480px, calc(100vw - 32px));
   padding: 22px;

@@ -4,7 +4,9 @@ import { bindExternalIndexControls, bindFiscalYearControls, bindOrdersIndexContr
 import { bindAllShareCardControls, bindShareCardControls, printPreparedShareCards, renderAllShareCardControls, renderAllShareCardPreview, renderShareCardBatchPreview, renderShareCardControls, renderShareCardPreview } from '../prints/shareCardPrint.js';
 import { printIsolatedPreview } from '../prints/printPreview.js';
 import { bindInventoryPrintControls, renderInventoryPrintControls, renderInventoryStatement } from '../prints/inventoryPrint.js';
-import { bindBalanceDifferenceControls, filterBalanceDifferences, renderBalanceDifferenceControls, renderBalanceDifferenceTable, renderMovementDifferencesIndex } from '../prints/administrationPrint.js';
+import { bindBalanceDifferenceControls, filterBalanceDifferences, renderBalanceDifferenceActionList, renderBalanceDifferenceControls, renderBalanceDifferenceTable, renderMovementDifferencesIndex } from '../prints/administrationPrint.js';
+import { openAddyDepartmentAllocationDialog } from '../transactions/addy/addyDom.js';
+import { openAddyCompositionDialog } from '../transactions/entryHelpers.js';
 import { getDefaultRegistryCount } from '../prints/shared.js';
 
 export { renderBalanceDifferenceControls, renderBalanceDifferenceTable };
@@ -28,7 +30,6 @@ const printTabGroups = [
     key: 'shares',
     label: 'Μερίδες',
     tabs: [
-      { key: 'registry', label: 'Μητρώο Μερίδων' },
       { key: 'share-card', label: 'Μερίδα Υλικού' },
       { key: 'shares-by-category', label: 'Μερίδες ανά Κατηγορία Υλικού' },
       { key: 'balance-differences', label: 'Πλεονάσματα - Ελλείμματα' }
@@ -44,8 +45,9 @@ const printTabGroups = [
   },
   {
     key: 'management',
-    label: 'Διαφορές',
+    label: 'Βιβλία και Μητρώα',
     tabs: [
+      { key: 'registry', label: 'Μητρώο Μερίδων' },
       { key: 'movement-differences', label: 'Ευρετήριο Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού' }
     ]
   }
@@ -67,7 +69,7 @@ export async function renderPrintsPage(
     settingsApi.get(),
     inventoryApi.getReferenceData()
   ]);
-  const visiblePrintTabGroups = getVisiblePrintTabGroups(options.visibleGroups);
+  const visiblePrintTabGroups = getVisiblePrintTabGroups(options.visibleGroups, options.visibleTabs);
   const initialGroup = visiblePrintTabGroups.some((group) => group.key === options.initialGroup)
     ? options.initialGroup
     : visiblePrintTabGroups[0].key;
@@ -90,6 +92,9 @@ export async function renderPrintsPage(
     selectedAddyIndexId: '',
     selectedExhpIndexId: '',
     balanceDifferenceFilter: 'all',
+    balanceDifferenceRows: [],
+    balanceDifferenceDepartments: [],
+    balanceDifferenceShares: [],
     selectedMaterialCategories: []
   };
 
@@ -150,6 +155,10 @@ export async function renderPrintsPage(
       <div id="print-controls"></div>
     </section>
 
+    <section class="page-panel no-print" data-balance-difference-action-panel hidden>
+      <div data-balance-difference-action-list></div>
+    </section>
+
     <section id="print-preview" class="print-preview-shell" ${options.tileMenu ? 'hidden' : ''}></section>
   `;
 
@@ -159,8 +168,13 @@ export async function renderPrintsPage(
   const tileMenu = container.querySelector('[data-print-tile-menu]');
   const menuBack = container.querySelector('[data-print-menu-back]');
   const controlsPanel = container.querySelector('[data-print-controls-panel]');
+  const balanceDifferenceActionPanel = container.querySelector('[data-balance-difference-action-panel]');
+  const balanceDifferenceActionList = container.querySelector('[data-balance-difference-action-list]');
 
   async function renderActiveTab() {
+    balanceDifferenceActionPanel.hidden = true;
+    balanceDifferenceActionPanel.style.display = 'none';
+    balanceDifferenceActionList.innerHTML = '';
     if (options.tileMenu) {
       container.classList.toggle('print-index-menu-mode', state.showTileMenu);
       tileMenu.hidden = !state.showTileMenu;
@@ -268,13 +282,27 @@ export async function renderPrintsPage(
     }
 
     if (state.activeTab === 'balance-differences') {
-      const rows = await administrationApi.getBalanceDifferences();
+      const [rows, internalReference] = await Promise.all([
+        administrationApi.getBalanceDifferences(),
+        window.appApi.internal.getReferenceData()
+      ]);
+      state.balanceDifferenceRows = rows;
+      state.balanceDifferenceDepartments = internalReference.departmentManagers || [];
+      state.balanceDifferenceShares = internalReference.shares || [];
       title.textContent = 'Πλεονάσματα - Ελλείμματα';
-      controls.innerHTML = renderBalanceDifferenceControls(state, rows);
-      preview.innerHTML = renderBalanceDifferenceTable(
-        filterBalanceDifferences(rows, state.balanceDifferenceFilter)
+      const renderBalanceActionList = (filteredRows) => renderBalanceDifferenceActionList(
+        filteredRows,
+        state.balanceDifferenceDepartments
       );
-      bindBalanceDifferenceControls(container, state, rows, preview);
+      const filteredRows = filterBalanceDifferences(rows, state.balanceDifferenceFilter);
+      controls.innerHTML = renderBalanceDifferenceControls(state, rows);
+      balanceDifferenceActionPanel.hidden = false;
+      balanceDifferenceActionPanel.style.display = '';
+      balanceDifferenceActionList.innerHTML = renderBalanceActionList(filteredRows);
+      preview.innerHTML = renderBalanceDifferenceTable(filteredRows);
+      bindBalanceDifferenceControls(container, state, rows, preview, (nextRows) => {
+        balanceDifferenceActionList.innerHTML = renderBalanceActionList(nextRows);
+      });
       preview.style.display = 'none';
       return;
     }
@@ -335,7 +363,9 @@ export async function renderPrintsPage(
           state.activeTab === 'share-card'
             ? () => printPreparedShareCards(container, preview, settings, state)
             : null,
-          state.activeTab === 'share-card' ? 'share-card-preview' : '',
+          state.activeTab === 'share-card'
+            ? 'share-card-preview'
+            : '',
           state.activeTab === 'share-card'
             ? (requestedPage, modalPreview) => {
                 state.sharePreviewPage = Math.max(
@@ -375,6 +405,11 @@ export async function renderPrintsPage(
       renderShareCardBatchPreview(state.sharePrintCards, settings, state, preview);
     }
 
+    const settleBalanceDifference = event.target.closest('[data-settle-balance-difference]');
+    if (settleBalanceDifference) {
+      void settleBalanceDifferenceToDepartments(settleBalanceDifference);
+    }
+
     if (event.target.closest('#preview-category-shares')) {
       openCategorySharePreview(
         renderSharesByCategoryPages(shares, settings, state.selectedMaterialCategories)
@@ -382,16 +417,75 @@ export async function renderPrintsPage(
     }
   });
 
+  async function settleBalanceDifferenceToDepartments(button) {
+    try {
+      const share = state.balanceDifferenceShares.find((item) =>
+        Number(item.id) === Number(button.dataset.shareId)
+      );
+      if (!share) throw new Error('Η μερίδα δεν βρέθηκε. Ανανεώστε την κατάσταση και δοκιμάστε ξανά.');
+      const isDeficit = button.dataset.status === 'Έλλειμμα';
+      const quantity = Number(button.dataset.quantity);
+      const allocation = await openAddyDepartmentAllocationDialog({
+        departments: state.balanceDifferenceDepartments,
+        share,
+        shareNumber: share.shareNumber,
+        description: share.description,
+        transactionType: isDeficit ? 'Χρέωση' : 'Πίστωση',
+        quantity
+      });
+      if (!allocation || allocation.skipped) return;
+      const preparedAllocations = [];
+      for (const entry of allocation.allocations) {
+        let composition = [];
+        if (share.requiresComposition) {
+          const department = state.balanceDifferenceDepartments.find((item) =>
+            Number(item.id) === Number(entry.departmentManagerId)
+          );
+          composition = await openAddyCompositionDialog(share, entry.quantity, {
+            internalSettlement: true,
+            departmentName: department?.departmentName || '',
+            transactionType: isDeficit ? 'Χρέωση' : 'Πίστωση'
+          });
+          if (!composition) return;
+        }
+        preparedAllocations.push({ ...entry, composition });
+      }
+      for (const entry of preparedAllocations) {
+        await window.appApi.internal.save({
+          documentDate: new Date().toISOString().slice(0, 10),
+          departmentManagerId: entry.departmentManagerId,
+          shareId: share.id,
+          movementType: isDeficit ? 'Χορήγηση' : 'Επιστροφή',
+          quantity: entry.quantity,
+          notes: `${isDeficit ? 'Χρέωση ελλείμματος' : 'Πίστωση πλεονάσματος'} μερίδας ${share.shareNumber}`,
+          composition: entry.composition
+        });
+      }
+      showToast('Η κατανομή στα τμήματα αποθηκεύτηκε.');
+      await renderActiveTab();
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η τακτοποίηση της διαφοράς.', 'error');
+    }
+  }
+
   await renderActiveTab();
 }
 
-function getVisiblePrintTabGroups(visibleGroups) {
+function getVisiblePrintTabGroups(visibleGroups, visibleTabs) {
   if (!Array.isArray(visibleGroups) || !visibleGroups.length) {
-    return printTabGroups;
+    return filterPrintTabs(printTabGroups, visibleTabs);
   }
   const keys = new Set(visibleGroups);
-  const groups = printTabGroups.filter((group) => keys.has(group.key));
-  return groups.length ? groups : printTabGroups;
+  const groups = filterPrintTabs(printTabGroups.filter((group) => keys.has(group.key)), visibleTabs);
+  return groups.length ? groups : filterPrintTabs(printTabGroups, visibleTabs);
+}
+
+function filterPrintTabs(groups, visibleTabs) {
+  if (!Array.isArray(visibleTabs) || !visibleTabs.length) return groups;
+  const tabs = new Set(visibleTabs);
+  return groups
+    .map((group) => ({ ...group, tabs: group.tabs.filter((tab) => tabs.has(tab.key)) }))
+    .filter((group) => group.tabs.length);
 }
 
 function renderPrintSubtabs(state, groups = printTabGroups) {

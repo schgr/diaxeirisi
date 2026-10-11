@@ -766,3 +766,32 @@ h3 {
 .exhp-reason-setting .row-actions {
   grid-column: 1 / -1;
 }
+
+/* EFED 104: common frame and signature positions of the two-sided form. */
+.official-movement-protocol-page { box-sizing: border-box; }
+.official-protocol-register { grid-template-columns: 1fr 58mm; }
+.official-protocol-register > span { border-bottom: 0; }
+.official-protocol-register > span:first-child { align-self: end; }
+.official-protocol-meta-table { border: 3px solid #000; border-bottom: 0; }
+.official-protocol-meta-table td { height: 12.5mm; }
+.official-protocol-material-table { margin-top: 0; border-left: 3px solid #000; border-right: 3px solid #000; }
+.official-protocol-material-table thead tr:first-child th { height: 20mm; font-weight: normal; }
+.official-protocol-material-table .vertical-table-heading { white-space: normal; }
+.official-protocol-field-numbers td { height: 3.5mm; }
+.official-protocol-material-table tbody td { height: 5mm; box-sizing: border-box; }
+.official-protocol-notes { min-height: 14mm; border-left: 3px solid #000; border-right: 3px solid #000; }
+.official-protocol-signoff { border: 3px solid #000; border-top: 0; padding: 0 1mm; }
+.official-protocol-acceptance, .official-protocol-footer-fields { border: 0; font-size: 8px; }
+.official-protocol-acceptance { grid-template-columns: 34% 26% 40%; }
+.official-protocol-footer-fields { grid-template-columns: 50% 18% 32%; }
+.official-protocol-acceptance > div, .official-protocol-footer-fields > div { min-height: 16mm; padding: 1mm 0; }
+.official-protocol-acceptance > div + div, .official-protocol-footer-fields > div + div { border-left: 0; }
+.official-protocol-acceptance span, .official-protocol-footer-fields span { margin-top: 0; text-align: left; }
+.official-protocol-committee { text-align: center; padding-top: 5mm !important; }
+.official-protocol-acceptance .official-protocol-receivers { display: flex; justify-content: space-between; }
+.official-protocol-receivers > span { text-align: center; }
+.official-protocol-footer-fields > div:last-child { padding-top: 5mm; text-align: center; }
+.official-protocol-opinion { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.55; }
+.official-protocol-opinion p { margin-bottom: 1mm; }
+.official-protocol-checkbox { display: inline-block; width: 10mm; height: 5mm; border: 2px solid #000; vertical-align: middle; box-sizing: border-box; }
+.official-protocol-writing-line { display: block; min-height: 5mm; border-bottom: 1px dotted #000; }

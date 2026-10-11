@@ -34,6 +34,15 @@ function validateExhp(payload) {
     status: 'Οριστική',
     items: items.map(validateItem)
   };
+  const seenShares = new Set();
+  for (const item of validated.items) {
+    if (!item.shareNumber) continue;
+    const key = item.shareNumber.toLocaleLowerCase('el-GR');
+    if (seenShares.has(key)) {
+      throw new AppError(`Η μερίδα ${item.shareNumber} υπάρχει ήδη στην ΕΧΠ.`, 'VALIDATION_ERROR');
+    }
+    seenShares.add(key);
+  }
   if (isNominalNumberTransferReason(validated.issueReason)) {
     validateNominalTransferItems(validated.items);
   }

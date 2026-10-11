@@ -24,6 +24,39 @@ async function invoke(channel, ...args) {
   return result.data;
 }
 
+function nextAnimationFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+async function prepareCurrentDocumentForPrint() {
+  const source = document.querySelector('.isolated-print-root')
+    || document.querySelector('.modal-backdrop:not([hidden])')
+    || document.querySelector('main')
+    || document.body;
+  const images = [...source.querySelectorAll('img')];
+
+  await Promise.all(images.map((image) => {
+    if (image.complete) return Promise.resolve();
+    if (typeof image.decode === 'function') return image.decode().catch(() => {});
+    return new Promise((resolve) => {
+      image.addEventListener('load', resolve, { once: true });
+      image.addEventListener('error', resolve, { once: true });
+    });
+  }));
+
+  // Let Chromium calculate every page before the native Windows print dialog
+  // captures the document. This avoids empty Microsoft Print to PDF output for
+  // long, image-backed official forms.
+  source.getBoundingClientRect();
+  void source.offsetHeight;
+  await nextAnimationFrame();
+  await nextAnimationFrame();
+  const pageCount = source.querySelectorAll('.print-document-area').length;
+  if (pageCount > 1) {
+    await new Promise((resolve) => setTimeout(resolve, Math.min(1500, 100 + pageCount * 15)));
+  }
+}
+
 contextBridge.exposeInMainWorld('appApi', {
   heavyTasks: {
     cancel: (taskId) => invoke('heavy-task:cancel', taskId),
@@ -56,7 +89,7 @@ contextBridge.exposeInMainWorld('appApi', {
     list: () => invoke('backup:list'),
       createAutomatic: (taskId) => invoke('backup:create-automatic', taskId),
       createManual: (taskId) => invoke('backup:create-manual', taskId),
-      restore: (taskId) => invoke('backup:restore', taskId),
+      restore: (taskId, source) => invoke('backup:restore', taskId, source),
       cancel: (taskId) => invoke('backup:cancel', taskId),
       onProgress: (listener) => {
         const handler = (_event, progress) => listener(progress);
@@ -70,10 +103,15 @@ contextBridge.exposeInMainWorld('appApi', {
     quit: () => invoke('window:quit')
   },
   print: {
-    currentDocument: (options = {}) => invoke('print:current-document', {
-      ...options,
-      title: options.title || resolveCurrentPrintTitle()
-    })
+    currentDocument: async (options = {}) => {
+      await prepareCurrentDocumentForPrint();
+      const result = await invoke('print:current-document', {
+        ...options,
+        title: options.title || resolveCurrentPrintTitle()
+      });
+      if (result.openedPdf) document.dispatchEvent(new Event('document-print-pdf-ready'));
+      return result;
+    }
   },
   export: {
     document: (format, payload, taskId) => invoke('export:document', format, payload, taskId)
@@ -125,8 +163,6 @@ contextBridge.exposeInMainWorld('appApi', {
     updateTransactionUnit: (id, payload) =>
       invoke('settings:update-transaction-unit', id, payload),
     deleteTransactionUnit: (id) => invoke('settings:delete-transaction-unit', id),
-    addCommerceBusiness: (payload) => invoke('settings:add-commerce-business', payload),
-    deleteCommerceBusiness: (id) => invoke('settings:delete-commerce-business', id),
     addMaterialCategory: (payload) => invoke('settings:add-material-category', payload),
     updateMaterialCategory: (id, payload) =>
       invoke('settings:update-material-category', id, payload),
@@ -263,6 +299,7 @@ contextBridge.exposeInMainWorld('appApi', {
     addOfficer: (payload) => invoke('administration:add-officer', payload),
     closeOfficer: (id, endDate) => invoke('administration:close-officer', id, endDate),
     createHandover: (payload) => invoke('administration:create-handover', payload),
+    deleteHandover: (id) => invoke('administration:delete-handover', id),
     getHandover: (id) => invoke('administration:get-handover', id),
     updateHandoverCheck: (id, payload) =>
       invoke('administration:update-handover-check', id, payload),
@@ -283,11 +320,11 @@ contextBridge.exposeInMainWorld('appApi', {
 
 function resolveCurrentPrintTitle() {
   const isolatedRoot = document.querySelector('.isolated-print-root');
-  const source = isolatedRoot ||
-    document.querySelector('.modal-backdrop:not([hidden])') ||
-    document.querySelector('main') ||
-    document.body;
-  const heading = source.querySelector('h1, h2, h3');
+  const modal = document.querySelector('.modal-backdrop:not([hidden])');
+  const heading = isolatedRoot?.querySelector('h1, h2, h3')
+    || modal?.querySelector('.material-card-header h1, .material-card-header h2, .material-card-header h3')
+    || modal?.querySelector('h1, h2, h3')
+    || document.querySelector('main h1, main h2, main h3');
   const value = String(heading?.textContent || document.title || 'Κατάσταση')
     .replace(/\s+/g, ' ')
     .trim();

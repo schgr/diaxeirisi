@@ -15,6 +15,7 @@ import { escapeHtml } from './components/forms.js';
 import { initializeDocumentExports } from './documentExport.js';
 import { initializeLocalizedQuantities } from './localizedQuantities.js';
 import { createPageDraftController } from './pageDrafts.js';
+import { initializeDocumentPreviews } from './prints/printPreview.js';
 
 const THEME_STORAGE_KEY = 'diaxeirisi-theme';
 const DEFAULT_THEME = 'blueprint';
@@ -34,6 +35,10 @@ registerGlobalErrorReporting();
 applyStoredTheme();
 initializeDocumentExports(showToast);
 initializeLocalizedQuantities();
+initializeDocumentPreviews();
+document.addEventListener('document-print-pdf-ready', () => {
+  showToast('Τα έντυπα άνοιξαν ως PDF. Επιλέξτε Εκτύπωση σε κάθε PDF (Ctrl+P).');
+});
 
 const sections = [
   { id: 'shares', title: 'ΜΕΡΙΔΕΣ', type: 'shares' },
@@ -81,6 +86,21 @@ const sections = [
       title: 'Ευρετήριο Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού',
       menuTitle: 'Ευρετήρια Πρωτοκόλλων Διαφορών από Διακίνηση Υλικού',
       visibleGroups: ['management'],
+      visibleTabs: ['movement-differences'],
+      initialGroup: 'management',
+      directPreview: true
+    }
+  },
+  {
+    id: 'material-registry',
+    title: 'ΜΗΤΡΩΟ ΜΕΡΙΔΩΝ',
+    type: 'prints',
+    hidden: true,
+    printOptions: {
+      title: 'Μητρώο Μερίδων',
+      menuTitle: 'Μητρώο Μερίδων',
+      visibleGroups: ['management'],
+      visibleTabs: ['registry'],
       initialGroup: 'management',
       directPreview: true
     }

@@ -6,6 +6,7 @@ const { initializeDatabase } = require('../src/db/database');
 const { createSettingsService } = require('../src/services/settingsService');
 const { createSharesService } = require('../src/services/sharesService');
 const { createTransactionsService } = require('../src/services/transactionsService');
+const { createInternalService } = require('../src/services/internalService');
 const { validateExhp, isNominalNumberTransferReason } = require('../src/transactions/exhpValidation');
 
 async function run() {
@@ -67,6 +68,10 @@ async function run() {
       INSERT INTO department_managers (department_name, department_head, sort_order)
       VALUES ('Τμήμα Α', 'Διαχειριστής Α', 1)
     `).run().lastInsertRowid;
+    const secondDepartmentId = db.prepare(`
+      INSERT INTO department_managers (department_name, department_head, sort_order)
+      VALUES ('Τμήμα Β', 'Διαχειριστής Β', 2)
+    `).run().lastInsertRowid;
     const internalDocumentId = db.prepare(`
       INSERT INTO internal_documents (
         fiscal_year, serial_number, document_date, department_manager_id,
@@ -77,8 +82,26 @@ async function run() {
       INSERT INTO internal_items (
         internal_document_id, share_id, share_number, nominal_number,
         description, measurement_unit, quantity, composition_snapshot
-      ) VALUES (?, ?, '10', '1005000001', 'Δοκιμαστικό Υλικό', 'Τεμάχια', 4, '')
-    `).run(internalDocumentId, source.id);
+      ) VALUES (?, ?, '10', '1005000001', 'Δοκιμαστικό Υλικό', 'Τεμάχια', 3, ?)
+    `).run(internalDocumentId, source.id, JSON.stringify([{
+      componentNominalNumber: 'COMP-1', componentDescription: 'Παρελκόμενο',
+      measurementUnit: 'Τεμάχια', quantity: 3
+    }]));
+    const secondDocumentId = db.prepare(`
+      INSERT INTO internal_documents (
+        fiscal_year, serial_number, document_date, department_manager_id,
+        department_name, department_head, movement_type, notes
+      ) VALUES (2026, 2, '2026-01-11', ?, 'Τμήμα Β', 'Διαχειριστής Β', 'Χορήγηση', '')
+    `).run(secondDepartmentId).lastInsertRowid;
+    db.prepare(`
+      INSERT INTO internal_items (
+        internal_document_id, share_id, share_number, nominal_number,
+        description, measurement_unit, quantity, composition_snapshot
+      ) VALUES (?, ?, '10', '1005000001', 'Δοκιμαστικό Υλικό', 'Τεμάχια', 1, ?)
+    `).run(secondDocumentId, source.id, JSON.stringify([{
+      componentNominalNumber: 'COMP-1', componentDescription: 'Παρελκόμενο',
+      measurementUnit: 'Τεμάχια', quantity: 1
+    }]));
 
     const reason = 'Μεταβολή Υλικών Λόγω Αλλαγής Του Αριθμού Ονομαστικού.';
     assert.strictEqual(isNominalNumberTransferReason(reason), true);
@@ -94,7 +117,39 @@ async function run() {
         measurementUnit: 'Τεμάχια', transactionType: 'Πίστωση', quantity: 1
       }]
     }));
-    const result = transactions.saveExhp({
+    shares.addShare({
+      shareNumber: '20', nominalNumber: '1005000020', description: 'Άλλο Υλικό',
+      materialType: 'Υλικό', projectedQuantity: 1, accountingBalance: 1, chargedQuantity: 0
+    });
+    const addyItem = {
+      shareNumber: '10', nominalNumber: '1005000001', description: 'Δοκιμαστικό Υλικό',
+      measurementUnit: 'Τεμάχια', materialType: 'Υλικό', transactionType: 'Πίστωση', quantity: 11
+    };
+    assert.throws(() => transactions.saveAddy({
+      documentDate: '2026-07-22', transactionUnit: 'Μονάδα', items: [addyItem]
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('μερίδας 10'));
+    assert.throws(() => transactions.saveAddy({
+      documentDate: '2026-07-22', transactionUnit: 'Μονάδα',
+      items: [{ ...addyItem, transactionType: 'Χρέωση', quantity: 1, nominalNumber: '1005000099' }]
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('χρησιμοποιείται ήδη'));
+    assert.throws(() => transactions.saveExhp({
+      documentDate: '2026-07-22', serviceUnit: '108 Α/Κ ΜΜΠ/ΓΔΥ',
+      issueReason: 'Λογιστική Τακτοποίηση Διαφορών Ομοειδών Υλικών.',
+      items: [addyItem]
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('μερίδας 10'));
+    assert.throws(() => transactions.saveExhp({
+      documentDate: '2026-07-22', serviceUnit: '108 Α/Κ ΜΜΠ/ΓΔΥ',
+      issueReason: 'Λογιστική Τακτοποίηση Διαφορών Ομοειδών Υλικών.',
+      items: [{ ...addyItem, transactionType: 'Χρέωση', quantity: 1, nominalNumber: '1005000099' }]
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('χρησιμοποιείται ήδη'));
+    assert.strictEqual(db.prepare('SELECT COUNT(*) AS total FROM addy_documents').get().total, 0);
+    assert.strictEqual(db.prepare('SELECT COUNT(*) AS total FROM exhp_documents').get().total, 0);
+    db.prepare(`
+      INSERT INTO shares (share_number, nominal_number, description, material_type,
+        archive_status, accounting_balance, charged_quantity)
+      VALUES ('110', 'ARCHIVED', 'Παλιά αρχειοθετημένη μερίδα', 'Υλικό', 'Αρχείο', 0, 0)
+    `).run();
+    const transferPayload = {
       documentDate: '2026-07-22',
       serviceUnit: '108 Α/Κ ΜΜΠ/ΓΔΥ',
       issueReason: reason,
@@ -111,7 +166,18 @@ async function run() {
           transactionType: 'Χρέωση', quantity: 10, transferGroup: 'pair-1'
         }
       ]
-    });
+    };
+    assert.throws(() => transactions.saveExhp({
+      ...transferPayload,
+      items: transferPayload.items.map((item) => item.transactionType === 'Χρέωση'
+        ? { ...item, shareNumber: '20' }
+        : item)
+    }), (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('χρησιμοποιείται ήδη'));
+    assert.throws(() => transactions.saveExhp(transferPayload),
+      (error) => error.code === 'VALIDATION_ERROR' && error.message.includes('χρησιμοποιείται ήδη'));
+    assert.strictEqual(db.prepare('SELECT COUNT(*) AS total FROM exhp_documents').get().total, 0);
+    db.prepare("DELETE FROM shares WHERE share_number = '110'").run();
+    const result = transactions.saveExhp(transferPayload);
 
     assert.strictEqual(result.document.items.length, 2);
     assert.strictEqual(
@@ -119,7 +185,7 @@ async function run() {
       '1005000099'
     );
     const oldShare = db.prepare("SELECT * FROM shares WHERE share_number = '10'").get();
-    const newShare = db.prepare("SELECT * FROM shares WHERE share_number = '110'").get();
+    const newShare = db.prepare("SELECT * FROM shares WHERE share_number = '110' AND archive_status = 'Ενεργή'").get();
     assert.strictEqual(oldShare.archive_status, 'Ενεργή');
     assert.strictEqual(Number(oldShare.accounting_balance), 0);
     assert.strictEqual(Number(oldShare.charged_quantity), 0);
@@ -139,6 +205,15 @@ async function run() {
     assert.strictEqual(movedInternal.share_id, newShare.id);
     assert.strictEqual(movedInternal.share_number, '110');
     assert.strictEqual(movedInternal.nominal_number, '1005000099');
+    const internal = createInternalService(db);
+    for (const [id, quantity] of [[departmentId, 3], [secondDepartmentId, 1]]) {
+      const balances = internal.listDepartmentBalances(id);
+      assert.strictEqual(balances.length, 1);
+      assert.strictEqual(balances[0].shareNumber, '110');
+      assert.strictEqual(balances[0].nominalNumber, '1005000099');
+      assert.strictEqual(balances[0].finalQuantity, quantity);
+      assert.strictEqual(balances[0].composition[0].finalQuantity, quantity);
+    }
     assert.strictEqual(db.prepare('SELECT share_id FROM share_composition_items').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_change_sheet_entries').get().share_id, newShare.id);
     assert.strictEqual(db.prepare('SELECT share_id FROM share_serial_numbers').get().share_id, newShare.id);

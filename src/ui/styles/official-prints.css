@@ -208,6 +208,12 @@
 }
 
 @media screen {
+  /* Keep the ΕΧΠ preview in the same A4 landscape orientation as the form. */
+  .exhp-document-backdrop .request-document-preview {
+    width: 297mm;
+    min-width: 297mm;
+  }
+
   .exhp-document-backdrop .exhp-unit-overlay {
     width: 18% !important;
     overflow: visible;
@@ -270,8 +276,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  transform: scaleY(1.1);
-  transform-origin: center;
+  transform: none;
 }
 
 .exhp-page-content > img {
@@ -287,7 +292,7 @@
   overflow: hidden;
   color: #000;
   font-family: Arial, sans-serif;
-  font-size: clamp(12px, calc(1vw + 2px), 17px);
+  font-size: clamp(10px, calc(0.84vw + 2px), 15px);
   line-height: 1.12;
   text-align: center;
   white-space: normal;
@@ -306,6 +311,134 @@
 .material-description-cell,
 .material-description-overlay {
   text-align: left !important;
+}
+
+/* Κ.2302/ΔΥΠ - fields are mapped directly to the clean reference form. */
+.exhp-reference-field {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #000;
+  font-family: Arial, sans-serif;
+  line-height: 1;
+}
+
+.exhp-reference-header-field,
+.exhp-reference-management,
+.exhp-reference-row-cell,
+.exhp-reference-approval-field {
+  display: grid;
+  place-items: center;
+  padding: 0 2px;
+  text-align: center;
+}
+
+.exhp-reference-header-field {
+  font-size: clamp(11px, calc(0.78vw + 3px), 14px);
+  font-weight: 700;
+}
+
+.exhp-reference-unit,
+.exhp-reference-unit {
+  justify-items: start;
+  text-align: left;
+}
+
+.exhp-reference-management {
+  justify-items: center;
+  padding: 0 2px;
+  font-size: clamp(10px, calc(0.64vw + 3px), 12px);
+  text-align: center;
+}
+
+.exhp-reference-row-cell {
+  font-size: clamp(9px, calc(0.59vw + 3px), 12px);
+  white-space: nowrap;
+}
+
+.exhp-reference-description {
+  justify-items: start;
+  padding-left: 3px;
+  text-align: left;
+  text-overflow: ellipsis;
+}
+
+.exhp-reference-text-field,
+.exhp-reference-support-field {
+  padding: 3px 5px;
+  font-size: clamp(10px, calc(0.66vw + 3px), 13px);
+  line-height: 1.12;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.exhp-reference-approval-field {
+  font-size: clamp(10px, calc(0.66vw + 3px), 13px);
+  line-height: 1.1;
+}
+
+.exhp-reference-support-field .exhp-supporting-documents-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 0;
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  width: 100%;
+  height: 100%;
+}
+
+.exhp-reference-support-field .exhp-supporting-documents-grid span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(8px, calc(0.5vw + 3px), 10px);
+  line-height: 1.05;
+  text-align: left;
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.exhp-reference-support-field .exhp-supporting-documents-grid .exhp-supporting-documents-gap {
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.exhp-reference-signature {
+  display: grid;
+  place-items: center;
+  align-content: end;
+  padding: 2px;
+  text-align: center;
+}
+
+.exhp-reference-signature .exhp-officer-signature {
+  min-height: 0;
+  width: 100%;
+  align-content: end;
+}
+
+.exhp-reference-signature .exhp-officer-signature strong {
+  font-size: clamp(9px, calc(0.58vw + 3px), 12px);
+}
+
+.exhp-reference-signature .exhp-officer-signature em {
+  font-size: clamp(8px, calc(0.52vw + 3px), 11px);
+}
+
+.exhp-reference-signature-field-16 .exhp-officer-signature strong {
+  font-size: clamp(7px, calc(0.58vw + 1px), 10px);
+}
+
+.exhp-reference-signature-field-16 .exhp-officer-signature em {
+  font-size: clamp(6px, calc(0.52vw + 1px), 9px);
 }
 
 .exhp-material-position-overlay {
@@ -487,6 +620,10 @@
   padding: 1px 2px;
   text-align: center;
   font-size: clamp(5.6px, 0.56vw, 7.8px);
+}
+
+.efed505-row-overlay:not(.material-description-overlay) {
+  font-size: calc(clamp(5.6px, 0.56vw, 7.8px) + 1pt);
   line-height: 0.95;
 }
 
@@ -494,7 +631,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding-left: 0;
+  padding-left: 2px;
   text-align: left !important;
 }
 
@@ -569,6 +706,26 @@
   font-size: clamp(8px, 0.72vw, 11px);
 }
 
+/* The name in field 19 (Λογιστήριο) needs one point less than the other
+   front-side signatures to remain inside the official form's narrow cell. */
+.exhp-reference-signature.exhp-field-19-signature {
+  align-content: end;
+  padding-bottom: 1px;
+}
+
+/* Preview only: fields 16 and 19 are exactly one point smaller. */
+@media screen {
+  .exhp-reference-signature-field-16 .exhp-officer-signature strong,
+  .exhp-field-19-signature .exhp-officer-signature strong {
+    font-size: clamp(7px, calc(0.58vw + 1px), 10px);
+  }
+
+  .exhp-reference-signature-field-16 .exhp-officer-signature em,
+  .exhp-field-19-signature .exhp-officer-signature em {
+    font-size: clamp(6px, calc(0.52vw + 1px), 9px);
+  }
+}
+
 .exhp-front-signature .exhp-officer-signature em {
   font-size: clamp(7px, 0.64vw, 10px);
 }
@@ -607,12 +764,21 @@
   padding: 2px 5px;
 }
 
+.exhp-field-21-overlay {
+  padding-left: 0;
+  padding-top: 0;
+}
+
 .exhp-supporting-documents-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   grid-auto-flow: column;
-  gap: 1px 8px;
+  gap: 0;
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
   width: 100%;
   height: 100%;
 }
@@ -620,10 +786,21 @@
 .exhp-supporting-documents-grid span {
   min-width: 0;
   overflow: hidden;
-  font-size: clamp(8px, calc(0.58vw + 2px), 10px);
+  font-size: clamp(10px, calc(0.58vw + 4px), 12px);
   line-height: 1.05;
   text-align: left;
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
   white-space: normal;
+}
+
+.exhp-supporting-documents-grid .exhp-supporting-documents-gap {
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .official-inline-input {
@@ -774,7 +951,7 @@
   padding: 1px;
   font-size: 7px;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .k2310-number-row td {
@@ -794,13 +971,26 @@
   padding: 5px 7px;
   text-align: left;
   font-weight: 400;
+  font-size: 9px;
 }
 
 .k2310-meta-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 0.75fr;
+  grid-template-columns: 1fr 1.55fr 0.6fr;
   align-items: end;
-  gap: 12px;
+  gap: 3px;
+}
+
+.k2310-meta-grid > span {
+  white-space: nowrap;
+}
+
+.k2310-meta-to {
+  font-size: 8.5px;
+}
+
+.k2310-meta-recipient {
+  font-weight: 700;
 }
 
 .k2310-meta-grid span:last-child {
@@ -830,16 +1020,18 @@
 }
 
 .k2310-horizontal-signatures {
-  position: relative;
-  min-height: 50px;
-  margin-top: -8px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
   font-size: 9px;
   line-height: 1.2;
 }
 
 .k2310-horizontal-signatures > div {
   position: absolute;
-  top: 0;
+  bottom: 0;
   width: 190px;
   transform: translateX(-50%);
   text-align: center;
@@ -847,15 +1039,15 @@
 
 .k2310-signature-mode-manager .k2310-signature-manager,
 .k2310-signature-mode-department .k2310-signature-department {
-  left: 60.5%;
+  left: 102.8%;
 }
 
 .k2310-signature-mode-all .k2310-signature-manager {
-  left: 16.5%;
+  left: 28%;
 }
 
 .k2310-signature-mode-all .k2310-signature-department {
-  left: 60.5%;
+  left: 102.8%;
 }
 
 /* In every document-preview toolbar, closing is always the final action. */
@@ -904,7 +1096,7 @@
 }
 
 .k2310-horizontal-signatures strong {
-  margin-top: 8px;
+  margin-top: 0;
   font-size: 10px;
 }
 
@@ -1084,6 +1276,8 @@
   color: #000;
   font-family: Arial, sans-serif;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .official-share-back-code {
@@ -1109,6 +1303,16 @@
   border-collapse: collapse;
   table-layout: fixed;
   font-size: clamp(8px, 0.76vw, 10px);
+}
+
+.official-share-back-table {
+  flex: 1 1 auto;
+  height: 1px;
+}
+
+.official-share-back-summary,
+.official-share-back-footer {
+  flex: 0 0 auto;
 }
 
 .official-share-back-table th,
@@ -1137,6 +1341,11 @@
   font-size: clamp(9px, 0.9vw, 12px);
 }
 
+/* Keep the first seven ledger headings compact; the observations column keeps its original size. */
+.official-share-back-table thead tr:first-child th:nth-child(-n + 7) {
+  font-size: clamp(8px, calc(0.9vw - 1px), 11px);
+}
+
 .official-share-back-date-heading {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -1144,11 +1353,12 @@
 }
 
 .official-share-back-table tr {
-  height: 18px;
+  height: auto;
 }
 
 .official-share-back-table tbody tr:not(.official-share-back-transfer-row) {
   font-size: clamp(10px, 0.92vw, 12px);
+  height: 15px;
 }
 
 .official-share-back-table tbody td {
@@ -1162,7 +1372,7 @@
 }
 
 .official-share-back-transfer-row {
-  height: 20px !important;
+  height: 14px !important;
   font-weight: 700;
 }
 
@@ -1172,7 +1382,7 @@
 }
 
 .official-share-back-summary-label {
-  width: 27%;
+  width: 19%;
 }
 
 .official-share-back-summary th {
@@ -1183,7 +1393,7 @@
 }
 
 .official-share-back-summary tr {
-  height: 21px;
+  height: 28px;
 }
 
 .official-share-back-footer {
@@ -1230,6 +1440,30 @@
   place-items: center start;
 }
 
+.official-share-overlay.share-primary-data-overlay {
+  font-size: clamp(10px, calc(0.82vw + 1px), 13px);
+}
+
+/* Fields 23 and 24 on the share-card movement grid need one point less to
+   keep long dates and issuing-unit names inside their printed cells. */
+.official-share-overlay.share-field-23-overlay,
+.official-share-overlay.share-field-24-overlay {
+  font-size: clamp(8px, calc(0.82vw - 1px), 11px);
+}
+
+/* The inventory description is intentionally one point smaller than the
+   numeric columns, so long material names remain inside field 9. */
+.official-inventory-overlay.material-description-overlay {
+  font-size: clamp(8px, calc(0.82vw - 1px), 11px);
+}
+
+/* Only the on-screen inventory preview uses the compact P.E.D. signature. */
+@media screen {
+  .inventory-modal-preview .inventory-signature-overlay:last-of-type {
+    font-size: clamp(11px, calc(1.15vw - 1px), 15px);
+  }
+}
+
 .official-share-overlay.share-opening-inventory-overlay {
   place-items: center start;
   padding-left: 7px;
@@ -1258,6 +1492,19 @@
   font-weight: 700;
 }
 
+/* Preview only: reduce PED signature font size by 2px and meta fields by 1px */
+@media screen {
+  .inventory-modal-preview .inventory-ped-signature,
+  .inventory-statement-modal .inventory-ped-signature {
+    font-size: clamp(10px, 1.15vw - 2px, 14px);
+  }
+
+  .inventory-modal-preview .inventory-meta-overlay,
+  .inventory-statement-modal .inventory-meta-overlay {
+    font-size: clamp(11px, 1.2vw - 1px, 16px);
+  }
+}
+
 .inventory-meta-overlay,
 .inventory-date-overlay {
   font-size: clamp(12px, 1.2vw, 17px);
@@ -1281,14 +1528,20 @@
 }
 
 .official-inventory-overlay.inventory-row-overlay {
-  font-size: clamp(8px, 0.8vw, 11px);
+  padding: 0 1px;
+  font-size: clamp(9px, 0.72vw, 12px);
   font-weight: 600;
-  line-height: 0.95;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 @media screen {
   .official-inventory-overlay.inventory-row-overlay {
-    font-size: clamp(8px, 0.78vw, 10px);
+    /* Do not let a viewport minimum push the value over the ruled row. */
+    padding: 0 1px;
+    font-size: clamp(7px, 0.7vw, 10px);
+    line-height: 1;
   }
 
   .official-inventory-overlay.inventory-meta-overlay,
@@ -1353,6 +1606,7 @@
 }
 
 .composition-document-page {
+  position: relative;
   width: 210mm;
   height: 297mm;
   min-height: 297mm;
@@ -1452,7 +1706,7 @@
 }
 
 .composition-document-table td {
-  height: 10mm;
+  height: 7mm;
 }
 
 .composition-document-table th:nth-child(1),
@@ -1571,7 +1825,6 @@
   white-space: nowrap;
   font-size: 6px;
   line-height: 1;
-  vertical-align: middle;
 }
 
 .change-sheet-document-table .change-sheet-movement-heading > span {
@@ -1929,6 +2182,60 @@
     margin: 0;
   }
 
+  /* Override portrait for external index */
+  body.external-index-print-mode {
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+  }
+
+  .exhp-reference-signature-field-16 .exhp-officer-signature strong {
+    font-size: clamp(8px, calc(0.58vw + 2px), 11px);
+  }
+
+  .exhp-reference-signature-field-16 .exhp-officer-signature em {
+    font-size: clamp(7px, calc(0.52vw + 2px), 10px);
+  }
+
+  .exhp-field-19-signature .exhp-officer-signature strong {
+    font-size: clamp(9px, calc(0.58vw + 3px), 12px);
+  }
+
+  .exhp-field-19-signature .exhp-officer-signature em {
+    font-size: clamp(8px, calc(0.52vw + 3px), 11px);
+  }
+
+  .exhp-faithful-page .exhp-reference-signature,
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #000 !important;
+  }
+
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature strong,
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature em {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+  }
+
+  .exhp-faithful-page .exhp-reference-signature,
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #000 !important;
+  }
+
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature strong,
+  .exhp-faithful-page .exhp-reference-signature .exhp-officer-signature em {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+  }
+
   body[data-isolated-document-print='true'] > *:not(.isolated-print-root) {
     display: none !important;
   }
@@ -2278,6 +2585,19 @@
     page-break-after: always;
   }
 
+  .share-card-print-root .official-share-page.print-document-area {
+    page: portrait;
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+  }
+
+  .share-card-print-root .official-share-back-table tbody tr:not(.official-share-back-transfer-row) {
+    font-size: 13px;
+  }
+
   .official-movement-protocol-page.print-document-area {
     page: portrait;
     position: relative;
@@ -2330,6 +2650,14 @@
 
   .official-share-overlay.material-description-overlay {
     font-size: 11px;
+  }
+
+  .official-share-overlay.share-primary-data-overlay {
+    font-size: 13px;
+  }
+
+  .official-share-overlay.material-description-overlay.share-primary-data-overlay {
+    font-size: 12px;
   }
 
   .official-inventory-overlay.inventory-row-overlay {
@@ -2461,6 +2789,10 @@
     line-height: 0.95;
   }
 
+  .efed505-row-overlay:not(.material-description-overlay) {
+    font-size: 6.9pt;
+  }
+
   .efed505-signature-name {
     font-size: 6.3pt;
     line-height: 1.02;
@@ -2569,53 +2901,6 @@
     page-break-after: auto;
   }
 
-  .addy-composition-document.print-document-area {
-    page: portrait;
-    position: relative;
-    top: auto;
-    left: auto;
-    width: 192mm;
-    height: 279mm;
-    min-height: 279mm;
-    margin: 9mm;
-    padding: 2mm 0 0;
-    font-size: 15px;
-    break-after: auto;
-    page-break-after: auto;
-  }
-
-  .addy-composition-document .material-form-code {
-    margin-bottom: 3mm;
-    font-size: 15px;
-  }
-
-  .addy-composition-document h1 {
-    margin-bottom: 4mm;
-    font-size: 21px;
-  }
-
-  .addy-composition-document .composition-document-details {
-    gap: 1.5mm;
-    margin-bottom: 4mm;
-    font-size: 14px;
-  }
-
-  .addy-composition-document .composition-document-table th {
-    height: 10mm;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .addy-composition-document .composition-document-table td {
-    height: 12mm;
-    font-size: 14px;
-  }
-
-  .addy-composition-document .composition-document-footer {
-    margin-top: 6mm;
-    font-size: 14px;
-  }
-
   .change-sheet-document-page.print-document-area {
     page: landscape;
     position: relative;
@@ -2629,6 +2914,19 @@
     overflow: hidden;
     break-after: page;
     page-break-after: always;
+  }
+
+  .balance-differences-page.print-document-area,
+  .serial-registry-print-page.print-document-area {
+    page: landscape;
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 297mm;
+    height: 210mm;
+    min-height: 210mm;
+    margin: 0;
+    overflow: hidden;
   }
 
   .change-sheet-document-page.print-document-area:last-child {
@@ -2646,6 +2944,12 @@
 .material-card-flags-table td:nth-child(8) {
   width: 8%;
   text-align: center;
+}
+
+.composition-document-page .composition-document-table tbody td,
+.composition-document-page .composition-document-footer strong,
+.composition-document-page .composition-document-footer em {
+  font-size: 9px;
 }
 
 .material-card-flags-table th:nth-child(9),

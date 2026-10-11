@@ -23,12 +23,19 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
             </div>
           </label>
         `).join('') : '<p class="empty-table">Δεν έχουν αντιστοιχιστεί δικαιολογητικά στην αιτιολογία.</p>'}
-        <label class="exhp-support-row exhp-other-support-row">
-          <span><strong>Άλλο δικαιολογητικό</strong>Πρόσθεσε οποιοδήποτε άλλο δικαιολογητικό απαιτείται.</span>
-          <input data-exhp-other-support value="${escapeHtml(documentData.otherSupportDocument || '')}" placeholder="Τίτλος / αριθμός / ημερομηνία / στοιχεία" />
-          <button class="secondary-button" data-save-other-support type="button">Αποθήκευση</button>
-        </label>
       </div>
+      <section class="exhp-folder-manual-supports">
+        <div class="requests-status-header">
+          <div><h3>Δικαιολογητικά υποστήριξης</h3><p class="muted">Πρόσθεσε τα δικαιολογητικά που θα συνοδεύουν την ΕΧΠ.</p></div>
+          <button class="secondary-button" data-add-other-support type="button">Προσθήκη δικαιολογητικού</button>
+        </div>
+        <div class="exhp-support-grid" data-other-support-list>
+          ${renderOtherSupportRows(documentData.otherSupportDocument)}
+        </div>
+        <div class="row-actions exhp-folder-manual-support-actions">
+          <button class="secondary-button" data-save-other-support type="button">Αποθήκευση δικαιολογητικών</button>
+        </div>
+      </section>
       <footer class="addy-save-row"><span class="status-pill ${documentData.supportStatus === 'Πλήρης για ΕΥΣ' ? 'balanced' : 'pending'}">${escapeHtml(displaySupportStatus(documentData.supportStatus))}</span></footer>
     </section>
   `;
@@ -39,6 +46,8 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
     }
     const save = event.target.closest('[data-save-support]');
     const saveOther = event.target.closest('[data-save-other-support]');
+    const addOther = event.target.closest('[data-add-other-support]');
+    const removeOther = event.target.closest('[data-remove-other-support]');
     const print = event.target.closest('[data-print-support]');
     if (print) {
       const support = documentData.supports.find((item) => item.id === Number(print.dataset.printSupport));
@@ -54,12 +63,25 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
     }
     if (saveOther) {
       try {
-        const value = modal.querySelector('[data-exhp-other-support]').value;
+        const value = collectOtherSupportRows(modal).join('\n');
         const result = await api.updateExhpOtherSupport(documentData.id, value);
         documentData.otherSupportDocument = value.trim();
         showToast(result.message);
       } catch (error) {
         showToast(error.message || 'Δεν ήταν δυνατή η αποθήκευση του πρόσθετου δικαιολογητικού.', 'error');
+      }
+      return;
+    }
+    if (addOther) {
+      modal.querySelector('[data-other-support-list]')?.insertAdjacentHTML('beforeend', renderOtherSupportRow());
+      return;
+    }
+    if (removeOther) {
+      const rows = modal.querySelectorAll('[data-other-support-row]');
+      if (rows.length > 1) removeOther.closest('[data-other-support-row]')?.remove();
+      else {
+        const input = rows[0]?.querySelector('[data-exhp-other-support]');
+        if (input) input.value = '';
       }
       return;
     }
@@ -79,4 +101,27 @@ export function openExhpSupportFolder(documentData, api, showToast, settings = {
     }
   });
   document.body.appendChild(modal);
+}
+
+function renderOtherSupportRows(value = '') {
+  const rows = String(value)
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return (rows.length ? rows : ['']).map((item) => renderOtherSupportRow(item)).join('');
+}
+
+function renderOtherSupportRow(value = '') {
+  return `
+    <label class="exhp-support-row manual-exhp-support-row" data-other-support-row>
+      <input data-exhp-other-support value="${escapeHtml(value)}" placeholder="π.χ. Διαταγή 123/2026" />
+      <button class="secondary-button" data-remove-other-support type="button">Διαγραφή</button>
+    </label>
+  `;
+}
+
+function collectOtherSupportRows(container) {
+  return Array.from(container.querySelectorAll('[data-exhp-other-support]'))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
 }

@@ -261,6 +261,12 @@ function createTransactionsRepository(db) {
       const validatedAddress = optionalText(address);
       db.prepare('UPDATE commerce_companies SET name = ?, tax_number = ?, address = ? WHERE id = ?')
         .run(validatedName, validatedTaxNumber, validatedAddress, id);
+      return {
+        id: Number(id),
+        name: validatedName,
+        taxNumber: validatedTaxNumber,
+        address: validatedAddress
+      };
     },
 
     deleteCommerceCompany(id) {

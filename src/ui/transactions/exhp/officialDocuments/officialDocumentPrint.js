@@ -1,6 +1,14 @@
 import { escapeHtml } from '../../../components/forms.js';
 import { formatDate } from '../../shared.js';
 
+export function isLandscapeExhpDocument(preview) {
+  if (typeof preview === 'string') {
+    return /(?:^|[\s"'])faithful-form-page-landscape(?:[\s"']|$)|(?:^|[\s"'])exhp-faithful-page(?:[\s"']|$)/u.test(preview);
+  }
+  return Boolean(preview?.matches?.('.faithful-form-page-landscape, .exhp-faithful-page')
+    || preview?.querySelector?.('.faithful-form-page-landscape, .exhp-faithful-page'));
+}
+
 export async function printExhpDocument(preview) {
   const printRoot = document.createElement('div');
   printRoot.className = 'isolated-print-root';
@@ -8,7 +16,7 @@ export async function printExhpDocument(preview) {
   document.body.dataset.isolatedDocumentPrint = 'true';
   document.body.appendChild(printRoot);
   try {
-    await window.appApi.print.currentDocument({ landscape: false });
+    await window.appApi.print.currentDocument({ landscape: isLandscapeExhpDocument(printRoot) });
   } finally {
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;
@@ -51,7 +59,9 @@ export function previewExhpDocument(type, data) {
       return;
     }
     if (event.target.closest('[data-print-exhp-doc-preview]')) {
-      await window.appApi.print.currentDocument({ landscape: false });
+      await window.appApi.print.currentDocument({
+        landscape: isLandscapeExhpDocument(modal.querySelector('.request-document-preview'))
+      });
     }
   });
 

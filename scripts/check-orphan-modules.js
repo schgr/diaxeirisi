@@ -19,6 +19,7 @@ const PACKAGING_CONFIGS = [
   'electron-builder.beta.js'
 ];
 const INTENTIONAL_TEST_ONLY_MODULES = new Set([
+  'src/ui/barcode/code128.js',
   'src/exhpForm/supportingDocs/shared/docHeader.js',
   'src/exhpForm/supportingDocs/shared/letteredList.js',
   'src/types/settings.types.js'

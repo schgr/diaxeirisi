@@ -8,6 +8,7 @@ import {
 } from './settingsPage.js';
 import { bindAddyForm } from '../transactions/addyForm.js';
 import { bindExhpDocumentsWizard, renderExhpDocumentOptions } from '../transactions/exhpDocumentsWizard.js';
+import { openExhpSupportFolder } from '../transactions/exhpSupportDocuments.js';
 import {
   renderAddyRows,
   renderExhpEntryTables,
@@ -212,16 +213,20 @@ export async function renderTransactionsPage(
               <th>Είδος Δοσοληψίας</th>
               <th>Μονάδα Δοσοληψιών</th>
               <th>Είδος Υλικού</th>
+              <th data-addy-list-actions-heading ${state.addyListEditing ? '' : 'hidden'}>Ενέργειες</th>
             </tr>
           </thead>
           <tbody id="addy-items-body">
-            ${renderAddyRows(state.items)}
+            ${renderAddyRows(state.items, state.addyListEditing)}
           </tbody>
         </table>
       </div>
       <div class="addy-save-row">
         <span id="addy-limit-text" class="muted">0/10 καταχωρήσεις</span>
-        <button id="addy-save" class="primary-button" type="button" disabled>Αποθήκευση</button>
+        <div class="row-actions">
+          <button id="addy-edit-list" class="secondary-button" type="button">Επεξεργασία</button>
+          <button id="addy-save" class="primary-button" type="button" disabled>Αποθήκευση</button>
+        </div>
       </div>
     </section>
 
@@ -434,6 +439,7 @@ export async function renderTransactionsPage(
           <input id="exhp-edit-date" type="date" required />
         </label>
         <button class="primary-button exhp-edit-save-button" type="submit">Αποθήκευση αλλαγών</button>
+        <button class="secondary-button" data-edit-exhp-supports type="button">Δικαιολογητικά υποστήριξης</button>
       </form>
       <p class="muted">Οι αλλαγές ενημερώνουν την ΕΧΠ, το Ευρετήριο Εντολών Χρεωπιστώσεων και τις κινήσεις των αντίστοιχων μερίδων.</p>
       <h4>Υλικά της ΕΧΠ</h4>
@@ -636,6 +642,18 @@ function bindExhpMenu(container, transactionsApi, settingsApi, settings, state, 
       showToast(result.message);
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η ενημέρωση της ΕΧΠ.', 'error');
+    }
+  });
+
+  container.querySelector('[data-edit-exhp-supports]')?.addEventListener('click', async () => {
+    const id = Number(container.querySelector('#exhp-edit-id')?.value);
+    if (!id) return;
+    try {
+      const documentData = await transactionsApi.getExhpDocument(id);
+      state.viewedExhp = documentData;
+      openExhpSupportFolder(documentData, transactionsApi, showToast, settings);
+    } catch (error) {
+      showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση των δικαιολογητικών υποστήριξης.', 'error');
     }
   });
 }

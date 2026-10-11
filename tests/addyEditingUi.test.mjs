@@ -21,6 +21,14 @@ const rows = renderAddyRows([{
 }]);
 assert.doesNotMatch(rows, /data-edit-addy-item/u);
 assert.doesNotMatch(rows, /data-remove-addy-item/u);
+const editableRows = renderAddyRows([{
+  shareNumber: '152', nominalNumber: '1315231129037', description: 'Υλικό', quantity: 1,
+  unitPrice: '', measurementUnit: 'Τεμάχια', transactionType: 'Χρέωση',
+  transactionUnit: '104 Α/Κ ΜΜΠ/ΔΥ', materialType: 'Υλικό'
+}], true);
+assert.match(editableRows, /data-edit-addy-item="0"/u);
+assert.match(editableRows, /data-remove-addy-item="0"/u);
+assert.match(renderAddyRows([], true), /colspan="11"[^>]*>Δεν έχουν προστεθεί υλικά/u);
 
 const valueControl = (value) => ({ value });
 assert.equal(isCommerceUnit('ΕΜΠΟΡΙΟ'), true, 'Commerce matching must ignore accents and letter case.');

@@ -18,6 +18,20 @@ async function run() {
     toLegacyPreviewPayload
   } = await import(moduleUrl);
 
+  const { validateDocDMetasximatismos, renderDocDEdit } = await import('../src/exhpForm/supportingDocs/docD_metasximatismos.js');
+  const { renderDocZEdit } = await import('../src/exhpForm/supportingDocs/docZ_analosimo.js');
+  assert.strictEqual(validateDocDMetasximatismos({
+    commonFields: { monada: 'Μονάδα' },
+    specificFields: { topos: 'ΔΡΥΜΟΣ', dgiArithmos: '123', proedros: 'Πρόεδρος' },
+    materialsUsed: [{ description: 'Υλικό', quantity: 1 }]
+  }).valid, true, 'Transformation must save without an unavailable EXHP serial field');
+  for (const renderEditor of [renderDocDEdit, renderDocZEdit]) {
+    const html = renderEditor({}, { materialCatalog: [{ shareNumber: '15', description: 'Υλικό' }] });
+    assert.doesNotMatch(html, /<datalist|list="exhp-material-picker-catalog"/);
+    assert.match(html, /data-material-picker-select/);
+    assert.match(html, /data-material-picker-variant="manual"/);
+  }
+
   assert.strictEqual(
     getAitiologiaCodeForIssueReason('Διαγραφή Αναλώσιμου Υλικού και Ειδών Σταθερών Χορηγιών.'),
     'z'
@@ -276,6 +290,30 @@ async function run() {
   assert.strictEqual(producedDebit.quantity, 2);
   assert.ok(!syncedD.some((item) => item.description === 'stale used'));
   assert.ok(!syncedD.some((item) => item.description === 'stale produced'));
+
+  for (const transactionType of ['Χρέωση', 'Πίστωση']) {
+    const manual = [{ shareNumber: ' 20 ', transactionType, quantity: 1 }];
+    for (const data of [
+      dData,
+      { aitiologiaCode: 'z', materials: [{ shareNumber: '20', quantity: 2 }] },
+      { aitiologiaCode: 'st', entries: [{ shareNumber: '20', quantity: 2, movement: 'initial' }] },
+      { aitiologiaCode: 'a', committeeTier: 'secondary', formKey: 'a', materials: [{ shareNumber: '20', quantity: 2 }] }
+    ]) {
+      assert.throws(() => syncSupportDocumentMaterialsToExhpItems(manual, data), /Η μερίδα 20 υπάρχει ήδη/);
+    }
+    assert.strictEqual(manual.length, 1);
+  }
+  assert.throws(() => syncSupportDocumentMaterialsToExhpItems([], {
+    aitiologiaCode: 'z', materials: [{ shareNumber: '20', quantity: 1 }, { shareNumber: '20', quantity: 2 }]
+  }), /δεύτερη εισαγωγή/);
+  const draftState = { currentItems: [{ shareNumber: '20', transactionType: 'Χρέωση' }] };
+  assert.throws(() => saveNewSupportDocumentDraft(draftState, dData), /Η μερίδα 20 υπάρχει ήδη/);
+  assert.strictEqual(draftState.newModuleDrafts, undefined, 'Conflicts must not mutate document drafts');
+  const unrelatedSupport = [{ shareNumber: '20', supportModuleSource: 'docZ_analosimo', transactionType: 'Πίστωση' }];
+  assert.throws(() => syncSupportDocumentMaterialsToExhpItems(unrelatedSupport, dData), /Η μερίδα 20 υπάρχει ήδη/);
+  assert.strictEqual(syncSupportDocumentMaterialsToExhpItems(unrelatedSupport, {
+    aitiologiaCode: 'z', materials: [{ shareNumber: '20', quantity: 3 }]
+  })[0].quantity, 3, 'Saving the same document updates its own rows');
 
   const unchangedWithoutDocument = syncSupportDocumentMaterialsToExhpItems(syncedD, null);
   assert.strictEqual(unchangedWithoutDocument, syncedD);

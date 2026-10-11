@@ -75,6 +75,25 @@
   grid-template-columns: minmax(260px, 1.5fr) minmax(320px, 1fr) auto;
 }
 
+.exhp-folder-manual-supports {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.exhp-folder-manual-supports h3 {
+  margin: 0;
+}
+
+.exhp-folder-manual-supports .requests-status-header {
+  margin-bottom: 8px;
+}
+
+.exhp-folder-manual-support-actions {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
 .exhp-support-modal {
   width: min(1100px, calc(100vw - 32px));
 }
@@ -290,9 +309,27 @@
 }
 
 .doc-st-clothing-editor .doc-st-edit-grid {
-  margin-top: -10px;
-  margin-bottom: 0;
-  gap: 6px 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0;
+  margin-bottom: 16px;
+  gap: 12px 16px;
+}
+
+.doc-st-edit-grid .field {
+  min-width: 0;
+}
+
+.doc-st-edit-grid .field input {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 760px) {
+  .doc-st-clothing-editor .doc-st-edit-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .exhp-form-field-narrow input,
@@ -457,26 +494,38 @@
 }
 
 .archived-shares-document {
+  box-sizing: border-box;
   width: min(100%, 297mm);
   min-height: 210mm;
-  padding: 14mm;
+  padding: 8mm 10mm;
   background: #ffffff;
   color: #000000;
   font-family: Arial, sans-serif;
 }
 
+/* Το έντυπο πρέπει να παραμένει ευανάγνωστο και στην προεπισκόπηση, χωρίς
+   να κληρονομεί το ανοιχτό χρώμα της σκοτεινής εφαρμογής. */
+.archived-shares-preview-content .archived-shares-document,
+.archived-shares-preview-content .archived-shares-document * {
+  color: #000000 !important;
+}
+
+.archived-shares-preview-content .archived-shares-document th {
+  background: #e8eef5;
+}
+
 .archived-shares-document-heading {
-  margin-bottom: 8mm;
+  margin-bottom: 5mm;
   text-align: center;
 }
 
 .archived-shares-document-heading span {
-  font-size: 10pt;
+  font-size: 9pt;
 }
 
 .archived-shares-document-heading h2 {
   margin: 2mm 0 0;
-  font-size: 18pt;
+  font-size: 16pt;
 }
 
 .archived-shares-document-table {
@@ -489,7 +538,8 @@
 .archived-shares-document-table th,
 .archived-shares-document-table td {
   border: 1px solid #555;
-  padding: 2mm;
+  padding: 1.5mm;
+  font-size: 9pt;
   color: #000000;
   overflow-wrap: anywhere;
 }
@@ -728,6 +778,10 @@ table.administration-table td {
   letter-spacing: 0;
 }
 
+.official-handover-page:first-child h1 {
+  margin: 8mm 0 6mm;
+}
+
 .official-handover-page h2 {
   margin: 5mm 0 2mm;
   text-align: center;
@@ -743,6 +797,11 @@ table.administration-table td {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+/* Continuation sheets do not repeat the unit and form-code header. */
+.official-handover-continuation-header {
+  display: none;
 }
 
 .official-fill {
@@ -891,17 +950,17 @@ table.administration-table td {
 .official-handover-signatures {
   display: grid;
   gap: 8mm;
-  margin-top: 45mm;
   text-align: center;
 }
 
 .official-handover-approval {
   grid-template-columns: repeat(4, 1fr);
+  margin-top: 20mm;
 }
 
 .official-handover-signatures {
   grid-template-columns: 1fr 1fr;
-  margin-top: 55mm;
+  margin-top: 18mm;
 }
 
 .official-handover-approval div,
@@ -915,6 +974,28 @@ table.administration-table td {
 .official-handover-approval em,
 .official-handover-signatures em {
   font-style: normal;
+}
+
+.official-handover-signature-title {
+  display: block;
+  line-height: 1.4;
+  margin-bottom: 7mm;
+}
+
+.official-handover-approval .official-handover-signature-title {
+  min-height: 2.8em;
+}
+
+.official-handover-commander-signature > strong,
+.official-handover-commander-signature > em,
+.official-handover-ped-signature > strong,
+.official-handover-ped-signature > em {
+  font-size: calc(1em - 1px);
+}
+
+.official-handover-commander-signature > strong,
+.official-handover-ped-signature > strong {
+  white-space: nowrap;
 }
 
 .addy-composition-modal {
@@ -1114,6 +1195,14 @@ table.administration-table td {
   font-family: Arial, "Segoe UI", sans-serif;
   font-size: 10px;
   box-shadow: 0 12px 35px rgba(16, 24, 40, 0.18);
+}
+
+@media screen {
+  .material-registry-page {
+    /* Make preview match print dimensions */
+    width: 210mm;
+    min-height: 297mm;
+  }
 }
 
 .registry-topline {

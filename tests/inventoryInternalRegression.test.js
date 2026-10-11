@@ -141,7 +141,7 @@ async function run() {
   );
   assert.match(chargesPage, /movementType === 'Επιστροφή' && quantity > 0/u);
   assert.match(addyPrint, /isolated-print-root addy-isolated-print-root/u);
-  assert.match(addyPrint, /printRoot\.innerHTML = source\.outerHTML/u);
+  assert.match(addyPrint, /printRoot\.innerHTML = Array\.from\(sources, \(source\) => source\.outerHTML\)\.join\(''\)/u);
   assert.match(
     styles,
     /\.composition-document-page \.material-form-page-number\s*\{[\s\S]*right:\s*15mm;[\s\S]*bottom:\s*8mm;[\s\S]*text-align:\s*right;/u

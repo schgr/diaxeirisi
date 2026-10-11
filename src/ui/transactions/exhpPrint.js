@@ -78,13 +78,26 @@ export function openExhpDocument(documentData) {
 
 
 export function renderExhpDocument(documentData) {
+  const isToolCollection = getAitiologiaCodeForIssueReason(
+    documentData.reason, documentData.reasonCode || ''
+  ) === 'e';
+  const materialPosition = (item) => isToolCollection && Number(item.quantity) === 0
+    && item.ledgerSerial === 'Φ.Μ.' ? 'Φ.Μ' : documentData.registryNumber;
   const chargeItems = documentData.items
     .filter((item) => item.transactionType === 'Χρέωση')
-    .map((item, index) => ({ ...item, exhpSerial: index + 1 }));
+    .map((item, index) => ({
+      ...item,
+      exhpSerial: index + 1,
+      transactionYearSerial: materialPosition(item)
+    }));
   const creditItems = documentData.items
     .filter((item) => item.transactionType === 'Πίστωση')
-    .map((item, index) => ({ ...item, exhpSerial: index + 1 }));
-  const pageCount = Math.max(1, Math.ceil(chargeItems.length / 14), Math.ceil(creditItems.length / 14));
+    .map((item, index) => ({
+      ...item,
+      exhpSerial: index + 1,
+      transactionYearSerial: materialPosition(item)
+    }));
+  const pageCount = Math.max(1, Math.ceil(chargeItems.length / 18), Math.ceil(creditItems.length / 18));
   const fillSecondOpinion = shouldFillExhpSecondOpinion(
     documentData.reason,
     documentData.reasonCode || '',
@@ -105,30 +118,29 @@ export function renderExhpDocument(documentData) {
     ...splitExhpSupportingDocumentLines(documentData.otherSupportDocument)
   ].filter(Boolean))].slice(0, 9);
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
-    const chargePage = chargeItems.slice(pageIndex * 14, pageIndex * 14 + 14);
-    const creditPage = creditItems.slice(pageIndex * 14, pageIndex * 14 + 14);
+    const chargePage = chargeItems.slice(pageIndex * 18, pageIndex * 18 + 18);
+    const creditPage = creditItems.slice(pageIndex * 18, pageIndex * 18 + 18);
     const frontPageNumber = pageIndex + 1;
     return `
       <article class="exhp-faithful-page exhp-paged-document exhp-faithful-front-side print-document-area">
         <div class="exhp-page-content">
           <img src="./assets/official-forms/exhp-front-clean.png" alt="Εντολή Χρεωπιστώσεως - εμπρός πλευρά" />
-          ${exhpStaticOverlay(documentData.unit, 14.2, 16.4, 10.8, 2.2, 'exhp-unit-overlay')}
-          ${exhpStaticOverlay(documentData.registryNumber, 82.6, 14.2, 9.2, 2.2, 'exhp-registry-overlay')}
-          ${exhpStaticOverlay(formatDate(documentData.date), 81.0, 17.0, 10.5, 2.2, 'exhp-date-overlay')}
-          ${chargeItems.length ? exhpStaticOverlay(documentData.managementType || '', 20.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
-          ${creditItems.length ? exhpStaticOverlay(documentData.managementType || '', 69.0, 22.0, 27.5, 2.4, 'exhp-management-type') : ''}
-          ${renderFaithfulExhpRows(chargePage, false)}
-          ${renderFaithfulExhpRows(creditPage, true)}
-          ${renderExhpFrontSignatureTitles()}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 1.2, 76.1, 10.8, 2.7, 'exhp-field-15-signature')}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.ped, 46.6, 76.1, 11.5, 2.7, 'exhp-field-18-signature')}
-          ${renderExhpFrontSignature(documentData.financialOfficers?.manager, 78.9, 76.1, 8.0, 2.7, 'exhp-field-15-signature exhp-credit-field-15-signature')}
-          ${exhpStaticOverlay(documentData.reason, 2.7, 81.0, 45.8, 5.1, 'material-description-overlay')}
-          ${exhpStaticOverlay(renderExhpSupportingDocuments(supportingDocuments), 50.8, 81.0, 46.0, 5.1, 'exhp-supporting-documents-overlay', true)}
-          ${exhpStaticOverlay(documentData.notes || '', 2.7, 89.0, 45.8, 4.3, 'material-description-overlay')}
-          ${exhpStaticOverlay(documentData.approvalReference || '', 51.0, 89.0, 23.0, 4.3)}
+          ${exhpReferenceField(documentData.unit, 10.4, 11.7, 37.6, 2.2, 'exhp-reference-header-field exhp-reference-unit')}
+          ${exhpReferenceField(documentData.registryNumber, 75.4, 9.7, 20.0, 2.2, 'exhp-reference-header-field')}
+          ${exhpReferenceField(formatDate(documentData.date), 75.4, 11.7, 20.0, 2.2, 'exhp-reference-header-field')}
+          ${chargeItems.length ? exhpReferenceField(documentData.managementType || '', 5.4, 13.45, 42.8, 1.8, 'exhp-reference-management') : ''}
+          ${creditItems.length ? exhpReferenceField(documentData.managementType || '', 49.5, 13.45, 44.0, 1.8, 'exhp-reference-management') : ''}
+          ${renderExhpReferenceRows(chargePage, 'charge')}
+          ${renderExhpReferenceRows(creditPage, 'credit')}
+          ${renderExhpReferenceSignature(documentData.financialOfficers?.manager, 2.9, 72.4, 9.4, 4.9, 'exhp-reference-signature-field-16')}
+          ${renderExhpReferenceSignature(documentData.financialOfficers?.manager, 67.7, 72.4, 9.4, 4.9, 'exhp-reference-signature-field-16')}
+          ${renderExhpReferenceSignature(documentData.financialOfficers?.ped, 37.45, 69.5, 18.0, 8.5, 'exhp-field-19-signature')}
+          ${exhpReferenceField(documentData.reason, 2.9, 79.1, 45.8, 8.95, 'exhp-reference-text-field')}
+          ${exhpReferenceField(renderExhpSupportingDocuments(supportingDocuments), 48.7, 77.75, 45.5, 10.3, 'exhp-reference-support-field', true)}
+          ${exhpReferenceField(documentData.notes || '', 2.9, 88.1, 45.8, 5.8, 'exhp-reference-text-field')}
+          ${exhpReferenceField(documentData.approvalReference || '', 48.7, 88.1, 18.3, 5.8, 'exhp-reference-approval-field')}
           ${showCommanderInField23
-            ? renderExhpFrontSignature(documentData.financialOfficers?.commander, 75.4, 89.0, 20.5, 4.3, 'exhp-field-23-signature')
+            ? renderExhpReferenceSignature(documentData.financialOfficers?.commander, 67.0, 88.1, 27.2, 5.8)
             : ''}
         </div>
         ${renderExhpPageNumber(frontPageNumber, pageCount)}
@@ -145,22 +157,6 @@ export function renderExhpDocument(documentData) {
   }).join('');
 }
 
-export function renderExhpFrontSignatureTitles() {
-  const fields = [
-    { left: 1.8, width: 10.8, maskLeft: 1.6, maskWidth: 11.5, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
-    { left: 12.8, width: 12.6, maskLeft: 12.5, maskWidth: 13.6, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' },
-    { left: 49.2, width: 9.2, maskLeft: 47.4, maskWidth: 10.5, text: '(18) ΤΟ ΛΟΓΙΣΤΗΡΙΟ' },
-    { left: 78.9, width: 8.2, maskLeft: 79.3, maskWidth: 8.2, text: '(15) Ο ΔΙΑΧΕΙΡΙΣΤΗΣ' },
-    { left: 87.9, width: 9.0, maskLeft: 87.2, maskWidth: 10.7, text: '(16) Ο ΒΟΗΘΟΣ ΓΕΝ. ΔΙΑΧ.' }
-  ];
-  return `${fields.map((field) => `
-    ${exhpStaticOverlay('', field.maskLeft, 74.05, field.maskWidth, 2.7, 'exhp-signature-title-mask')}
-    ${exhpStaticOverlay(field.text, field.left, 73.25, field.width, 1.35, 'exhp-signature-title')}
-  `).join('')}
-    ${exhpStaticOverlay('', 87.0, 75.35, 10.9, 2.85, 'exhp-credit-field-16-clear-mask')}
-  `;
-}
-
 function splitExhpSupportingDocumentLines(value) {
   return String(value || '')
     .split(/\r?\n/u)
@@ -170,14 +166,11 @@ function splitExhpSupportingDocumentLines(value) {
 
 export function renderExhpSupportingDocuments(documents) {
   const cells = Array.from({ length: 9 }, (_unused, index) => documents[index] || '');
-  return `<div class="exhp-supporting-documents-grid">${cells.map((document) => `<span>${escapeHtml(document)}</span>`).join('')}</div>`;
+  return `<div class="exhp-supporting-documents-grid"><i class="exhp-supporting-documents-gap" aria-hidden="true"></i>${cells.map((document) => `<span>${escapeHtml(document)}</span>`).join('')}</div>`;
 }
 
-function formatExhpMaterialPosition(item) {
-  const shareNumber = String(item.shareNumber || '').trim();
-  const ledgerSerial = String(item.ledgerSerial || '').trim();
-  if (shareNumber === 'Φ.Μ.' && ledgerSerial === 'Φ.Μ.') return 'Φ.Μ.';
-  return [shareNumber, ledgerSerial].filter(Boolean).join('/');
+function formatExhpShareNumber(item) {
+  return String(item.shareNumber || '').trim();
 }
 
 function formatExhpPrintedQuantity(quantity) {
@@ -186,33 +179,29 @@ function formatExhpPrintedQuantity(quantity) {
 
 
 
-export function renderFaithfulExhpRows(items, isCredit) {
-  const columns = isCredit
-    ? [
-        { left: 49.95, width: 3.2, value: (item) => item.exhpSerial },
-        { left: 53.25, width: 13.1, value: (item) => item.nominalNumber },
-        { left: 66.4, width: 14.1, value: (item) => item.description, className: 'material-description-overlay' },
-        { left: 80.65, width: 2.45, value: formatExhpMaterialPosition, className: 'exhp-material-position-overlay' },
-        { left: 83.25, width: 2.4, value: (item) => item.measurementUnit },
-        { left: 85.8, width: 2.45, value: (item) => formatExhpPrintedQuantity(item.quantity) }
-      ]
-    : [
-        { left: 1.65, width: 3.7, value: (item) => item.exhpSerial },
-        { left: 5.45, width: 12.25, value: (item) => item.nominalNumber },
-        { left: 17.85, width: 13.0, value: (item) => item.description, className: 'material-description-overlay' },
-        { left: 30.95, width: 2.35, value: formatExhpMaterialPosition, className: 'exhp-material-position-overlay' },
-        { left: 33.42, width: 3.25, value: (item) => item.measurementUnit },
-        { left: 36.85, width: 2.45, value: (item) => formatExhpPrintedQuantity(item.quantity) }
-      ];
-
-  return items.map((item, rowIndex) => columns.map((column) => exhpStaticOverlay(
+export function renderExhpReferenceRows(items, side) {
+  const left = side === 'credit' ? 48.7 : 2.9;
+  const columns = [
+    { offset: 0, width: 2.45, value: (item) => item.exhpSerial },
+    { offset: 2.45, width: 7.07, value: (item) => item.nominalNumber },
+    { offset: 9.52, width: 16.82, value: (item) => item.description, className: 'exhp-reference-description' },
+    { offset: 26.34, width: 3.25, value: formatExhpShareNumber },
+    { offset: 29.59, width: 2.85, value: (item) => item.transactionYearSerial || item.materialPosition || item.position || '' },
+    { offset: 32.44, width: 3.31, value: (item) => item.measurementUnit },
+    { offset: 35.75, width: 2.45, value: (item) => formatExhpPrintedQuantity(item.quantity) }
+  ];
+  return items.map((item, rowIndex) => columns.map((column) => exhpReferenceField(
     column.value(item),
-    column.left,
-    38.55 + rowIndex * 2.45,
+    left + column.offset,
+    24.2 + rowIndex * 2.45,
     column.width,
     2.45,
-    `exhp-row-overlay ${column.className || ''}`.trim()
+    `exhp-reference-row-cell ${column.className || ''}`.trim()
   )).join('')).join('');
+}
+
+export function renderFaithfulExhpRows(items, isCredit) {
+  return renderExhpReferenceRows(items, isCredit ? 'credit' : 'charge');
 }
 
 
@@ -243,16 +232,21 @@ export function renderExhpOfficerSignature(value) {
 
 
 
-export function renderExhpFrontSignature(value, left, top, width, height, className = '') {
-  return exhpStaticOverlay(
+function renderExhpReferenceSignature(value, left, top, width, height, modifierClass = '') {
+  return exhpReferenceField(
     renderExhpOfficerSignature(value),
     left,
     top,
     width,
     height,
-    `exhp-front-signature ${className}`.trim(),
+    `exhp-reference-signature ${modifierClass}`.trim(),
     true
   );
+}
+
+function exhpReferenceField(value, left, top, width, height, className = '', isHtml = false) {
+  const content = isHtml ? value : escapeHtml(value ?? '');
+  return `<div class="exhp-reference-field ${className}" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%">${content}</div>`;
 }
 
 

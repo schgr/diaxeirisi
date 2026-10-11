@@ -14,6 +14,10 @@ function validateAddy(payload) {
 
   const transactionUnit = requireText(payload && payload.transactionUnit, 'Μονάδα Δοσοληψιών');
   const validatedItems = items.map(validateAddyItem);
+  assertUniqueShareNumbers(validatedItems);
+  if (new Set(validatedItems.map((item) => item.transactionType)).size > 1) {
+    throw new AppError('Το ίδιο ΑΔΔΥ δεν μπορεί να περιέχει μαζί χρεώσεις και πιστώσεις.', 'VALIDATION_ERROR');
+  }
   if (normalize(transactionUnit) === 'εμποριο' && validatedItems.some((item) => item.unitPrice === null)) {
     throw new AppError('Η τιμή είναι υποχρεωτική όταν η Μονάδα Δοσοληψιών είναι Εμπόριο.', 'VALIDATION_ERROR');
   }
@@ -28,6 +32,17 @@ function validateAddy(payload) {
     commerceCompanyId: payload && payload.commerceCompanyId ? Number(payload.commerceCompanyId) : null,
     items: validatedItems
   };
+}
+
+function assertUniqueShareNumbers(items) {
+  const seen = new Set();
+  for (const item of items) {
+    const key = item.shareNumber.toLocaleLowerCase('el-GR');
+    if (seen.has(key)) {
+      throw new AppError(`Η μερίδα ${item.shareNumber} υπάρχει ήδη στη λίστα υλικών.`, 'VALIDATION_ERROR');
+    }
+    seen.add(key);
+  }
 }
 
 function validateAddyItem(item) {

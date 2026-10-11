@@ -17,7 +17,7 @@ export {
   renderUselessBForm,
   renderUselessMaterialTabs
 } from './exhp/officialDocuments/officialDocumentRenderer.js';
-export { previewExhpDocument } from './exhp/officialDocuments/officialDocumentPrint.js';
+export { isLandscapeExhpDocument, previewExhpDocument } from './exhp/officialDocuments/officialDocumentPrint.js';
 export {
   autofillShareDocumentRow,
   bindShareRows,

@@ -5,6 +5,8 @@ import { renderChangeSheetDocument, renderSharePrintDocument } from './sharesPag
 import { splitOfficerSignature } from '../officerSignature.js';
 import { renderInventoryStatement } from '../prints/inventoryPrint.js';
 
+const RENUMBER_DRAFT_KEY = 'financial-year:renumber-draft';
+
 export async function renderFinancialYearTasksPage(
   container,
   transactionsApi,
@@ -265,10 +267,48 @@ export async function renderFinancialYearTasksPage(
       state.fiscalYear = Number(data.fiscalYear || state.fiscalYear);
       container.querySelector('[data-renumber-year]').value = state.fiscalYear;
       renumberResults.innerHTML = renderRenumberingTable(data.shares);
+      restoreRenumberDraft(data.shares);
     } catch (error) {
       renumberResults.innerHTML = '<p class="muted">Δεν ήταν δυνατή η φόρτωση των μερίδων.</p>';
       showToast(error.message || 'Δεν ήταν δυνατή η φόρτωση των μερίδων.', 'error');
     }
+  }
+
+  function saveRenumberDraft() {
+    const numbers = {};
+    renumberResults.querySelectorAll('[data-renumber-row]').forEach((row) => {
+      const value = row.querySelector('[data-new-share-number]').value;
+      if (value) numbers[row.dataset.shareId] = {
+        oldNumber: row.children[1].textContent,
+        newNumber: value
+      };
+    });
+    try {
+      if (Object.keys(numbers).length) {
+        window.localStorage.setItem(RENUMBER_DRAFT_KEY, JSON.stringify(numbers));
+      } else {
+        window.localStorage.removeItem(RENUMBER_DRAFT_KEY);
+      }
+    } catch (error) {
+      console.error('Αποτυχία αποθήκευσης πρόχειρης αρίθμησης:', error);
+    }
+  }
+
+  function restoreRenumberDraft(shares) {
+    let numbers;
+    try {
+      numbers = JSON.parse(window.localStorage.getItem(RENUMBER_DRAFT_KEY) || '{}');
+    } catch (error) {
+      console.error('Αποτυχία ανάκτησης πρόχειρης αρίθμησης:', error);
+      return;
+    }
+    renumberResults.querySelectorAll('[data-renumber-row]').forEach((row) => {
+      const share = shares.find((item) => String(item.id) === row.dataset.shareId);
+      const draft = numbers?.[row.dataset.shareId];
+      if (share && draft?.oldNumber === String(share.shareNumber)) {
+        row.querySelector('[data-new-share-number]').value = draft.newNumber;
+      }
+    });
   }
 
   function collectRenumberingPayload() {
@@ -462,6 +502,9 @@ export async function renderFinancialYearTasksPage(
       showToast(error.message || 'Ο έλεγχος απέτυχε.', 'error');
     }
   });
+  renumberResults.addEventListener('input', (event) => {
+    if (event.target.matches('[data-new-share-number]')) saveRenumberDraft();
+  });
   container.querySelector('[data-renumber-save]').addEventListener('click', async () => {
     try {
       const payload = collectRenumberingPayload();
@@ -471,6 +514,11 @@ export async function renderFinancialYearTasksPage(
       });
       if (!accepted) return;
       const result = await yearEndApi.applyRenumbering(payload);
+      try {
+        window.localStorage.removeItem(RENUMBER_DRAFT_KEY);
+      } catch (error) {
+        console.error('Αποτυχία διαγραφής πρόχειρης αρίθμησης:', error);
+      }
       await loadRenumbering();
       setRenumberMessage(result.message);
       showToast(result.message, 'success');
@@ -546,7 +594,7 @@ function openAnnualInventoryPreview(settings, session, showToast) {
         landscape: false,
         title: `Κατάσταση Απογραφής Έτους ${session.fiscalYear}`
       });
-      if (result?.printed === false) throw new Error(result.failureReason || 'Η εκτύπωση ακυρώθηκε.');
+      if (result?.printed === false && !result.openedPdf) throw new Error(result.failureReason || 'Η εκτύπωση ακυρώθηκε.');
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση.', 'error');
     } finally {
@@ -672,6 +720,15 @@ export function renderMovedShareCardsTable(cards) {
   return `
     <div class="table-wrap annual-share-prints-table-wrap">
       <table class="index-table administration-table annual-share-prints-table">
+        <colgroup>
+          <col style="width: 4%" />
+          <col style="width: 4%" />
+          <col style="width: 7%" />
+          <col style="width: 13%" />
+          <col style="width: 52.7143%" />
+          <col style="width: 5%" />
+          <col style="width: 14.2857%" />
+        </colgroup>
         <thead><tr><th>Επιλογή</th><th>Α/Α</th><th>Αριθμός Μερίδας</th><th>Αριθμός Ονομαστικού</th><th>Περιγραφή</th><th>Κινήσεις</th><th>Έντυπα</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
@@ -718,8 +775,8 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
       return;
     }
     if (!event.target.closest('[data-print-annual-share-documents]')) return;
-    const printButton = backdrop.querySelector('[data-print-annual-share-documents]');
-    printButton.disabled = true;
+    const actionButtons = backdrop.querySelectorAll('[data-print-annual-share-documents]');
+    actionButtons.forEach((button) => { button.disabled = true; });
     try {
       const printResult = await printAnnualDocumentGroup(
         backdrop.querySelector('[data-annual-document-pages]').innerHTML,
@@ -727,13 +784,13 @@ function openAnnualSharePrintPreview(cards, settings, fiscalYear, showToast) {
         `Μερίδες με Κίνηση ${fiscalYear}`,
         true
       );
-      if (printResult?.printed === false) {
+      if (printResult?.printed === false && !printResult.openedPdf) {
         throw new Error(printResult.failureReason || 'Η εκτύπωση των μερίδων ακυρώθηκε.');
       }
     } catch (error) {
       showToast(error.message || 'Δεν ήταν δυνατή η εκτύπωση.', 'error');
     } finally {
-      printButton.disabled = false;
+      actionButtons.forEach((button) => { button.disabled = false; });
     }
   });
   document.body.appendChild(backdrop);
@@ -754,10 +811,15 @@ async function printAnnualDocumentGroup(html, landscape, title, mixedOrientation
   printRoot.className = 'isolated-print-root';
   printRoot.innerHTML = `
     <style>
-      @page {
-        size: ${landscape ? '297mm 210mm' : '210mm 297mm'} !important;
-        margin: 0 !important;
-      }
+      ${mixedOrientation ? `
+        @page portrait { size: A4 portrait; margin: 0; }
+        @page landscape { size: A4 landscape; margin: 0; }
+      ` : `
+        @page {
+          size: ${landscape ? '297mm 210mm' : '210mm 297mm'} !important;
+          margin: 0 !important;
+        }
+      `}
       ${mixedOrientation ? '' : `
         .isolated-print-root > .print-document-area {
           page: auto !important;
@@ -770,7 +832,7 @@ async function printAnnualDocumentGroup(html, landscape, title, mixedOrientation
   document.body.appendChild(printRoot);
   try {
     await waitForPrintLayout();
-    return await window.appApi.print.currentDocument({ landscape, title });
+    return await window.appApi.print.currentDocument({ landscape, title, mixedOrientation });
   } finally {
     printRoot.remove();
     delete document.body.dataset.isolatedDocumentPrint;

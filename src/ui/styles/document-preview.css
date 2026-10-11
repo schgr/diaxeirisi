@@ -1,0 +1,282 @@
+/*
+ * Shared on-screen document viewer.
+ * Printed output retains its millimetre dimensions; these rules only scale the
+ * preview page to the usable viewport, keeping every form readable at any
+ * screen size and avoiding a separate layout for each document type.
+ */
+@media screen {
+  .official-share-back-summary th.official-share-back-projected-label {
+    font-size: clamp(9px, calc(1vw - 1px), 13px);
+  }
+
+  .share-back-preview-backdrop .official-share-back-summary th.official-share-back-projected-label {
+    font-size: clamp(7px, calc(1vw - 3px), 11px);
+  }
+
+  .request-document-backdrop,
+  .handover-document-backdrop,
+  .index-document-preview-backdrop,
+  .generic-print-preview-backdrop {
+    padding: 8px;
+  }
+
+  .request-document-modal:has(.request-document-preview),
+  .handover-document-modal:has(.handover-document-preview),
+  .index-document-preview-modal:has(.index-document-preview-content),
+  .inventory-statement-modal:has(.inventory-modal-preview) {
+    display: flex;
+    flex-direction: column;
+    width: min(calc(297mm + 22px), calc(100vw - 16px));
+    height: auto;
+    max-height: calc(100dvh - 16px);
+    overflow: hidden;
+  }
+
+  .category-share-preview-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(calc(210mm + 22px), calc(100vw - 16px));
+    max-height: calc(100dvh - 16px);
+    overflow: hidden;
+  }
+
+  .index-document-preview-modal:has(.official-share-page, .material-registry-page, .weapon-registry-print) {
+    width: min(900px, calc(100vw - 16px));
+  }
+
+  /* Match portrait viewers to the displayed sheet rather than landscape A4. */
+  :is(.request-document-modal, .handover-document-modal, .index-document-preview-modal, .inventory-statement-modal):has(
+    .faithful-form-page,
+    .official-share-page,
+    .official-inventory-page,
+    .official-a4-form,
+    .official-movement-protocol-page,
+    .official-handover-page,
+    .share-document-page,
+    .weapon-registry-print,
+    .dyp192-page
+  ) {
+    width: min(calc(210mm + 22px), calc((100dvh - 152px) * 0.70707 + 22px), calc(100vw - 16px));
+  }
+
+  :is(.request-document-modal, .handover-document-modal, .index-document-preview-modal, .inventory-statement-modal) > .material-card-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  :is(.request-document-modal, .handover-document-modal, .index-document-preview-modal, .inventory-statement-modal) > .material-card-header > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  :is(.request-document-modal, .handover-document-modal, .index-document-preview-modal, .inventory-statement-modal) > .material-card-header h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .request-document-modal.annual-share-print-modal:has(.change-sheet-document-page) {
+    width: min(calc(297mm + 32px), calc(100vw - 16px));
+  }
+
+  .material-form-preview-backdrop .request-document-modal:has(.composition-document-page) {
+    width: min(calc(210mm + 22px), calc(100vw - 16px));
+  }
+
+  .annual-share-print-preview [data-annual-document-pages] {
+    flex: 0 0 auto;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .annual-share-print-preview [data-annual-document-pages] > .change-sheet-document-page {
+    box-sizing: border-box;
+    width: 297mm !important;
+    min-width: 297mm;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    margin: 0 auto !important;
+  }
+
+  .request-document-preview,
+  .handover-document-preview,
+  .index-document-preview-content,
+  .inventory-modal-preview,
+  .print-preview-shell,
+  .category-share-preview-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
+    gap: 8px;
+    padding: 8px;
+    max-height: calc(100dvh - 120px);
+    overflow: auto;
+    box-sizing: border-box;
+  }
+
+  /* Portrait A4 documents always fit between the preview header and its bottom edge. */
+  :is(.request-document-preview, .handover-document-preview, .index-document-preview-content, .inventory-modal-preview, .print-preview-shell) :is(
+    .faithful-form-page,
+    .official-share-page,
+    .official-inventory-page,
+    .official-a4-form,
+    .official-movement-protocol-page,
+    .official-handover-page,
+    .share-document-page,
+    .weapon-registry-print,
+    .dyp192-page
+  ) {
+    flex: 0 0 auto;
+    width: min(210mm, 100%, calc((100dvh - 152px) * 0.70707)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 100%;
+    margin: 0 auto !important;
+    aspect-ratio: 210 / 297;
+  }
+
+  /* Preserve printed dimensions so registry and composition rows remain visible. */
+  .index-document-preview-content .material-registry-page,
+  .request-document-preview .addy-composition-document,
+  .print-preview-shell .composition-document-page {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0 auto;
+  }
+
+  /* Landscape A4 documents use the same viewer, with the matching ratio. */
+  :is(.request-document-preview, .handover-document-preview, .index-document-preview-content, .inventory-modal-preview, .print-preview-shell) :is(
+    .request-document-page,
+    .addy-document-page,
+    .faithful-form-page-landscape,
+    .exhp-faithful-page,
+    .exhp-clean-page,
+    .official-index-page,
+    .external-excel-index-page,
+    .index-page,
+    .serial-registry-print-page,
+    .financial-year-print-sheet,
+    .balance-differences-page,
+    .controlled-material-print,
+    .change-sheet-document-page,
+    .ammunition-batch-preview-page,
+    .ammunition-batch-print
+  ) {
+    flex: 0 0 auto;
+    width: min(297mm, 100%, calc((100dvh - 152px) * 1.41429)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 100%;
+    margin: 0 auto !important;
+    aspect-ratio: 297 / 210;
+  }
+
+}
+
+/* Lift the annual signatures while keeping clearance below the page counter. */
+.external-excel-index-page .official-index-annual-signatures {
+  bottom: 6mm;
+}
+
+@media print {
+  /* Keep borders and both header labels inside the printer's usable area. */
+  body[data-isolated-document-print='true'] .isolated-print-root > .external-excel-index-page {
+    padding: 6mm 7mm;
+  }
+
+  .external-excel-index-page .external-excel-index-code {
+    position: absolute;
+    top: 6mm;
+    right: 7mm;
+    margin-top: 0;
+  }
+}
+
+@media screen {
+  .share-preview-pagination { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 0 auto 12px; min-height: 48px; height: auto; padding: 12px 16px; box-sizing: border-box; max-width: 100%; overflow: visible; }
+}
+
+@media screen {
+  .modal-backdrop:has(.document-preview-modal) {
+    padding: 8px;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .document-preview-modal {
+    display: flex !important;
+    flex-direction: column;
+    width: min(1145px, calc(100vw - 16px)) !important;
+    height: calc(100dvh - 16px) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow: hidden !important;
+  }
+
+  .document-preview-modal > .material-card-header,
+  .document-preview-modal > .category-share-preview-header {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+  }
+
+  .document-preview-tools {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 12px;
+  }
+
+  .document-preview-tools label { display: flex; align-items: center; gap: 8px; }
+  .document-preview-tools select { width: auto; padding: 4px 8px; }
+
+  .document-preview-modal .document-preview-viewport {
+    display: flex !important;
+    flex: 1 1 0;
+    align-items: safe center;
+    justify-content: flex-start;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+    scrollbar-gutter: stable;
+  }
+
+  /* CSS zoom also scales layout space, so subsequent sheets and scrolling
+     follow the displayed paper. The print tree uses the original page rules. */
+  .document-preview-viewport [data-preview-paper] {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    aspect-ratio: auto !important;
+    zoom: var(--preview-scale, 1);
+  }
+
+  .document-preview-viewport [data-preview-paper='landscape'] {
+    width: 297mm !important;
+    min-width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+  }
+}
+
+/* Reserve the existing footer area even when composition rows have a subtitle. */
+.balance-differences-page .balance-differences-table th,
+.balance-differences-page .balance-differences-table td {
+  padding: 2px 3px;
+  line-height: 1.1;
+}
+
+.balance-differences-page .balance-differences-table th { height: 14mm; }

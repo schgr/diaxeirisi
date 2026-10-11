@@ -256,7 +256,7 @@ function openSharePrintDocument(card) {
     }
 
     if (event.target.closest('[data-print-share-document]')) {
-      void window.appApi.print.currentDocument({ landscape: false });
+      void printShareCardDocument(backdrop.querySelector('.request-document-preview'));
     }
   });
 
@@ -297,11 +297,11 @@ function renderSharePrintDocument(card, options = {}) {
         ${options.issuerRank
           ? shareDocumentOverlay(options.issuerRank, 4.1, 23.3, 28.2, 1.5, 'share-issuer-rank-overlay')
           : ''}
-        ${shareDocumentOverlay(card.share.nominalNumber, 33.5, 14.2, 34.0, 2.6)}
-        ${shareDocumentOverlay(card.share.shareNumber, 69.5, 14.2, 19.0, 2.6)}
-        ${shareDocumentOverlay(card.share.description, 33.5, 18.6, 34.0, 2.8, 'material-description-overlay')}
+        ${shareDocumentOverlay(card.share.nominalNumber, 33.5, 14.2, 34.0, 2.6, 'share-primary-data-overlay')}
+        ${shareDocumentOverlay(card.share.shareNumber, 69.5, 14.2, 19.0, 2.6, 'share-primary-data-overlay')}
+        ${shareDocumentOverlay(card.share.description, 33.5, 18.6, 34.0, 2.8, 'material-description-overlay share-primary-data-overlay')}
         ${shareDocumentOverlay(card.share.materialCode, 70.0, 22.9, 18.0, 2.6)}
-        ${shareDocumentOverlay(card.share.measurementUnit, 4.0, 30.6, 28.4, 2.6)}
+        ${shareDocumentOverlay(card.share.measurementUnit, 4.0, 30.6, 28.4, 2.6, 'share-primary-data-overlay')}
         ${shareDocumentOverlay(card.share.unitPrice ? formatQuantity(card.share.unitPrice) : '', 55.0, 30.6, 16.0, 2.6)}
         ${shareDocumentOverlay(
           `ΑΠΟ ΜΕΤΑΦΟΡΑ - ΑΠΟΓΡΑΦΗ ${resolvePreviousYearInventoryDate(card, options)}`,
@@ -365,7 +365,7 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
             <tr>
               <th>Α/Α</th>
               <th class="official-share-back-date-heading">ΗΜΕΡ</th>
-              <th>ΑΥΤΟΣ ΠΟΥ<br />ΠΑΡΕΔΩΣΕ<br />ή ΠΑΡΕΛΑΒΕ</th>
+              <th>ΧΡΕΩΣΗ<br />Ή<br />ΠΙΣΤΩΣΗ</th>
               <th>ΑΡΙΘΜΟΣ<br />ΕΥΡΕΤΗΡΙΟΥ</th>
               <th>ΕΙΣΑΓΩΓΕΣ</th>
               <th>ΕΞΑΓΩΓΕΣ</th>
@@ -394,15 +394,35 @@ function renderOfficialShareBackPage(rows, openingBalance, transferBalance) {
           <colgroup><col class="official-share-back-summary-label" />${'<col />'.repeat(12)}</colgroup>
           <tbody>
             <tr><th>30. ΤΜΗΜΑΤΑ</th>${'<td></td>'.repeat(12)}</tr>
-            <tr><th>31. ΠΡΟΒΛΕΠΟΜΕΝΑ</th>${'<td></td>'.repeat(12)}</tr>
+            <tr><th class="official-share-back-projected-label">31. ΠΡΟΒΛΕΠΟΜΕΝΑ</th>${'<td></td>'.repeat(12)}</tr>
             <tr><th>32. ΥΠΑΡΧΟΝΤΑ</th>${'<td></td>'.repeat(12)}</tr>
             <tr><th>33. ΔΙΑΦΟΡΑ</th>${'<td></td>'.repeat(12)}</tr>
           </tbody>
         </table>
-        <div class="official-share-back-footer">ΕΦΟΔ 202</div>
+        <div class="official-share-back-footer">ΕΦΕΔ 202</div>
       </section>
     </article>
   `;
+}
+
+async function printShareCardDocument(preview) {
+  if (!preview) return;
+  const printRoot = document.createElement('div');
+  printRoot.className = 'isolated-print-root share-card-print-root';
+  printRoot.innerHTML = preview.innerHTML;
+  const pageStyle = document.createElement('style');
+  pageStyle.textContent = '@page { size: A4 portrait !important; margin: 0; }';
+  document.body.dataset.isolatedDocumentPrint = 'true';
+  document.body.appendChild(printRoot);
+  document.head.appendChild(pageStyle);
+  try {
+    await new Promise((resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+    await window.appApi.print.currentDocument({ landscape: false, title: 'Μερίδα Υλικού - Δελτίο Υπολοίπων' });
+  } finally {
+    pageStyle.remove();
+    printRoot.remove();
+    delete document.body.dataset.isolatedDocumentPrint;
+  }
 }
 
 function renderOfficialShareBackRow(item) {
@@ -428,8 +448,8 @@ function renderShareBackTemplate() {
 function renderOfficialShareRows(rows) {
   const columns = [
     { left: 3.9, width: 5.4, value: (item) => item.serialNumber },
-    { left: 9.5, width: 8.1, value: (item) => formatDate(item.date) },
-    { left: 17.8, width: 12.9, value: (item) => item.transactionUnit },
+    { left: 9.5, width: 8.1, value: (item) => formatDate(item.date), className: 'share-field-23-overlay' },
+    { left: 17.8, width: 12.9, value: (item) => item.transactionUnit, className: 'share-field-24-overlay' },
     { left: 30.8, width: 13.1, value: (item) => item.registryNumber },
     { left: 44.2, width: 13.0, value: (item) => item.imports ? formatQuantity(item.imports) : '' },
     { left: 57.3, width: 10.6, value: (item) => item.exports ? formatQuantity(item.exports) : '' },
@@ -442,7 +462,7 @@ function renderOfficialShareRows(rows) {
     66.15 + rowIndex * 1.72,
     column.width,
     1.72,
-    column === columns[7] ? 'material-description-overlay' : ''
+    [column.className, column === columns[7] ? 'material-description-overlay' : ''].filter(Boolean).join(' ')
   )).join('')).join('');
 }
 

@@ -48,7 +48,7 @@ function renderCategoryShareControls(categories, state) {
       <div class="category-share-selection">
         <strong>Κατηγορίες Υλικού</strong>
         <div class="card-table-wrap category-share-options">
-          <table class="category-share-selection-table">
+          <table class="index-table category-share-selection-table">
             <thead>
               <tr><th>Α/Α</th><th>Κατηγορία Υλικού</th><th>Επιλογή</th></tr>
             </thead>

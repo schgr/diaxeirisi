@@ -32,17 +32,17 @@ const EMPTY_DATA = {
 };
 
 const EFED_505_TABLE_COLUMNS = [
-  { key: 'seq', left: 9.41, width: 3.19, value: (item, index) => item.seq || index + 1 },
-  { key: 'nomenclature', left: 12.60, width: 26.20, value: (item) => item.nomenclature || '', className: 'efed505-item-nomenclature' },
-  { key: 'description', left: 38.80, width: 16.63, value: (item) => item.description || '', className: 'efed505-item-description' },
-  { key: 'unit', left: 55.43, width: 9.91, value: (item) => item.unit || '', className: 'efed505-item-unit' },
-  { key: 'quantity', left: 65.34, width: 9.41, value: (item) => formatQuantity(item.quantity), className: 'efed505-item-quantity' },
-  { key: 'notes', left: 74.75, width: 8.57, value: (item) => item.notes || '', className: 'material-description-overlay' }
+  { key: 'seq', left: 8.56, width: 5.50, value: (item, index) => item.seq || index + 1 },
+  { key: 'nomenclature', left: 14.06, width: 16.88, value: (item) => item.nomenclature || '', className: 'efed505-item-nomenclature' },
+  { key: 'description', left: 30.94, width: 23.82, value: (item) => item.description || '', className: 'efed505-item-description' },
+  { key: 'unit', left: 54.76, width: 9.51, value: (item) => item.unit || '', className: 'efed505-item-unit' },
+  { key: 'quantity', left: 64.27, width: 9.51, value: (item) => formatQuantity(item.quantity), className: 'efed505-item-quantity' },
+  { key: 'notes', left: 73.78, width: 9.54, value: (item) => item.notes || '', className: 'material-description-overlay' }
 ];
 
 const EFED_505_ROWS_PER_PAGE = 10;
 const EFED_505_FIRST_ROW_TOP = 51.20;
-const EFED_505_ROW_STEP = 2.48;
+const EFED_505_ROW_STEP = 2.04;
 
 export function createDocZAnalosimo({ monada = '', addyAxp = '', onSave = null, data = {}, materialCatalog = [] } = {}) {
   let state = normalizeDocZData({
@@ -109,7 +109,7 @@ export function renderDocZEdit(data = {}, options = {}) {
         ${renderInputField('Από', 'specificFields.apoDate', fields.apoDate, 'date')}
         ${renderInputField('Έως', 'specificFields.eosDate', fields.eosDate, 'date')}
       </div>
-      ${renderMaterialPickerTableInput(normalized.materials, options.materialCatalog || [], 'docZMaterialsChanged')}
+      ${renderMaterialPickerTableInput(normalized.materials, options.materialCatalog || [], 'docZMaterialsChanged', { variant: 'manual' })}
     </section>
   `;
 }
@@ -213,9 +213,9 @@ function renderEfed505SignatureNameOverlays(data) {
   return `
     ${efed505SignatureOverlay(officers.commander, 10.90, 90.95, 18.00, 'efed505-signature-commander')}
     ${efed505SignatureOverlay(officers.manager, 31.90, 90.95, 19.50, 'efed505-signature-manager')}
-    ${efed505SignatureOverlay(fields.proedros, 52.80, 95.05, 15.00, 'efed505-signature-committee-president')}
-    ${efed505SignatureOverlay(fields.melosA, 72.60, 94.85, 15.50, 'efed505-signature-committee-member')}
-    ${efed505SignatureOverlay(fields.melosB, 72.60, 97.15, 15.50, 'efed505-signature-committee-member')}
+    ${efed505SignatureOverlay(fields.proedros, 52.80, 95.55, 15.00, 'efed505-signature-committee-president')}
+    ${efed505SignatureOverlay(fields.melosA, 72.60, 95.55, 15.50, 'efed505-signature-committee-member')}
+    ${efed505SignatureOverlay(fields.melosB, 72.60, 98.00, 15.50, 'efed505-signature-committee-member')}
   `;
 }
 
@@ -225,7 +225,7 @@ function efed505SignatureOverlay(value, left, top, width, className = '') {
     <span>${escapeHtml(signature.name || value || '')}</span>
     ${signature.rank ? `<span>${escapeHtml(signature.rank)}</span>` : ''}
   `;
-  return efed505StaticOverlay(content, left, top, width, 2.70, `efed505-signature-name ${className}`.trim(), true);
+  return efed505StaticOverlay(content, left, top, width, 1.90, `efed505-signature-name ${className}`.trim(), true);
 }
 
 function renderEfed505MaterialRows(rows, offset = 0) {

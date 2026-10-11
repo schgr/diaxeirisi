@@ -10,7 +10,7 @@ async function writeExcelExport(filePath, payload = {}) {
   let sources = tables.length
     ? tables
     : [{ name: payload.title || 'Κατάσταση', rows: (payload.textLines || []).map((line) => [line]) }];
-  if (payload.singleWorksheet && sources.length > 1) {
+  if (sources.length > 1) {
     const rows = [];
     const pageBreakRows = [];
     sources.forEach((table, index) => {

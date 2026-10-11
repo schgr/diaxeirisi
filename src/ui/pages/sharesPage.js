@@ -34,11 +34,11 @@ export async function renderSharesPage(container, sharesApi, settingsApi, showTo
     ${options.compositionOnly ? '' : `<section class="page-panel shares-filter-panel">
       <div class="shares-filter-grid">
         <label class="field">
-          <span>Αριθμός μερίδας</span>
+          <span>Αριθμός Μερίδας</span>
           <input data-filter="shareNumber" autocomplete="off" />
         </label>
         <label class="field">
-          <span>Αριθμός ονομαστικού</span>
+          <span>Αριθμός Ονομαστικού</span>
           <input data-filter="nominalNumber" autocomplete="off" />
         </label>
         <label class="field">

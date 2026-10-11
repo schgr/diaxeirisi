@@ -118,18 +118,20 @@ function collectRecordRow(row) {
 }
 
 function renderCompositionDocument(card, settings) {
-  const rowsPerPage = 16;
+  const firstPageRows = 26;
+  const continuationRows = 33;
   const items = card.compositionItems || [];
-  const pageCount = Math.max(1, Math.ceil(items.length / rowsPerPage));
+  const pageCount = 1 + Math.ceil(Math.max(0, items.length - firstPageRows) / continuationRows);
 
   return Array.from({ length: pageCount }, (_unused, pageIndex) => {
-    const pageItems = items.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
+    const startIndex = pageIndex === 0 ? 0 : firstPageRows + (pageIndex - 1) * continuationRows;
+    const pageItems = items.slice(startIndex, startIndex + (pageIndex === 0 ? firstPageRows : continuationRows));
     const isFirstPage = pageIndex === 0;
     const isLastPage = pageIndex === pageCount - 1;
     return `
       <article class="composition-document-page print-document-area">
         ${isFirstPage ? renderCompositionDocumentHeader(card, settings) : ''}
-        ${renderCompositionDocumentTable(pageItems, pageIndex * rowsPerPage)}
+        ${renderCompositionDocumentTable(pageItems, startIndex)}
         ${isLastPage ? renderCompositionDocumentFooter(settings) : ''}
         <div class="material-form-page-number">Σελίδα ${pageIndex + 1} από ${pageCount}</div>
       </article>
